@@ -41,6 +41,7 @@ public sealed class AgentSession(
                 if (!string.IsNullOrWhiteSpace(l)) Emit(new EngineError(l));
         }, ct);
 
+        bool stdinOpen = !adapter.CloseStdinAfterStart;
         foreach (var line in adapter.InitialStdinLines(prompt))
             await proc.StandardInput.WriteLineAsync(line.AsMemory(), ct);
         await proc.StandardInput.FlushAsync(ct);
@@ -50,7 +51,16 @@ public sealed class AgentSession(
         string? outLine;
         while ((outLine = await proc.StandardOutput.ReadLineAsync(ct)) is not null)
             foreach (var ev in adapter.ParseLine(outLine))
+            {
                 await EmitTranslatedAsync(ev, ct);
+                // A keep-open engine (Claude) waits for more stdin after the turn; close
+                // stdin on completion so it exits and the read loop ends.
+                if (ev is TurnCompleted && stdinOpen)
+                {
+                    proc.StandardInput.Close();
+                    stdinOpen = false;
+                }
+            }
 
         await proc.WaitForExitAsync(ct);
         await stderrPump;

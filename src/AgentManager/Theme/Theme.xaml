@@ -1,0 +1,168 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== Design tokens (from AgentManager.html :root) ===== -->
+    <Color x:Key="Bg0Color">#FF0A0E12</Color>
+    <SolidColorBrush x:Key="Bg0" Color="#FF0A0E12"/>
+    <SolidColorBrush x:Key="Bg1" Color="#FF0D131A"/>
+    <SolidColorBrush x:Key="Bg2" Color="#FF10171F"/>
+    <SolidColorBrush x:Key="Bg3" Color="#FF161F29"/>
+    <SolidColorBrush x:Key="Bg4" Color="#FF1D2832"/>
+    <SolidColorBrush x:Key="Bg5" Color="#FF26333F"/>
+    <SolidColorBrush x:Key="Line" Color="#FF22303B"/>
+    <SolidColorBrush x:Key="LineSoft" Color="#FF1A242D"/>
+    <SolidColorBrush x:Key="LineBright" Color="#FF33444F"/>
+    <SolidColorBrush x:Key="Txt0" Color="#FFDBE3EA"/>
+    <SolidColorBrush x:Key="Txt1" Color="#FF90A0AC"/>
+    <SolidColorBrush x:Key="Txt2" Color="#FF5E6E7A"/>
+    <SolidColorBrush x:Key="Txt3" Color="#FF43525C"/>
+    <SolidColorBrush x:Key="Accent" Color="#FFFF5A2C"/>
+    <SolidColorBrush x:Key="AccentBright" Color="#FFFF7048"/>
+    <SolidColorBrush x:Key="AccentDim" Color="#24FF5A2C"/>
+    <SolidColorBrush x:Key="AccentLine" Color="#66FF5A2C"/>
+    <SolidColorBrush x:Key="Warn" Color="#FFF5B531"/>
+    <SolidColorBrush x:Key="Ok" Color="#FF34D3A6"/>
+    <SolidColorBrush x:Key="Err" Color="#FFFF4D5E"/>
+    <SolidColorBrush x:Key="Info" Color="#FF5B9BFF"/>
+    <SolidColorBrush x:Key="Add" Color="#FF2FAE7A"/>
+    <SolidColorBrush x:Key="Del" Color="#FFE05566"/>
+    <SolidColorBrush x:Key="AccentText" Color="#FF1A0C06"/>
+
+    <FontFamily x:Key="Sans">Segoe UI, sans-serif</FontFamily>
+    <FontFamily x:Key="Mono">Consolas, Cascadia Mono, monospace</FontFamily>
+
+    <!-- ===== Base text ===== -->
+    <Style TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
+        <Setter Property="FontFamily" Value="{StaticResource Sans}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
+    </Style>
+
+    <Style x:Key="Lbl" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Mono}"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+
+    <!-- ===== Accent "New Agent" button ===== -->
+    <Style x:Key="AccentButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource Accent}"/>
+        <Setter Property="Foreground" Value="{StaticResource AccentText}"/>
+        <Setter Property="FontFamily" Value="{StaticResource Sans}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="12.5"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="12,9"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource AccentBright}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Ghost / chip button ===== -->
+    <Style x:Key="ChipButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource Bg3}"/>
+        <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
+        <Setter Property="FontFamily" Value="{StaticResource Sans}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="11,6"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{StaticResource Line}"
+                            BorderThickness="1" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource LineBright}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Titlebar menu button ===== -->
+    <Style x:Key="MenuButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
+        <Setter Property="FontSize" Value="12.5"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="9,3"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource Bg3}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Send button (accent square) ===== -->
+    <Style x:Key="SendButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource Accent}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="7" Width="32" Height="32">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource AccentBright}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource Bg4}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Composer textbox ===== -->
+    <Style x:Key="ComposerInput" TargetType="TextBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Accent}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontFamily" Value="{StaticResource Sans}"/>
+        <Setter Property="FontSize" Value="13.5"/>
+        <Setter Property="AcceptsReturn" Value="True"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="13,11"/>
+    </Style>
+
+    <!-- ===== Dark scrollbar (thin) ===== -->
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Width" Value="9"/>
+    </Style>
+
+</ResourceDictionary>

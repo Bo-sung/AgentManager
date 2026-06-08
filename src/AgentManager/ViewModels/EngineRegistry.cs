@@ -1,0 +1,54 @@
+using System.IO;
+using AgentManager.Core.Agents;
+
+namespace AgentManager.ViewModels;
+
+public sealed record EngineDef(string Id, string Badge, string Name, string Cli, string[] Models, string Desc, bool Enabled);
+
+/// <summary>Engine catalog + adapter/executable resolution.</summary>
+public static class EngineRegistry
+{
+    public static readonly EngineDef[] All =
+    [
+        new("cc", "CC", "Claude Code",     "claude",      ["sonnet", "opus", "haiku"],        "anthropic · cli", true),
+        new("gx", "GX", "GPT / Codex",     "codex",       ["gpt-5.1-codex", "gpt-5.1"],       "openai · cli",    true),
+        new("ag", "AG", "Antigravity CLI", "antigravity", ["gemini-3-flash", "gemini-3-pro"], "google · cli",    false),
+    ];
+
+    public static EngineDef Get(string id) => Array.Find(All, e => e.Id == id) ?? All[0];
+
+    public static IAgentAdapter? CreateAdapter(string id) => id switch
+    {
+        "cc" => new ClaudeAdapter(),
+        "gx" => new CodexAdapter(),
+        _ => null, // antigravity not wired yet
+    };
+
+    private static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+    public static string? ResolveExe(string id) => id switch
+    {
+        "cc" => ResolveClaude(),
+        "gx" => ResolveCodex(),
+        _ => null,
+    };
+
+    private static string ResolveClaude()
+    {
+        var p = Path.Combine(Home, ".local", "bin", "claude.exe");
+        return File.Exists(p) ? p : "claude"; // fall back to PATH
+    }
+
+    private static string? ResolveCodex()
+    {
+        // codex CLI ships inside the openai.chatgpt VS Code extension (versioned folder).
+        var extRoot = Path.Combine(Home, ".vscode", "extensions");
+        if (Directory.Exists(extRoot))
+            foreach (var dir in Directory.EnumerateDirectories(extRoot, "openai.chatgpt-*"))
+            {
+                var c = Path.Combine(dir, "bin", "windows-x86_64", "codex.exe");
+                if (File.Exists(c)) return c;
+            }
+        return null;
+    }
+}
