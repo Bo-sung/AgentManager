@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/AgentManager.Core/AgentManager.Core.csproj" />
+    <Project Path="src/AgentManager.Smoke/AgentManager.Smoke.csproj" />
     <Project Path="src/AgentManager/AgentManager.csproj" />
   </Folder>
 </Solution>
