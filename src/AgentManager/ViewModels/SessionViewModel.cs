@@ -15,6 +15,11 @@ public sealed class SessionViewModel : ObservableObject
     public DateTime StartedAt { get; } = DateTime.Now;
     public ObservableCollection<TranscriptItem> Transcript { get; } = [];
 
+    /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
+    public string? WorktreePath { get; set; }
+    public bool Isolated { get; set; }
+    public bool WorktreeAttempted { get; set; }
+
     public SessionViewModel(string id, EngineDef engine, string title, string branch, string project, string model)
     {
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;

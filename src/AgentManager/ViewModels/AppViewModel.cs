@@ -6,6 +6,7 @@ using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
 
@@ -101,6 +102,27 @@ public sealed class AppViewModel : ObservableObject
         if (e.PropertyName == nameof(SessionViewModel.Status)) RefreshCounts();
     }
 
+    private static readonly string WorktreesRoot =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "worktrees");
+
+    /// <summary>Create the session's worktree once (branched from project HEAD). No-op if not a git repo.</summary>
+    private async Task EnsureWorktreeAsync(SessionViewModel s)
+    {
+        if (s.WorktreeAttempted) return;
+        s.WorktreeAttempted = true;
+        try
+        {
+            Directory.CreateDirectory(WorktreesRoot);
+            var wt = await GitWorktree.CreateAsync(WorkingDirectory, s.Id, s.Branch, WorktreesRoot);
+            if (wt is not null) { s.WorktreePath = wt.Path; s.Isolated = true; }
+            else s.Transcript.Add(new WorkingBlock("⚠ git 레포가 아니어서 격리(worktree) 없이 실행합니다"));
+        }
+        catch (Exception ex)
+        {
+            s.Transcript.Add(new WorkingBlock($"⚠ worktree 생성 실패 — 격리 없이 실행: {ex.Message}"));
+        }
+    }
+
     private async Task SendAsync()
     {
         var s = ActiveSession;
@@ -127,11 +149,15 @@ public sealed class AppViewModel : ObservableObject
             return;
         }
 
+        // Worktree isolation: each session works in its own git worktree.
+        await EnsureWorktreeAsync(s);
+        var cwd = s.WorktreePath ?? WorkingDirectory;
+
         var tools = new Dictionary<string, ToolBlock>();
         var session = new AgentSession(adapter, exe, _translator, TranslationEnabled);
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
 
-        var options = new SessionOptions { WorkingDirectory = WorkingDirectory, BypassPermissions = true };
+        var options = new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;
         try
