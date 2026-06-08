@@ -33,6 +33,12 @@ public sealed class AgentSession(
         using var proc = new Process { StartInfo = psi };
         proc.Start();
 
+        // Stop support: killing the process ends the read loop and the turn.
+        using var killReg = ct.Register(() =>
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+        });
+
         // Drain stderr → EngineError
         var stderrPump = Task.Run(async () =>
         {

@@ -28,7 +28,11 @@ public sealed class AppViewModel : ObservableObject
         CreateSessionCommand = new RelayCommand(_ => CreateSession(), _ => NewAgentSelectedEngine is not null);
         SelectSessionCommand = new RelayCommand(s => { if (s is SessionViewModel vm) ActiveSession = vm; });
         SendCommand = new RelayCommand(_ => _ = SendAsync(), _ => ActiveSession?.CanSend == true);
+        StopCommand = new RelayCommand(_ => StopActive(), _ => ActiveSession?.IsRunning == true);
     }
+
+    // running sessions → their cancellation source (Stop)
+    private readonly Dictionary<string, CancellationTokenSource> _running = [];
 
     // ----- commands -----
     public RelayCommand NewAgentCommand { get; }
@@ -36,6 +40,15 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand CreateSessionCommand { get; }
     public RelayCommand SelectSessionCommand { get; }
     public RelayCommand SendCommand { get; }
+    public RelayCommand StopCommand { get; }
+
+    private void StopActive()
+    {
+        if (ActiveSession is { } s && _running.TryGetValue(s.Id, out var cts))
+        {
+            try { cts.Cancel(); } catch { }
+        }
+    }
 
     // ----- active session -----
     private SessionViewModel? _active;
@@ -119,17 +132,30 @@ public sealed class AppViewModel : ObservableObject
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
 
         var options = new SessionOptions { WorkingDirectory = WorkingDirectory, BypassPermissions = true };
+        var cts = new CancellationTokenSource();
+        _running[s.Id] = cts;
         try
         {
-            await Task.Run(() => session.RunAsync(options, prompt));
+            await Task.Run(() => session.RunAsync(options, prompt, cts.Token), cts.Token);
             if (s.Status == "running") s.Status = "done";
+            if (s.Status == "done") s.Activity = "completed";
+        }
+        catch (OperationCanceledException)
+        {
+            s.Transcript.Add(new WorkingBlock("⏹ 중지됨"));
+            s.Status = "idle";
+            s.Activity = "stopped";
         }
         catch (Exception ex)
         {
             s.Transcript.Add(new ErrorBlock("Run failed", ex.Message));
             s.Status = "error";
         }
-        s.Activity = s.Status == "done" ? "completed" : s.Activity;
+        finally
+        {
+            _running.Remove(s.Id);
+            cts.Dispose();
+        }
     }
 
     private void Apply(SessionViewModel s, NormalizedEvent ev, Dictionary<string, ToolBlock> tools)
