@@ -11,19 +11,43 @@ public sealed class SessionViewModel : ObservableObject
     public string Cli { get; }
     public string Title { get; }
     public string Branch { get; }
+    public string ProjectId { get; }
     public string Project { get; }
-    public DateTime StartedAt { get; } = DateTime.Now;
+    public string ProjectPath { get; }
+    public DateTime StartedAt { get; }
     public ObservableCollection<TranscriptItem> Transcript { get; } = [];
+    public ObservableCollection<ReviewChangeViewModel> Changes { get; } = [];
 
     /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
-    public string? WorktreePath { get; set; }
-    public bool Isolated { get; set; }
+    private string? _worktreePath;
+    public string? WorktreePath
+    {
+        get => _worktreePath;
+        set { if (Set(ref _worktreePath, value)) OnChanged(nameof(WorktreeLabel)); }
+    }
+
+    private bool _isolated;
+    public bool Isolated
+    {
+        get => _isolated;
+        set { if (Set(ref _isolated, value)) OnChanged(nameof(WorktreeLabel)); }
+    }
     public bool WorktreeAttempted { get; set; }
 
-    public SessionViewModel(string id, EngineDef engine, string title, string branch, string project, string model)
+    public SessionViewModel(
+        string id,
+        EngineDef engine,
+        string title,
+        string branch,
+        string projectId,
+        string project,
+        string projectPath,
+        string model,
+        DateTime? startedAt = null)
     {
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
-        Title = title; Branch = branch; Project = project; _model = model;
+        Title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
+        StartedAt = startedAt ?? DateTime.Now;
     }
 
     private string _status = "idle";
@@ -44,6 +68,21 @@ public sealed class SessionViewModel : ObservableObject
 
     private string _activity = "";
     public string Activity { get => _activity; set => Set(ref _activity, value); }
+
+    private ReviewChangeViewModel? _selectedChange;
+    public ReviewChangeViewModel? SelectedChange
+    {
+        get => _selectedChange;
+        set => Set(ref _selectedChange, value);
+    }
+
+    private string _diffText = "변경 파일을 선택하면 diff가 표시됩니다.";
+    public string DiffText { get => _diffText; set => Set(ref _diffText, value); }
+
+    private string _reviewStatus = "No isolated worktree yet";
+    public string ReviewStatus { get => _reviewStatus; set => Set(ref _reviewStatus, value); }
+
+    public string WorktreeLabel => Isolated && WorktreePath is not null ? WorktreePath : "not isolated";
 
     private long _tokensIn, _tokensOut;
     public long TokensIn { get => _tokensIn; set { if (Set(ref _tokensIn, value)) OnChanged(nameof(TokensLabel)); } }

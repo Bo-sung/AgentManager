@@ -80,5 +80,5 @@ tool_use_result:{ stdout, stderr, interrupted, isImage, noOutputExpected }
 ## 미완 / 다음
 - [ ] 권한 왕복(`control_request`/응답) 캡처 (non-bypass)
 - [ ] 서브에이전트(Task) 실제 호출해 `parent_tool_use_id`/`caller` 값 확인
-- [ ] **Codex 측 동일 캡처** (`codex exec` 설치 후) → 같은 매핑표 작성
+- [x] **Codex 측 동일 캡처** (`codex exec --json`) → `PHASE0_CODEX_EXEC_JSON_KO.md`
 - [ ] 두 매핑표 통합 → `IAgentAdapter.ParseChunk` 구현 기준 확정

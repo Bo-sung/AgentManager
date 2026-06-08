@@ -4,7 +4,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:vm="clr-namespace:AgentManager.ViewModels"
         x:Name="Root"
-        Title="AgentManager" Height="760" Width="1180" WindowStyle="None"
+        Title="AgentManager" Height="760" Width="1320" WindowStyle="None"
         Background="{StaticResource Bg1}" Foreground="{StaticResource Txt0}"
         FontFamily="{StaticResource Sans}" FontSize="13">
 
@@ -153,6 +153,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="280"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="380"/>
             </Grid.ColumnDefinitions>
 
             <!-- Sidebar -->
@@ -166,6 +167,37 @@
                         <TextBlock Text="◷  Activity History" Foreground="{StaticResource Txt1}" Padding="9,7"/>
                         <TextBlock Text="▦  Scheduled Tasks" Foreground="{StaticResource Txt1}" Padding="9,7"/>
                     </StackPanel>
+
+                    <Border DockPanel.Dock="Top" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,1" Padding="8,9">
+                        <StackPanel>
+                            <DockPanel Margin="6,0,4,6">
+                                <TextBlock DockPanel.Dock="Left" Text="PROJECTS" Style="{StaticResource Lbl}" VerticalAlignment="Center"/>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="+" Width="28"
+                                        ToolTip="프로젝트 추가" Command="{Binding NewProjectCommand}"/>
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding Projects}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,1" CornerRadius="6" Padding="8,7" Cursor="Hand" Background="Transparent"
+                                                MouseLeftButtonUp="ProjectRow_Click">
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding SessionCount}" FontFamily="{StaticResource Mono}"
+                                                           FontSize="10" Foreground="{StaticResource Txt2}" Margin="8,0,0,0"
+                                                           VerticalAlignment="Center"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontSize="12" Foreground="{StaticResource Txt0}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Path}" FontFamily="{StaticResource Mono}" FontSize="9.5"
+                                                               Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis"
+                                                               Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
 
                     <!-- footer -->
                     <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="10,8">
@@ -335,6 +367,107 @@
                     </ScrollViewer>
                 </DockPanel>
             </Grid>
+
+            <!-- Review pane -->
+            <Border Grid.Column="2" DataContext="{Binding ActiveSession}" Background="{StaticResource Bg2}"
+                    BorderBrush="{StaticResource LineSoft}" BorderThickness="1,0,0,0">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
+                        <DockPanel Margin="14,0">
+                            <TextBlock DockPanel.Dock="Left" Text="REVIEW" Style="{StaticResource Lbl}" Foreground="{StaticResource Accent}"
+                                       VerticalAlignment="Center" Margin="0,0,9,0"/>
+                            <TextBlock Text="{Binding ReviewStatus}" FontFamily="{StaticResource Mono}" FontSize="10.5"
+                                       Foreground="{StaticResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="↻" Width="30"
+                                    ToolTip="변경 목록 새로고침"
+                                    Command="{Binding DataContext.RefreshReviewCommand, ElementName=Root}"/>
+                        </DockPanel>
+                    </Border>
+
+                    <Border DockPanel.Dock="Top" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="12,10">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,7">
+                                <TextBlock DockPanel.Dock="Left" Text="CHANGES" Style="{StaticResource Lbl}"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding Changes.Count}" FontFamily="{StaticResource Mono}"
+                                           FontSize="10" Foreground="{StaticResource Txt2}"/>
+                            </DockPanel>
+                            <ListBox x:Name="ReviewChangesList" ItemsSource="{Binding Changes}" SelectedItem="{Binding SelectedChange, Mode=TwoWay}"
+                                     SelectionChanged="ReviewChanges_SelectionChanged"
+                                     Background="Transparent" BorderThickness="0" MaxHeight="190"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="Margin" Value="0,0,0,4"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="row" Background="{TemplateBinding Background}" CornerRadius="6">
+                                                        <ContentPresenter/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="row" Property="Background" Value="{StaticResource Bg3}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="row" Property="Background" Value="{StaticResource Bg4}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="8,7">
+                                            <Border DockPanel.Dock="Left" Width="24" Height="22" CornerRadius="4"
+                                                    Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                                    Margin="0,0,8,0">
+                                                <TextBlock Text="{Binding KindLabel}" FontFamily="{StaticResource Mono}" FontSize="10"
+                                                           Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding StatLabel}" FontFamily="{StaticResource Mono}"
+                                                       FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            <TextBlock Text="{Binding Path}" FontFamily="{StaticResource Mono}" FontSize="11"
+                                                       Foreground="{StaticResource Txt0}" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
+
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="12,10">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="WORKTREE" Style="{StaticResource Lbl}" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding WorktreeLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5"
+                                       Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                    </Border>
+
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Height="32" Background="{StaticResource Bg1}"
+                                BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
+                            <DockPanel Margin="12,0">
+                                <TextBlock DockPanel.Dock="Left" Text="DIFF" Style="{StaticResource Lbl}" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedChange.Path}" FontFamily="{StaticResource Mono}"
+                                           FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" MaxWidth="270"/>
+                            </DockPanel>
+                        </Border>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <TextBox Text="{Binding DiffText}" FontFamily="{StaticResource Mono}" FontSize="11"
+                                     Foreground="{StaticResource Txt1}" Background="{StaticResource Bg1}"
+                                     BorderThickness="0" IsReadOnly="True" TextWrapping="NoWrap"
+                                     AcceptsReturn="True" AcceptsTab="True" Padding="12,10"/>
+                        </ScrollViewer>
+                    </DockPanel>
+                </DockPanel>
+            </Border>
         </Grid>
 
         <!-- ===================== New-agent overlay ===================== -->
@@ -382,6 +515,41 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Style="{StaticResource ChipButton}" Content="Cancel" Margin="0,0,9,0" Command="{Binding CancelNewAgentCommand}"/>
                             <Button Style="{StaticResource AccentButton}" Content="⚡ Launch agent" Command="{Binding CreateSessionCommand}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===================== New-project overlay ===================== -->
+        <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNewProject, Converter={StaticResource BoolVis}}">
+            <Border Width="560" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
+                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10">
+                <StackPanel>
+                    <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="NEW PROJECT" Style="{StaticResource Lbl}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="✕" Command="{Binding CancelNewProjectCommand}"/>
+                            <TextBlock Text="Register a workspace folder" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+                    <StackPanel Margin="18">
+                        <TextBlock Text="NAME" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                 Text="{Binding NewProjectName, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="FOLDER PATH" Style="{StaticResource Lbl}" Margin="0,16,0,8"/>
+                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                 Text="{Binding NewProjectPath, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="{Binding NewProjectError}" FontFamily="{StaticResource Mono}" FontSize="10"
+                                   Foreground="{StaticResource Err}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                    <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource ChipButton}" Content="Cancel" Margin="0,0,9,0" Command="{Binding CancelNewProjectCommand}"/>
+                            <Button Style="{StaticResource AccentButton}" Content="+  Add project" Command="{Binding CreateProjectCommand}"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

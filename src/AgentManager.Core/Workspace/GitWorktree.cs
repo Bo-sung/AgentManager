@@ -101,11 +101,62 @@ public static class GitWorktree
         return list;
     }
 
-    /// <summary>Unified diff for the worktree (optionally one file).</summary>
+    /// <summary>Unified diff for the worktree (optionally one file), including untracked files.</summary>
     public static async Task<string> GetDiffAsync(string worktreePath, string? file = null)
     {
         var args = file is null ? new[] { "diff", "HEAD" } : ["diff", "HEAD", "--", file];
         var r = await RunAsync(worktreePath, args);
-        return r.stdout;
+        var diff = r.stdout;
+
+        if (file is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(diff) || !await IsUntrackedAsync(worktreePath, file))
+                return diff;
+            return await BuildUntrackedDiffAsync(worktreePath, file);
+        }
+
+        var untracked = await RunAsync(worktreePath, "ls-files", "--others", "--exclude-standard");
+        foreach (var path in untracked.stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            diff += await BuildUntrackedDiffAsync(worktreePath, path);
+
+        return diff;
+    }
+
+    private static async Task<bool> IsUntrackedAsync(string worktreePath, string file)
+    {
+        var r = await RunAsync(worktreePath, "ls-files", "--others", "--exclude-standard", "--", file);
+        return r.stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Any(p => string.Equals(p, file, StringComparison.Ordinal));
+    }
+
+    private static async Task<string> BuildUntrackedDiffAsync(string worktreePath, string file)
+    {
+        var root = System.IO.Path.GetFullPath(worktreePath);
+        var full = System.IO.Path.GetFullPath(System.IO.Path.Combine(root, file.Replace('/', System.IO.Path.DirectorySeparatorChar)));
+        if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !File.Exists(full))
+            return "";
+
+        var bytes = await File.ReadAllBytesAsync(full);
+        var sb = new StringBuilder();
+        sb.AppendLine($"diff --git a/{file} b/{file}");
+        sb.AppendLine("new file mode 100644");
+        sb.AppendLine("index 0000000..0000000");
+        sb.AppendLine("--- /dev/null");
+        sb.AppendLine($"+++ b/{file}");
+
+        if (bytes.Contains((byte)0))
+        {
+            sb.AppendLine($"Binary files /dev/null and b/{file} differ");
+            return sb.ToString();
+        }
+
+        var text = Utf8.GetString(bytes).Replace("\r\n", "\n");
+        var lines = text.Split('\n');
+        sb.AppendLine($"@@ -0,0 +1,{lines.Length} @@");
+        foreach (var line in lines.Take(4000))
+            sb.Append('+').AppendLine(line);
+        if (lines.Length > 4000)
+            sb.AppendLine("+... diff truncated ...");
+        return sb.ToString();
     }
 }

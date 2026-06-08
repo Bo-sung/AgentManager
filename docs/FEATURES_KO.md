@@ -35,16 +35,16 @@
 | # | 기능 | 상태 | 출처 |
 |---|---|---|---|
 | 1 | Provider 등록/탐지 (Claude/Codex 경로·설치확인) | 🟡 일부 | 공통 |
-| 2 | **Project 등록** (local folder, 멀티폴더) | ⬜ | 공통 |
+| 2 | **Project 등록** (local folder, 멀티폴더) | ✅ | 공통 |
 | 3 | Session 생성 (provider·cwd·prompt·번역 토글) | ✅ | 공통 |
 | 4 | Process manager (spawn/stream/**stop**/resume) | 🟡 stop✅ resume⬜ | 공통 |
 | 5 | Event parser → normalized events | ✅ | 공통 |
 | 6 | Session list (running/waiting/done/failed) + 상태 | ✅ | VSCode |
 | 7 | **Worktree 격리** (세션별 git worktree) | ✅ | VSCode |
-| 8 | **Changes/Diff 패널** (변경 파일 + diff 뷰) | ⬜ ← 다음 | VSCode+AG |
-| 9 | **우측 Review pane** (Overview/Changes/Actions) | ⬜ | 공통 |
+| 8 | **Changes/Diff 패널** (변경 파일 + diff 뷰) | ✅ | VSCode+AG |
+| 9 | **우측 Review pane** (Overview/Changes/Actions) | 🟡 목록/diff 완료 · actions 미구현 | 공통 |
 | 10 | 멀티턴(resume) | ⬜ | 공통 |
-| 11 | 영속성 (세션/transcript 저장·복원) | ⬜ | VSCode |
+| 11 | 영속성 (세션/transcript 저장·복원) | ✅ | VSCode |
 | 12 | 번역 토글 + 원본보기 + 인디케이터 | 🟡 ON기본 | 우리 |
 | 13 | 설정 (provider 경로, Ollama 모델/URL, 기본값) | ⬜ | 공통 |
 | 14 | 마크다운 렌더링 | ⬜ | 공통 |
@@ -83,14 +83,14 @@
 ## 5. 근시일 계획 변경 (기존 M1 → 재정렬)
 리서치 반영해 **구조(P0 핵심 4)를 앞으로** 당깁니다:
 1. ✅ Stop (완료)
-2. **멀티턴(resume)** — 작고 즉시 가치
-3. **Project 개념 + Worktree 격리** — 안전 기본값(구조 변화)
-4. **우측 Review pane + Changes/Diff** — evidence 검토(구조 변화)
-5. **영속성** — 재시작 생존
-6. 번역 토글/원본보기, 마크다운, 설정 패널
+2. ✅ Worktree 격리 (완료)
+3. ✅ 우측 Review pane + Changes/Diff (완료)
+4. ✅ Project 개념 (완료)
+5. ✅ 영속성 (완료)
+6. 멀티턴(resume) · 번역 토글/원본보기 · 마크다운 · 설정 패널
 > 이후 P1(승인·merge·fork·artifacts), P2(파이프라인·Antigravity…)
 
 ## 6. 확정 대기 (네 결정 필요)
-- [ ] P0에 **Project+Worktree+Review pane**을 지금 넣을지(구조 큰 변화) vs 간단한 멀티턴/설정 먼저
-- [ ] 영속성: JSON 시작 OK?
+- [x] P0에 **Review pane + Project**를 먼저 완성할지 vs 간단한 멀티턴/설정 먼저
+- [x] 영속성: JSON 시작 OK?
 - [ ] 파이프라인/Handoff를 "제품 차별점"으로 일찍 투자할지 vs P2로

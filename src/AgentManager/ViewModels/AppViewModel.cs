@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using AgentManager.Persistence;
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
 using AgentManager.Core.Session;
@@ -13,23 +14,31 @@ namespace AgentManager.ViewModels;
 public sealed class AppViewModel : ObservableObject
 {
     private readonly OllamaTranslator _translator = new(new OllamaOptions());
+    private readonly List<SessionViewModel> _allSessions = [];
 
+    public ObservableCollection<ProjectViewModel> Projects { get; } = [];
     public ObservableCollection<SessionViewModel> Sessions { get; } = [];
     public EngineDef[] Engines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
-    public string Project { get; } = "workspace";
-    public string WorkingDirectory { get; set; }
+    public string Project => ActiveProject?.Name ?? "workspace";
+    public string WorkingDirectory => ActiveProject?.Path ?? FindRepoRoot();
 
     public AppViewModel()
     {
-        WorkingDirectory = FindRepoRoot();
         NewAgentSelectedEngine = Engines[0];
+        RestoreState();
+        NewProjectPath = WorkingDirectory;
 
         NewAgentCommand = new RelayCommand(_ => ShowNewAgent = true);
         CancelNewAgentCommand = new RelayCommand(_ => ShowNewAgent = false);
         CreateSessionCommand = new RelayCommand(_ => CreateSession(), _ => NewAgentSelectedEngine is not null);
         SelectSessionCommand = new RelayCommand(s => { if (s is SessionViewModel vm) ActiveSession = vm; });
+        NewProjectCommand = new RelayCommand(_ => ShowNewProject = true);
+        CancelNewProjectCommand = new RelayCommand(_ => ShowNewProject = false);
+        CreateProjectCommand = new RelayCommand(_ => CreateProject(), _ => !string.IsNullOrWhiteSpace(NewProjectPath));
+        SelectProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel vm) ActiveProject = vm; });
         SendCommand = new RelayCommand(_ => _ = SendAsync(), _ => ActiveSession?.CanSend == true);
         StopCommand = new RelayCommand(_ => StopActive(), _ => ActiveSession?.IsRunning == true);
+        RefreshReviewCommand = new RelayCommand(_ => _ = RefreshReviewAsync(ActiveSession), _ => ActiveSession is not null);
     }
 
     // running sessions → their cancellation source (Stop)
@@ -40,8 +49,13 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand CancelNewAgentCommand { get; }
     public RelayCommand CreateSessionCommand { get; }
     public RelayCommand SelectSessionCommand { get; }
+    public RelayCommand NewProjectCommand { get; }
+    public RelayCommand CancelNewProjectCommand { get; }
+    public RelayCommand CreateProjectCommand { get; }
+    public RelayCommand SelectProjectCommand { get; }
     public RelayCommand SendCommand { get; }
     public RelayCommand StopCommand { get; }
+    public RelayCommand RefreshReviewCommand { get; }
 
     private void StopActive()
     {
@@ -51,14 +65,39 @@ public sealed class AppViewModel : ObservableObject
         }
     }
 
+    public string PersistencePath => AppStateStore.StatePath;
+
     // ----- active session -----
     private SessionViewModel? _active;
     public SessionViewModel? ActiveSession
     {
         get => _active;
-        set { if (Set(ref _active, value)) OnChanged(nameof(HasActive)); }
+        set
+        {
+            if (Set(ref _active, value))
+            {
+                OnChanged(nameof(HasActive));
+                _ = RefreshReviewAsync(value);
+            }
+        }
     }
     public bool HasActive => _active is not null;
+
+    private ProjectViewModel? _activeProject;
+    public ProjectViewModel? ActiveProject
+    {
+        get => _activeProject;
+        set
+        {
+            if (Set(ref _activeProject, value))
+            {
+                OnChanged(nameof(Project));
+                OnChanged(nameof(WorkingDirectory));
+                RefreshProjectSessions();
+                SaveState();
+            }
+        }
+    }
 
     // ----- new-agent overlay state -----
     private bool _showNew;
@@ -67,6 +106,16 @@ public sealed class AppViewModel : ObservableObject
     public EngineDef? NewAgentSelectedEngine { get => _newEngine; set => Set(ref _newEngine, value); }
     private string _newTitle = "";
     public string NewAgentTitle { get => _newTitle; set => Set(ref _newTitle, value); }
+
+    // ----- new-project overlay state -----
+    private bool _showNewProject;
+    public bool ShowNewProject { get => _showNewProject; set => Set(ref _showNewProject, value); }
+    private string _newProjectName = "";
+    public string NewProjectName { get => _newProjectName; set => Set(ref _newProjectName, value); }
+    private string _newProjectPath = "";
+    public string NewProjectPath { get => _newProjectPath; set => Set(ref _newProjectPath, value); }
+    private string _newProjectError = "";
+    public string NewProjectError { get => _newProjectError; set => Set(ref _newProjectError, value); }
 
     // ----- translation + quota -----
     private bool _translationEnabled = true;
@@ -83,23 +132,174 @@ public sealed class AppViewModel : ObservableObject
 
     private void CreateSession()
     {
+        var project = ActiveProject ?? Projects.FirstOrDefault();
+        if (project is null) return;
         var engine = NewAgentSelectedEngine ?? Engines[0];
         var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
         var branch = "agent/" + Slug(title);
-        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, Project, engine.Models[0]);
+        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, engine.Models[0]);
         s.PropertyChanged += SessionStatusWatch;
+        _allSessions.Insert(0, s);
         Sessions.Insert(0, s);
         ActiveSession = s;
         ShowNewAgent = false;
         var task = title;
         NewAgentTitle = "";
         RefreshCounts();
+        RefreshProjectCounts();
+        SaveState();
         _ = RunTurnAsync(s, task); // first turn = the task
+    }
+
+    private void CreateProject()
+    {
+        var path = NewProjectPath.Trim().Trim('"');
+        if (!Directory.Exists(path))
+        {
+            NewProjectError = "폴더를 찾을 수 없습니다.";
+            return;
+        }
+
+        var fullPath = Path.GetFullPath(path);
+        var existing = Projects.FirstOrDefault(p => string.Equals(p.Path, fullPath, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            ActiveProject = existing;
+            ShowNewProject = false;
+            NewProjectError = "";
+            return;
+        }
+
+        var name = string.IsNullOrWhiteSpace(NewProjectName)
+            ? new DirectoryInfo(fullPath).Name
+            : NewProjectName.Trim();
+        if (string.IsNullOrWhiteSpace(name)) name = "project";
+
+        var project = new ProjectViewModel(Slug(name) + "-" + DateTime.Now.Ticks, name, fullPath);
+        Projects.Add(project);
+        ActiveProject = project;
+        ShowNewProject = false;
+        NewProjectName = "";
+        NewProjectPath = "";
+        NewProjectError = "";
+        SaveState();
     }
 
     private void SessionStatusWatch(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(SessionViewModel.Status)) RefreshCounts();
+    }
+
+    private void RefreshProjectSessions()
+    {
+        Sessions.Clear();
+        if (ActiveProject is { } project)
+        {
+            foreach (var s in _allSessions.Where(s => s.ProjectId == project.Id))
+                Sessions.Add(s);
+        }
+
+        RefreshProjectCounts();
+
+        ActiveSession = Sessions.FirstOrDefault();
+        RefreshCounts();
+    }
+
+    private void RefreshProjectCounts()
+    {
+        foreach (var p in Projects)
+            p.SessionCount = _allSessions.Count(s => s.ProjectId == p.Id);
+    }
+
+    private void RestoreState()
+    {
+        var state = AppStateStore.Load();
+        if (state is null || state.Projects.Count == 0)
+        {
+            var repo = FindRepoRoot();
+            var project = new ProjectViewModel(Slug("workspace") + "-" + DateTime.Now.Ticks, "workspace", repo);
+            Projects.Add(project);
+            ActiveProject = project;
+            return;
+        }
+
+        foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
+            Projects.Add(new ProjectViewModel(p.Id, p.Name, p.Path));
+
+        if (Projects.Count == 0)
+        {
+            var repo = FindRepoRoot();
+            Projects.Add(new ProjectViewModel(Slug("workspace") + "-" + DateTime.Now.Ticks, "workspace", repo));
+        }
+
+        foreach (var dto in state.Sessions)
+        {
+            var project = Projects.FirstOrDefault(p => p.Id == dto.ProjectId);
+            if (project is null) continue;
+            var engine = EngineRegistry.Get(dto.AgentId);
+            var s = new SessionViewModel(
+                dto.Id,
+                engine,
+                dto.Title,
+                dto.Branch,
+                dto.ProjectId,
+                dto.Project,
+                dto.ProjectPath,
+                dto.Model,
+                dto.StartedAt)
+            {
+                WorktreePath = Directory.Exists(dto.WorktreePath) ? dto.WorktreePath : null,
+                Isolated = dto.Isolated && Directory.Exists(dto.WorktreePath),
+                WorktreeAttempted = dto.WorktreeAttempted,
+                Status = dto.Status is "running" or "waiting" ? "idle" : dto.Status,
+                Activity = dto.Status is "running" or "waiting" ? "restored after restart" : dto.Activity,
+                TokensIn = dto.TokensIn,
+                TokensOut = dto.TokensOut,
+            };
+            foreach (var item in dto.Transcript)
+                s.Transcript.Add(AppStateStore.FromDto(item));
+            s.PropertyChanged += SessionStatusWatch;
+            _allSessions.Add(s);
+        }
+
+        ActiveProject = Projects.FirstOrDefault(p => p.Id == state.ActiveProjectId) ?? Projects[0];
+        RefreshProjectSessions();
+    }
+
+    private void SaveState()
+    {
+        try
+        {
+            AppStateStore.Save(new AppStateDto
+            {
+                ActiveProjectId = ActiveProject?.Id,
+                Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path }).ToList(),
+                Sessions = _allSessions.Select(s => new SessionDto
+                {
+                    Id = s.Id,
+                    AgentId = s.AgentId,
+                    Title = s.Title,
+                    Branch = s.Branch,
+                    ProjectId = s.ProjectId,
+                    Project = s.Project,
+                    ProjectPath = s.ProjectPath,
+                    Model = s.Model,
+                    Status = s.Status,
+                    Activity = s.Activity,
+                    TokensIn = s.TokensIn,
+                    TokensOut = s.TokensOut,
+                    StartedAt = s.StartedAt,
+                    WorktreePath = s.WorktreePath,
+                    Isolated = s.Isolated,
+                    WorktreeAttempted = s.WorktreeAttempted,
+                    Transcript = s.Transcript.Select(AppStateStore.ToDto).ToList(),
+                }).ToList(),
+            });
+        }
+        catch
+        {
+            // Persistence should never interrupt an agent run or UI interaction.
+        }
     }
 
     private static readonly string WorktreesRoot =
@@ -112,8 +312,9 @@ public sealed class AppViewModel : ObservableObject
         s.WorktreeAttempted = true;
         try
         {
-            Directory.CreateDirectory(WorktreesRoot);
-            var wt = await GitWorktree.CreateAsync(WorkingDirectory, s.Id, s.Branch, WorktreesRoot);
+            var projectWorktreesRoot = Path.Combine(WorktreesRoot, s.ProjectId);
+            Directory.CreateDirectory(projectWorktreesRoot);
+            var wt = await GitWorktree.CreateAsync(s.ProjectPath, s.Id, s.Branch, projectWorktreesRoot);
             if (wt is not null) { s.WorktreePath = wt.Path; s.Isolated = true; }
             else s.Transcript.Add(new WorkingBlock("⚠ git 레포가 아니어서 격리(worktree) 없이 실행합니다"));
         }
@@ -151,7 +352,7 @@ public sealed class AppViewModel : ObservableObject
 
         // Worktree isolation: each session works in its own git worktree.
         await EnsureWorktreeAsync(s);
-        var cwd = s.WorktreePath ?? WorkingDirectory;
+        var cwd = s.WorktreePath ?? s.ProjectPath;
 
         var tools = new Dictionary<string, ToolBlock>();
         var session = new AgentSession(adapter, exe, _translator, TranslationEnabled);
@@ -179,8 +380,75 @@ public sealed class AppViewModel : ObservableObject
         }
         finally
         {
+            await RefreshReviewAsync(s);
+            SaveState();
             _running.Remove(s.Id);
             cts.Dispose();
+        }
+    }
+
+    public async Task SelectReviewChangeAsync(ReviewChangeViewModel? change)
+    {
+        var s = ActiveSession;
+        if (s is null) return;
+        await LoadReviewDiffAsync(s, change);
+    }
+
+    private async Task LoadReviewDiffAsync(SessionViewModel s, ReviewChangeViewModel? change)
+    {
+        s.SelectedChange = change;
+        if (change is null || string.IsNullOrWhiteSpace(s.WorktreePath))
+        {
+            s.DiffText = "변경 파일을 선택하면 diff가 표시됩니다.";
+            return;
+        }
+
+        s.DiffText = "Loading diff...";
+        try
+        {
+            var diff = await GitWorktree.GetDiffAsync(s.WorktreePath, change.Path);
+            s.DiffText = string.IsNullOrWhiteSpace(diff) ? "No textual diff." : diff;
+            SaveState();
+        }
+        catch (Exception ex)
+        {
+            s.DiffText = "Diff failed: " + ex.Message;
+        }
+    }
+
+    private async Task RefreshReviewAsync(SessionViewModel? s)
+    {
+        if (s is null) return;
+        if (string.IsNullOrWhiteSpace(s.WorktreePath))
+        {
+            s.Changes.Clear();
+            s.SelectedChange = null;
+            s.DiffText = "세션 worktree가 아직 없습니다.";
+            s.ReviewStatus = "No isolated worktree";
+            return;
+        }
+
+        s.ReviewStatus = "Scanning changes...";
+        try
+        {
+            var changes = await GitWorktree.GetChangedFilesAsync(s.WorktreePath);
+            s.Changes.Clear();
+            foreach (var change in changes)
+                s.Changes.Add(new ReviewChangeViewModel(change));
+
+            s.ReviewStatus = changes.Count == 0 ? "No changes" : $"{changes.Count} changed file(s)";
+            if (s.Changes.Count > 0)
+                await LoadReviewDiffAsync(s, s.Changes[0]);
+            else
+            {
+                s.SelectedChange = null;
+                s.DiffText = "No changes in this worktree.";
+            }
+        }
+        catch (Exception ex)
+        {
+            s.ReviewStatus = "Review refresh failed";
+            s.DiffText = ex.Message;
         }
     }
 
@@ -223,6 +491,7 @@ public sealed class AppViewModel : ObservableObject
                 s.Activity = "completed";
                 break;
         }
+        SaveState();
     }
 
     private static string KindOf(string name) => name switch

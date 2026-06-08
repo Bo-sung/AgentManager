@@ -1,0 +1,120 @@
+using System.IO;
+using System.Text.Json;
+using AgentManager.ViewModels;
+
+namespace AgentManager.Persistence;
+
+public sealed record AppStateDto
+{
+    public string? ActiveProjectId { get; init; }
+    public List<ProjectDto> Projects { get; init; } = [];
+    public List<SessionDto> Sessions { get; init; } = [];
+}
+
+public sealed record ProjectDto
+{
+    public required string Id { get; init; }
+    public required string Name { get; init; }
+    public required string Path { get; init; }
+}
+
+public sealed record SessionDto
+{
+    public required string Id { get; init; }
+    public required string AgentId { get; init; }
+    public required string Title { get; init; }
+    public required string Branch { get; init; }
+    public required string ProjectId { get; init; }
+    public required string Project { get; init; }
+    public required string ProjectPath { get; init; }
+    public required string Model { get; init; }
+    public required string Status { get; init; }
+    public string Activity { get; init; } = "";
+    public long TokensIn { get; init; }
+    public long TokensOut { get; init; }
+    public DateTime StartedAt { get; init; }
+    public string? WorktreePath { get; init; }
+    public bool Isolated { get; init; }
+    public bool WorktreeAttempted { get; init; }
+    public List<TranscriptDto> Transcript { get; init; } = [];
+}
+
+public sealed record TranscriptDto
+{
+    public required string Type { get; init; }
+    public string Text { get; init; } = "";
+    public string Title { get; init; } = "";
+    public string Body { get; init; } = "";
+    public string ToolUseId { get; init; } = "";
+    public string Kind { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string Stat { get; init; } = "";
+    public bool IsOpen { get; init; }
+}
+
+public static class AppStateStore
+{
+    private static readonly JsonSerializerOptions Options = new()
+    {
+        WriteIndented = true,
+    };
+
+    public static string StatePath =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "state.json");
+
+    public static AppStateDto? Load()
+    {
+        try
+        {
+            if (!File.Exists(StatePath)) return null;
+            var json = File.ReadAllText(StatePath);
+            return JsonSerializer.Deserialize<AppStateDto>(json, Options);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public static void Save(AppStateDto state)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(StatePath)!);
+        var temp = StatePath + ".tmp";
+        File.WriteAllText(temp, JsonSerializer.Serialize(state, Options));
+        File.Move(temp, StatePath, overwrite: true);
+    }
+
+    public static TranscriptDto ToDto(TranscriptItem item) => item switch
+    {
+        UserBlock u => new TranscriptDto { Type = "user", Text = u.Text },
+        AgentTextBlock a => new TranscriptDto { Type = "agent", Text = a.Text },
+        ToolBlock t => new TranscriptDto
+        {
+            Type = "tool",
+            ToolUseId = t.ToolUseId,
+            Kind = t.Kind,
+            Name = t.Name,
+            Stat = t.Stat,
+            Body = t.Body,
+            IsOpen = t.IsOpen,
+        },
+        ErrorBlock e => new TranscriptDto { Type = "error", Title = e.Title, Body = e.Body },
+        WorkingBlock w => new TranscriptDto { Type = "working", Text = w.Text },
+        _ => new TranscriptDto { Type = "unknown" },
+    };
+
+    public static TranscriptItem FromDto(TranscriptDto dto) => dto.Type switch
+    {
+        "user" => new UserBlock(dto.Text),
+        "agent" => new AgentTextBlock(dto.Text),
+        "tool" => new ToolBlock(dto.ToolUseId, dto.Kind, dto.Name)
+        {
+            Stat = dto.Stat,
+            Body = dto.Body,
+            IsOpen = dto.IsOpen,
+        },
+        "error" => new ErrorBlock(dto.Title, dto.Body),
+        "working" => new WorkingBlock(dto.Text),
+        _ => new WorkingBlock("복원할 수 없는 transcript block"),
+    };
+}

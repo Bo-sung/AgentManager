@@ -12,7 +12,7 @@
 ### A. 세션 수명주기
 - ✅ 세션 생성 (New Agent)
 - 🟡 다중 세션 동시 실행
-- ⬜ 실행 중지/취소 (Stop) — S
+- ✅ 실행 중지/취소 (Stop) — S
 - ⬜ 멀티턴 대화(세션 연속성) — M
 - ⬜ 삭제 / 보관(archive) / 이름변경 — S
 - ⬜ 복제 / 분기(fork) — M
@@ -23,7 +23,7 @@
 - 🟡 모델 선택(표시만 → 실제 `--model` 연결) — S
 - ⬜ 승인 프롬프트 UI(approve/reject) — M *(Claude 우선, Codex는 제약)*
 - ⬜ 권한/샌드박스 모드 선택(read-only/workspace-write/yolo) — S
-- ⬜ 작업 디렉터리/worktree 세션별 지정 — M
+- ✅ 작업 디렉터리/worktree 세션별 지정 — M
 - ⬜ Antigravity 어댑터 — M *(전환 후)*
 
 ### C. 번역 레이어 (차별점)
@@ -49,7 +49,7 @@
 - ⬜ 리뷰 드로어 diff 렌더링 + Keep/Discard — L
 
 ### F. 영속성/설정
-- ⬜ 세션 저장/복원(재시작 생존) — M
+- ✅ 세션 저장/복원(재시작 생존) — M
 - ⬜ 설정 저장(엔진 경로/Ollama/번역 기본값/cwd) — S
 - ⬜ 설정 패널 UI — M
 
@@ -117,8 +117,13 @@ Antigravity 어댑터 · 이미지 첨부 · 검색/필터 · Codex 승인(app-s
   → M2의 승인 프롬프트/샌드박스 항목은 후순위로 내림.
 - ⏳ 영속성 저장 위치/형식 — M3에서 결정 (`%AppData%/AgentManager/sessions/*.json` 유력)
 
-### 결정에 따른 M1 (현재 진행)
-1. **Stop(중지)** ← 지금
-2. 멀티턴(resume)
-3. 모델 선택 `--model` 연결
-4. 경과 타이머 / 비용 표시
+### 결정에 따른 M1/P0 (현재 진행)
+1. ✅ Stop(중지)
+2. ✅ Worktree 격리
+3. ✅ 우측 Review pane + Changes/Diff
+4. ✅ Project 개념
+5. ✅ 영속성
+6. **Review actions** ← 추천
+7. 멀티턴(resume)
+8. 모델 선택 `--model` 연결
+9. 경과 타이머 / 비용 표시

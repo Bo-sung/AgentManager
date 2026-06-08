@@ -44,6 +44,12 @@ public partial class MainWindow : Window
             _vm.ActiveSession = s;
     }
 
+    private void ProjectRow_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is ProjectViewModel p)
+            _vm.ActiveProject = p;
+    }
+
     private void EngineOpt_Click(object sender, MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is EngineDef def)
@@ -57,5 +63,11 @@ public partial class MainWindow : Window
             e.Handled = true;
             if (_vm.SendCommand.CanExecute(null)) _vm.SendCommand.Execute(null);
         }
+    }
+
+    private void ReviewChanges_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if ((sender as ListBox)?.SelectedItem is ReviewChangeViewModel change)
+            _ = _vm.SelectReviewChangeAsync(change);
     }
 }

@@ -14,12 +14,14 @@
 | 확정 기능셋 문서화(리서치 반영) | cf4a2d9 |
 | **M1-① Stop(중지)** | ae26f06 |
 | **P0구조-① Worktree 격리** (Core GitWorktree + 세션별 worktree cwd) | 2314af2 |
+| **P0구조-② 우측 Review pane** (변경파일 목록 + diff 뷰) | working tree |
+| **P0구조-③ Project 개념** (프로젝트 등록/선택 + 세션 소속 + project cwd) | working tree |
+| **P0구조-④ JSON 영속성** (project/session/transcript 저장·복원) | working tree |
 
 ## 🔜 다음 (구조 먼저 — FEATURES §5)
-1. **P0구조-② 우측 Review pane** — 변경파일 목록 + diff 뷰 + Merge/Discard ← 다음
-2. **P0구조-③ Project 개념** — 폴더(멀티폴더) 등록·선택, 세션이 project에 소속
-3. **영속성** — project/session/transcript JSON 저장·복원
-4. 멀티턴(resume) · 번역 토글/원본보기 · 마크다운 · 설정 패널
+1. **Review actions** — worktree 변경 Merge/Discard/Commit ← 추천
+2. 멀티턴(resume)
+3. 번역 토글/원본보기 · 마크다운 · 설정 패널
 
 ## ⏸ 보류 / 후순위
 - 승인 broker (현재 bypass 유지 — 결정됨)
