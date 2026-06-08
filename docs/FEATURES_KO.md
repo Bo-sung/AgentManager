@@ -40,8 +40,8 @@
 | 4 | Process manager (spawn/stream/**stop**/resume) | 🟡 stop✅ resume⬜ | 공통 |
 | 5 | Event parser → normalized events | ✅ | 공통 |
 | 6 | Session list (running/waiting/done/failed) + 상태 | ✅ | VSCode |
-| 7 | **Worktree 격리** (세션별 git worktree) | ⬜ | VSCode |
-| 8 | **Changes/Diff 패널** (변경 파일 + diff 뷰) | ⬜ | VSCode+AG |
+| 7 | **Worktree 격리** (세션별 git worktree) | ✅ | VSCode |
+| 8 | **Changes/Diff 패널** (변경 파일 + diff 뷰) | ⬜ ← 다음 | VSCode+AG |
 | 9 | **우측 Review pane** (Overview/Changes/Actions) | ⬜ | 공통 |
 | 10 | 멀티턴(resume) | ⬜ | 공통 |
 | 11 | 영속성 (세션/transcript 저장·복원) | ⬜ | VSCode |
