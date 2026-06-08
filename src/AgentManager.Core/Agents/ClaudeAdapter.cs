@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using AgentManager.Core.Events;
 
@@ -26,6 +27,9 @@ public sealed class ClaudeAdapter : IAgentAdapter
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
+            StandardOutputEncoding = Utf8NoBom,
+            StandardErrorEncoding = Utf8NoBom,
+            StandardInputEncoding = Utf8NoBom,
         };
         psi.ArgumentList.Add("--output-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--input-format"); psi.ArgumentList.Add("stream-json");
@@ -142,6 +146,8 @@ public sealed class ClaudeAdapter : IAgentAdapter
                 break;
         }
     }
+
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
     private static string? Str(JsonElement e, string name)
         => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
