@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:vm="clr-namespace:AgentManager.ViewModels"
+        xmlns:controls="clr-namespace:AgentManager.Controls"
         x:Name="Root"
         Title="AgentManager" Height="760" Width="1380" WindowStyle="None"
         Background="{StaticResource Bg1}" Foreground="{StaticResource Txt0}"
@@ -50,8 +51,12 @@
                         <TextBlock FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}">
                             <Run Text="/ "/><Run Text="{Binding DataContext.Model, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
                         </TextBlock>
+                        <ToggleButton Style="{StaticResource TogglePillButton}" Content="ORIGINAL"
+                                      IsChecked="{Binding ShowOriginal, Mode=TwoWay}"
+                                      Visibility="{Binding HasOriginal, Converter={StaticResource BoolVis}}"
+                                      Margin="9,0,0,0" ToolTip="Show original response"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="{StaticResource Txt0}" LineHeight="21"/>
+                    <controls:MarkdownViewer Text="{Binding DisplayText}"/>
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -69,6 +74,10 @@
                                                    FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="0,0,9,0"/>
                                         <TextBlock DockPanel.Dock="Right" Text="{Binding Stat}" FontFamily="{StaticResource Mono}"
                                                    FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+                                        <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="ORIGINAL"
+                                                      IsChecked="{Binding ShowOriginal, Mode=TwoWay}"
+                                                      Visibility="{Binding HasOriginal, Converter={StaticResource BoolVis}}"
+                                                      Margin="0,0,9,0" ToolTip="Show original output"/>
                                         <TextBlock Text="{Binding Name}" FontFamily="{StaticResource Mono}" FontSize="11.5"
                                                    Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                     </DockPanel>
@@ -80,7 +89,7 @@
                             Padding="12,10" MaxHeight="220"
                             Visibility="{Binding IsOpen, Converter={StaticResource BoolVis}}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <TextBlock Text="{Binding Body}" FontFamily="{StaticResource Mono}" FontSize="11"
+                            <TextBlock Text="{Binding DisplayBody}" FontFamily="{StaticResource Mono}" FontSize="11"
                                        Foreground="{StaticResource Txt1}" TextWrapping="Wrap"/>
                         </ScrollViewer>
                     </Border>
@@ -153,6 +162,7 @@
                     <Button Style="{StaticResource MenuButton}" Content="Edit"/>
                     <Button Style="{StaticResource MenuButton}" Content="View"/>
                     <Button Style="{StaticResource MenuButton}" Content="Agents"/>
+                    <Button Style="{StaticResource MenuButton}" Content="Settings" Command="{Binding ShowSettingsCommand}"/>
                     <Button Style="{StaticResource MenuButton}" Content="Help"/>
                 </StackPanel>
 
@@ -391,13 +401,36 @@
                     </Border>
 
                     <!-- status strip -->
-                    <Border DockPanel.Dock="Top" Height="32" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
+                    <Border DockPanel.Dock="Top" Height="38" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
                         <DockPanel Margin="16,0" LastChildFill="False" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10.5">
                             <TextBlock DockPanel.Dock="Left" Text="{Binding StatusLabel}" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                            <Border DockPanel.Dock="Left" Background="{StaticResource AccentDim}"
+                                    BorderThickness="1" CornerRadius="13" Padding="9,3" VerticalAlignment="Center" Margin="0,0,16,0"
+                                    Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsQuiet}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="RUNNING" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding LastSignalLabel}" Foreground="{StaticResource Txt2}"/>
+                                </StackPanel>
+                            </Border>
                             <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource Txt2}">
                                 <Run Text="AGENT "/><Run Text="{Binding AgentName, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
                             <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
                                 <Run Text="MODEL "/><Run Text="{Binding Model, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
+                            <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
+                                          IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
+                                          Content="{Binding TranslationLabel}" ToolTip="Toggle translation for this session"
+                                          Margin="16,0,0,0"/>
                             <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
                                 <Run Text="TKN "/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
                         </DockPanel>
@@ -406,6 +439,29 @@
                     <!-- composer (bottom) -->
                     <Border DockPanel.Dock="Bottom" Margin="28,0,28,18" MaxWidth="880" MinWidth="520" HorizontalAlignment="Stretch">
                         <StackPanel>
+                            <Border Margin="4,0,4,8" Background="{StaticResource AccentDim}" BorderThickness="1" CornerRadius="8"
+                                    Padding="11,8" Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsQuiet}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <DockPanel TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10.5">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0">
+                                        <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,10,0"/>
+                                        <TextBlock Text="{Binding LastSignalLabel}" Foreground="{StaticResource Txt2}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="RUNNING" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                                        <TextBlock Text="{Binding BusyLine}" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
                             <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10">
                                 <DockPanel LastChildFill="True">
                                     <Border DockPanel.Dock="Bottom" Padding="9,0,9,8" Height="46">
@@ -682,6 +738,75 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Style="{StaticResource ChipButton}" Content="Cancel" Margin="0,0,9,0" Command="{Binding CancelNewProjectCommand}"/>
                             <Button Style="{StaticResource AccentButton}" Content="+  Add project" Command="{Binding CreateProjectCommand}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===================== Settings overlay ===================== -->
+        <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowSettings, Converter={StaticResource BoolVis}}">
+            <Border Width="620" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
+                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10">
+                <StackPanel>
+                    <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="✕" Command="{Binding CancelSettingsCommand}"/>
+                            <TextBlock DockPanel.Dock="Left" Text="SETTINGS" Style="{StaticResource Lbl}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Runtime and translation defaults" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+                    <StackPanel Margin="18">
+                        <DockPanel Margin="0,0,0,8">
+                            <TextBlock DockPanel.Dock="Left" Text="PROVIDERS" Style="{StaticResource Lbl}"/>
+                            <TextBlock DockPanel.Dock="Right" Text="leave blank for auto-detect/PATH" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt3}"/>
+                        </DockPanel>
+
+                        <TextBlock Text="CLAUDE CLI PATH" Style="{StaticResource Lbl}" Margin="0,2,0,7"/>
+                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                 Text="{Binding SettingsClaudePath, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="CODEX CLI PATH" Style="{StaticResource Lbl}" Margin="0,14,0,7"/>
+                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                 Text="{Binding SettingsCodexPath, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <Border Height="1" Background="{StaticResource LineSoft}" Margin="0,18,0,16"/>
+
+                        <TextBlock Text="OLLAMA TRANSLATION" Style="{StaticResource Lbl}" Margin="0,0,0,7"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="220"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="ENDPOINT" Style="{StaticResource Lbl}" Margin="0,0,0,7"/>
+                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                         BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                         Text="{Binding SettingsOllamaEndpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="MODEL" Style="{StaticResource Lbl}" Margin="0,0,0,7"/>
+                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                         BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                         Text="{Binding SettingsOllamaModel, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <DockPanel Margin="0,16,0,0">
+                            <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
+                                          IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}"
+                                          Content="DEFAULT TRANSLATION"/>
+                            <TextBlock Text="{Binding SettingsStatus}" FontFamily="{StaticResource Mono}" FontSize="10"
+                                       Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </DockPanel>
+                    </StackPanel>
+                    <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource ChipButton}" Content="Cancel" Margin="0,0,9,0" Command="{Binding CancelSettingsCommand}"/>
+                            <Button Style="{StaticResource AccentButton}" Content="Save settings" Command="{Binding SaveSettingsCommand}"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

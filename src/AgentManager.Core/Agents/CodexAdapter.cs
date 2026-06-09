@@ -33,6 +33,11 @@ public sealed class CodexAdapter : IAgentAdapter
             StandardInputEncoding = Utf8NoBom,
         };
         psi.ArgumentList.Add("exec");
+        if (!string.IsNullOrWhiteSpace(options.ResumeSessionId))
+        {
+            psi.ArgumentList.Add("resume");
+            psi.ArgumentList.Add(options.ResumeSessionId);
+        }
         psi.ArgumentList.Add("--json");
         if (options.BypassPermissions)
             psi.ArgumentList.Add("--dangerously-bypass-approvals-and-sandbox");

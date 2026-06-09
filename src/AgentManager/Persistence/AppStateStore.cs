@@ -7,8 +7,18 @@ namespace AgentManager.Persistence;
 public sealed record AppStateDto
 {
     public string? ActiveProjectId { get; init; }
+    public AppSettingsDto Settings { get; init; } = new();
     public List<ProjectDto> Projects { get; init; } = [];
     public List<SessionDto> Sessions { get; init; } = [];
+}
+
+public sealed record AppSettingsDto
+{
+    public string ClaudePath { get; init; } = "";
+    public string CodexPath { get; init; } = "";
+    public string OllamaEndpoint { get; init; } = "http://localhost:11434";
+    public string OllamaModel { get; init; } = "exaone3.5:7.8b";
+    public bool TranslationEnabled { get; init; } = true;
 }
 
 public sealed record ProjectDto
@@ -28,6 +38,8 @@ public sealed record SessionDto
     public required string Project { get; init; }
     public required string ProjectPath { get; init; }
     public required string Model { get; init; }
+    public bool? TranslationEnabled { get; init; }
+    public string? EngineSessionId { get; init; }
     public required string Status { get; init; }
     public string Activity { get; init; } = "";
     public long TokensIn { get; init; }
@@ -43,13 +55,16 @@ public sealed record TranscriptDto
 {
     public required string Type { get; init; }
     public string Text { get; init; } = "";
+    public string OriginalText { get; init; } = "";
     public string Title { get; init; } = "";
     public string Body { get; init; } = "";
+    public string OriginalBody { get; init; } = "";
     public string ToolUseId { get; init; } = "";
     public string Kind { get; init; } = "";
     public string Name { get; init; } = "";
     public string Stat { get; init; } = "";
     public bool IsOpen { get; init; }
+    public bool ShowOriginal { get; init; }
 }
 
 public static class AppStateStore
@@ -87,7 +102,7 @@ public static class AppStateStore
     public static TranscriptDto ToDto(TranscriptItem item) => item switch
     {
         UserBlock u => new TranscriptDto { Type = "user", Text = u.Text },
-        AgentTextBlock a => new TranscriptDto { Type = "agent", Text = a.Text },
+        AgentTextBlock a => new TranscriptDto { Type = "agent", Text = a.Text, OriginalText = a.OriginalText ?? "", ShowOriginal = a.ShowOriginal },
         ToolBlock t => new TranscriptDto
         {
             Type = "tool",
@@ -96,7 +111,9 @@ public static class AppStateStore
             Name = t.Name,
             Stat = t.Stat,
             Body = t.Body,
+            OriginalBody = t.OriginalBody ?? "",
             IsOpen = t.IsOpen,
+            ShowOriginal = t.ShowOriginal,
         },
         ErrorBlock e => new TranscriptDto { Type = "error", Title = e.Title, Body = e.Body },
         WorkingBlock w => new TranscriptDto { Type = "working", Text = w.Text },
@@ -106,12 +123,14 @@ public static class AppStateStore
     public static TranscriptItem FromDto(TranscriptDto dto) => dto.Type switch
     {
         "user" => new UserBlock(dto.Text),
-        "agent" => new AgentTextBlock(dto.Text),
+        "agent" => new AgentTextBlock(dto.Text) { OriginalText = dto.OriginalText, ShowOriginal = dto.ShowOriginal },
         "tool" => new ToolBlock(dto.ToolUseId, dto.Kind, dto.Name)
         {
             Stat = dto.Stat,
             Body = dto.Body,
+            OriginalBody = dto.OriginalBody,
             IsOpen = dto.IsOpen,
+            ShowOriginal = dto.ShowOriginal,
         },
         "error" => new ErrorBlock(dto.Title, dto.Body),
         "working" => new WorkingBlock(dto.Text),

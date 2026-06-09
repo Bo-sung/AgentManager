@@ -53,4 +53,29 @@ static string Trunc(string s) => s.Length > 40 ? s[..40] + "…" : s;
 
 Run("Claude stream-json", new ClaudeAdapter(), claudeLines);
 Run("Codex exec --json", new CodexAdapter(), codexLines);
+AssertResumeArgs();
 Console.WriteLine("smoke OK");
+
+static void AssertResumeArgs()
+{
+    var cwd = Environment.CurrentDirectory;
+    var claude = new ClaudeAdapter().BuildStartInfo(
+        "claude",
+        new SessionOptions { WorkingDirectory = cwd, ResumeSessionId = "sess-1" },
+        "next turn");
+    var claudeArgs = claude.ArgumentList.ToArray();
+    Assert(claudeArgs.Contains("--resume") && claudeArgs.Contains("sess-1"), "Claude resume args missing");
+
+    var codex = new CodexAdapter().BuildStartInfo(
+        "codex",
+        new SessionOptions { WorkingDirectory = cwd, ResumeSessionId = "thread-1" },
+        "next turn");
+    var codexArgs = codex.ArgumentList.ToArray();
+    Assert(codexArgs.Length >= 3 && codexArgs[0] == "exec" && codexArgs[1] == "resume" && codexArgs[2] == "thread-1",
+        "Codex resume args missing");
+}
+
+static void Assert(bool condition, string message)
+{
+    if (!condition) throw new InvalidOperationException(message);
+}

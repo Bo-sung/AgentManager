@@ -13,7 +13,7 @@
 - ✅ 세션 생성 (New Agent)
 - 🟡 다중 세션 동시 실행
 - ✅ 실행 중지/취소 (Stop) — S
-- ⬜ 멀티턴 대화(세션 연속성) — M
+- 🟡 멀티턴 대화(세션 연속성) — M
 - ⬜ 삭제 / 보관(archive) / 이름변경 — S
 - ⬜ 복제 / 분기(fork) — M
 - ⬜ 동시 실행 개수 제한(concurrency cap) — S
@@ -28,21 +28,21 @@
 
 ### C. 번역 레이어 (차별점)
 - 🟡 KO↔EN (기본 ON, UI 토글 없음)
-- ⬜ 번역 토글 + "번역 중..." 인디케이터 — S
-- ⬜ 메시지별 원본/번역 보기 — S
-- ⬜ 번역 설정(모델/엔드포인트) 패널 — S
+- 🟡 번역 토글 + "번역 중..." 인디케이터 — S
+- 🟡 메시지별 원본/번역 보기 — S
+- 🟡 번역 설정(모델/엔드포인트) 패널 — S
 - ⬜ 서브에이전트 결과 번역 UI 확인 — S
 
 ### D. 관측/대시보드
 - 🟡 세션 상태 / 🟡 토큰 / 🟡 할당량
-- ⬜ 경과 시간 라이브 타이머 — S
+- 🟡 경과 시간 라이브 타이머 — S
 - ⬜ 비용(total_cost_usd) 표시 — S
 - ⬜ 전체 집계(총 토큰/비용/실행수) — S
 - ⬜ 데스크톱 알림(완료/승인대기) — M
 
 ### E. 트랜스크립트 렌더링
 - ✅ 유저/에이전트/툴/에러 블록
-- ⬜ 마크다운(**굵게**/`코드`/목록/코드블록) — M
+- 🟡 마크다운(**굵게**/`코드`/목록/코드블록) — M
 - ⬜ thinking 블록 — S
 - ⬜ 스트리밍 타이핑 효과 — S
 - ⬜ 메시지 액션(복사/재실행/IDE 열기) — S
@@ -50,8 +50,8 @@
 
 ### F. 영속성/설정
 - ✅ 세션 저장/복원(재시작 생존) — M
-- ⬜ 설정 저장(엔진 경로/Ollama/번역 기본값/cwd) — S
-- ⬜ 설정 패널 UI — M
+- 🟡 설정 저장(엔진 경로/Ollama/번역 기본값/cwd) — S
+- 🟡 설정 패널 UI — M
 
 ### G. 마무리/UX
 - ⬜ 사이드바 Active/Project 그룹화 — S
@@ -72,7 +72,7 @@
 - 현재: 매 Send = 새 프로세스(맥락 없음)
 - 방식①(권장): **per-turn 프로세스 + resume.** `SessionStarted`에서 받은 sessionId 저장 → 다음 턴 `SessionOptions.ResumeSessionId`로 Claude `--resume`, Codex `exec resume <id>`/`--last`
 - 방식②: Claude 프로세스 상주(양방향 stdin 유지). 복잡 → 보류
-- 어댑터에 ResumeArgs 이미 자리 있음(ClaudeAdapter는 `--resume` 처리). Codex resume 인자 추가 필요
+- 어댑터에 ResumeArgs 자리 있음. Claude는 `--resume`, Codex는 `exec resume <id>` 인자 연결됨. 실제 CLI 2턴 검증 필요
 
 ### C. 승인 프롬프트 UI — M ★아키텍처 주의
 - **Claude**: `--permission-prompt-tool stdio`(비-bypass) → `PermissionRequest`(can_use_tool) 이벤트 수신 → UI approve/reject → **stdin으로 control_response 전송**. 즉 **프로세스 상주 + 양방향 stdin** 필요(현재 단발 구조와 충돌) → AgentSession에 "응답 보내기" 경로 추가
@@ -124,6 +124,6 @@ Antigravity 어댑터 · 이미지 첨부 · 검색/필터 · Codex 승인(app-s
 4. ✅ Project 개념
 5. ✅ 영속성
 6. **Review actions** ← 추천
-7. 멀티턴(resume)
+7. 🟡 멀티턴(resume)
 8. 모델 선택 `--model` 연결
 9. 경과 타이머 / 비용 표시

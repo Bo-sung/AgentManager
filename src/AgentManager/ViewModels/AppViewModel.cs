@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using AgentManager.Persistence;
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
@@ -13,8 +14,13 @@ namespace AgentManager.ViewModels;
 
 public sealed class AppViewModel : ObservableObject
 {
-    private readonly OllamaTranslator _translator = new(new OllamaOptions());
+    private OllamaTranslator _translator = CreateTranslator("http://localhost:11434", "exaone3.5:7.8b");
     private readonly List<SessionViewModel> _allSessions = [];
+    private readonly DispatcherTimer _runtimeTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private string _claudePath = "";
+    private string _codexPath = "";
+    private string _ollamaEndpoint = "http://localhost:11434";
+    private string _ollamaModel = "exaone3.5:7.8b";
 
     public ObservableCollection<ProjectViewModel> Projects { get; } = [];
     public ObservableCollection<SessionViewModel> Sessions { get; } = [];
@@ -29,6 +35,8 @@ public sealed class AppViewModel : ObservableObject
         NewAgentSelectedEngine = Engines[0];
         RestoreState();
         NewProjectPath = WorkingDirectory;
+        _runtimeTimer.Tick += (_, _) => RefreshRunningSessions();
+        _runtimeTimer.Start();
 
         NewAgentCommand = new RelayCommand(_ => ShowNewAgent = true);
         CancelNewAgentCommand = new RelayCommand(_ => ShowNewAgent = false);
@@ -38,6 +46,9 @@ public sealed class AppViewModel : ObservableObject
         CancelNewProjectCommand = new RelayCommand(_ => ShowNewProject = false);
         CreateProjectCommand = new RelayCommand(_ => CreateProject(), _ => !string.IsNullOrWhiteSpace(NewProjectPath));
         SelectProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel vm) ActiveProject = vm; });
+        ShowSettingsCommand = new RelayCommand(_ => OpenSettings());
+        CancelSettingsCommand = new RelayCommand(_ => ShowSettings = false);
+        SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
         SendCommand = new RelayCommand(_ => _ = SendAsync(), _ => ActiveSession?.CanSend == true);
         StopCommand = new RelayCommand(_ => StopActive(), _ => ActiveSession?.IsRunning == true);
         RefreshReviewCommand = new RelayCommand(_ => _ = RefreshReviewAsync(ActiveSession), _ => ActiveSession is not null);
@@ -58,6 +69,9 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand CancelNewProjectCommand { get; }
     public RelayCommand CreateProjectCommand { get; }
     public RelayCommand SelectProjectCommand { get; }
+    public RelayCommand ShowSettingsCommand { get; }
+    public RelayCommand CancelSettingsCommand { get; }
+    public RelayCommand SaveSettingsCommand { get; }
     public RelayCommand SendCommand { get; }
     public RelayCommand StopCommand { get; }
     public RelayCommand RefreshReviewCommand { get; }
@@ -137,6 +151,22 @@ public sealed class AppViewModel : ObservableObject
     private string _newProjectError = "";
     public string NewProjectError { get => _newProjectError; set => Set(ref _newProjectError, value); }
 
+    // ----- settings overlay state -----
+    private bool _showSettings;
+    public bool ShowSettings { get => _showSettings; set => Set(ref _showSettings, value); }
+    private string _settingsClaudePath = "";
+    public string SettingsClaudePath { get => _settingsClaudePath; set => Set(ref _settingsClaudePath, value); }
+    private string _settingsCodexPath = "";
+    public string SettingsCodexPath { get => _settingsCodexPath; set => Set(ref _settingsCodexPath, value); }
+    private string _settingsOllamaEndpoint = "";
+    public string SettingsOllamaEndpoint { get => _settingsOllamaEndpoint; set => Set(ref _settingsOllamaEndpoint, value); }
+    private string _settingsOllamaModel = "";
+    public string SettingsOllamaModel { get => _settingsOllamaModel; set => Set(ref _settingsOllamaModel, value); }
+    private bool _settingsDefaultTranslationEnabled = true;
+    public bool SettingsDefaultTranslationEnabled { get => _settingsDefaultTranslationEnabled; set => Set(ref _settingsDefaultTranslationEnabled, value); }
+    private string _settingsStatus = "";
+    public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
+
     // ----- translation + quota -----
     private bool _translationEnabled = true;
     public bool TranslationEnabled { get => _translationEnabled; set => Set(ref _translationEnabled, value); }
@@ -150,6 +180,13 @@ public sealed class AppViewModel : ObservableObject
     private int CountBy(string s) { int n = 0; foreach (var x in Sessions) if (x.Status == s) n++; return n; }
     private void RefreshCounts() { OnChanged(nameof(RunningCount)); OnChanged(nameof(WaitingCount)); OnChanged(nameof(DoneCount)); }
 
+    private void RefreshRunningSessions()
+    {
+        foreach (var session in _allSessions)
+            if (session.IsRunning)
+                session.RefreshRuntimeLabels();
+    }
+
     private void CreateSession()
     {
         var project = ActiveProject ?? Projects.FirstOrDefault();
@@ -157,7 +194,10 @@ public sealed class AppViewModel : ObservableObject
         var engine = NewAgentSelectedEngine ?? Engines[0];
         var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
         var branch = "agent/" + Slug(title);
-        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, engine.Models[0]);
+        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, engine.Models[0])
+        {
+            TranslationEnabled = TranslationEnabled,
+        };
         s.PropertyChanged += SessionStatusWatch;
         _allSessions.Insert(0, s);
         ActiveSession = s;
@@ -205,12 +245,42 @@ public sealed class AppViewModel : ObservableObject
         SaveState();
     }
 
+    private void OpenSettings()
+    {
+        SettingsClaudePath = _claudePath;
+        SettingsCodexPath = _codexPath;
+        SettingsOllamaEndpoint = _ollamaEndpoint;
+        SettingsOllamaModel = _ollamaModel;
+        SettingsDefaultTranslationEnabled = TranslationEnabled;
+        SettingsStatus = "";
+        ShowSettings = true;
+    }
+
+    private void SaveSettings()
+    {
+        _claudePath = Clean(SettingsClaudePath);
+        _codexPath = Clean(SettingsCodexPath);
+        _ollamaEndpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint.Trim();
+        _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();
+        TranslationEnabled = SettingsDefaultTranslationEnabled;
+        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
+        SettingsStatus = "Settings saved";
+        ShowSettings = false;
+        SaveState();
+    }
+
+    private static string Clean(string value) => value.Trim().Trim('"');
+
     private void SessionStatusWatch(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(SessionViewModel.Status))
         {
             RefreshProjectSessions();
             RefreshCounts();
+        }
+        else if (e.PropertyName == nameof(SessionViewModel.TranslationEnabled))
+        {
+            SaveState();
         }
     }
 
@@ -257,6 +327,13 @@ public sealed class AppViewModel : ObservableObject
             return;
         }
 
+        _claudePath = state.Settings.ClaudePath;
+        _codexPath = state.Settings.CodexPath;
+        _ollamaEndpoint = string.IsNullOrWhiteSpace(state.Settings.OllamaEndpoint) ? _ollamaEndpoint : state.Settings.OllamaEndpoint;
+        _ollamaModel = string.IsNullOrWhiteSpace(state.Settings.OllamaModel) ? _ollamaModel : state.Settings.OllamaModel;
+        TranslationEnabled = state.Settings.TranslationEnabled;
+        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
+
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
             Projects.Add(new ProjectViewModel(p.Id, p.Name, p.Path));
 
@@ -289,6 +366,8 @@ public sealed class AppViewModel : ObservableObject
                 Activity = dto.Status is "running" or "waiting" ? "restored after restart" : dto.Activity,
                 TokensIn = dto.TokensIn,
                 TokensOut = dto.TokensOut,
+                TranslationEnabled = dto.TranslationEnabled ?? true,
+                EngineSessionId = dto.EngineSessionId,
             };
             foreach (var item in dto.Transcript)
                 s.Transcript.Add(AppStateStore.FromDto(item));
@@ -307,6 +386,14 @@ public sealed class AppViewModel : ObservableObject
             AppStateStore.Save(new AppStateDto
             {
                 ActiveProjectId = ActiveProject?.Id,
+                Settings = new AppSettingsDto
+                {
+                    ClaudePath = _claudePath,
+                    CodexPath = _codexPath,
+                    OllamaEndpoint = _ollamaEndpoint,
+                    OllamaModel = _ollamaModel,
+                    TranslationEnabled = TranslationEnabled,
+                },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
                 {
@@ -318,6 +405,8 @@ public sealed class AppViewModel : ObservableObject
                     Project = s.Project,
                     ProjectPath = s.ProjectPath,
                     Model = s.Model,
+                    TranslationEnabled = s.TranslationEnabled,
+                    EngineSessionId = s.EngineSessionId,
                     Status = s.Status,
                     Activity = s.Activity,
                     TokensIn = s.TokensIn,
@@ -373,44 +462,53 @@ public sealed class AppViewModel : ObservableObject
         var dispatcher = Application.Current.Dispatcher;
         s.Transcript.Add(new UserBlock(prompt));
         s.Status = "running";
-        s.Activity = "working…";
+        s.MarkRunStarted(s.TranslationEnabled ? "translating prompt / preparing run" : "preparing run");
 
         var adapter = EngineRegistry.CreateAdapter(s.AgentId);
-        var exe = EngineRegistry.ResolveExe(s.AgentId);
+        var exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath);
         if (adapter is null || exe is null)
         {
             s.Transcript.Add(new ErrorBlock("Engine unavailable", $"{s.AgentName} CLI를 찾을 수 없습니다."));
             s.Status = "error";
+            s.MarkRunEnded("engine unavailable");
             return;
         }
 
         // Worktree isolation: each session works in its own git worktree.
+        s.Activity = "preparing worktree";
         await EnsureWorktreeAsync(s);
         var cwd = s.WorktreePath ?? s.ProjectPath;
 
         var tools = new Dictionary<string, ToolBlock>();
-        var session = new AgentSession(adapter, exe, _translator, TranslationEnabled);
+        var session = new AgentSession(adapter, exe, _translator, s.TranslationEnabled);
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
 
-        var options = new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true };
+        var options = new SessionOptions
+        {
+            WorkingDirectory = cwd,
+            BypassPermissions = true,
+            ResumeSessionId = s.EngineSessionId,
+        };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;
         try
         {
+            s.Activity = s.TranslationEnabled ? "translating prompt / starting engine" : "starting engine";
             await Task.Run(() => session.RunAsync(options, prompt, cts.Token), cts.Token);
             if (s.Status == "running") s.Status = "done";
-            if (s.Status == "done") s.Activity = "completed";
+            if (s.Status == "done") s.MarkRunEnded("completed");
         }
         catch (OperationCanceledException)
         {
             s.Transcript.Add(new WorkingBlock("⏹ 중지됨"));
             s.Status = "idle";
-            s.Activity = "stopped";
+            s.MarkRunEnded("stopped");
         }
         catch (Exception ex)
         {
             s.Transcript.Add(new ErrorBlock("Run failed", ex.Message));
             s.Status = "error";
+            s.MarkRunEnded("failed");
         }
         finally
         {
@@ -521,26 +619,42 @@ public sealed class AppViewModel : ObservableObject
 
     private void Apply(SessionViewModel s, NormalizedEvent ev, Dictionary<string, ToolBlock> tools)
     {
+        s.MarkRunSignal();
         switch (ev)
         {
+            case SessionStarted started:
+                if (!string.IsNullOrWhiteSpace(started.SessionId))
+                    s.EngineSessionId = started.SessionId;
+                if (!string.IsNullOrWhiteSpace(started.Model))
+                    s.MarkRunSignal($"connected · {started.Model}");
+                else
+                    s.MarkRunSignal("connected");
+                break;
             case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
-                s.Transcript.Add(new AgentTextBlock(at.Text));
+                s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText });
+                s.Activity = "receiving response";
                 break;
             case ToolUseStarted u:
                 var tb = new ToolBlock(u.ToolUseId, KindOf(u.Name), u.Name);
                 tools[u.ToolUseId] = tb;
                 s.Transcript.Add(tb);
-                s.Activity = $"{u.Name}…";
+                s.MarkRunSignal($"{u.Name}…");
                 break;
             case ToolResult r:
                 if (tools.TryGetValue(r.ToolUseId, out var t))
                 {
                     t.Body = Trim(r.Content, 2000);
+                    t.OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000);
                     t.Stat = r.IsError ? "error" : "done";
                 }
                 else
                 {
-                    s.Transcript.Add(new ToolBlock(r.ToolUseId, "RUN", "result") { Body = Trim(r.Content, 2000), Stat = r.IsError ? "error" : "done" });
+                    s.Transcript.Add(new ToolBlock(r.ToolUseId, "RUN", "result")
+                    {
+                        Body = Trim(r.Content, 2000),
+                        OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000),
+                        Stat = r.IsError ? "error" : "done"
+                    });
                 }
                 break;
             case TokenUsage k:
@@ -555,7 +669,7 @@ public sealed class AppViewModel : ObservableObject
                 break;
             case TurnCompleted c:
                 s.Status = c.IsError ? "error" : "done";
-                s.Activity = "completed";
+                s.MarkRunEnded(c.IsError ? "failed" : "completed");
                 break;
         }
         SaveState();
@@ -586,4 +700,11 @@ public sealed class AppViewModel : ObservableObject
                 return d.FullName;
         return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     }
+
+    private static OllamaTranslator CreateTranslator(string endpoint, string model) =>
+        new(new OllamaOptions
+        {
+            Endpoint = string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:11434" : endpoint.Trim(),
+            Model = string.IsNullOrWhiteSpace(model) ? "exaone3.5:7.8b" : model.Trim(),
+        });
 }

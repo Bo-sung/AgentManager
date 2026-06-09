@@ -18,11 +18,16 @@
 | **P0구조-③ Project 개념** (프로젝트 등록/선택 + 세션 소속 + project cwd) | f82a194 |
 | **P0구조-④ JSON 영속성** (project/session/transcript 저장·복원) | f82a194 |
 | **P0구조-⑤ 3-pane 보강** (사이드바 Active/Project 그룹화 + 접이식 Review pane 토글 + 활성 하이라이트) | a20fc6a |
-| **P0구조-⑥ Review actions** (Merge ▸ main = 커밋+머지 / Discard = reset+clean) | working tree |
+| **P0구조-⑥ Review actions** (Merge ▸ main = 커밋+머지 / Discard = reset+clean) | e1d95c4 |
+| **M1-⑦ 멀티턴(resume)** (SessionStarted id 저장 + 다음 턴 Claude/Codex resume 인자) | working tree |
+| **M2-① 번역 토글/원본보기** (세션별 TR ON/OFF + 번역 응답 ORIGINAL 표시) | working tree |
+| **M3-① 마크다운 렌더링** (assistant 응답 heading/list/code fence/inline code/bold 표시) | working tree |
+| **M1-⑧ 실행 상태 가시화** (RUNNING 바 + 경과 시간 + 마지막 출력 신호 + 무응답 경고) | working tree |
+| **M3-② 설정 패널** (provider 경로 + Ollama endpoint/model + 새 세션 번역 기본값 저장) | working tree |
 
 ## 🔜 다음 (구조 먼저 — FEATURES §5)
-1. **멀티턴(resume)** — 같은 세션 대화 이어가기(Claude --resume / Codex exec resume) ← 추천
-2. 번역 토글/원본보기 · 마크다운 · 설정 패널
+1. **비용 표시 / 전체 집계** — total_cost_usd, 총 토큰, 실행수
+2. 모델 선택 `--model` 연결
 
 ## ⏸ 보류 / 후순위
 - 승인 broker (현재 bypass 유지 — 결정됨)

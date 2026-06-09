@@ -12,7 +12,35 @@ public sealed class AgentTextBlock : TranscriptItem
 {
     private string _text;
     public AgentTextBlock(string text) => _text = text;
-    public string Text { get => _text; set => Set(ref _text, value); }
+    public string Text
+    {
+        get => _text;
+        set { if (Set(ref _text, value)) OnChanged(nameof(DisplayText)); }
+    }
+
+    private string? _originalText;
+    public string? OriginalText
+    {
+        get => _originalText;
+        set
+        {
+            if (Set(ref _originalText, string.IsNullOrWhiteSpace(value) ? null : value))
+            {
+                OnChanged(nameof(HasOriginal));
+                OnChanged(nameof(DisplayText));
+            }
+        }
+    }
+
+    private bool _showOriginal;
+    public bool ShowOriginal
+    {
+        get => _showOriginal;
+        set { if (Set(ref _showOriginal, value)) OnChanged(nameof(DisplayText)); }
+    }
+
+    public bool HasOriginal => !string.IsNullOrWhiteSpace(_originalText);
+    public string DisplayText => ShowOriginal && HasOriginal ? _originalText! : _text;
 }
 
 public sealed class ToolBlock : TranscriptItem
@@ -28,8 +56,40 @@ public sealed class ToolBlock : TranscriptItem
         ToolUseId = toolUseId; Kind = kind; Name = name;
     }
     public string Stat { get => _stat; set => Set(ref _stat, value); }
-    public string Body { get => _body; set { if (Set(ref _body, value)) OnChanged(nameof(HasBody)); } }
+    public string Body
+    {
+        get => _body;
+        set
+        {
+            if (Set(ref _body, value))
+            {
+                OnChanged(nameof(HasBody));
+                OnChanged(nameof(DisplayBody));
+            }
+        }
+    }
+    private string? _originalBody;
+    public string? OriginalBody
+    {
+        get => _originalBody;
+        set
+        {
+            if (Set(ref _originalBody, string.IsNullOrWhiteSpace(value) ? null : value))
+            {
+                OnChanged(nameof(HasOriginal));
+                OnChanged(nameof(DisplayBody));
+            }
+        }
+    }
+    private bool _showOriginal;
+    public bool ShowOriginal
+    {
+        get => _showOriginal;
+        set { if (Set(ref _showOriginal, value)) OnChanged(nameof(DisplayBody)); }
+    }
     public bool HasBody => !string.IsNullOrEmpty(_body);
+    public bool HasOriginal => !string.IsNullOrWhiteSpace(_originalBody);
+    public string DisplayBody => ShowOriginal && HasOriginal ? _originalBody! : _body;
     public bool IsOpen { get => _isOpen; set => Set(ref _isOpen, value); }
 }
 

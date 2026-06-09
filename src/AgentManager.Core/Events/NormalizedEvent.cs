@@ -10,7 +10,7 @@ public abstract record NormalizedEvent;
 public sealed record SessionStarted(string SessionId, string? Model, int ToolCount, string? Cwd) : NormalizedEvent;
 
 /// <summary>Assistant natural-language text. This is the EN→KO translation target.</summary>
-public sealed record AssistantText(string Text, bool FromSubagent = false) : NormalizedEvent;
+public sealed record AssistantText(string Text, bool FromSubagent = false, string? OriginalText = null) : NormalizedEvent;
 
 /// <summary>Model reasoning/thinking (Claude thinking block). Usually not translated.</summary>
 public sealed record Thinking(string Text) : NormalizedEvent;
@@ -19,7 +19,7 @@ public sealed record Thinking(string Text) : NormalizedEvent;
 public sealed record ToolUseStarted(string ToolUseId, string Name, string InputJson) : NormalizedEvent;
 
 /// <summary>A tool/command result. Only subagent (Task) results are translated.</summary>
-public sealed record ToolResult(string ToolUseId, string Content, bool IsError, bool FromSubagent = false) : NormalizedEvent;
+public sealed record ToolResult(string ToolUseId, string Content, bool IsError, bool FromSubagent = false, string? OriginalContent = null) : NormalizedEvent;
 
 /// <summary>Running token usage.</summary>
 public sealed record TokenUsage(

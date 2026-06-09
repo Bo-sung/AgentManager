@@ -79,11 +79,23 @@ public sealed class AgentSession(
             switch (ev)
             {
                 case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
-                    ev = at with { Text = await translator.TranslateAsync(at.Text, TranslationDirection.EnToKo, ct) };
+                    var originalText = at.Text;
+                    var translatedText = await translator.TranslateAsync(originalText, TranslationDirection.EnToKo, ct);
+                    ev = at with
+                    {
+                        Text = translatedText,
+                        OriginalText = string.Equals(translatedText, originalText, StringComparison.Ordinal) ? null : originalText
+                    };
                     break;
                 // Only subagent (Task) results are natural language worth translating.
                 case ToolResult { FromSubagent: true, IsError: false } tr when !string.IsNullOrWhiteSpace(tr.Content):
-                    ev = tr with { Content = await translator.TranslateAsync(tr.Content, TranslationDirection.EnToKo, ct) };
+                    var originalContent = tr.Content;
+                    var translatedContent = await translator.TranslateAsync(originalContent, TranslationDirection.EnToKo, ct);
+                    ev = tr with
+                    {
+                        Content = translatedContent,
+                        OriginalContent = string.Equals(translatedContent, originalContent, StringComparison.Ordinal) ? null : originalContent
+                    };
                     break;
             }
         }

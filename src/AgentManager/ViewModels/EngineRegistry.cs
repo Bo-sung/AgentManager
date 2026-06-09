@@ -26,12 +26,19 @@ public static class EngineRegistry
 
     private static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-    public static string? ResolveExe(string id) => id switch
+    public static string? ResolveExe(string id, string? claudePath = null, string? codexPath = null) => id switch
     {
-        "cc" => ResolveClaude(),
-        "gx" => ResolveCodex(),
+        "cc" => ResolveOverride(claudePath) ?? ResolveClaude(),
+        "gx" => ResolveOverride(codexPath) ?? ResolveCodex(),
         _ => null,
     };
+
+    private static string? ResolveOverride(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        var trimmed = path.Trim().Trim('"');
+        return File.Exists(trimmed) ? trimmed : trimmed;
+    }
 
     private static string ResolveClaude()
     {

@@ -37,17 +37,17 @@
 | 1 | Provider 등록/탐지 (Claude/Codex 경로·설치확인) | 🟡 일부 | 공통 |
 | 2 | **Project 등록** (local folder, 멀티폴더) | ✅ | 공통 |
 | 3 | Session 생성 (provider·cwd·prompt·번역 토글) | ✅ | 공통 |
-| 4 | Process manager (spawn/stream/**stop**/resume) | 🟡 stop✅ resume⬜ | 공통 |
+| 4 | Process manager (spawn/stream/**stop**/resume) | 🟡 stop✅ resume🟡 | 공통 |
 | 5 | Event parser → normalized events | ✅ | 공통 |
 | 6 | Session list (running/waiting/done/failed) + 상태 | ✅ | VSCode |
 | 7 | **Worktree 격리** (세션별 git worktree) | ✅ | VSCode |
 | 8 | **Changes/Diff 패널** (변경 파일 + diff 뷰) | ✅ | VSCode+AG |
 | 9 | **우측 Review pane** (Overview/Changes/Actions) | ✅ 목록/diff/Merge/Discard | 공통 |
-| 10 | 멀티턴(resume) | ⬜ | 공통 |
+| 10 | 멀티턴(resume) | 🟡 구현, 실제 CLI 2턴 검증 대기 | 공통 |
 | 11 | 영속성 (세션/transcript 저장·복원) | ✅ | VSCode |
-| 12 | 번역 토글 + 원본보기 + 인디케이터 | 🟡 ON기본 | 우리 |
-| 13 | 설정 (provider 경로, Ollama 모델/URL, 기본값) | ⬜ | 공통 |
-| 14 | 마크다운 렌더링 | ⬜ | 공통 |
+| 12 | 번역 토글 + 원본보기 + 인디케이터 | 🟡 세션별 토글/ORIGINAL✅, 인디케이터⬜ | 우리 |
+| 13 | 설정 (provider 경로, Ollama 모델/URL, 기본값) | 🟡 provider/Ollama/번역 기본값✅ | 공통 |
+| 14 | 마크다운 렌더링 | 🟡 기본 렌더링✅, 고급 Markdown⬜ | 공통 |
 
 ### P1 — 제품 경쟁력
 | 기능 | 상태 | 출처 |
@@ -60,7 +60,7 @@
 | 모델 선택 실제 연결 / Agent target 선택 | 🟡 | VSCode |
 | Artifacts 패널 (plan/task list/test result) | ⬜ | AG |
 | MCP registry (project별 allowlist) | ⬜ | 공통 |
-| 경과타이머 / 비용 / 집계 대시보드 | ⬜ | 공통 |
+| 경과타이머 / 비용 / 집계 대시보드 | 🟡 경과/last signal✅, 비용/집계⬜ | 공통 |
 | 사이드바 grouping (project/상태) | ⬜ | VSCode |
 
 ### P2 — 고급/차별화
@@ -87,7 +87,7 @@
 3. ✅ 우측 Review pane + Changes/Diff (완료)
 4. ✅ Project 개념 (완료)
 5. ✅ 영속성 (완료)
-6. 멀티턴(resume) · 번역 토글/원본보기 · 마크다운 · 설정 패널
+6. 🟡 멀티턴(resume) · 번역 토글/원본보기 · 마크다운 · 설정 패널
 > 이후 P1(승인·merge·fork·artifacts), P2(파이프라인·Antigravity…)
 
 ## 6. 확정 대기 (네 결정 필요)

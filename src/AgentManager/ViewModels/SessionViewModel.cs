@@ -54,7 +54,17 @@ public sealed class SessionViewModel : ObservableObject
     public string Status
     {
         get => _status;
-        set { if (Set(ref _status, value)) { OnChanged(nameof(StatusLabel)); OnChanged(nameof(IsRunning)); OnChanged(nameof(IsLive)); } }
+        set
+        {
+            if (Set(ref _status, value))
+            {
+                OnChanged(nameof(StatusLabel));
+                OnChanged(nameof(IsRunning));
+                OnChanged(nameof(IsLive));
+                OnChanged(nameof(CanSend));
+                RefreshRuntimeLabels();
+            }
+        }
     }
     public string StatusLabel => _status switch
     {
@@ -69,8 +79,82 @@ public sealed class SessionViewModel : ObservableObject
     private string _model;
     public string Model { get => _model; set => Set(ref _model, value); }
 
+    private bool _translationEnabled = true;
+    public bool TranslationEnabled
+    {
+        get => _translationEnabled;
+        set
+        {
+            if (Set(ref _translationEnabled, value))
+                OnChanged(nameof(TranslationLabel));
+        }
+    }
+    public string TranslationLabel => TranslationEnabled ? "TR ON" : "TR OFF";
+
+    private string? _engineSessionId;
+    public string? EngineSessionId
+    {
+        get => _engineSessionId;
+        set => Set(ref _engineSessionId, string.IsNullOrWhiteSpace(value) ? null : value);
+    }
+
     private string _activity = "";
-    public string Activity { get => _activity; set => Set(ref _activity, value); }
+    public string Activity
+    {
+        get => _activity;
+        set
+        {
+            if (Set(ref _activity, value))
+                OnChanged(nameof(BusyLine));
+        }
+    }
+
+    private DateTime? _runStartedAt;
+    private DateTime? _lastSignalAt;
+
+    public string BusyLine
+    {
+        get
+        {
+            if (!IsRunning) return string.IsNullOrWhiteSpace(Activity) ? StatusLabel : Activity;
+            var activity = string.IsNullOrWhiteSpace(Activity) ? "waiting for engine output" : Activity;
+            return IsQuiet ? $"{activity} · no output for {Ago(_lastSignalAt ?? _runStartedAt ?? DateTime.Now)}" : activity;
+        }
+    }
+
+    public string RunningElapsedLabel => IsRunning && _runStartedAt is { } started ? FormatDuration(DateTime.Now - started) : "";
+    public string LastSignalLabel => IsRunning && _lastSignalAt is { } last ? "last signal " + Ago(last) + " ago" : "waiting for first signal";
+    public bool IsQuiet => IsRunning && _lastSignalAt is { } last && DateTime.Now - last > TimeSpan.FromSeconds(45);
+
+    public void MarkRunStarted(string activity)
+    {
+        _runStartedAt = DateTime.Now;
+        _lastSignalAt = null;
+        Activity = activity;
+        RefreshRuntimeLabels();
+    }
+
+    public void MarkRunSignal(string? activity = null)
+    {
+        _lastSignalAt = DateTime.Now;
+        if (!string.IsNullOrWhiteSpace(activity))
+            Activity = activity;
+        RefreshRuntimeLabels();
+    }
+
+    public void MarkRunEnded(string activity)
+    {
+        Activity = activity;
+        RefreshRuntimeLabels();
+    }
+
+    public void RefreshRuntimeLabels()
+    {
+        OnChanged(nameof(BusyLine));
+        OnChanged(nameof(RunningElapsedLabel));
+        OnChanged(nameof(LastSignalLabel));
+        OnChanged(nameof(IsQuiet));
+    }
 
     private ReviewChangeViewModel? _selectedChange;
     public ReviewChangeViewModel? SelectedChange
@@ -97,4 +181,17 @@ public sealed class SessionViewModel : ObservableObject
     public bool CanSend => !string.IsNullOrWhiteSpace(_draft) && !IsRunning;
 
     private static string Fmt(long n) => n >= 1000 ? (n / 1000.0).ToString("0.0") + "k" : n.ToString();
+
+    private static string FormatDuration(TimeSpan span)
+    {
+        if (span.TotalHours >= 1) return span.ToString(@"h\:mm\:ss");
+        return span.ToString(@"m\:ss");
+    }
+
+    private static string Ago(DateTime since)
+    {
+        var span = DateTime.Now - since;
+        if (span.TotalMinutes >= 1) return FormatDuration(span);
+        return Math.Max(0, (int)span.TotalSeconds) + "s";
+    }
 }
