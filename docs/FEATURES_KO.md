@@ -52,18 +52,18 @@
 ### P1 — 제품 경쟁력
 | 기능 | 상태 | 출처 |
 |---|---|---|
-| 승인 broker (Claude can_use_tool approve/deny) | ⬜ | 공통 |
-| 권한/샌드박스 모드 선택 | ⬜ | 공통 |
-| Merge / Discard / Commit (worktree→main) | 🟡 Merge/Discard ✅, Commit-only ⬜ | VSCode |
-| Session fork (context 상속 분기) | ⬜ | VSCode |
-| Diff 인라인 피드백 → agent 재지시 | ⬜ | VSCode |
+| 승인 broker (Claude can_use_tool approve/deny) | ⬜ (bypass 유지 — 결정) | 공통 |
+| 권한/샌드박스 모드 선택 | 🟡 로직✅ (Codex --sandbox, Claude ReadOnly→plan) · UI⬜ | 공통 |
+| Merge / Discard / Commit (worktree→main) | ✅ Merge·Discard·Commit-only(로직) | VSCode |
+| Session fork (context 상속 분기) | 🟡 로직✅ (transcript+engine세션 상속) · UI⬜ | VSCode |
+| Diff 인라인 피드백 → agent 재지시 | 🟡 로직✅ (diff+피드백→후속 턴) · UI⬜ | VSCode |
 | 모델 선택 실제 연결 / Agent target 선택 | ✅ SessionOptions.Model → --model/-m | VSCode |
 | Artifacts 패널 (plan/task list/test result) | ⬜ | AG |
 | MCP registry (project별 allowlist) | ⬜ | 공통 |
 | 경과타이머 / 비용 / 집계 대시보드 | 🟡 경과✅ · 비용/집계 로직✅(UI 노출 대기) | 공통 |
 | 사이드바 grouping (project/상태) | ✅ Active/Project 그룹 + 아카이브 그룹(로직) | VSCode |
 | 세션 수명주기 (삭제/보관/이름변경) | 🟡 로직✅(커맨드·영속성) · UI(컨텍스트 메뉴)⬜ | 공통 |
-| 동시 실행 cap (병렬 세션 수 제한) | ⬜ | 공통 |
+| 동시 실행 cap (병렬 세션 수 제한) | 🟡 로직✅ (기본 3, 영속) · 설정 UI⬜ | 공통 |
 
 ### P2 — 고급/차별화
 | 기능 | 비고 |
