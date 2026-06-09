@@ -30,7 +30,10 @@
 > **작업 방식(합의)**: 기능(Core/VM) 우선, View XAML 바인딩은 나중에 일괄. (집계 표시 UI 보류 중)
 
 ## 🔜 다음 (기능 우선)
-1. **세션 수명주기** — 삭제/보관(archive)/이름변경 (VM+영속성 로직) ← 진행 중
+| **A-① 세션 수명주기 (로직)** (Delete=중지+worktree제거, Archive 토글+ArchivedSessions, Rename, 영속성) | 9b77dc2 |
+
+## 🔜 다음 (기능 우선)
+1. 동시 실행 cap · 세션 fork
 2. 동시 실행 cap · 세션 fork
 3. (UI 일괄 패스) 집계 표시 · 세션 컨텍스트 메뉴
 
