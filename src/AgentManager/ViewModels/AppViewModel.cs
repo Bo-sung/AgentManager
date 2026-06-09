@@ -59,6 +59,10 @@ public sealed class AppViewModel : ObservableObject
         DeleteSessionCommand = new RelayCommand(p => _ = DeleteSessionAsync(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         ArchiveSessionCommand = new RelayCommand(p => ToggleArchive(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         RenameSessionCommand = new RelayCommand(p => { if (p is string t) RenameSession(ActiveSession, t); }, _ => ActiveSession is not null);
+        CommitReviewCommand = new RelayCommand(_ => _ = CommitReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
+        ForkSessionCommand = new RelayCommand(p => ForkSession(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
+        SendDiffFeedbackCommand = new RelayCommand(p => { if (p is string f) _ = SendDiffFeedbackAsync(ActiveSession, f); },
+            _ => ActiveSession is { IsRunning: false, SelectedChange: not null });
     }
 
     // running sessions → their cancellation source (Stop)
@@ -85,6 +89,77 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand DeleteSessionCommand { get; }
     public RelayCommand ArchiveSessionCommand { get; }
     public RelayCommand RenameSessionCommand { get; }
+    public RelayCommand CommitReviewCommand { get; }
+    public RelayCommand ForkSessionCommand { get; }
+    public RelayCommand SendDiffFeedbackCommand { get; }
+
+    /// <summary>동시 실행 세션 수 제한 (설정, 영속).</summary>
+    private int _maxConcurrentSessions = 3;
+    public int MaxConcurrentSessions
+    {
+        get => _maxConcurrentSessions;
+        set => Set(ref _maxConcurrentSessions, Math.Max(1, value));
+    }
+
+    /// <summary>Commit-only: 에이전트 브랜치에 커밋만 하고 머지하지 않음(리뷰 보존).</summary>
+    public async Task CommitReviewAsync(SessionViewModel? s)
+    {
+        if (s?.WorktreePath is null) return;
+        s.ReviewStatus = "Committing…";
+        var (ok, msg) = await GitWorktree.CommitAsync(s.WorktreePath, $"agent: {s.Title}");
+        s.Transcript.Add(ok ? new WorkingBlock("✓ " + msg) : (TranscriptItem)new ErrorBlock("Commit 실패", msg));
+        await RefreshReviewAsync(s);
+        SaveState();
+    }
+
+    /// <summary>Fork: 트랜스크립트·엔진세션id를 상속한 새 세션(새 worktree). 다음 턴은 같은 대화에서 분기.</summary>
+    public void ForkSession(SessionViewModel? src)
+    {
+        if (src is null) return;
+        var engine = EngineRegistry.Get(src.AgentId);
+        var title = src.Title + " (fork)";
+        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, "agent/" + Slug(title),
+            src.ProjectId, src.Project, src.ProjectPath, src.Model)
+        {
+            TranslationEnabled = src.TranslationEnabled,
+            EngineSessionId = src.EngineSessionId, // resume the same engine conversation, then diverge
+            Sandbox = src.Sandbox,
+        };
+        foreach (var item in src.Transcript)
+            s.Transcript.Add(CloneTranscriptItem(item));
+        s.Transcript.Add(new WorkingBlock($"⑂ '{src.Title}'에서 분기됨"));
+        s.PropertyChanged += SessionStatusWatch;
+        _allSessions.Insert(0, s);
+        ActiveSession = s;
+        RefreshProjectSessions(selectFirstIfMissing: false);
+        RefreshCounts();
+        RefreshProjectCounts();
+        SaveState();
+    }
+
+    private static TranscriptItem CloneTranscriptItem(TranscriptItem item) => item switch
+    {
+        UserBlock u => new UserBlock(u.Text),
+        AgentTextBlock a => new AgentTextBlock(a.Text) { OriginalText = a.OriginalText },
+        ToolBlock t => new ToolBlock(t.ToolUseId, t.Kind, t.Name) { Stat = t.Stat, Body = t.Body, OriginalBody = t.OriginalBody },
+        ErrorBlock e => new ErrorBlock(e.Title, e.Body),
+        WorkingBlock w => new WorkingBlock(w.Text),
+        _ => new WorkingBlock(item.ToString() ?? ""),
+    };
+
+    /// <summary>Diff 인라인 피드백: 선택한 변경의 diff를 맥락으로 붙여 에이전트에 수정 재지시.</summary>
+    public async Task SendDiffFeedbackAsync(SessionViewModel? s, string feedback)
+    {
+        if (s is null || s.SelectedChange is null || string.IsNullOrWhiteSpace(feedback)) return;
+        var diff = s.DiffText ?? "";
+        if (diff.Length > 6000) diff = diff[..6000] + "\n... (diff truncated)";
+        var prompt =
+            $"Review feedback on your change to `{s.SelectedChange.Path}`.\n\n" +
+            $"```diff\n{diff}\n```\n\n" +
+            $"Feedback: {feedback.Trim()}\n\n" +
+            "Apply the feedback to this file (and only what the feedback requires).";
+        await RunTurnAsync(s, prompt);
+    }
 
     // ----- session lifecycle (logic; UI hookup deferred) -----
 
@@ -401,6 +476,7 @@ public sealed class AppViewModel : ObservableObject
         _ollamaEndpoint = string.IsNullOrWhiteSpace(state.Settings.OllamaEndpoint) ? _ollamaEndpoint : state.Settings.OllamaEndpoint;
         _ollamaModel = string.IsNullOrWhiteSpace(state.Settings.OllamaModel) ? _ollamaModel : state.Settings.OllamaModel;
         TranslationEnabled = state.Settings.TranslationEnabled;
+        MaxConcurrentSessions = state.Settings.MaxConcurrentSessions;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
 
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
@@ -437,6 +513,7 @@ public sealed class AppViewModel : ObservableObject
                 TokensOut = dto.TokensOut,
                 CostUsd = dto.CostUsd,
                 IsArchived = dto.IsArchived,
+                Sandbox = Enum.TryParse<SandboxMode>(dto.Sandbox, out var sb) ? sb : SandboxMode.DangerFullAccess,
                 TranslationEnabled = dto.TranslationEnabled ?? true,
                 EngineSessionId = dto.EngineSessionId,
             };
@@ -464,6 +541,7 @@ public sealed class AppViewModel : ObservableObject
                     OllamaEndpoint = _ollamaEndpoint,
                     OllamaModel = _ollamaModel,
                     TranslationEnabled = TranslationEnabled,
+                    MaxConcurrentSessions = MaxConcurrentSessions,
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
@@ -484,6 +562,7 @@ public sealed class AppViewModel : ObservableObject
                     TokensOut = s.TokensOut,
                     CostUsd = s.CostUsd,
                     IsArchived = s.IsArchived,
+                    Sandbox = s.Sandbox.ToString(),
                     StartedAt = s.StartedAt,
                     WorktreePath = s.WorktreePath,
                     Isolated = s.Isolated,
@@ -532,6 +611,14 @@ public sealed class AppViewModel : ObservableObject
     /// <summary>Run one engine turn for a session and stream normalized events into its transcript.</summary>
     private async Task RunTurnAsync(SessionViewModel s, string prompt)
     {
+        // concurrency cap: protect the machine/quota from too many parallel engines
+        if (_running.Count >= MaxConcurrentSessions)
+        {
+            s.Transcript.Add(new ErrorBlock("동시 실행 한도",
+                $"실행 중 세션이 {_running.Count}개입니다 (한도 {MaxConcurrentSessions}). 끝나길 기다리거나 설정에서 한도를 올리세요."));
+            return;
+        }
+
         var dispatcher = Application.Current.Dispatcher;
         s.Transcript.Add(new UserBlock(prompt));
         s.Status = "running";
@@ -564,6 +651,7 @@ public sealed class AppViewModel : ObservableObject
         {
             WorkingDirectory = cwd,
             BypassPermissions = true,
+            Sandbox = s.Sandbox,
             ResumeSessionId = s.EngineSessionId,
             Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
         };

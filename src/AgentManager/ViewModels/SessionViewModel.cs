@@ -56,6 +56,10 @@ public sealed class SessionViewModel : ObservableObject
     private bool _isArchived;
     public bool IsArchived { get => _isArchived; set => Set(ref _isArchived, value); }
 
+    /// <summary>Per-session sandbox: ReadOnly(분석만)/WorkspaceWrite/DangerFullAccess.</summary>
+    private Core.Agents.SandboxMode _sandbox = Core.Agents.SandboxMode.DangerFullAccess;
+    public Core.Agents.SandboxMode Sandbox { get => _sandbox; set => Set(ref _sandbox, value); }
+
     private string _status = "idle";
     public string Status
     {

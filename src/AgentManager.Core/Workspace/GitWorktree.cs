@@ -70,6 +70,20 @@ public static class GitWorktree
         return (true, "변경을 폐기했습니다");
     }
 
+    /// <summary>Commit the worktree's changes onto its agent branch only (no merge) —
+    /// keeps the work safe/reviewable without touching the project's main branch.</summary>
+    public static async Task<(bool ok, string message)> CommitAsync(string worktreePath, string commitMessage)
+    {
+        await RunAsync(worktreePath, "add", "-A");
+        var status = await RunAsync(worktreePath, "status", "--porcelain");
+        if (string.IsNullOrWhiteSpace(status.stdout))
+            return (false, "커밋할 변경이 없습니다");
+        var commit = await RunAsync(worktreePath, "commit", "-m", commitMessage);
+        return commit.code == 0
+            ? (true, "에이전트 브랜치에 커밋했습니다 (머지 안 함)")
+            : (false, "commit 실패: " + (commit.stdout + commit.stderr).Trim());
+    }
+
     /// <summary>
     /// Commit the worktree's changes to its branch and merge that branch into the project's
     /// current branch. On failure (dirty main tree / conflict) the merge is aborted and the

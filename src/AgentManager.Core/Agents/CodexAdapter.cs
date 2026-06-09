@@ -39,9 +39,13 @@ public sealed class CodexAdapter : IAgentAdapter
             psi.ArgumentList.Add(options.ResumeSessionId);
         }
         psi.ArgumentList.Add("--json");
-        if (options.BypassPermissions)
+        if (options.BypassPermissions && options.Sandbox == SandboxMode.DangerFullAccess)
             psi.ArgumentList.Add("--dangerously-bypass-approvals-and-sandbox");
-        else { psi.ArgumentList.Add("--sandbox"); psi.ArgumentList.Add("workspace-write"); }
+        else
+        {
+            psi.ArgumentList.Add("--sandbox");
+            psi.ArgumentList.Add(options.Sandbox == SandboxMode.ReadOnly ? "read-only" : "workspace-write");
+        }
         if (!string.IsNullOrWhiteSpace(options.Model)) { psi.ArgumentList.Add("-m"); psi.ArgumentList.Add(options.Model); }
         psi.ArgumentList.Add("-C"); psi.ArgumentList.Add(options.WorkingDirectory);
         psi.ArgumentList.Add(prompt); // prompt is a positional arg for Codex

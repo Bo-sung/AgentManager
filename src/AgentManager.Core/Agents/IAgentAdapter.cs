@@ -13,6 +13,11 @@ public sealed record AgentCapabilities(
     bool Quota);
 
 /// <summary>Options for starting one agent turn/session.</summary>
+/// <summary>How much the engine may touch without asking. Mapping is engine-specific:
+/// Codex maps to --sandbox read-only/workspace-write/danger; Claude (no approval broker yet)
+/// treats ReadOnly as plan mode and everything else as bypass.</summary>
+public enum SandboxMode { ReadOnly, WorkspaceWrite, DangerFullAccess }
+
 public sealed record SessionOptions
 {
     public required string WorkingDirectory { get; init; }
@@ -20,6 +25,7 @@ public sealed record SessionOptions
     public string? ResumeSessionId { get; init; }
     /// <summary>Skip approval prompts (yolo / bypass sandbox).</summary>
     public bool BypassPermissions { get; init; }
+    public SandboxMode Sandbox { get; init; } = SandboxMode.DangerFullAccess;
 }
 
 /// <summary>

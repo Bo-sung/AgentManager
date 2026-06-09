@@ -19,6 +19,7 @@ public sealed record AppSettingsDto
     public string OllamaEndpoint { get; init; } = "http://localhost:11434";
     public string OllamaModel { get; init; } = "exaone3.5:7.8b";
     public bool TranslationEnabled { get; init; } = true;
+    public int MaxConcurrentSessions { get; init; } = 3;
 }
 
 public sealed record ProjectDto
@@ -46,6 +47,7 @@ public sealed record SessionDto
     public long TokensOut { get; init; }
     public double CostUsd { get; init; }
     public bool IsArchived { get; init; }
+    public string Sandbox { get; init; } = "DangerFullAccess";
     public DateTime StartedAt { get; init; }
     public string? WorktreePath { get; init; }
     public bool Isolated { get; init; }

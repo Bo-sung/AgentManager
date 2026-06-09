@@ -34,7 +34,12 @@ public sealed class ClaudeAdapter : IAgentAdapter
         psi.ArgumentList.Add("--output-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--input-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--verbose");
-        if (options.BypassPermissions)
+        if (options.Sandbox == SandboxMode.ReadOnly)
+        {
+            // No approval broker yet: read-only maps to plan mode (no edits/commands).
+            psi.ArgumentList.Add("--permission-mode"); psi.ArgumentList.Add("plan");
+        }
+        else if (options.BypassPermissions)
             psi.ArgumentList.Add("--dangerously-skip-permissions");
         else { psi.ArgumentList.Add("--permission-prompt-tool"); psi.ArgumentList.Add("stdio"); }
         if (!string.IsNullOrWhiteSpace(options.Model)) { psi.ArgumentList.Add("--model"); psi.ArgumentList.Add(options.Model); }
