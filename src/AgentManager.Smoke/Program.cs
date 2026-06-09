@@ -1,7 +1,8 @@
-// Offline parser smoke test — feeds captured JSONL samples through the adapters
-// and prints the normalized events. No CLI/model calls (zero tokens).
+// Headless smoke tests — adapter parsing/args (zero tokens) + GitWorktree
+// end-to-end against a throwaway temp repo (zero tokens, real git).
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
+using AgentManager.Core.Workspace;
 
 string[] claudeLines =
 [
@@ -54,7 +55,96 @@ static string Trunc(string s) => s.Length > 40 ? s[..40] + "…" : s;
 Run("Claude stream-json", new ClaudeAdapter(), claudeLines);
 Run("Codex exec --json", new CodexAdapter(), codexLines);
 AssertResumeArgs();
+AssertSandboxAndModelArgs();
+await TestGitWorktreeAsync();
 Console.WriteLine("smoke OK");
+
+static void AssertSandboxAndModelArgs()
+{
+    var cwd = Environment.CurrentDirectory;
+
+    // Codex sandbox mapping
+    string[] CodexArgs(SandboxMode sb, bool bypass) =>
+        new CodexAdapter().BuildStartInfo("codex",
+            new SessionOptions { WorkingDirectory = cwd, BypassPermissions = bypass, Sandbox = sb }, "p").ArgumentList.ToArray();
+    Assert(CodexArgs(SandboxMode.DangerFullAccess, true).Contains("--dangerously-bypass-approvals-and-sandbox"), "Codex danger+bypass");
+    var ro = CodexArgs(SandboxMode.ReadOnly, true);
+    Assert(ro.Contains("--sandbox") && ro.Contains("read-only"), "Codex read-only");
+    var ww = CodexArgs(SandboxMode.WorkspaceWrite, true);
+    Assert(ww.Contains("--sandbox") && ww.Contains("workspace-write"), "Codex workspace-write");
+
+    // Claude sandbox + model mapping
+    string[] ClaudeArgs(SandboxMode sb, string? model = null) =>
+        new ClaudeAdapter().BuildStartInfo("claude",
+            new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, Sandbox = sb, Model = model }, "p").ArgumentList.ToArray();
+    var plan = ClaudeArgs(SandboxMode.ReadOnly);
+    Assert(plan.Contains("--permission-mode") && plan.Contains("plan"), "Claude read-only→plan");
+    Assert(ClaudeArgs(SandboxMode.DangerFullAccess).Contains("--dangerously-skip-permissions"), "Claude bypass");
+    var cm = ClaudeArgs(SandboxMode.DangerFullAccess, "sonnet");
+    Assert(cm.Contains("--model") && cm.Contains("sonnet"), "Claude --model");
+    var xm = new CodexAdapter().BuildStartInfo("codex",
+        new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, Model = "gpt-5.1" }, "p").ArgumentList.ToArray();
+    Assert(xm.Contains("-m") && xm.Contains("gpt-5.1"), "Codex -m");
+    Console.WriteLine("sandbox/model arg asserts OK");
+}
+
+static async Task TestGitWorktreeAsync()
+{
+    var tmp = Path.Combine(Path.GetTempPath(), "am_smoke_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(tmp);
+    try
+    {
+        async Task<string> Git(params string[] args)
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo { FileName = "git", WorkingDirectory = tmp, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
+            foreach (var a in args) psi.ArgumentList.Add(a);
+            using var p = System.Diagnostics.Process.Start(psi)!;
+            var o = await p.StandardOutput.ReadToEndAsync();
+            await p.WaitForExitAsync();
+            return o;
+        }
+        await Git("init", "-q");
+        await Git("config", "user.email", "t@t"); await Git("config", "user.name", "t");
+        await File.WriteAllTextAsync(Path.Combine(tmp, "a.txt"), "base\n");
+        await Git("add", "-A"); await Git("commit", "-qm", "init");
+
+        // create
+        var wtRoot = Path.Combine(tmp, "_wts");
+        var wt = await GitWorktree.CreateAsync(tmp, "s1", "agent/s1", wtRoot);
+        Assert(wt is not null && Directory.Exists(wt.Path), "worktree create");
+
+        // change detection (modified + untracked) and diff incl. untracked
+        await File.WriteAllTextAsync(Path.Combine(wt!.Path, "a.txt"), "changed\n");
+        await File.WriteAllTextAsync(Path.Combine(wt.Path, "new.txt"), "hello\n");
+        var changes = await GitWorktree.GetChangedFilesAsync(wt.Path);
+        Assert(changes.Count == 2, $"changes count = {changes.Count} (expected 2)");
+        var diff = await GitWorktree.GetDiffAsync(wt.Path);
+        Assert(diff.Contains("changed") && diff.Contains("new.txt"), "diff incl. untracked");
+
+        // discard → clean
+        var (dok, _) = await GitWorktree.DiscardAsync(wt.Path);
+        Assert(dok && (await GitWorktree.GetChangedFilesAsync(wt.Path)).Count == 0, "discard cleans");
+
+        // commit-only → branch ahead, main untouched
+        await File.WriteAllTextAsync(Path.Combine(wt.Path, "a.txt"), "feature\n");
+        var (cok, _) = await GitWorktree.CommitAsync(wt.Path, "agent: c1");
+        Assert(cok, "commit-only");
+        Assert((await File.ReadAllTextAsync(Path.Combine(tmp, "a.txt"))).StartsWith("base"), "main untouched after commit-only");
+
+        // merge (second change) → main updated
+        await File.WriteAllTextAsync(Path.Combine(wt.Path, "a.txt"), "feature2\n");
+        var (mok, mmsg) = await GitWorktree.MergeAsync(tmp, "agent/s1", "agent: c2", wt.Path);
+        Assert(mok, "merge: " + mmsg);
+        Assert((await File.ReadAllTextAsync(Path.Combine(tmp, "a.txt"))).StartsWith("feature2"), "main has merged content");
+
+        await GitWorktree.RemoveAsync(tmp, wt.Path);
+        Console.WriteLine("GitWorktree end-to-end OK (create/changes/diff/discard/commit-only/merge)");
+    }
+    finally
+    {
+        try { Directory.Delete(tmp, true); } catch { }
+    }
+}
 
 static void AssertResumeArgs()
 {
