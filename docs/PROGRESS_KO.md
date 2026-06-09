@@ -30,10 +30,11 @@
 > **작업 방식(합의)**: 기능(Core/VM) 우선, View XAML 바인딩은 나중에 일괄.
 > UI 노출 대기 중: 집계 표시(Σ TKN/COST) · 세션 컨텍스트 메뉴(삭제/보관/이름변경) · 아카이브 그룹
 
-## 🔜 다음 (기능 우선)
-1. (남은 로직, 무거움) Artifacts 추출 · MCP registry · 승인 broker(보류 해제 시)
-2. **검증 부채**: 멀티턴 resume 실 2턴 · fork · cap · sandbox · 피드백 실동작 테스트
-3. **(UI 일괄 패스)** 집계 표시 · 세션 컨텍스트 메뉴 · 아카이브 그룹 · 샌드박스 선택 · Commit/피드백 버튼 · cap 설정
+| **검증 패스** (Smoke: sandbox/model 인자 매트릭스 + GitWorktree e2e · 실 2턴 resume="47" 성공, session_id 유지) | ec1aab6 |
+
+## 🔜 다음
+1. **무거운 로직 논의/설계**: Artifacts 추출 · MCP registry · 승인 broker(보류 해제 여부) ← 진행 중
+2. **(UI 일괄 패스)** 집계 표시 · 세션 컨텍스트 메뉴 · 아카이브 그룹 · 샌드박스 선택 · Commit/피드백 버튼 · cap 설정
 
 ## ⏸ 보류 / 후순위
 - 승인 broker (현재 bypass 유지 — 결정됨)
