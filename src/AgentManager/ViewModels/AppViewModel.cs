@@ -26,6 +26,7 @@ public sealed class AppViewModel : ObservableObject
     public ObservableCollection<SessionViewModel> Sessions { get; } = [];
     public ObservableCollection<SessionViewModel> ActiveSessions { get; } = [];
     public ObservableCollection<SessionViewModel> ProjectSessions { get; } = [];
+    public ObservableCollection<SessionViewModel> ArchivedSessions { get; } = [];
     public EngineDef[] Engines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
     public string Project => ActiveProject?.Name ?? "workspace";
     public string WorkingDirectory => ActiveProject?.Path ?? FindRepoRoot();
@@ -55,6 +56,9 @@ public sealed class AppViewModel : ObservableObject
         ToggleReviewCommand = new RelayCommand(_ => IsReviewOpen = !IsReviewOpen);
         MergeReviewCommand = new RelayCommand(_ => _ = MergeReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
         DiscardReviewCommand = new RelayCommand(_ => _ = DiscardReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
+        DeleteSessionCommand = new RelayCommand(p => _ = DeleteSessionAsync(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
+        ArchiveSessionCommand = new RelayCommand(p => ToggleArchive(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
+        RenameSessionCommand = new RelayCommand(p => { if (p is string t) RenameSession(ActiveSession, t); }, _ => ActiveSession is not null);
     }
 
     // running sessions → their cancellation source (Stop)
@@ -78,6 +82,46 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand ToggleReviewCommand { get; }
     public RelayCommand MergeReviewCommand { get; }
     public RelayCommand DiscardReviewCommand { get; }
+    public RelayCommand DeleteSessionCommand { get; }
+    public RelayCommand ArchiveSessionCommand { get; }
+    public RelayCommand RenameSessionCommand { get; }
+
+    // ----- session lifecycle (logic; UI hookup deferred) -----
+
+    /// <summary>Delete: stop if running, drop the worktree, remove from all lists, persist.</summary>
+    public async Task DeleteSessionAsync(SessionViewModel? s)
+    {
+        if (s is null) return;
+        if (_running.TryGetValue(s.Id, out var cts)) { try { cts.Cancel(); } catch { } }
+        if (s.WorktreePath is not null)
+        {
+            await GitWorktree.RemoveAsync(s.ProjectPath, s.WorktreePath);
+            s.WorktreePath = null;
+        }
+        s.PropertyChanged -= SessionStatusWatch;
+        _allSessions.Remove(s);
+        if (ReferenceEquals(ActiveSession, s)) ActiveSession = null;
+        RefreshProjectSessions();
+        RefreshTotals();
+        SaveState();
+    }
+
+    /// <summary>Archive toggle: hides the session from Active/Project groups (kept in storage).</summary>
+    public void ToggleArchive(SessionViewModel? s)
+    {
+        if (s is null) return;
+        s.IsArchived = !s.IsArchived;
+        if (s.IsArchived && ReferenceEquals(ActiveSession, s)) ActiveSession = null;
+        RefreshProjectSessions();
+        SaveState();
+    }
+
+    public void RenameSession(SessionViewModel? s, string newTitle)
+    {
+        if (s is null || string.IsNullOrWhiteSpace(newTitle)) return;
+        s.Title = newTitle.Trim();
+        SaveState();
+    }
 
     private void StopActive()
     {
@@ -313,12 +357,14 @@ public sealed class AppViewModel : ObservableObject
         Sessions.Clear();
         ActiveSessions.Clear();
         ProjectSessions.Clear();
+        ArchivedSessions.Clear();
         if (ActiveProject is { } project)
         {
             foreach (var s in _allSessions.Where(s => s.ProjectId == project.Id))
             {
                 Sessions.Add(s);
-                if (s.IsLive) ActiveSessions.Add(s);
+                if (s.IsArchived) ArchivedSessions.Add(s);
+                else if (s.IsLive) ActiveSessions.Add(s);
                 else ProjectSessions.Add(s);
             }
         }
@@ -390,6 +436,7 @@ public sealed class AppViewModel : ObservableObject
                 TokensIn = dto.TokensIn,
                 TokensOut = dto.TokensOut,
                 CostUsd = dto.CostUsd,
+                IsArchived = dto.IsArchived,
                 TranslationEnabled = dto.TranslationEnabled ?? true,
                 EngineSessionId = dto.EngineSessionId,
             };
@@ -436,6 +483,7 @@ public sealed class AppViewModel : ObservableObject
                     TokensIn = s.TokensIn,
                     TokensOut = s.TokensOut,
                     CostUsd = s.CostUsd,
+                    IsArchived = s.IsArchived,
                     StartedAt = s.StartedAt,
                     WorktreePath = s.WorktreePath,
                     Isolated = s.Isolated,

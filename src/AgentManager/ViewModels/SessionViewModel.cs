@@ -9,7 +9,6 @@ public sealed class SessionViewModel : ObservableObject
     public string Badge { get; }
     public string AgentName { get; }
     public string Cli { get; }
-    public string Title { get; }
     public string Branch { get; }
     public string ProjectId { get; }
     public string Project { get; }
@@ -46,9 +45,16 @@ public sealed class SessionViewModel : ObservableObject
         DateTime? startedAt = null)
     {
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
-        Title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
+        _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
         StartedAt = startedAt ?? DateTime.Now;
     }
+
+    private string _title;
+    public string Title { get => _title; set => Set(ref _title, value); }
+
+    /// <summary>Archived sessions are hidden from the Active/Project groups (kept in storage).</summary>
+    private bool _isArchived;
+    public bool IsArchived { get => _isArchived; set => Set(ref _isArchived, value); }
 
     private string _status = "idle";
     public string Status

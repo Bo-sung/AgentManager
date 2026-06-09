@@ -25,9 +25,14 @@
 | **M1-⑧ 실행 상태 가시화** (RUNNING 바 + 경과 시간 + 마지막 출력 신호 + 무응답 경고) | 76ab03e |
 | **M3-② 설정 패널** (provider 경로 + Ollama endpoint/model + 새 세션 번역 기본값 저장) | 76ab03e |
 
-## 🔜 다음 (구조 먼저 — FEATURES §5)
-1. **비용 표시 / 전체 집계** — total_cost_usd, 총 토큰, 실행수
-2. 모델 선택 `--model` 연결
+| **M1-⑨ 비용/토큰 정산 + 모델 연결 (로직)** (TurnCompleted.Usage 보정, CostUsd 누적·영속, Total 집계 속성, SessionOptions.Model) | e48fab7 |
+
+> **작업 방식(합의)**: 기능(Core/VM) 우선, View XAML 바인딩은 나중에 일괄. (집계 표시 UI 보류 중)
+
+## 🔜 다음 (기능 우선)
+1. **세션 수명주기** — 삭제/보관(archive)/이름변경 (VM+영속성 로직) ← 진행 중
+2. 동시 실행 cap · 세션 fork
+3. (UI 일괄 패스) 집계 표시 · 세션 컨텍스트 메뉴
 
 ## ⏸ 보류 / 후순위
 - 승인 broker (현재 bypass 유지 — 결정됨)
