@@ -44,6 +44,7 @@ public sealed record SessionDto
     public string Activity { get; init; } = "";
     public long TokensIn { get; init; }
     public long TokensOut { get; init; }
+    public double CostUsd { get; init; }
     public DateTime StartedAt { get; init; }
     public string? WorktreePath { get; init; }
     public bool Isolated { get; init; }

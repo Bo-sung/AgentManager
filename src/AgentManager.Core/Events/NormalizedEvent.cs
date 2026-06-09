@@ -35,8 +35,9 @@ public sealed record QuotaUpdate(double Utilization, long ResetsAtUnix, string R
 /// <summary>Engine is asking permission to run a tool (Claude can_use_tool).</summary>
 public sealed record PermissionRequest(string RequestId, string ToolName, string InputJson, string? ToolUseId) : NormalizedEvent;
 
-/// <summary>Turn finished.</summary>
-public sealed record TurnCompleted(string? FinalText, bool IsError, double? CostUsd, int? NumTurns) : NormalizedEvent;
+/// <summary>Turn finished. <paramref name="Usage"/> is the authoritative turn total when the
+/// engine reports it at end-of-turn (Claude result.usage) — consumers should reconcile with it.</summary>
+public sealed record TurnCompleted(string? FinalText, bool IsError, double? CostUsd, int? NumTurns, TokenUsage? Usage = null) : NormalizedEvent;
 
 /// <summary>Engine error (stderr or error event).</summary>
 public sealed record EngineError(string Message) : NormalizedEvent;

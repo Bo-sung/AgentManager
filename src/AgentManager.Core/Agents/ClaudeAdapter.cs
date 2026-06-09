@@ -134,11 +134,18 @@ public sealed class ClaudeAdapter : IAgentAdapter
                 break;
 
             case "result":
+                // result.usage is the authoritative turn total (per-message usage undercounts output).
+                TokenUsage? turnUsage = null;
+                if (root.TryGetProperty("usage", out var ru) && ru.ValueKind == JsonValueKind.Object)
+                    turnUsage = new TokenUsage(
+                        Lng(ru, "input_tokens"), Lng(ru, "output_tokens"),
+                        Lng(ru, "cache_read_input_tokens"), Lng(ru, "cache_creation_input_tokens"));
                 yield return new TurnCompleted(
                     Str(root, "result"),
                     root.TryGetProperty("is_error", out var re) && re.ValueKind == JsonValueKind.True,
                     root.TryGetProperty("total_cost_usd", out var cost) && cost.ValueKind == JsonValueKind.Number ? cost.GetDouble() : null,
-                    root.TryGetProperty("num_turns", out var nt) && nt.ValueKind == JsonValueKind.Number ? nt.GetInt32() : null);
+                    root.TryGetProperty("num_turns", out var nt) && nt.ValueKind == JsonValueKind.Number ? nt.GetInt32() : null,
+                    turnUsage);
                 break;
 
             default:

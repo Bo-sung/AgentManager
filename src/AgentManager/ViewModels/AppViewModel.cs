@@ -180,6 +180,29 @@ public sealed class AppViewModel : ObservableObject
     private int CountBy(string s) { int n = 0; foreach (var x in Sessions) if (x.Status == s) n++; return n; }
     private void RefreshCounts() { OnChanged(nameof(RunningCount)); OnChanged(nameof(WaitingCount)); OnChanged(nameof(DoneCount)); }
 
+    // ----- aggregate dashboard (all sessions) -----
+    public string TotalTokensLabel
+    {
+        get
+        {
+            long tin = 0, tout = 0;
+            foreach (var x in _allSessions) { tin += x.TokensIn; tout += x.TokensOut; }
+            return $"{FmtK(tin)} / {FmtK(tout)}";
+        }
+    }
+    public string TotalCostLabel
+    {
+        get
+        {
+            double c = 0;
+            foreach (var x in _allSessions) c += x.CostUsd;
+            return c > 0 ? "$" + c.ToString("0.00") : "$0";
+        }
+    }
+    private void RefreshTotals() { OnChanged(nameof(TotalTokensLabel)); OnChanged(nameof(TotalCostLabel)); }
+    private static string FmtK(long n) => n >= 1_000_000 ? (n / 1_000_000.0).ToString("0.0") + "M"
+        : n >= 1000 ? (n / 1000.0).ToString("0.0") + "k" : n.ToString();
+
     private void RefreshRunningSessions()
     {
         foreach (var session in _allSessions)
@@ -366,6 +389,7 @@ public sealed class AppViewModel : ObservableObject
                 Activity = dto.Status is "running" or "waiting" ? "restored after restart" : dto.Activity,
                 TokensIn = dto.TokensIn,
                 TokensOut = dto.TokensOut,
+                CostUsd = dto.CostUsd,
                 TranslationEnabled = dto.TranslationEnabled ?? true,
                 EngineSessionId = dto.EngineSessionId,
             };
@@ -411,6 +435,7 @@ public sealed class AppViewModel : ObservableObject
                     Activity = s.Activity,
                     TokensIn = s.TokensIn,
                     TokensOut = s.TokensOut,
+                    CostUsd = s.CostUsd,
                     StartedAt = s.StartedAt,
                     WorktreePath = s.WorktreePath,
                     Isolated = s.Isolated,
@@ -483,11 +508,16 @@ public sealed class AppViewModel : ObservableObject
         var session = new AgentSession(adapter, exe, _translator, s.TranslationEnabled);
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
 
+        // turn baseline for end-of-turn usage reconciliation
+        s.TurnBaseIn = s.TokensIn;
+        s.TurnBaseOut = s.TokensOut;
+
         var options = new SessionOptions
         {
             WorkingDirectory = cwd,
             BypassPermissions = true,
             ResumeSessionId = s.EngineSessionId,
+            Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
         };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;
@@ -658,8 +688,10 @@ public sealed class AppViewModel : ObservableObject
                 }
                 break;
             case TokenUsage k:
-                s.TokensIn = k.InputTokens;
-                s.TokensOut = k.OutputTokens;
+                // live accumulation; TurnCompleted.Usage reconciles to the turn total
+                s.TokensIn += k.InputTokens;
+                s.TokensOut += k.OutputTokens;
+                RefreshTotals();
                 break;
             case QuotaUpdate q:
                 QuotaText = $"QUOTA {q.Utilization:P0} · {q.RateLimitType}";
@@ -668,8 +700,16 @@ public sealed class AppViewModel : ObservableObject
                 s.Transcript.Add(new ErrorBlock("stderr", e.Message));
                 break;
             case TurnCompleted c:
+                if (c.Usage is { } turnUsage)
+                {
+                    // reconcile: per-message usage undercounts (esp. output); result.usage is the turn total
+                    s.TokensIn = s.TurnBaseIn + turnUsage.InputTokens;
+                    s.TokensOut = s.TurnBaseOut + turnUsage.OutputTokens;
+                }
+                if (c.CostUsd is { } turnCost) s.CostUsd += turnCost;
                 s.Status = c.IsError ? "error" : "done";
                 s.MarkRunEnded(c.IsError ? "failed" : "completed");
+                RefreshTotals();
                 break;
         }
         SaveState();

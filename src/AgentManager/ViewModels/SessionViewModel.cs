@@ -176,6 +176,15 @@ public sealed class SessionViewModel : ObservableObject
     public long TokensOut { get => _tokensOut; set { if (Set(ref _tokensOut, value)) OnChanged(nameof(TokensLabel)); } }
     public string TokensLabel => $"{Fmt(_tokensIn)} / {Fmt(_tokensOut)}";
 
+    /// <summary>Token totals at turn start — TurnCompleted.Usage reconciles against these
+    /// (Claude's per-message usage undercounts; result.usage is authoritative).</summary>
+    public long TurnBaseIn { get; set; }
+    public long TurnBaseOut { get; set; }
+
+    private double _costUsd;
+    public double CostUsd { get => _costUsd; set { if (Set(ref _costUsd, value)) OnChanged(nameof(CostLabel)); } }
+    public string CostLabel => _costUsd > 0 ? "$" + _costUsd.ToString("0.0000") : "—";
+
     private string _draft = "";
     public string Draft { get => _draft; set { if (Set(ref _draft, value)) OnChanged(nameof(CanSend)); } }
     public bool CanSend => !string.IsNullOrWhiteSpace(_draft) && !IsRunning;
