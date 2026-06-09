@@ -42,6 +42,8 @@ public sealed class AppViewModel : ObservableObject
         StopCommand = new RelayCommand(_ => StopActive(), _ => ActiveSession?.IsRunning == true);
         RefreshReviewCommand = new RelayCommand(_ => _ = RefreshReviewAsync(ActiveSession), _ => ActiveSession is not null);
         ToggleReviewCommand = new RelayCommand(_ => IsReviewOpen = !IsReviewOpen);
+        MergeReviewCommand = new RelayCommand(_ => _ = MergeReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
+        DiscardReviewCommand = new RelayCommand(_ => _ = DiscardReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
     }
 
     // running sessions → their cancellation source (Stop)
@@ -60,6 +62,8 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand StopCommand { get; }
     public RelayCommand RefreshReviewCommand { get; }
     public RelayCommand ToggleReviewCommand { get; }
+    public RelayCommand MergeReviewCommand { get; }
+    public RelayCommand DiscardReviewCommand { get; }
 
     private void StopActive()
     {
@@ -480,6 +484,39 @@ public sealed class AppViewModel : ObservableObject
             s.ReviewStatus = "Review refresh failed";
             s.DiffText = ex.Message;
         }
+    }
+
+    private async Task MergeReviewAsync(SessionViewModel? s)
+    {
+        if (s?.WorktreePath is null) return;
+        s.ReviewStatus = "Merging…";
+        var (ok, msg) = await GitWorktree.MergeAsync(s.ProjectPath, s.Branch, $"agent: {s.Title}", s.WorktreePath);
+        if (ok)
+        {
+            await GitWorktree.RemoveAsync(s.ProjectPath, s.WorktreePath);
+            s.WorktreePath = null;
+            s.Isolated = false;
+            s.Status = "done";
+            s.Activity = "merged";
+            s.Transcript.Add(new WorkingBlock("✓ " + msg));
+        }
+        else
+        {
+            s.Transcript.Add(new ErrorBlock("Merge 실패", msg));
+        }
+        s.ReviewStatus = msg;
+        await RefreshReviewAsync(s);
+        SaveState();
+    }
+
+    private async Task DiscardReviewAsync(SessionViewModel? s)
+    {
+        if (s?.WorktreePath is null) return;
+        s.ReviewStatus = "Discarding…";
+        var (ok, msg) = await GitWorktree.DiscardAsync(s.WorktreePath);
+        s.Transcript.Add(ok ? new WorkingBlock("↩ " + msg) : (TranscriptItem)new ErrorBlock("Discard 실패", msg));
+        await RefreshReviewAsync(s);
+        SaveState();
     }
 
     private void Apply(SessionViewModel s, NormalizedEvent ev, Dictionary<string, ToolBlock> tools)

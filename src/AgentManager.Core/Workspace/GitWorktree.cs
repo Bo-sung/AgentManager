@@ -61,6 +61,40 @@ public static class GitWorktree
         try { await RunAsync(repoPath, "worktree", "remove", "--force", worktreePath); } catch { }
     }
 
+    /// <summary>Drop all changes in the worktree (tracked + untracked) back to HEAD. Worktree is kept.</summary>
+    public static async Task<(bool ok, string message)> DiscardAsync(string worktreePath)
+    {
+        var reset = await RunAsync(worktreePath, "reset", "--hard", "HEAD");
+        if (reset.code != 0) return (false, reset.stderr.Trim());
+        await RunAsync(worktreePath, "clean", "-fdx");
+        return (true, "변경을 폐기했습니다");
+    }
+
+    /// <summary>
+    /// Commit the worktree's changes to its branch and merge that branch into the project's
+    /// current branch. On failure (dirty main tree / conflict) the merge is aborted and the
+    /// commit remains on the agent branch (nothing lost).
+    /// </summary>
+    public static async Task<(bool ok, string message)> MergeAsync(string repoPath, string branch, string commitMessage, string worktreePath)
+    {
+        await RunAsync(worktreePath, "add", "-A");
+        var status = await RunAsync(worktreePath, "status", "--porcelain");
+        if (string.IsNullOrWhiteSpace(status.stdout))
+            return (false, "머지할 변경이 없습니다");
+
+        var commit = await RunAsync(worktreePath, "commit", "-m", commitMessage);
+        if (commit.code != 0)
+            return (false, "commit 실패: " + (commit.stdout + commit.stderr).Trim());
+
+        var merge = await RunAsync(repoPath, "merge", "--no-ff", branch, "-m", $"Merge agent branch {branch}");
+        if (merge.code != 0)
+        {
+            await RunAsync(repoPath, "merge", "--abort");
+            return (false, "머지 실패(메인 작업트리 dirty 또는 충돌). 변경은 브랜치 '" + branch + "'에 커밋됨: " + (merge.stdout + merge.stderr).Trim());
+        }
+        return (true, $"'{branch}' → 메인 머지 완료");
+    }
+
     /// <summary>Files changed in the worktree vs its HEAD (includes untracked).</summary>
     public static async Task<IReadOnlyList<FileChange>> GetChangedFilesAsync(string worktreePath)
     {

@@ -564,8 +564,12 @@
                     <StackPanel DockPanel.Dock="Bottom">
                         <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="12,10">
                             <DockPanel>
-                                <Button DockPanel.Dock="Left" Style="{StaticResource AccentButton}" Content="Keep changes" Margin="0,0,8,0"/>
-                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="Discard"/>
+                                <Button DockPanel.Dock="Left" Style="{StaticResource AccentButton}" Content="Merge ▸ main" Margin="0,0,8,0"
+                                        ToolTip="agent 변경을 커밋 후 프로젝트 메인 브랜치로 머지"
+                                        Command="{Binding DataContext.MergeReviewCommand, ElementName=Root}"/>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="Discard"
+                                        ToolTip="worktree의 변경을 모두 폐기(reset --hard + clean)"
+                                        Command="{Binding DataContext.DiscardReviewCommand, ElementName=Root}"/>
                             </DockPanel>
                         </Border>
                         <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="12,10">

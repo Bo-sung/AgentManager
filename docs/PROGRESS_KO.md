@@ -17,12 +17,12 @@
 | **P0구조-② 우측 Review pane** (변경파일 목록 + diff 뷰) | f82a194 |
 | **P0구조-③ Project 개념** (프로젝트 등록/선택 + 세션 소속 + project cwd) | f82a194 |
 | **P0구조-④ JSON 영속성** (project/session/transcript 저장·복원) | f82a194 |
-| **P0구조-⑤ 3-pane 보강** (사이드바 Active/Project 그룹화 + 접이식 Review pane 토글 + 활성 하이라이트) | working tree |
+| **P0구조-⑤ 3-pane 보강** (사이드바 Active/Project 그룹화 + 접이식 Review pane 토글 + 활성 하이라이트) | a20fc6a |
+| **P0구조-⑥ Review actions** (Merge ▸ main = 커밋+머지 / Discard = reset+clean) | working tree |
 
 ## 🔜 다음 (구조 먼저 — FEATURES §5)
-1. **Review actions** — worktree 변경 Merge/Discard/Commit ← 추천
-2. 멀티턴(resume)
-3. 번역 토글/원본보기 · 마크다운 · 설정 패널
+1. **멀티턴(resume)** — 같은 세션 대화 이어가기(Claude --resume / Codex exec resume) ← 추천
+2. 번역 토글/원본보기 · 마크다운 · 설정 패널
 
 ## ⏸ 보류 / 후순위
 - 승인 broker (현재 bypass 유지 — 결정됨)

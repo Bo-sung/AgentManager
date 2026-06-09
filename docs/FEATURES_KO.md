@@ -42,7 +42,7 @@
 | 6 | Session list (running/waiting/done/failed) + 상태 | ✅ | VSCode |
 | 7 | **Worktree 격리** (세션별 git worktree) | ✅ | VSCode |
 | 8 | **Changes/Diff 패널** (변경 파일 + diff 뷰) | ✅ | VSCode+AG |
-| 9 | **우측 Review pane** (Overview/Changes/Actions) | 🟡 목록/diff 완료 · actions 미구현 | 공통 |
+| 9 | **우측 Review pane** (Overview/Changes/Actions) | ✅ 목록/diff/Merge/Discard | 공통 |
 | 10 | 멀티턴(resume) | ⬜ | 공통 |
 | 11 | 영속성 (세션/transcript 저장·복원) | ✅ | VSCode |
 | 12 | 번역 토글 + 원본보기 + 인디케이터 | 🟡 ON기본 | 우리 |
@@ -54,7 +54,7 @@
 |---|---|---|
 | 승인 broker (Claude can_use_tool approve/deny) | ⬜ | 공통 |
 | 권한/샌드박스 모드 선택 | ⬜ | 공통 |
-| Merge / Discard / Commit (worktree→main) | ⬜ | VSCode |
+| Merge / Discard / Commit (worktree→main) | 🟡 Merge/Discard ✅, Commit-only ⬜ | VSCode |
 | Session fork (context 상속 분기) | ⬜ | VSCode |
 | Diff 인라인 피드백 → agent 재지시 | ⬜ | VSCode |
 | 모델 선택 실제 연결 / Agent target 선택 | 🟡 | VSCode |
