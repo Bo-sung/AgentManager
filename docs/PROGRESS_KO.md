@@ -24,18 +24,15 @@
 | **M3-① 마크다운 렌더링** (assistant 응답 heading/list/code fence/inline code/bold 표시) | 76ab03e |
 | **M1-⑧ 실행 상태 가시화** (RUNNING 바 + 경과 시간 + 마지막 출력 신호 + 무응답 경고) | 76ab03e |
 | **M3-② 설정 패널** (provider 경로 + Ollama endpoint/model + 새 세션 번역 기본값 저장) | 76ab03e |
-
 | **M1-⑨ 비용/토큰 정산 + 모델 연결 (로직)** (TurnCompleted.Usage 보정, CostUsd 누적·영속, Total 집계 속성, SessionOptions.Model) | e48fab7 |
-
-> **작업 방식(합의)**: 기능(Core/VM) 우선, View XAML 바인딩은 나중에 일괄. (집계 표시 UI 보류 중)
-
-## 🔜 다음 (기능 우선)
 | **A-① 세션 수명주기 (로직)** (Delete=중지+worktree제거, Archive 토글+ArchivedSessions, Rename, 영속성) | 9b77dc2 |
+
+> **작업 방식(합의)**: 기능(Core/VM) 우선, View XAML 바인딩은 나중에 일괄.
+> UI 노출 대기 중: 집계 표시(Σ TKN/COST) · 세션 컨텍스트 메뉴(삭제/보관/이름변경) · 아카이브 그룹
 
 ## 🔜 다음 (기능 우선)
 1. 동시 실행 cap · 세션 fork
-2. 동시 실행 cap · 세션 fork
-3. (UI 일괄 패스) 집계 표시 · 세션 컨텍스트 메뉴
+2. (UI 일괄 패스) 집계 표시 · 세션 컨텍스트 메뉴 · 아카이브 그룹
 
 ## ⏸ 보류 / 후순위
 - 승인 broker (현재 bypass 유지 — 결정됨)
