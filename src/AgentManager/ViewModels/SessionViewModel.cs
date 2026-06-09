@@ -63,6 +63,9 @@ public sealed class SessionViewModel : ObservableObject
     public bool IsRunning => _status == "running";
     public bool IsLive => _status is "running" or "waiting";
 
+    private bool _isActive;
+    public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
+
     private string _model;
     public string Model { get => _model; set => Set(ref _model, value); }
 

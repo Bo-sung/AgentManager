@@ -8,4 +8,7 @@ public sealed class ProjectViewModel(string id, string name, string path) : Obse
 
     private int _sessionCount;
     public int SessionCount { get => _sessionCount; set => Set(ref _sessionCount, value); }
+
+    private bool _isActive;
+    public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
 }

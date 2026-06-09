@@ -18,6 +18,8 @@ public sealed class AppViewModel : ObservableObject
 
     public ObservableCollection<ProjectViewModel> Projects { get; } = [];
     public ObservableCollection<SessionViewModel> Sessions { get; } = [];
+    public ObservableCollection<SessionViewModel> ActiveSessions { get; } = [];
+    public ObservableCollection<SessionViewModel> ProjectSessions { get; } = [];
     public EngineDef[] Engines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
     public string Project => ActiveProject?.Name ?? "workspace";
     public string WorkingDirectory => ActiveProject?.Path ?? FindRepoRoot();
@@ -39,6 +41,7 @@ public sealed class AppViewModel : ObservableObject
         SendCommand = new RelayCommand(_ => _ = SendAsync(), _ => ActiveSession?.CanSend == true);
         StopCommand = new RelayCommand(_ => StopActive(), _ => ActiveSession?.IsRunning == true);
         RefreshReviewCommand = new RelayCommand(_ => _ = RefreshReviewAsync(ActiveSession), _ => ActiveSession is not null);
+        ToggleReviewCommand = new RelayCommand(_ => IsReviewOpen = !IsReviewOpen);
     }
 
     // running sessions → their cancellation source (Stop)
@@ -56,6 +59,7 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand SendCommand { get; }
     public RelayCommand StopCommand { get; }
     public RelayCommand RefreshReviewCommand { get; }
+    public RelayCommand ToggleReviewCommand { get; }
 
     private void StopActive()
     {
@@ -67,6 +71,14 @@ public sealed class AppViewModel : ObservableObject
 
     public string PersistencePath => AppStateStore.StatePath;
 
+    private bool _isReviewOpen;
+    public bool IsReviewOpen
+    {
+        get => _isReviewOpen;
+        set { if (Set(ref _isReviewOpen, value)) OnChanged(nameof(ReviewPaneWidth)); }
+    }
+    public GridLength ReviewPaneWidth => IsReviewOpen ? new GridLength(420) : new GridLength(0);
+
     // ----- active session -----
     private SessionViewModel? _active;
     public SessionViewModel? ActiveSession
@@ -76,6 +88,8 @@ public sealed class AppViewModel : ObservableObject
         {
             if (Set(ref _active, value))
             {
+                foreach (var session in _allSessions)
+                    session.IsActive = ReferenceEquals(session, value);
                 OnChanged(nameof(HasActive));
                 _ = RefreshReviewAsync(value);
             }
@@ -91,6 +105,8 @@ public sealed class AppViewModel : ObservableObject
         {
             if (Set(ref _activeProject, value))
             {
+                foreach (var project in Projects)
+                    project.IsActive = ReferenceEquals(project, value);
                 OnChanged(nameof(Project));
                 OnChanged(nameof(WorkingDirectory));
                 RefreshProjectSessions();
@@ -140,8 +156,8 @@ public sealed class AppViewModel : ObservableObject
         var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, engine.Models[0]);
         s.PropertyChanged += SessionStatusWatch;
         _allSessions.Insert(0, s);
-        Sessions.Insert(0, s);
         ActiveSession = s;
+        RefreshProjectSessions(selectFirstIfMissing: false);
         ShowNewAgent = false;
         var task = title;
         NewAgentTitle = "";
@@ -187,21 +203,35 @@ public sealed class AppViewModel : ObservableObject
 
     private void SessionStatusWatch(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SessionViewModel.Status)) RefreshCounts();
+        if (e.PropertyName == nameof(SessionViewModel.Status))
+        {
+            RefreshProjectSessions();
+            RefreshCounts();
+        }
     }
 
-    private void RefreshProjectSessions()
+    private void RefreshProjectSessions(bool selectFirstIfMissing = true)
     {
+        var current = ActiveSession;
         Sessions.Clear();
+        ActiveSessions.Clear();
+        ProjectSessions.Clear();
         if (ActiveProject is { } project)
         {
             foreach (var s in _allSessions.Where(s => s.ProjectId == project.Id))
+            {
                 Sessions.Add(s);
+                if (s.IsLive) ActiveSessions.Add(s);
+                else ProjectSessions.Add(s);
+            }
         }
 
         RefreshProjectCounts();
 
-        ActiveSession = Sessions.FirstOrDefault();
+        if (current is not null && Sessions.Contains(current))
+            ActiveSession = current;
+        else if (selectFirstIfMissing)
+            ActiveSession = Sessions.FirstOrDefault();
         RefreshCounts();
     }
 

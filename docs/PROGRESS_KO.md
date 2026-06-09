@@ -14,9 +14,10 @@
 | 확정 기능셋 문서화(리서치 반영) | cf4a2d9 |
 | **M1-① Stop(중지)** | ae26f06 |
 | **P0구조-① Worktree 격리** (Core GitWorktree + 세션별 worktree cwd) | 2314af2 |
-| **P0구조-② 우측 Review pane** (변경파일 목록 + diff 뷰) | working tree |
-| **P0구조-③ Project 개념** (프로젝트 등록/선택 + 세션 소속 + project cwd) | working tree |
-| **P0구조-④ JSON 영속성** (project/session/transcript 저장·복원) | working tree |
+| **P0구조-② 우측 Review pane** (변경파일 목록 + diff 뷰) | f82a194 |
+| **P0구조-③ Project 개념** (프로젝트 등록/선택 + 세션 소속 + project cwd) | f82a194 |
+| **P0구조-④ JSON 영속성** (project/session/transcript 저장·복원) | f82a194 |
+| **P0구조-⑤ 3-pane 보강** (사이드바 Active/Project 그룹화 + 접이식 Review pane 토글 + 활성 하이라이트) | working tree |
 
 ## 🔜 다음 (구조 먼저 — FEATURES §5)
 1. **Review actions** — worktree 변경 Merge/Discard/Commit ← 추천
