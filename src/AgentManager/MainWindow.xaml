@@ -282,6 +282,23 @@
                                     <DataTemplate>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,8" Cursor="Hand"
                                                 MouseLeftButtonUp="SessionRow_Click">
+                                            <Border.ContextMenu>
+                                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                    <MenuItem Header="Archive" Command="{Binding DataContext.ArchiveSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="Fork" Command="{Binding DataContext.ForkSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="Delete" Command="{Binding DataContext.DeleteSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <Separator/>
+                                                    <StackPanel Width="190" Margin="8,6">
+                                                        <TextBlock Text="RENAME" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                        <TextBox x:Name="ActiveRenameBox" Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}"
+                                                                 BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="8"
+                                                                 AcceptsReturn="False" Text="{Binding Title, Mode=OneWay}"/>
+                                                        <Button Style="{StaticResource ChipButton}" Content="Apply" Margin="0,8,0,0"
+                                                                Command="{Binding DataContext.RenameSessionCommand, Source={x:Reference Root}}"
+                                                                CommandParameter="{Binding Text, ElementName=ActiveRenameBox}"/>
+                                                    </StackPanel>
+                                                </ContextMenu>
+                                            </Border.ContextMenu>
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="Transparent"/>
@@ -351,6 +368,23 @@
                                     <DataTemplate>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,8" Cursor="Hand"
                                                 MouseLeftButtonUp="SessionRow_Click">
+                                            <Border.ContextMenu>
+                                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                    <MenuItem Header="Archive" Command="{Binding DataContext.ArchiveSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="Fork" Command="{Binding DataContext.ForkSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="Delete" Command="{Binding DataContext.DeleteSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <Separator/>
+                                                    <StackPanel Width="190" Margin="8,6">
+                                                        <TextBlock Text="RENAME" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                        <TextBox x:Name="ProjectRenameBox" Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}"
+                                                                 BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="8"
+                                                                 AcceptsReturn="False" Text="{Binding Title, Mode=OneWay}"/>
+                                                        <Button Style="{StaticResource ChipButton}" Content="Apply" Margin="0,8,0,0"
+                                                                Command="{Binding DataContext.RenameSessionCommand, Source={x:Reference Root}}"
+                                                                CommandParameter="{Binding Text, ElementName=ProjectRenameBox}"/>
+                                                    </StackPanel>
+                                                </ContextMenu>
+                                            </Border.ContextMenu>
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="Transparent"/>
