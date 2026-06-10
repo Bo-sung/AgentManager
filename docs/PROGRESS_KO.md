@@ -39,6 +39,7 @@
 
 | **IDE 핸드오프 + 이미지 첨부 + UI 수정(스크롤바/콤보/컴포저 모델선택)** | 08aecaf~244d2d0 |
 | **알림(작업표시줄 깜빡임+승인 사운드) + Thinking 블록 + Provider 탐지 표시** | f726b26 |
+| **Diff 색상 + 마크다운 링크/테이블 + Release 패키징 (Codex)** | 90e8040, 0edbf6f, c79bc7b |
 
 ## 🔜 다음
 1. **위임 진행 중**: Codex(docs/DELEGATE_CODEX_2.md — diff 색상·마크다운 링크/테이블·publish) · Gemini(docs/DELEGATE_GEMINI_2.md — README)
