@@ -115,6 +115,51 @@
                 <TextBlock Text="{Binding Text}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}"/>
             </StackPanel>
         </DataTemplate>
+
+        <!-- Approval prompt: engine is blocked until Approve/Deny -->
+        <DataTemplate DataType="{x:Type vm:ApprovalBlock}">
+            <Border Margin="40,10,0,10" BorderBrush="{StaticResource Warn}" BorderThickness="1"
+                    CornerRadius="7" Background="#10F5B531">
+                <StackPanel>
+                    <DockPanel Margin="13,10,13,0">
+                        <TextBlock DockPanel.Dock="Left" Text="⚠ APPROVAL REQUIRED" FontFamily="{StaticResource Mono}"
+                                   FontSize="10.5" Foreground="{StaticResource Warn}" VerticalAlignment="Center"/>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding State}" FontFamily="{StaticResource Mono}"
+                                   FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ToolName}" FontFamily="{StaticResource Mono}" FontSize="11.5"
+                                   FontWeight="SemiBold" Foreground="{StaticResource Txt0}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                            CornerRadius="4" Margin="13,9" Padding="11,8" MaxHeight="120">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <TextBlock Text="{Binding InputSummary}" FontFamily="{StaticResource Mono}" FontSize="11"
+                                       Foreground="{StaticResource Txt1}" TextWrapping="Wrap"/>
+                        </ScrollViewer>
+                    </Border>
+                    <StackPanel Orientation="Horizontal" Margin="13,0,13,12"
+                                Visibility="{Binding IsPending, Converter={StaticResource BoolVis}}">
+                        <Button Content="✓ Approve &amp; run" Cursor="Hand" Padding="15,7" Margin="0,0,8,0"
+                                FontWeight="SemiBold" FontSize="12" Foreground="#FF06160F"
+                                Command="{Binding DataContext.ApproveCommand, ElementName=Root}" CommandParameter="{Binding}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="ab" Background="{StaticResource Ok}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="ab" Property="Opacity" Value="0.88"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button Style="{StaticResource ChipButton}" Content="Reject"
+                                Command="{Binding DataContext.DenyCommand, ElementName=Root}" CommandParameter="{Binding}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
