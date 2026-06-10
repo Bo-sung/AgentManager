@@ -37,9 +37,13 @@
 
 > 기능(Core/VM) 우선 + View 일괄 + 멀티세션 위임 방식으로 **로직·UI 패스 모두 종료**.
 
+| **IDE 핸드오프 + 이미지 첨부 + UI 수정(스크롤바/콤보/컴포저 모델선택)** | 08aecaf~244d2d0 |
+| **알림(작업표시줄 깜빡임+승인 사운드) + Thinking 블록 + Provider 탐지 표시** | f726b26 |
+
 ## 🔜 다음
-1. 승인 Stage 2+ — Codex app-server 스파이크 · Antigravity 어댑터(전환 후)
-2. 풀 MCP registry (수요 시) · 마크다운 고급 렌더링 · 멀티폴더 project
+1. **위임 진행 중**: Codex(docs/DELEGATE_CODEX_2.md — diff 색상·마크다운 링크/테이블·publish) · Gemini(docs/DELEGATE_GEMINI_2.md — README)
+2. 소형 잔여: 세션 검색/필터 · 멀티폴더 project
+3. **뒤로 미룸(결정)**: 승인 Stage 2(Codex app-server) · Antigravity 어댑터 · 풀 MCP
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
