@@ -482,6 +482,8 @@
                                           Margin="16,0,0,0"/>
                             <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
                                 <Run Text="TKN "/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
+                            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}" Margin="0,0,16,0">
+                                <Run Text="COST "/><Run Text="{Binding CostLabel, Mode=OneWay}" Foreground="{StaticResource Ok}"/></TextBlock>
                         </DockPanel>
                     </Border>
 
