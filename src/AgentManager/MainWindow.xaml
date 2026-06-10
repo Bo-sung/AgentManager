@@ -246,9 +246,9 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="4" Orientation="Horizontal" shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button x:Name="MinBtn" Style="{StaticResource MenuButton}" Content="—" Width="44" Click="MinBtn_Click"/>
-                    <Button x:Name="MaxBtn" Style="{StaticResource MenuButton}" Content="▢" Width="44" Click="MaxBtn_Click"/>
-                    <Button x:Name="CloseBtn" Style="{StaticResource MenuButton}" Content="✕" Width="44" Click="CloseBtn_Click"/>
+                    <Button x:Name="MinBtn" Style="{StaticResource MenuButton}" Content="—" Width="44" Click="MinBtn_Click" ToolTip="최소화"/>
+                    <Button x:Name="MaxBtn" Style="{StaticResource MenuButton}" Content="▢" Width="44" Click="MaxBtn_Click" ToolTip="최대화"/>
+                    <Button x:Name="CloseBtn" Style="{StaticResource MenuButton}" Content="✕" Width="44" Click="CloseBtn_Click" ToolTip="닫기"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -669,7 +669,7 @@
                                                 </Button.Template>
                                             </Button>
                                             <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}" Content="➤"
-                                                    Foreground="{StaticResource AccentText}"
+                                                    Foreground="{StaticResource AccentText}" ToolTip="보내기 (Enter)"
                                                     Command="{Binding DataContext.SendCommand, ElementName=Root}"/>
                                             <Button DockPanel.Dock="Right" Style="{StaticResource ComposerIconButton}"
                                                     Content="♩" ToolTip="Dictate" Margin="0,0,8,0"/>
@@ -828,6 +828,19 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            <TextBlock Text="아직 아티팩트 없음" FontFamily="{StaticResource Mono}" FontSize="10"
+                                       Foreground="{StaticResource Txt3}" Margin="2,4">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Artifacts.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
 
