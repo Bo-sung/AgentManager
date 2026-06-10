@@ -432,6 +432,65 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <DockPanel Margin="14,18,14,6">
+                                <TextBlock DockPanel.Dock="Left" Text="ARCHIVED" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt2}" Margin="0,0,8,0"/>
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding ArchivedSessions.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt3}"/>
+                                <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding ArchivedSessions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="6,1" CornerRadius="7" Padding="10,8" Cursor="Hand"
+                                                Opacity="0.72" MouseLeftButtonUp="SessionRow_Click">
+                                            <Border.ContextMenu>
+                                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                    <MenuItem Header="Unarchive" Command="{Binding DataContext.ArchiveSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="Fork" Command="{Binding DataContext.ForkSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="Delete" Command="{Binding DataContext.DeleteSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <Separator/>
+                                                    <StackPanel Width="190" Margin="8,6">
+                                                        <TextBlock Text="RENAME" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                        <TextBox x:Name="ArchivedRenameBox" Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}"
+                                                                 BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="8"
+                                                                 AcceptsReturn="False" Text="{Binding Title, Mode=OneWay}"/>
+                                                        <Button Style="{StaticResource ChipButton}" Content="Apply" Margin="0,8,0,0"
+                                                                Command="{Binding DataContext.RenameSessionCommand, Source={x:Reference Root}}"
+                                                                CommandParameter="{Binding Text, ElementName=ArchivedRenameBox}"/>
+                                                    </StackPanel>
+                                                </ContextMenu>
+                                            </Border.ContextMenu>
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                                    <Setter Property="BorderThickness" Value="2,0,0,0"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                                        </Trigger>
+                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                                            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <DockPanel>
+                                                <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Margin="0,0,9,0"
+                                                        Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                                                    <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10"
+                                                               Foreground="{StaticResource Txt2}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" FontSize="12.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt3}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>
