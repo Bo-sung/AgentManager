@@ -138,7 +138,20 @@ static void AssertSandboxAndModelArgs()
     var xm = new CodexAdapter().BuildStartInfo("codex",
         new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, Model = "gpt-5.1" }, "p").ArgumentList.ToArray();
     Assert(xm.Contains("-m") && xm.Contains("gpt-5.1"), "Codex -m");
-    Console.WriteLine("sandbox/model arg asserts OK");
+
+    // MCP passthrough: existing file → --mcp-config; missing file → omitted
+    var mcpFile = Path.GetTempFileName();
+    try
+    {
+        var with = new ClaudeAdapter().BuildStartInfo("claude",
+            new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, McpConfigPath = mcpFile }, "p").ArgumentList.ToArray();
+        Assert(with.Contains("--mcp-config") && with.Contains(mcpFile), "Claude --mcp-config");
+        var without = new ClaudeAdapter().BuildStartInfo("claude",
+            new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, McpConfigPath = mcpFile + ".missing" }, "p").ArgumentList.ToArray();
+        Assert(!without.Contains("--mcp-config"), "missing mcp file omitted");
+    }
+    finally { File.Delete(mcpFile); }
+    Console.WriteLine("sandbox/model/mcp arg asserts OK");
 }
 
 static async Task TestGitWorktreeAsync()

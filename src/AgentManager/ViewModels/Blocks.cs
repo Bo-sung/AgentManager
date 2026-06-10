@@ -91,6 +91,9 @@ public sealed class ToolBlock : TranscriptItem
     public bool HasOriginal => !string.IsNullOrWhiteSpace(_originalBody);
     public string DisplayBody => ShowOriginal && HasOriginal ? _originalBody! : _body;
     public bool IsOpen { get => _isOpen; set => Set(ref _isOpen, value); }
+
+    /// <summary>Shell command text (Bash/shell tools) — used for artifact derivation (test runs).</summary>
+    public string? CommandText { get; set; }
 }
 
 public sealed class ErrorBlock(string title, string body) : TranscriptItem

@@ -16,6 +16,7 @@ public sealed class SessionViewModel : ObservableObject
     public DateTime StartedAt { get; }
     public ObservableCollection<TranscriptItem> Transcript { get; } = [];
     public ObservableCollection<ReviewChangeViewModel> Changes { get; } = [];
+    public ObservableCollection<ArtifactViewModel> Artifacts { get; } = [];
 
     /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
     private string? _worktreePath;

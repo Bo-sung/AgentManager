@@ -27,6 +27,16 @@ public sealed record ProjectDto
     public required string Id { get; init; }
     public required string Name { get; init; }
     public required string Path { get; init; }
+    /// <summary>MCP passthrough: user-managed mcp config file → claude --mcp-config.</summary>
+    public string McpConfigPath { get; init; } = "";
+}
+
+public sealed record ArtifactDto
+{
+    public string Kind { get; init; } = "";
+    public string Title { get; init; } = "";
+    public string Content { get; init; } = "";
+    public bool IsError { get; init; }
 }
 
 public sealed record SessionDto
@@ -49,6 +59,7 @@ public sealed record SessionDto
     public bool IsArchived { get; init; }
     public string Sandbox { get; init; } = "DangerFullAccess";
     public bool RequireApproval { get; init; }
+    public List<ArtifactDto> Artifacts { get; init; } = [];
     public DateTime StartedAt { get; init; }
     public string? WorktreePath { get; init; }
     public bool Isolated { get; init; }

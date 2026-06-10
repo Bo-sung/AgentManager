@@ -29,6 +29,8 @@ public sealed record SessionOptions
     /// <summary>Skip approval prompts (yolo / bypass sandbox).</summary>
     public bool BypassPermissions { get; init; }
     public SandboxMode Sandbox { get; init; } = SandboxMode.DangerFullAccess;
+    /// <summary>MCP passthrough: path to a user-managed MCP config file (Claude --mcp-config).</summary>
+    public string? McpConfigPath { get; init; }
 }
 
 /// <summary>

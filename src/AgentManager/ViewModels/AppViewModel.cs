@@ -525,7 +525,7 @@ public sealed class AppViewModel : ObservableObject
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
 
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
-            Projects.Add(new ProjectViewModel(p.Id, p.Name, p.Path));
+            Projects.Add(new ProjectViewModel(p.Id, p.Name, p.Path) { McpConfigPath = p.McpConfigPath });
 
         if (Projects.Count == 0)
         {
@@ -565,6 +565,8 @@ public sealed class AppViewModel : ObservableObject
             };
             foreach (var item in dto.Transcript)
                 s.Transcript.Add(AppStateStore.FromDto(item));
+            foreach (var a in dto.Artifacts)
+                s.Artifacts.Add(new ArtifactViewModel(a.Kind, a.Title) { Content = a.Content, IsError = a.IsError });
             s.PropertyChanged += SessionStatusWatch;
             _allSessions.Add(s);
         }
@@ -589,7 +591,7 @@ public sealed class AppViewModel : ObservableObject
                     TranslationEnabled = TranslationEnabled,
                     MaxConcurrentSessions = MaxConcurrentSessions,
                 },
-                Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path }).ToList(),
+                Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
                 {
                     Id = s.Id,
@@ -610,6 +612,7 @@ public sealed class AppViewModel : ObservableObject
                     IsArchived = s.IsArchived,
                     Sandbox = s.Sandbox.ToString(),
                     RequireApproval = s.RequireApproval,
+                    Artifacts = s.Artifacts.Select(a => new ArtifactDto { Kind = a.Kind, Title = a.Title, Content = a.Content, IsError = a.IsError }).ToList(),
                     StartedAt = s.StartedAt,
                     WorktreePath = s.WorktreePath,
                     Isolated = s.Isolated,
@@ -696,6 +699,7 @@ public sealed class AppViewModel : ObservableObject
         s.TurnBaseIn = s.TokensIn;
         s.TurnBaseOut = s.TokensOut;
 
+        var mcpPath = Projects.FirstOrDefault(p => p.Id == s.ProjectId)?.McpConfigPath;
         var options = new SessionOptions
         {
             WorkingDirectory = cwd,
@@ -703,6 +707,7 @@ public sealed class AppViewModel : ObservableObject
             Sandbox = s.Sandbox,
             ResumeSessionId = s.EngineSessionId,
             Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
+            McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
         };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;
@@ -851,10 +856,12 @@ public sealed class AppViewModel : ObservableObject
                 s.Activity = "receiving response";
                 break;
             case ToolUseStarted u:
-                var tb = new ToolBlock(u.ToolUseId, KindOf(u.Name), u.Name);
+                var tb = new ToolBlock(u.ToolUseId, KindOf(u.Name), u.Name) { CommandText = ExtractCommand(u) };
                 tools[u.ToolUseId] = tb;
                 s.Transcript.Add(tb);
                 s.MarkRunSignal($"{u.Name}…");
+                if (u.Name == "TodoWrite")
+                    UpsertTaskListArtifact(s, u.InputJson);
                 break;
             case ToolResult r:
                 if (tools.TryGetValue(r.ToolUseId, out var t))
@@ -862,6 +869,8 @@ public sealed class AppViewModel : ObservableObject
                     t.Body = Trim(r.Content, 2000);
                     t.OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000);
                     t.Stat = r.IsError ? "error" : "done";
+                    if (t.CommandText is { } cmd && IsTestCommand(cmd))
+                        UpsertTestArtifact(s, cmd, r.Content, r.IsError);
                 }
                 else
                 {
@@ -893,12 +902,77 @@ public sealed class AppViewModel : ObservableObject
                     s.TokensOut = s.TurnBaseOut + turnUsage.OutputTokens;
                 }
                 if (c.CostUsd is { } turnCost) s.CostUsd += turnCost;
+                UpsertSummaryArtifact(s);
                 s.Status = c.IsError ? "error" : "done";
                 s.MarkRunEnded(c.IsError ? "failed" : "completed");
                 RefreshTotals();
                 break;
         }
         SaveState();
+    }
+
+    // ----- artifacts (light): derived from events, no extra engine calls -----
+
+    private static string? ExtractCommand(ToolUseStarted u)
+    {
+        if (u.Name is not ("Bash" or "shell")) return null;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(u.InputJson);
+            return doc.RootElement.TryGetProperty("command", out var c) ? c.GetString() : null;
+        }
+        catch { return null; }
+    }
+
+    private static bool IsTestCommand(string cmd) =>
+        System.Text.RegularExpressions.Regex.IsMatch(cmd,
+            @"\b(dotnet\s+test|npm\s+(run\s+)?test|pytest|vitest|jest|mocha|cargo\s+test|go\s+test)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    private static ArtifactViewModel GetOrAddArtifact(SessionViewModel s, string kind, string title)
+    {
+        var a = s.Artifacts.FirstOrDefault(x => x.Kind == kind && x.Title == title);
+        if (a is null) { a = new ArtifactViewModel(kind, title); s.Artifacts.Insert(0, a); }
+        return a;
+    }
+
+    /// <summary>TodoWrite 입력 → 체크리스트 아티팩트(최신 상태로 교체).</summary>
+    private static void UpsertTaskListArtifact(SessionViewModel s, string inputJson)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(inputJson);
+            if (!doc.RootElement.TryGetProperty("todos", out var todos) || todos.ValueKind != System.Text.Json.JsonValueKind.Array) return;
+            var lines = new List<string>();
+            foreach (var t in todos.EnumerateArray())
+            {
+                var status = t.TryGetProperty("status", out var st) ? st.GetString() : "";
+                var mark = status switch { "completed" => "✅", "in_progress" => "🔄", _ => "⬜" };
+                var content = t.TryGetProperty("content", out var ct) ? ct.GetString() : "";
+                lines.Add($"{mark} {content}");
+            }
+            if (lines.Count == 0) return;
+            GetOrAddArtifact(s, "tasklist", "Task List").Content = string.Join("\n", lines);
+        }
+        catch { /* malformed input — skip */ }
+    }
+
+    /// <summary>테스트 러너 실행 결과 → 테스트 아티팩트(명령별 최신 결과).</summary>
+    private static void UpsertTestArtifact(SessionViewModel s, string cmd, string output, bool isError)
+    {
+        var shortCmd = cmd.Length > 60 ? cmd[..60] + "…" : cmd;
+        var a = GetOrAddArtifact(s, "test", shortCmd);
+        a.IsError = isError;
+        var tail = output.Length > 1500 ? "…" + output[^1500..] : output;
+        a.Content = (isError ? "❌ FAILED\n" : "✅ PASSED\n") + tail;
+    }
+
+    /// <summary>턴 종료 시 마지막 어시스턴트 텍스트 → 요약(walkthrough) 아티팩트.</summary>
+    private static void UpsertSummaryArtifact(SessionViewModel s)
+    {
+        var last = s.Transcript.OfType<AgentTextBlock>().LastOrDefault();
+        if (last is null || string.IsNullOrWhiteSpace(last.Text)) return;
+        GetOrAddArtifact(s, "summary", "Summary").Content = last.Text;
     }
 
     private static string KindOf(string name) => name switch
