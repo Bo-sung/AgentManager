@@ -41,10 +41,11 @@
 | **알림(작업표시줄 깜빡임+승인 사운드) + Thinking 블록 + Provider 탐지 표시** | f726b26 |
 | **Diff 색상 + 마크다운 링크/테이블 + Release 패키징 (Codex)** | 90e8040, 0edbf6f, c79bc7b |
 
+| **README 재작성 (Gemini, 검증·보정 완료)** | c4995af, 2d88507 |
+
 ## 🔜 다음
-1. **위임 진행 중**: Codex(docs/DELEGATE_CODEX_2.md — diff 색상·마크다운 링크/테이블·publish) · Gemini(docs/DELEGATE_GEMINI_2.md — README)
-2. 소형 잔여: 세션 검색/필터 · 멀티폴더 project
-3. **뒤로 미룸(결정)**: 승인 Stage 2(Codex app-server) · Antigravity 어댑터 · 풀 MCP
+1. 소형 잔여: 세션 검색/필터 · 멀티폴더 project
+2. **뒤로 미룸(결정)**: 승인 Stage 2(Codex app-server) · Antigravity 어댑터 · 풀 MCP
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
