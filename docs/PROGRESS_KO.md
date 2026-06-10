@@ -34,11 +34,14 @@
 
 | **승인 broker Stage 1 (Claude, 로직)** — PermissionHandler 왕복, control_response, ApprovalBlock, RequireApproval(기본 off). **실 왕복 검증**(Smoke --live-approval: Write 요청→allow→파일 생성) | 253060e |
 
-## 🔜 다음 (무거운 로직 — 결정 2026-06)
-1. **Artifacts 라이트** — 기존 이벤트 파생(태스크리스트/테스트결과/요약). 풀(파일 기반)은 보류 ← 다음
-2. **MCP 패스스루** — Project.McpConfigPath → `--mcp-config`. 풀 registry는 수요 확인 후(하위 계층이라 무손실 업그레이드)
-3. 승인 broker Stage 2+: Codex(app-server 스파이크) · Antigravity
-4. **(UI 일괄 패스)** 집계 표시 · 컨텍스트 메뉴 · 아카이브 그룹 · 샌드박스 선택 · Commit/피드백 버튼 · cap 설정 · 승인 UI
+| **Artifacts 라이트 (로직)** — TodoWrite→태스크리스트, 테스트 러너 감지→pass/fail, 턴 종료→Summary. 세션별 영속 | 37154aa |
+| **MCP 패스스루 (로직)** — Project.McpConfigPath(영속) → claude `--mcp-config`(파일 존재 시만). 풀 registry로 무손실 업그레이드 가능 | 37154aa |
+
+> **무거운 로직 3종 완료** (승인 Stage1 · Artifacts 라이트 · MCP 패스스루). 로직 단계 종료.
+
+## 🔜 다음
+1. **(UI 일괄 패스)** — 집계 표시 · 컨텍스트 메뉴(삭제/보관/이름변경/fork) · 아카이브 그룹 · 샌드박스/승인 토글 · Commit/피드백 버튼 · cap 설정 · 승인 UI(Approve/Deny) · Artifacts 패널 · 프로젝트 MCP 경로 필드
+2. 이후: 승인 Stage 2+(Codex app-server 스파이크 · Antigravity) · 풀 MCP(수요 시)
 
 ## ⏸ 보류 / 후순위
 - 승인 broker (현재 bypass 유지 — 결정됨)
