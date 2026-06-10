@@ -999,10 +999,7 @@
                             </DockPanel>
                         </Border>
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <TextBox Text="{Binding DiffText}" FontFamily="{StaticResource Mono}" FontSize="11"
-                                     Foreground="{StaticResource Txt1}" Background="{StaticResource Bg1}"
-                                     BorderThickness="0" IsReadOnly="True" TextWrapping="NoWrap"
-                                     AcceptsReturn="True" AcceptsTab="True" Padding="12,10"/>
+                            <controls:DiffViewer Text="{Binding DiffText}"/>
                         </ScrollViewer>
                     </DockPanel>
                 </DockPanel>
