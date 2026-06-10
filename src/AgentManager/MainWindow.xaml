@@ -650,8 +650,8 @@
                                         <DockPanel VerticalAlignment="Bottom" LastChildFill="True">
                                             <Button DockPanel.Dock="Left" Style="{StaticResource ComposerIconButton}"
                                                     Content="⊞" Margin="0,0,8,0"
-                                                    IsEnabled="False" ToolTipService.ShowOnDisabled="True"
-                                                    ToolTip="예정 (P1) — 이미지 첨부"/>
+                                                    ToolTip="이미지 첨부 (또는 입력창에 Ctrl+V 붙여넣기)"
+                                                    Click="AttachImage_Click"/>
                                             <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
                                                     ToolTip="{Binding Branch}">
                                                 <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"
@@ -731,12 +731,35 @@
                                             <TextBlock/>
                                         </DockPanel>
                                     </Border>
+                                    <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding PendingImages}" Margin="13,0,13,4">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource AccentLine}" BorderThickness="1"
+                                                        CornerRadius="10" Padding="8,3" Margin="0,2,6,2" ToolTip="{Binding}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🖼" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding}" FontFamily="{StaticResource Mono}" FontSize="9.5"
+                                                                   Foreground="{StaticResource Txt1}" MaxWidth="180"
+                                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                        <Button Content="✕" FontSize="9" Margin="6,0,0,0" Padding="2,0"
+                                                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                                                Foreground="{StaticResource Txt2}" ToolTip="제거"
+                                                                Click="RemovePendingImage_Click"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                     <Grid MinHeight="58">
                                         <TextBox x:Name="ComposerBox" Style="{StaticResource ComposerInput}" MinHeight="58" MaxHeight="160"
                                                  Padding="15,12,15,2"
                                                  VerticalContentAlignment="Top"
                                                  Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}"
-                                                 KeyDown="Composer_KeyDown"/>
+                                                 KeyDown="Composer_KeyDown"
+                                                 PreviewKeyDown="Composer_PreviewKeyDown"/>
                                         <TextBlock Margin="15,12,15,0" Foreground="{StaticResource Txt2}" IsHitTestVisible="False"
                                                    FontSize="13.5" LineHeight="20" VerticalAlignment="Top">
                                             <TextBlock.Style>

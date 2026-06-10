@@ -18,6 +18,9 @@ public sealed class SessionViewModel : ObservableObject
     public ObservableCollection<ReviewChangeViewModel> Changes { get; } = [];
     public ObservableCollection<ArtifactViewModel> Artifacts { get; } = [];
 
+    /// <summary>Images queued for the next turn (paste/⊞). Cleared on send; not persisted.</summary>
+    public ObservableCollection<string> PendingImages { get; } = [];
+
     /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
     private string? _worktreePath;
     public string? WorktreePath

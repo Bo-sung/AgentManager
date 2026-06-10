@@ -49,7 +49,7 @@ public sealed class ClaudeAdapter : IAgentAdapter
         return psi;
     }
 
-    public IReadOnlyList<string> InitialStdinLines(string prompt)
+    public IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options)
     {
         var init = JsonSerializer.Serialize(new
         {
@@ -57,15 +57,46 @@ public sealed class ClaudeAdapter : IAgentAdapter
             request_id = "init-" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             request = new { subtype = "initialize" }
         });
+
+        // text + attached images as base64 blocks (stream-json user message format)
+        var content = new List<object> { new { type = "text", text = prompt } };
+        foreach (var img in options.Images)
+        {
+            try
+            {
+                if (!File.Exists(img)) continue;
+                content.Add(new
+                {
+                    type = "image",
+                    source = new
+                    {
+                        type = "base64",
+                        media_type = MediaTypeOf(img),
+                        data = Convert.ToBase64String(File.ReadAllBytes(img)),
+                    },
+                });
+            }
+            catch { /* unreadable image — skip, keep the turn alive */ }
+        }
+
         var user = JsonSerializer.Serialize(new
         {
             type = "user",
             session_id = "",
             parent_tool_use_id = (string?)null,
-            message = new { role = "user", content = new[] { new { type = "text", text = prompt } } }
+            message = new { role = "user", content },
         });
         return [init, user];
     }
+
+    private static string MediaTypeOf(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".gif" => "image/gif",
+        ".webp" => "image/webp",
+        ".bmp" => "image/bmp",
+        _ => "image/png",
+    };
 
     public IEnumerable<NormalizedEvent> ParseLine(string line)
     {

@@ -78,6 +78,56 @@ public partial class MainWindow : Window
         DiffFeedbackBox.Text = "";
     }
 
+    // ----- image attach (paste / file picker) -----
+    private static readonly string AttachmentsDir =
+        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AgentManager", "attachments");
+
+    private void Composer_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) != 0 && Clipboard.ContainsImage())
+        {
+            e.Handled = true;
+            PasteClipboardImage();
+        }
+    }
+
+    private void PasteClipboardImage()
+    {
+        if (_vm.ActiveSession is not { } s) return;
+        try
+        {
+            var img = Clipboard.GetImage();
+            if (img is null) return;
+            System.IO.Directory.CreateDirectory(AttachmentsDir);
+            var file = System.IO.Path.Combine(AttachmentsDir,
+                "paste-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") + ".png");
+            var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(img));
+            using (var fs = System.IO.File.Create(file)) enc.Save(fs);
+            s.PendingImages.Add(file);
+        }
+        catch { }
+    }
+
+    private void AttachImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.ActiveSession is not { } s) return;
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Multiselect = true,
+            Filter = "Images|*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp",
+        };
+        if (dlg.ShowDialog() != true) return;
+        foreach (var f in dlg.FileNames) s.PendingImages.Add(f);
+    }
+
+    private void RemovePendingImage_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is string path && _vm.ActiveSession is { } s)
+            s.PendingImages.Remove(path);
+    }
+
     private void ModelOption_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is string model && _vm.ActiveSession is { } s)

@@ -712,11 +712,13 @@ public sealed class AppViewModel : ObservableObject
         if (s is null || !s.CanSend) return;
         var prompt = s.Draft.Trim();
         s.Draft = "";
-        await RunTurnAsync(s, prompt);
+        var images = s.PendingImages.ToArray();
+        s.PendingImages.Clear();
+        await RunTurnAsync(s, prompt, images);
     }
 
     /// <summary>Run one engine turn for a session and stream normalized events into its transcript.</summary>
-    private async Task RunTurnAsync(SessionViewModel s, string prompt)
+    private async Task RunTurnAsync(SessionViewModel s, string prompt, string[]? images = null)
     {
         // concurrency cap: protect the machine/quota from too many parallel engines
         if (_running.Count >= MaxConcurrentSessions)
@@ -765,6 +767,7 @@ public sealed class AppViewModel : ObservableObject
             ResumeSessionId = s.EngineSessionId,
             Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
             McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
+            Images = images ?? [],
         };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;

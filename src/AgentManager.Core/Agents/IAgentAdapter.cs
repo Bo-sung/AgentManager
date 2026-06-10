@@ -31,6 +31,8 @@ public sealed record SessionOptions
     public SandboxMode Sandbox { get; init; } = SandboxMode.DangerFullAccess;
     /// <summary>MCP passthrough: path to a user-managed MCP config file (Claude --mcp-config).</summary>
     public string? McpConfigPath { get; init; }
+    /// <summary>Image file paths to attach to this turn (Claude: base64 blocks; Codex: -i args).</summary>
+    public IReadOnlyList<string> Images { get; init; } = [];
 }
 
 /// <summary>
@@ -50,7 +52,7 @@ public interface IAgentAdapter
     ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt);
 
     /// <summary>Lines to write to stdin right after start (Claude: init + user message; Codex: none).</summary>
-    IReadOnlyList<string> InitialStdinLines(string prompt);
+    IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options);
 
     /// <summary>Parse one line of stdout JSONL into zero or more normalized events.</summary>
     IEnumerable<NormalizedEvent> ParseLine(string line);

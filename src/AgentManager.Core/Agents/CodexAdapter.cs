@@ -47,12 +47,14 @@ public sealed class CodexAdapter : IAgentAdapter
             psi.ArgumentList.Add(options.Sandbox == SandboxMode.ReadOnly ? "read-only" : "workspace-write");
         }
         if (!string.IsNullOrWhiteSpace(options.Model)) { psi.ArgumentList.Add("-m"); psi.ArgumentList.Add(options.Model); }
+        foreach (var img in options.Images)
+            if (File.Exists(img)) { psi.ArgumentList.Add("-i"); psi.ArgumentList.Add(img); }
         psi.ArgumentList.Add("-C"); psi.ArgumentList.Add(options.WorkingDirectory);
         psi.ArgumentList.Add(prompt); // prompt is a positional arg for Codex
         return psi;
     }
 
-    public IReadOnlyList<string> InitialStdinLines(string prompt) => []; // prompt goes via args; stdin is closed
+    public IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options) => []; // prompt goes via args; stdin is closed
 
     public IEnumerable<NormalizedEvent> ParseLine(string line)
     {

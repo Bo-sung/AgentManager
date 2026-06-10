@@ -52,7 +52,7 @@ public sealed class AgentSession(
         }, ct);
 
         bool stdinOpen = !adapter.CloseStdinAfterStart;
-        foreach (var line in adapter.InitialStdinLines(prompt))
+        foreach (var line in adapter.InitialStdinLines(prompt, options))
             await proc.StandardInput.WriteLineAsync(line.AsMemory(), ct);
         await proc.StandardInput.FlushAsync(ct);
         if (adapter.CloseStdinAfterStart)
