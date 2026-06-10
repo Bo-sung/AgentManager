@@ -15,6 +15,12 @@
         <WindowChrome CaptionHeight="34" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0"/>
     </WindowChrome.WindowChrome>
 
+    <Window.InputBindings>
+        <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding NewAgentCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="R" Command="{Binding ToggleReviewCommand}"/>
+    </Window.InputBindings>
+
+
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
         <ObjectDataProvider x:Key="SandboxModes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">

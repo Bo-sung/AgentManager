@@ -75,4 +75,15 @@ public partial class MainWindow : Window
     {
         DiffFeedbackBox.Text = "";
     }
+
+    protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            if (_vm.ShowNewAgent) { _vm.ShowNewAgent = false; e.Handled = true; }
+            else if (_vm.ShowNewProject) { _vm.ShowNewProject = false; e.Handled = true; }
+        }
+    }
 }
+
