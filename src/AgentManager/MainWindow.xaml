@@ -4,6 +4,8 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:vm="clr-namespace:AgentManager.ViewModels"
         xmlns:controls="clr-namespace:AgentManager.Controls"
+        xmlns:agents="clr-namespace:AgentManager.Core.Agents;assembly=AgentManager.Core"
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
         x:Name="Root"
         Title="AgentManager" Height="760" Width="1380" WindowStyle="None"
         Background="{StaticResource Bg1}" Foreground="{StaticResource Txt0}"
@@ -15,6 +17,11 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
+        <ObjectDataProvider x:Key="SandboxModes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="agents:SandboxMode"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
 
         <!-- ===== Transcript block templates ===== -->
         <DataTemplate DataType="{x:Type vm:UserBlock}">
@@ -573,6 +580,15 @@
                                           IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
                                           Content="{Binding TranslationLabel}" ToolTip="Toggle translation for this session"
                                           Margin="16,0,0,0"/>
+                            <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
+                                          IsChecked="{Binding RequireApproval, Mode=TwoWay}"
+                                          Content="APPROVAL" ToolTip="Require tool approval for this session"
+                                          Margin="8,0,0,0"/>
+                            <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding Source={StaticResource SandboxModes}}"
+                                      SelectedItem="{Binding Sandbox, Mode=TwoWay}"
+                                      FontFamily="{StaticResource Mono}" FontSize="10" Width="132" Height="24"
+                                      Background="{StaticResource Bg1}" Foreground="{StaticResource Txt1}"
+                                      BorderBrush="{StaticResource Line}" Margin="8,0,0,0"/>
                             <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
                                 <Run Text="TKN "/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
                             <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}" Margin="0,0,16,0">
