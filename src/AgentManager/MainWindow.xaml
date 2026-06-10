@@ -970,6 +970,11 @@
                             </StackPanel>
                         </Grid>
 
+                        <TextBlock Text="동시 실행 한도" Style="{StaticResource Lbl}" Margin="0,16,0,7"/>
+                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                 Text="{Binding MaxConcurrentSessions, UpdateSourceTrigger=PropertyChanged}"/>
+
                         <DockPanel Margin="0,16,0,0">
                             <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
                                           IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}"
