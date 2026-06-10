@@ -16,8 +16,49 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _vm;
         _vm.PropertyChanged += Vm_PropertyChanged;
+        _vm.AttentionRequested += OnAttentionRequested;
         RestoreWindowPlacement();
         Closing += (_, _) => SaveWindowPlacement();
+    }
+
+    // ----- attention notifications (flash taskbar when unfocused; sound for approvals) -----
+    private void OnAttentionRequested(string reason, ViewModels.SessionViewModel s)
+    {
+        Dispatcher.InvokeAsync(() =>
+        {
+            if (reason == "approval")
+                System.Media.SystemSounds.Exclamation.Play();
+            if (!IsActive)
+                FlashTaskbar();
+        });
+    }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct FLASHWINFO
+    {
+        public uint cbSize; public IntPtr hwnd; public uint dwFlags; public uint uCount; public uint dwTimeout;
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool FlashWindowEx(ref FLASHWINFO pwfi);
+
+    private void FlashTaskbar()
+    {
+        try
+        {
+            var h = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if (h == IntPtr.Zero) return;
+            var fi = new FLASHWINFO
+            {
+                cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<FLASHWINFO>(),
+                hwnd = h,
+                dwFlags = 0x3 | 0xC, // FLASHW_ALL | FLASHW_TIMERNOFG: flash until the window comes to foreground
+                uCount = 0,
+                dwTimeout = 0,
+            };
+            FlashWindowEx(ref fi);
+        }
+        catch { }
     }
 
     private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)

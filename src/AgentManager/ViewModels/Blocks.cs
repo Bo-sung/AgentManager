@@ -102,6 +102,14 @@ public sealed class ErrorBlock(string title, string body) : TranscriptItem
     public string Body { get; } = body;
 }
 
+/// <summary>Model reasoning (Claude thinking block) — collapsed by default.</summary>
+public sealed class ThinkingBlock(string text) : TranscriptItem
+{
+    public string Text { get; } = text;
+    private bool _isOpen;
+    public bool IsOpen { get => _isOpen; set => Set(ref _isOpen, value); }
+}
+
 /// <summary>Engine asked permission to run a tool; resolves to allowed/denied/expired.</summary>
 public sealed class ApprovalBlock(string requestId, string toolName, string inputSummary) : TranscriptItem
 {

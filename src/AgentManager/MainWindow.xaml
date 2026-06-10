@@ -133,6 +133,35 @@
             </StackPanel>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:ThinkingBlock}">
+            <StackPanel Margin="40,4,0,4">
+                <ToggleButton IsChecked="{Binding IsOpen}" Cursor="Hand" Background="Transparent" BorderThickness="0"
+                              HorizontalAlignment="Left">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border Background="Transparent" Padding="2,2">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="◌ thinking" FontFamily="{StaticResource Mono}" FontSize="10"
+                                               Foreground="{StaticResource Txt3}"/>
+                                    <TextBlock x:Name="chev" Text=" ▸" FontSize="9" Foreground="{StaticResource Txt3}"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="chev" Property="Text" Value=" ▾"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
+                <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="2,0,0,0" Padding="12,4,0,2" Margin="2,2,0,0"
+                        Visibility="{Binding IsOpen, Converter={StaticResource BoolVis}}">
+                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontStyle="Italic" FontSize="12"
+                               Foreground="{StaticResource Txt2}" LineHeight="18"/>
+                </Border>
+            </StackPanel>
+        </DataTemplate>
+
         <!-- Approval prompt: engine is blocked until Approve/Deny -->
         <DataTemplate DataType="{x:Type vm:ApprovalBlock}">
             <Border Margin="40,10,0,10" BorderBrush="{StaticResource Warn}" BorderThickness="1"
@@ -1088,11 +1117,17 @@
                         <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
                                  Text="{Binding SettingsClaudePath, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="{Binding ClaudeDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5"
+                                   Foreground="{StaticResource Txt2}" Margin="2,4,0,0" TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding ClaudeDetectLabel}"/>
 
                         <TextBlock Text="CODEX CLI PATH" Style="{StaticResource Lbl}" Margin="0,14,0,7"/>
                         <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
                                  Text="{Binding SettingsCodexPath, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="{Binding CodexDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5"
+                                   Foreground="{StaticResource Txt2}" Margin="2,4,0,0" TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding CodexDetectLabel}"/>
 
                         <Border Height="1" Background="{StaticResource LineSoft}" Margin="0,18,0,16"/>
 

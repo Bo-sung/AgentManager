@@ -124,6 +124,10 @@ public sealed class AppViewModel : ObservableObject
         return null;
     }
 
+    /// <summary>Attention signal for the View (taskbar flash/sound when the window is unfocused).
+    /// Reasons: "approval" (input needed now), "done", "error".</summary>
+    public event Action<string, SessionViewModel>? AttentionRequested;
+
     // ----- approval broker (Stage 1: Claude) -----
     private readonly Dictionary<string, (TaskCompletionSource<PermissionDecision> Tcs, ApprovalBlock Block, SessionViewModel Session)> _pendingApprovals = [];
     public RelayCommand ApproveCommand { get; }
@@ -140,6 +144,7 @@ public sealed class AppViewModel : ObservableObject
             _pendingApprovals[pr.RequestId] = (tcs, block, s);
             s.Status = "waiting";
             s.Activity = $"승인 대기: {pr.ToolName}";
+            AttentionRequested?.Invoke("approval", s);
         });
         return tcs.Task;
     }
@@ -385,6 +390,18 @@ public sealed class AppViewModel : ObservableObject
     public string SettingsOllamaModel { get => _settingsOllamaModel; set => Set(ref _settingsOllamaModel, value); }
     private bool _settingsDefaultTranslationEnabled = true;
     public bool SettingsDefaultTranslationEnabled { get => _settingsDefaultTranslationEnabled; set => Set(ref _settingsDefaultTranslationEnabled, value); }
+
+    // provider detection status (settings panel)
+    public string ClaudeDetectLabel => DetectLabel("cc", _claudePath);
+    public string CodexDetectLabel => DetectLabel("gx", _codexPath);
+    private static string DetectLabel(string id, string? overridePath)
+    {
+        var exe = EngineRegistry.ResolveExe(id, id == "cc" ? overridePath : null, id == "gx" ? overridePath : null);
+        if (exe is null) return "✗ 미발견";
+        if (File.Exists(exe)) return "✓ " + exe;
+        return "△ PATH 의존: " + exe; // bare command name — resolved at spawn time
+    }
+    private void RefreshDetectLabels() { OnChanged(nameof(ClaudeDetectLabel)); OnChanged(nameof(CodexDetectLabel)); }
     private string _settingsStatus = "";
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
 
@@ -504,6 +521,7 @@ public sealed class AppViewModel : ObservableObject
     {
         _claudePath = Clean(SettingsClaudePath);
         _codexPath = Clean(SettingsCodexPath);
+        RefreshDetectLabels();
         _ollamaEndpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint.Trim();
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();
         TranslationEnabled = SettingsDefaultTranslationEnabled;
@@ -915,6 +933,10 @@ public sealed class AppViewModel : ObservableObject
                 s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText });
                 s.Activity = "receiving response";
                 break;
+            case Thinking th when !string.IsNullOrWhiteSpace(th.Text):
+                s.Transcript.Add(new ThinkingBlock(th.Text));
+                s.Activity = "thinking…";
+                break;
             case ToolUseStarted u:
                 var tb = new ToolBlock(u.ToolUseId, KindOf(u.Name), u.Name) { CommandText = ExtractCommand(u) };
                 tools[u.ToolUseId] = tb;
@@ -963,6 +985,7 @@ public sealed class AppViewModel : ObservableObject
                 }
                 if (c.CostUsd is { } turnCost) s.CostUsd += turnCost;
                 UpsertSummaryArtifact(s);
+                AttentionRequested?.Invoke(c.IsError ? "error" : "done", s);
                 s.Status = c.IsError ? "error" : "done";
                 s.MarkRunEnded(c.IsError ? "failed" : "completed");
                 RefreshTotals();
