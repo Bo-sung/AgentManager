@@ -70,4 +70,9 @@ public partial class MainWindow : Window
         if ((sender as ListBox)?.SelectedItem is ReviewChangeViewModel change)
             _ = _vm.SelectReviewChangeAsync(change);
     }
+
+    private void DiffFeedbackSend_Click(object sender, RoutedEventArgs e)
+    {
+        DiffFeedbackBox.Text = "";
+    }
 }

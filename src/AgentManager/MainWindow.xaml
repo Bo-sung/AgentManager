@@ -780,9 +780,24 @@
                     <StackPanel DockPanel.Dock="Bottom">
                         <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="12,10">
                             <DockPanel>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}" Content="➤"
+                                        Foreground="{StaticResource AccentText}" Margin="8,0,0,0"
+                                        Command="{Binding DataContext.SendDiffFeedbackCommand, ElementName=Root}"
+                                        CommandParameter="{Binding Text, ElementName=DiffFeedbackBox}"
+                                        Click="DiffFeedbackSend_Click"/>
+                                <TextBox x:Name="DiffFeedbackBox" Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}"
+                                         BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="9"
+                                         AcceptsReturn="False" MinHeight="32"
+                                         TextWrapping="NoWrap"/>
+                            </DockPanel>
+                        </Border>
+                        <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="12,10">
+                            <DockPanel>
                                 <Button DockPanel.Dock="Left" Style="{StaticResource AccentButton}" Content="Merge ▸ main" Margin="0,0,8,0"
                                         ToolTip="agent 변경을 커밋 후 프로젝트 메인 브랜치로 머지"
                                         Command="{Binding DataContext.MergeReviewCommand, ElementName=Root}"/>
+                                <Button DockPanel.Dock="Left" Style="{StaticResource ChipButton}" Content="Commit only" Margin="0,0,8,0"
+                                        Command="{Binding DataContext.CommitReviewCommand, ElementName=Root}"/>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="Discard"
                                         ToolTip="worktree의 변경을 모두 폐기(reset --hard + clean)"
                                         Command="{Binding DataContext.DiscardReviewCommand, ElementName=Root}"/>
