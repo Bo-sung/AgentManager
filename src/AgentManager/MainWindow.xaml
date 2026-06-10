@@ -68,6 +68,10 @@
                                       IsChecked="{Binding ShowOriginal, Mode=TwoWay}"
                                       Visibility="{Binding HasOriginal, Converter={StaticResource BoolVis}}"
                                       Margin="9,0,0,0" ToolTip="Show original response"/>
+                        <Button Content="⧉" FontSize="11" Margin="9,0,0,0" Padding="4,0"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                Foreground="{StaticResource Txt3}" ToolTip="복사"
+                                Click="CopyAgentText_Click"/>
                     </StackPanel>
                     <controls:MarkdownViewer Text="{Binding DisplayText}"/>
                 </StackPanel>

@@ -76,6 +76,12 @@ public partial class MainWindow : Window
         DiffFeedbackBox.Text = "";
     }
 
+    private void CopyAgentText_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is AgentTextBlock b)
+            try { Clipboard.SetText(b.Text); } catch { }
+    }
+
     protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);
