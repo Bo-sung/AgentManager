@@ -33,6 +33,7 @@
 | **MCP 패스스루 (로직)** — Project.McpConfigPath(영속) → claude `--mcp-config`(파일 존재 시만) | 37154aa |
 | **승인 UI (Approve/Deny 블록)** + UI 배치 위임 프롬프트 | fa54913 |
 | **UI 일괄 패스 (Codex 세션 수행, 검증 완료)** — 집계 표시, 컨텍스트 메뉴, 아카이브 그룹, 승인/샌드박스 토글, Commit/피드백, cap 설정, Artifacts 패널, MCP 경로 필드 | ee8e271~dfc2f34 |
+| **UI 폴리시 패스 (Gemini)** — 단축키/복사/창상태/내보내기/빈상태·툴팁 | 5483ae4~0b446e8 |
 
 > 기능(Core/VM) 우선 + View 일괄 + 멀티세션 위임 방식으로 **로직·UI 패스 모두 종료**.
 
