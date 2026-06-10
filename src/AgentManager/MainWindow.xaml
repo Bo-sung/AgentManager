@@ -774,6 +774,48 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
+
+                            <DockPanel Margin="0,14,0,7">
+                                <TextBlock DockPanel.Dock="Left" Text="ARTIFACTS" Style="{StaticResource Lbl}"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding Artifacts.Count}" FontFamily="{StaticResource Mono}"
+                                           FontSize="10" Foreground="{StaticResource Txt2}"/>
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding Artifacts}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,6" Background="{StaticResource Bg1}" BorderThickness="1" CornerRadius="7">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsError}" Value="True">
+                                                            <Setter Property="BorderBrush" Value="{StaticResource Err}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel>
+                                                <DockPanel Margin="9,7,9,5">
+                                                    <Border DockPanel.Dock="Left" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                                            CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                        <TextBlock Text="{Binding Kind}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Accent}"/>
+                                                    </Border>
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding UpdatedAt, StringFormat={}{0:HH:mm:ss}}"
+                                                               FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt3}"/>
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11.5" Foreground="{StaticResource Txt0}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </DockPanel>
+                                                <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="9,7" MaxHeight="120">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                                        <TextBlock Text="{Binding Content}" FontFamily="{StaticResource Mono}" FontSize="10.5"
+                                                                   Foreground="{StaticResource Txt1}" TextWrapping="Wrap"/>
+                                                    </ScrollViewer>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
 
