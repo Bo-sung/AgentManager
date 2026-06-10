@@ -560,8 +560,8 @@
                                 <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"/>
                             </Border>
                             <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="Open IDE" Margin="0,0,8,0"
-                                    IsEnabled="False" ToolTipService.ShowOnDisabled="True"
-                                    ToolTip="예정 (P1) — 활성 세션 worktree를 IDE로 열기"/>
+                                    ToolTip="활성 세션 worktree를 VS Code로 열기 (없으면 탐색기)"
+                                    Command="{Binding DataContext.OpenIdeCommand, ElementName=Root}"/>
                             <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="⤓ Export" Margin="0,0,8,0"
                                     ToolTip="트랜스크립트를 Markdown으로 내보내기" Click="ExportTranscript_Click"/>
                             <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="▣" Width="34" Padding="0"

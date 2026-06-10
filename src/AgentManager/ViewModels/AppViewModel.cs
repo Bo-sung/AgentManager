@@ -65,6 +65,41 @@ public sealed class AppViewModel : ObservableObject
             _ => ActiveSession is { IsRunning: false, SelectedChange: not null });
         ApproveCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, true); });
         DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
+        OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
+    }
+
+    public RelayCommand OpenIdeCommand { get; }
+
+    /// <summary>IDE 핸드오프: 활성 세션의 worktree(없으면 프로젝트 폴더)를 VS Code로 연다.
+    /// code가 PATH에 없으면 탐색기로 폴백.</summary>
+    private static void OpenIde(SessionViewModel? s)
+    {
+        if (s is null) return;
+        var path = s.WorktreePath ?? s.ProjectPath;
+        if (!Directory.Exists(path)) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "code",
+                Arguments = $"\"{path}\"",
+                UseShellExecute = true,
+                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
+            });
+        }
+        catch
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"\"{path}\"",
+                    UseShellExecute = true,
+                });
+            }
+            catch { }
+        }
     }
 
     // ----- approval broker (Stage 1: Claude) -----
