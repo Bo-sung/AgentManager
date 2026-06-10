@@ -222,6 +222,10 @@
                     <Ellipse Width="7" Height="7" Fill="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                     <TextBlock Foreground="{StaticResource Txt2}" VerticalAlignment="Center">
                         <Run Text="{Binding DoneCount, Mode=OneWay}"/> DONE</TextBlock>
+                    <TextBlock Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="18,0,10,0">
+                        <Run Text="Σ TKN "/><Run Text="{Binding TotalTokensLabel, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
+                    <TextBlock Foreground="{StaticResource Txt2}" VerticalAlignment="Center">
+                        <Run Text="COST "/><Run Text="{Binding TotalCostLabel, Mode=OneWay}" Foreground="{StaticResource Ok}"/></TextBlock>
                 </StackPanel>
 
                 <StackPanel Grid.Column="4" Orientation="Horizontal" shell:WindowChrome.IsHitTestVisibleInChrome="True">
