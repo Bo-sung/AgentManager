@@ -27,24 +27,20 @@
 | **M1-⑨ 비용/토큰 정산 + 모델 연결 (로직)** (TurnCompleted.Usage 보정, CostUsd 누적·영속, Total 집계 속성, SessionOptions.Model) | e48fab7 |
 | **A-① 세션 수명주기 (로직)** (Delete=중지+worktree제거, Archive 토글+ArchivedSessions, Rename, 영속성) | 9b77dc2 |
 
-> **작업 방식(합의)**: 기능(Core/VM) 우선, View XAML 바인딩은 나중에 일괄.
-> UI 노출 대기 중: 집계 표시(Σ TKN/COST) · 세션 컨텍스트 메뉴(삭제/보관/이름변경) · 아카이브 그룹
-
 | **검증 패스** (Smoke: sandbox/model 인자 매트릭스 + GitWorktree e2e · 실 2턴 resume="47" 성공, session_id 유지) | ec1aab6 |
-
-| **승인 broker Stage 1 (Claude, 로직)** — PermissionHandler 왕복, control_response, ApprovalBlock, RequireApproval(기본 off). **실 왕복 검증**(Smoke --live-approval: Write 요청→allow→파일 생성) | 253060e |
-
+| **승인 broker Stage 1 (Claude, 로직)** — PermissionHandler 왕복, control_response, ApprovalBlock, RequireApproval(기본 off). 실 왕복 검증(Smoke --live-approval) | 253060e |
 | **Artifacts 라이트 (로직)** — TodoWrite→태스크리스트, 테스트 러너 감지→pass/fail, 턴 종료→Summary. 세션별 영속 | 37154aa |
-| **MCP 패스스루 (로직)** — Project.McpConfigPath(영속) → claude `--mcp-config`(파일 존재 시만). 풀 registry로 무손실 업그레이드 가능 | 37154aa |
-| **UI 일괄 패스** — 집계 표시, 세션 컨텍스트 메뉴, 아카이브 그룹, 승인/샌드박스 토글, Commit/피드백, cap 설정, Artifacts 패널, MCP 경로 필드 | ee8e271 · 1ca2216 · b463f45 · 65cf993 · ddd1a2f · 0ba4bda · 9f2e2b8 · 59d63b2 · dfc2f34 |
+| **MCP 패스스루 (로직)** — Project.McpConfigPath(영속) → claude `--mcp-config`(파일 존재 시만) | 37154aa |
+| **승인 UI (Approve/Deny 블록)** + UI 배치 위임 프롬프트 | fa54913 |
+| **UI 일괄 패스 (Codex 세션 수행, 검증 완료)** — 집계 표시, 컨텍스트 메뉴, 아카이브 그룹, 승인/샌드박스 토글, Commit/피드백, cap 설정, Artifacts 패널, MCP 경로 필드 | ee8e271~dfc2f34 |
 
-> **무거운 로직 3종 완료** (승인 Stage1 · Artifacts 라이트 · MCP 패스스루). 로직 단계 종료.
+> 기능(Core/VM) 우선 + View 일괄 + 멀티세션 위임 방식으로 **로직·UI 패스 모두 종료**.
 
 ## 🔜 다음
-1. 이후: 승인 Stage 2+(Codex app-server 스파이크 · Antigravity) · 풀 MCP(수요 시)
+1. **UI 폴리시 패스 (Gemini 위임)** — 단축키 · 메시지 복사 · 창 상태 기억 · 트랜스크립트 내보내기 등 (docs/UI_POLISH_PROMPT_GEMINI.md)
+2. 승인 Stage 2+(Codex app-server 스파이크 · Antigravity) · 풀 MCP(수요 시)
 
 ## ⏸ 보류 / 후순위
-- 승인 broker (현재 bypass 유지 — 결정됨)
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
 - Browser QA · SSH/원격 · 컨테이너 · Scheduled · 팀공유 · Extension SDK → P2 이후
 - Antigravity 어댑터 → 전환(6/18)·표면 확정 후
