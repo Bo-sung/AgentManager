@@ -113,6 +113,33 @@ public partial class MainWindow : Window
         catch { }
     }
 
+    private void ExportTranscript_Click(object sender, RoutedEventArgs e)
+    {
+        var s = _vm.ActiveSession;
+        if (s is null) return;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = "session-" + s.Title + ".md",
+            Filter = "Markdown (*.md)|*.md"
+        };
+        if (dlg.ShowDialog() != true) return;
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("# " + s.Title).AppendLine();
+        foreach (var item in s.Transcript)
+        {
+            switch (item)
+            {
+                case UserBlock u: sb.AppendLine("## 🧑 User").AppendLine(u.Text).AppendLine(); break;
+                case AgentTextBlock a: sb.AppendLine("## 🤖 " + s.AgentName).AppendLine(a.Text).AppendLine(); break;
+                case ToolBlock t: sb.AppendLine("### 🔧 " + t.Name).AppendLine("```").AppendLine(t.Body).AppendLine("```").AppendLine(); break;
+                case ErrorBlock err: sb.AppendLine("### ❌ " + err.Title).AppendLine(err.Body).AppendLine(); break;
+                case ApprovalBlock p: sb.AppendLine("### ⚠ Approval: " + p.ToolName + " → " + p.State).AppendLine(); break;
+                case WorkingBlock w: sb.AppendLine("> " + w.Text).AppendLine(); break;
+            }
+        }
+        try { System.IO.File.WriteAllText(dlg.FileName, sb.ToString()); } catch { }
+    }
+
     private void SaveWindowPlacement()
     {
         try
