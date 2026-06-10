@@ -71,35 +71,57 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand OpenIdeCommand { get; }
 
     /// <summary>IDE 핸드오프: 활성 세션의 worktree(없으면 프로젝트 폴더)를 VS Code로 연다.
-    /// code가 PATH에 없으면 탐색기로 폴백.</summary>
+    /// ShellExecute는 .cmd(code)를 못 찾으므로 설치 경로를 직접 탐색해 cmd /c로 실행. 없으면 탐색기.</summary>
     private static void OpenIde(SessionViewModel? s)
     {
         if (s is null) return;
         var path = s.WorktreePath ?? s.ProjectPath;
         if (!Directory.Exists(path)) return;
+
+        var code = FindVsCodeCli();
+        try
+        {
+            if (code is not null)
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c \"\"{code}\" \"{path}\"\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                });
+                return;
+            }
+        }
+        catch { }
         try
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "code",
+                FileName = "explorer.exe",
                 Arguments = $"\"{path}\"",
                 UseShellExecute = true,
-                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
             });
         }
-        catch
+        catch { }
+    }
+
+    private static string? FindVsCodeCli()
+    {
+        string[] candidates =
+        [
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Microsoft VS Code", "bin", "code.cmd"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft VS Code", "bin", "code.cmd"),
+        ];
+        foreach (var c in candidates)
+            if (File.Exists(c)) return c;
+        // PATH lookup (covers custom installs)
+        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
         {
-            try
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "explorer.exe",
-                    Arguments = $"\"{path}\"",
-                    UseShellExecute = true,
-                });
-            }
-            catch { }
+            var p = Path.Combine(dir.Trim(), "code.cmd");
+            try { if (File.Exists(p)) return p; } catch { }
         }
+        return null;
     }
 
     // ----- approval broker (Stage 1: Claude) -----

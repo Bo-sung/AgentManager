@@ -47,11 +47,18 @@ public sealed class SessionViewModel : ObservableObject
     {
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
         _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
+        AvailableModels = engine.Models;
         StartedAt = startedAt ?? DateTime.Now;
     }
 
     private string _title;
     public string Title { get => _title; set => Set(ref _title, value); }
+
+    /// <summary>Models offered by this session's engine (for the composer model menu).</summary>
+    public string[] AvailableModels { get; private set; } = [];
+
+    /// <summary>Last segment of the branch, e.g. "agent/foo-bar" → "foo-bar" (composer pill).</summary>
+    public string BranchTail => Branch.Contains('/') ? Branch[(Branch.LastIndexOf('/') + 1)..] : Branch;
 
     /// <summary>Archived sessions are hidden from the Active/Project groups (kept in storage).</summary>
     private bool _isArchived;

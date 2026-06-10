@@ -652,17 +652,58 @@
                                                     Content="⊞" Margin="0,0,8,0"
                                                     IsEnabled="False" ToolTipService.ShowOnDisabled="True"
                                                     ToolTip="예정 (P1) — 이미지 첨부"/>
-                                            <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0">
+                                            <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
+                                                    ToolTip="{Binding Branch}">
                                                 <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"
                                                            VerticalAlignment="Center">
-                                                    <Run Text="⌘ worktree · "/><Run Text="{Binding Branch, Mode=OneWay}"/>
+                                                    <Run Text="⌥ Worktree · " Foreground="{StaticResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
                                                 </TextBlock>
                                             </Border>
-                                            <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0">
-                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" VerticalAlignment="Center">
-                                                    <Run Text="✧ " Foreground="{StaticResource Txt2}"/><Run Text="{Binding Model}" Foreground="{StaticResource Accent}"/>
-                                                </TextBlock>
-                                            </Border>
+                                            <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
+                                                <ToggleButton x:Name="ModelMenuBtn" Style="{StaticResource TogglePillButton}"
+                                                              Height="26" Padding="10,0" Cursor="Hand" ToolTip="모델 선택">
+                                                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" VerticalAlignment="Center">
+                                                        <Run Text="✧ " Foreground="{StaticResource Txt2}"/><Run Text="{Binding Model}" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/><Run Text="  ⌃" Foreground="{StaticResource Txt2}"/>
+                                                    </TextBlock>
+                                                </ToggleButton>
+                                                <Popup IsOpen="{Binding IsChecked, ElementName=ModelMenuBtn, Mode=TwoWay}"
+                                                       StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
+                                                    <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource LineBright}" BorderThickness="1"
+                                                            CornerRadius="7" Padding="5" Margin="8" MinWidth="200">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
+                                                        </Border.Effect>
+                                                        <StackPanel>
+                                                            <TextBlock Style="{StaticResource Lbl}" Margin="9,5,9,7">
+                                                                <Run Text="{Binding AgentName, Mode=OneWay}"/><Run Text=" · model"/>
+                                                            </TextBlock>
+                                                            <ItemsControl ItemsSource="{Binding AvailableModels}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Button Click="ModelOption_Click" Cursor="Hand"
+                                                                                Background="Transparent" BorderThickness="0"
+                                                                                HorizontalContentAlignment="Stretch" Padding="0">
+                                                                            <Button.Template>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Border x:Name="mi" Background="Transparent" CornerRadius="4" Padding="9,7">
+                                                                                        <ContentPresenter/>
+                                                                                    </Border>
+                                                                                    <ControlTemplate.Triggers>
+                                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                                            <Setter TargetName="mi" Property="Background" Value="{StaticResource Bg4}"/>
+                                                                                        </Trigger>
+                                                                                    </ControlTemplate.Triggers>
+                                                                                </ControlTemplate>
+                                                                            </Button.Template>
+                                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt0}" Text="{Binding}"/>
+                                                                        </Button>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Popup>
+                                            </Grid>
                                             <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Content="◼" Foreground="White"
                                                     Margin="6,0,0,0" ToolTip="중지"
                                                     Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"
@@ -715,7 +756,9 @@
                             </Border>
                             <DockPanel Margin="4,6,4,0" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="9.5">
                                 <TextBlock DockPanel.Dock="Left" Text="ENTER 전송 · SHIFT+ENTER 줄바꿈" Foreground="{StaticResource Txt3}"/>
-                                <TextBlock DockPanel.Dock="Right" Text="{Binding Cli}" Foreground="{StaticResource Txt3}"/>
+                                <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource Txt3}">
+                                    <Run Text="{Binding Cli, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Branch, Mode=OneWay}"/>
+                                </TextBlock>
                             </DockPanel>
                         </StackPanel>
                     </Border>

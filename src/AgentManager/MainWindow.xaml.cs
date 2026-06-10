@@ -78,6 +78,15 @@ public partial class MainWindow : Window
         DiffFeedbackBox.Text = "";
     }
 
+    private void ModelOption_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is string model && _vm.ActiveSession is { } s)
+            s.Model = model;
+        // close the popup by unchecking its toggle (popup IsOpen is two-way bound)
+        if (FindName("ModelMenuBtn") is System.Windows.Controls.Primitives.ToggleButton t)
+            t.IsChecked = false;
+    }
+
     private void CopyAgentText_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is AgentTextBlock b)
