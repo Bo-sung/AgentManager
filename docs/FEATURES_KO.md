@@ -64,6 +64,8 @@
 | 사이드바 grouping (project/상태) | ✅ Active/Project 그룹 + 아카이브 그룹(로직) | VSCode |
 | 세션 수명주기 (삭제/보관/이름변경) | 🟡 로직✅(커맨드·영속성) · UI(컨텍스트 메뉴)⬜ | 공통 |
 | 동시 실행 cap (병렬 세션 수 제한) | 🟡 로직✅ (기본 3, 영속) · 설정 UI⬜ | 공통 |
+| **IDE 핸드오프** (Open IDE — 활성 세션 worktree를 에디터로) | ⬜ 예정 (UI 자리만 비활성으로 존재) | VSCode+AG |
+| **이미지 첨부** (컴포저 ⊞ — 엔진 `-i`/base64 전달) | ⬜ 예정 (UI 자리만 비활성으로 존재) | 공통 |
 
 ### P2 — 고급/차별화
 | 기능 | 비고 |
@@ -71,7 +73,8 @@
 | **Multi-agent pipeline / Handoff** (Claude plan→Codex impl→verify) | 제품 차별점, 그러나 무거움 |
 | Antigravity CLI 어댑터 | 전환(6/18)·표면 확정 후 |
 | Browser QA / screenshot 검증 | AG 강점, 매우 무거움 |
-| Scheduled tasks (cron) | sidecar 필요 |
+| Scheduled tasks (cron) | sidecar 필요. 사이드바에 비활성 자리 존재 |
+| Activity History 뷰 (세션 횡단 활동 이력) | 사이드바에 비활성 자리 존재 |
 | Skills/Hooks registry | 확장 |
 | SSH/원격 runner, 컨테이너 격리 | 매우 무거움 |
 | Subagent orchestration / Judge agent | 고급 |

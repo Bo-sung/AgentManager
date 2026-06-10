@@ -220,12 +220,17 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Style="{StaticResource MenuButton}" Content="File"/>
-                    <Button Style="{StaticResource MenuButton}" Content="Edit"/>
-                    <Button Style="{StaticResource MenuButton}" Content="View"/>
-                    <Button Style="{StaticResource MenuButton}" Content="Agents"/>
+                    <Button Style="{StaticResource MenuButton}" Content="File" IsEnabled="False"
+                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 기능은 화면 버튼으로 제공됩니다"/>
+                    <Button Style="{StaticResource MenuButton}" Content="Edit" IsEnabled="False"
+                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 기능은 화면 버튼으로 제공됩니다"/>
+                    <Button Style="{StaticResource MenuButton}" Content="View" IsEnabled="False"
+                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 기능은 화면 버튼으로 제공됩니다"/>
+                    <Button Style="{StaticResource MenuButton}" Content="Agents" IsEnabled="False"
+                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 엔진 설정은 Settings에서"/>
                     <Button Style="{StaticResource MenuButton}" Content="Settings" Command="{Binding ShowSettingsCommand}"/>
-                    <Button Style="{StaticResource MenuButton}" Content="Help"/>
+                    <Button Style="{StaticResource MenuButton}" Content="Help" IsEnabled="False"
+                            ToolTipService.ShowOnDisabled="True" ToolTip="보류"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0"
@@ -268,9 +273,12 @@
                             Command="{Binding NewAgentCommand}" Content="+  New Agent"/>
 
                     <StackPanel DockPanel.Dock="Top" Margin="8,0,8,4">
-                        <TextBlock Text="◰  Orchestrator" Foreground="{StaticResource Txt0}" Padding="9,7"/>
-                        <TextBlock Text="◷  Activity History" Foreground="{StaticResource Txt1}" Padding="9,7"/>
-                        <TextBlock Text="▦  Scheduled Tasks" Foreground="{StaticResource Txt1}" Padding="9,7"/>
+                        <TextBlock Text="◰  Orchestrator" Foreground="{StaticResource Txt0}" Padding="9,7"
+                                   ToolTip="현재 화면"/>
+                        <TextBlock Text="◷  Activity History" Foreground="{StaticResource Txt3}" Padding="9,7"
+                                   ToolTip="예정 (P2) — 세션 횡단 활동 이력 뷰"/>
+                        <TextBlock Text="▦  Scheduled Tasks" Foreground="{StaticResource Txt3}" Padding="9,7"
+                                   ToolTip="예정 (P2) — 예약 에이전트 실행"/>
                     </StackPanel>
 
                     <!-- footer -->
@@ -551,7 +559,9 @@
                             <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"/>
                             </Border>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="Open IDE" Margin="0,0,8,0"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="Open IDE" Margin="0,0,8,0"
+                                    IsEnabled="False" ToolTipService.ShowOnDisabled="True"
+                                    ToolTip="예정 (P1) — 활성 세션 worktree를 IDE로 열기"/>
                             <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="⤓ Export" Margin="0,0,8,0"
                                     ToolTip="트랜스크립트를 Markdown으로 내보내기" Click="ExportTranscript_Click"/>
                             <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="▣" Width="34" Padding="0"
@@ -639,7 +649,9 @@
                                     <Border DockPanel.Dock="Bottom" Padding="9,0,9,8" Height="46">
                                         <DockPanel VerticalAlignment="Bottom" LastChildFill="True">
                                             <Button DockPanel.Dock="Left" Style="{StaticResource ComposerIconButton}"
-                                                    Content="⊞" ToolTip="Attach" Margin="0,0,8,0"/>
+                                                    Content="⊞" Margin="0,0,8,0"
+                                                    IsEnabled="False" ToolTipService.ShowOnDisabled="True"
+                                                    ToolTip="예정 (P1) — 이미지 첨부"/>
                                             <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0">
                                                 <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"
                                                            VerticalAlignment="Center">
@@ -672,7 +684,9 @@
                                                     Foreground="{StaticResource AccentText}" ToolTip="보내기 (Enter)"
                                                     Command="{Binding DataContext.SendCommand, ElementName=Root}"/>
                                             <Button DockPanel.Dock="Right" Style="{StaticResource ComposerIconButton}"
-                                                    Content="♩" ToolTip="Dictate" Margin="0,0,8,0"/>
+                                                    Content="♩" Margin="0,0,8,0"
+                                                    IsEnabled="False" ToolTipService.ShowOnDisabled="True"
+                                                    ToolTip="보류 — 음성 입력(계획 없음)"/>
                                             <TextBlock/>
                                         </DockPanel>
                                     </Border>
