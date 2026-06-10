@@ -1017,6 +1017,14 @@
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
                                  Text="{Binding MaxConcurrentSessions, UpdateSourceTrigger=PropertyChanged}"/>
 
+                        <Border Height="1" Background="{StaticResource LineSoft}" Margin="0,18,0,16"/>
+
+                        <TextBlock Text="PROJECT" Style="{StaticResource Lbl}" Margin="0,0,0,7"/>
+                        <TextBlock Text="MCP CONFIG (.mcp.json path, empty = unused)" Style="{StaticResource Lbl}" Margin="0,0,0,7"/>
+                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                 Text="{Binding ActiveProject.McpConfigPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
                         <DockPanel Margin="0,16,0,0">
                             <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
                                           IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}"
