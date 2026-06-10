@@ -22,6 +22,10 @@ public sealed class AgentSession(
     /// <summary>Raised for every normalized event (translation already applied).</summary>
     public event Action<NormalizedEvent>? EventReceived;
 
+    /// <summary>Answers engine permission requests (approval broker). Null = auto-deny.
+    /// The engine blocks until the returned task resolves, so this may wait on the user.</summary>
+    public Func<PermissionRequest, Task<PermissionDecision>>? PermissionHandler { get; set; }
+
     public async Task RunAsync(SessionOptions options, string userPrompt, CancellationToken ct = default)
     {
         // Input: KO → EN before the engine ever sees it (this is what cuts engine tokens).
@@ -59,6 +63,21 @@ public sealed class AgentSession(
             foreach (var ev in adapter.ParseLine(outLine))
             {
                 await EmitTranslatedAsync(ev, ct);
+
+                // Approval round-trip: the engine blocks until we answer on stdin.
+                if (ev is PermissionRequest pr && stdinOpen)
+                {
+                    var decision = PermissionHandler is not null
+                        ? await PermissionHandler(pr)
+                        : new PermissionDecision(false, "No approval handler — auto-denied");
+                    var response = adapter.BuildPermissionResponse(pr, decision);
+                    if (response is not null)
+                    {
+                        await proc.StandardInput.WriteLineAsync(response.AsMemory(), ct);
+                        await proc.StandardInput.FlushAsync(ct);
+                    }
+                }
+
                 // A keep-open engine (Claude) waits for more stdin after the turn; close
                 // stdin on completion so it exits and the read loop ends.
                 if (ev is TurnCompleted && stdinOpen)

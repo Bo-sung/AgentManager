@@ -63,6 +63,51 @@ public sealed class AppViewModel : ObservableObject
         ForkSessionCommand = new RelayCommand(p => ForkSession(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         SendDiffFeedbackCommand = new RelayCommand(p => { if (p is string f) _ = SendDiffFeedbackAsync(ActiveSession, f); },
             _ => ActiveSession is { IsRunning: false, SelectedChange: not null });
+        ApproveCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, true); });
+        DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
+    }
+
+    // ----- approval broker (Stage 1: Claude) -----
+    private readonly Dictionary<string, (TaskCompletionSource<PermissionDecision> Tcs, ApprovalBlock Block, SessionViewModel Session)> _pendingApprovals = [];
+    public RelayCommand ApproveCommand { get; }
+    public RelayCommand DenyCommand { get; }
+
+    private Task<PermissionDecision> HandlePermissionAsync(SessionViewModel s, PermissionRequest pr)
+    {
+        var tcs = new TaskCompletionSource<PermissionDecision>(TaskCreationOptions.RunContinuationsAsynchronously);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            var summary = pr.InputJson.Length > 400 ? pr.InputJson[..400] + "…" : pr.InputJson;
+            var block = new ApprovalBlock(pr.RequestId, pr.ToolName, summary);
+            s.Transcript.Add(block);
+            _pendingApprovals[pr.RequestId] = (tcs, block, s);
+            s.Status = "waiting";
+            s.Activity = $"승인 대기: {pr.ToolName}";
+        });
+        return tcs.Task;
+    }
+
+    public void ResolveApproval(string requestId, bool allow)
+    {
+        if (!_pendingApprovals.Remove(requestId, out var entry)) return;
+        entry.Block.State = allow ? "allowed" : "denied";
+        entry.Session.Status = "running";
+        entry.Session.Activity = allow ? $"{entry.Block.ToolName} 승인됨 — 계속" : $"{entry.Block.ToolName} 거부됨";
+        entry.Tcs.TrySetResult(new PermissionDecision(allow, allow ? null : "User denied permission"));
+        SaveState();
+    }
+
+    /// <summary>턴 종료/중지 시 남은 승인 요청은 거부로 정리(엔진은 이미 종료됨).</summary>
+    private void ExpirePendingApprovals(SessionViewModel s)
+    {
+        foreach (var key in _pendingApprovals.Where(kv => ReferenceEquals(kv.Value.Session, s)).Select(kv => kv.Key).ToList())
+        {
+            if (_pendingApprovals.Remove(key, out var entry))
+            {
+                entry.Block.State = "expired";
+                entry.Tcs.TrySetResult(new PermissionDecision(false, "Session ended"));
+            }
+        }
     }
 
     // running sessions → their cancellation source (Stop)
@@ -514,6 +559,7 @@ public sealed class AppViewModel : ObservableObject
                 CostUsd = dto.CostUsd,
                 IsArchived = dto.IsArchived,
                 Sandbox = Enum.TryParse<SandboxMode>(dto.Sandbox, out var sb) ? sb : SandboxMode.DangerFullAccess,
+                RequireApproval = dto.RequireApproval,
                 TranslationEnabled = dto.TranslationEnabled ?? true,
                 EngineSessionId = dto.EngineSessionId,
             };
@@ -563,6 +609,7 @@ public sealed class AppViewModel : ObservableObject
                     CostUsd = s.CostUsd,
                     IsArchived = s.IsArchived,
                     Sandbox = s.Sandbox.ToString(),
+                    RequireApproval = s.RequireApproval,
                     StartedAt = s.StartedAt,
                     WorktreePath = s.WorktreePath,
                     Isolated = s.Isolated,
@@ -642,6 +689,8 @@ public sealed class AppViewModel : ObservableObject
         var tools = new Dictionary<string, ToolBlock>();
         var session = new AgentSession(adapter, exe, _translator, s.TranslationEnabled);
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
+        if (s.RequireApproval)
+            session.PermissionHandler = pr => HandlePermissionAsync(s, pr);
 
         // turn baseline for end-of-turn usage reconciliation
         s.TurnBaseIn = s.TokensIn;
@@ -650,7 +699,7 @@ public sealed class AppViewModel : ObservableObject
         var options = new SessionOptions
         {
             WorkingDirectory = cwd,
-            BypassPermissions = true,
+            BypassPermissions = !s.RequireApproval, // Stage 1: Claude stdio approvals; Codex falls to sandbox
             Sandbox = s.Sandbox,
             ResumeSessionId = s.EngineSessionId,
             Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
@@ -678,6 +727,7 @@ public sealed class AppViewModel : ObservableObject
         }
         finally
         {
+            ExpirePendingApprovals(s);
             await RefreshReviewAsync(s);
             SaveState();
             _running.Remove(s.Id);

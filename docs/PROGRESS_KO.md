@@ -32,9 +32,11 @@
 
 | **검증 패스** (Smoke: sandbox/model 인자 매트릭스 + GitWorktree e2e · 실 2턴 resume="47" 성공, session_id 유지) | ec1aab6 |
 
-## 🔜 다음
-1. **무거운 로직 논의/설계**: Artifacts 추출 · MCP registry · 승인 broker(보류 해제 여부) ← 진행 중
-2. **(UI 일괄 패스)** 집계 표시 · 세션 컨텍스트 메뉴 · 아카이브 그룹 · 샌드박스 선택 · Commit/피드백 버튼 · cap 설정
+## 🔜 다음 (무거운 로직 — 결정 2026-06)
+1. **승인 broker Stage 1 (Claude만)** ← 진행 중. Stage 2+에서 Codex(app-server 스파이크)·Antigravity 확장 예정
+2. **Artifacts 라이트** — 기존 이벤트 파생(태스크리스트/테스트결과/요약). 풀(파일 기반)은 보류
+3. **MCP 패스스루** — Project.McpConfigPath → `--mcp-config`. 풀 registry는 수요 확인 후(패스스루가 하위 계층이라 마이그레이션 무손실)
+4. **(UI 일괄 패스)** 집계 표시 · 컨텍스트 메뉴 · 아카이브 그룹 · 샌드박스 선택 · Commit/피드백 버튼 · cap 설정 · 승인 UI
 
 ## ⏸ 보류 / 후순위
 - 승인 broker (현재 bypass 유지 — 결정됨)

@@ -13,6 +13,9 @@ public sealed record AgentCapabilities(
     bool Quota);
 
 /// <summary>Options for starting one agent turn/session.</summary>
+/// <summary>User's verdict on a tool-permission request.</summary>
+public sealed record PermissionDecision(bool Allow, string? Reason = null);
+
 /// <summary>How much the engine may touch without asking. Mapping is engine-specific:
 /// Codex maps to --sandbox read-only/workspace-write/danger; Claude (no approval broker yet)
 /// treats ReadOnly as plan mode and everything else as bypass.</summary>
@@ -49,4 +52,8 @@ public interface IAgentAdapter
 
     /// <summary>Parse one line of stdout JSONL into zero or more normalized events.</summary>
     IEnumerable<NormalizedEvent> ParseLine(string line);
+
+    /// <summary>Format the stdin line answering a permission request, or null if the engine
+    /// has no interactive approval protocol (Codex exec). Claude: control_response JSON.</summary>
+    string? BuildPermissionResponse(Events.PermissionRequest request, PermissionDecision decision) => null;
 }

@@ -159,6 +159,37 @@ public sealed class ClaudeAdapter : IAgentAdapter
         }
     }
 
+    /// <summary>control_response per the measured stdio permission protocol (Phase 0 capture):
+    /// allow echoes updatedInput + toolUseID; deny carries a message and interrupts.</summary>
+    public string? BuildPermissionResponse(Events.PermissionRequest request, PermissionDecision decision)
+    {
+        object inner;
+        if (decision.Allow)
+        {
+            using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(request.InputJson) ? "{}" : request.InputJson);
+            inner = new
+            {
+                behavior = "allow",
+                updatedInput = doc.RootElement.Clone(),
+                toolUseID = request.ToolUseId,
+            };
+        }
+        else
+        {
+            inner = new
+            {
+                behavior = "deny",
+                message = decision.Reason ?? "User denied permission",
+                interrupt = true,
+            };
+        }
+        return JsonSerializer.Serialize(new
+        {
+            type = "control_response",
+            response = new { subtype = "success", request_id = request.RequestId, response = inner },
+        });
+    }
+
     private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
     private static string? Str(JsonElement e, string name)

@@ -2,7 +2,45 @@
 // end-to-end against a throwaway temp repo (zero tokens, real git).
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
+using AgentManager.Core.Session;
 using AgentManager.Core.Workspace;
+
+// Live approval round-trip (costs a few engine tokens): dotnet run -- --live-approval
+if (args.Contains("--live-approval"))
+{
+    await LiveApprovalAsync();
+    return;
+}
+
+static async Task LiveApprovalAsync()
+{
+    var tmp = Path.Combine(Path.GetTempPath(), "am_appr_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(tmp);
+    try
+    {
+        var exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin", "claude.exe");
+        var session = new AgentSession(new ClaudeAdapter(), File.Exists(exe) ? exe : "claude");
+        int asked = 0;
+        session.PermissionHandler = pr =>
+        {
+            asked++;
+            Console.WriteLine($"  PermissionRequest #{asked}: {pr.ToolName} → AUTO-ALLOW");
+            return Task.FromResult(new PermissionDecision(true));
+        };
+        session.EventReceived += ev => { if (ev is AssistantText t) Console.WriteLine("  agent: " + t.Text); };
+
+        var options = new SessionOptions { WorkingDirectory = tmp, BypassPermissions = false };
+        await session.RunAsync(options, "Create a file named ok.txt containing exactly OK. Use the Write tool. Then stop.");
+
+        var created = File.Exists(Path.Combine(tmp, "ok.txt"));
+        Console.WriteLine($"approval round-trip: asked={asked}, file created={created}");
+        Console.WriteLine(asked > 0 && created ? "LIVE APPROVAL OK" : "LIVE APPROVAL FAILED");
+    }
+    finally
+    {
+        try { Directory.Delete(tmp, true); } catch { }
+    }
+}
 
 string[] claudeLines =
 [
@@ -56,8 +94,23 @@ Run("Claude stream-json", new ClaudeAdapter(), claudeLines);
 Run("Codex exec --json", new CodexAdapter(), codexLines);
 AssertResumeArgs();
 AssertSandboxAndModelArgs();
+AssertPermissionResponse();
 await TestGitWorktreeAsync();
 Console.WriteLine("smoke OK");
+
+static void AssertPermissionResponse()
+{
+    var req = new PermissionRequest("req-1", "Write", """{"file_path":"a.txt","content":"hi"}""", "toolu_9");
+    var allow = new ClaudeAdapter().BuildPermissionResponse(req, new PermissionDecision(true));
+    Assert(allow is not null && allow.Contains("\"behavior\":\"allow\"") && allow.Contains("req-1")
+        && allow.Contains("toolu_9") && allow.Contains("a.txt"), "Claude allow response");
+    var deny = new ClaudeAdapter().BuildPermissionResponse(req, new PermissionDecision(false, "nope"));
+    Assert(deny is not null && deny.Contains("\"behavior\":\"deny\"") && deny.Contains("nope")
+        && deny.Contains("\"interrupt\":true"), "Claude deny response");
+    Assert(((IAgentAdapter)new CodexAdapter()).BuildPermissionResponse(req, new PermissionDecision(true)) is null,
+        "Codex has no approval protocol (null)");
+    Console.WriteLine("permission response asserts OK");
+}
 
 static void AssertSandboxAndModelArgs()
 {

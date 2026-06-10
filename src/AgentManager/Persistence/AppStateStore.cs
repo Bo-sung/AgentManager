@@ -48,6 +48,7 @@ public sealed record SessionDto
     public double CostUsd { get; init; }
     public bool IsArchived { get; init; }
     public string Sandbox { get; init; } = "DangerFullAccess";
+    public bool RequireApproval { get; init; }
     public DateTime StartedAt { get; init; }
     public string? WorktreePath { get; init; }
     public bool Isolated { get; init; }
@@ -121,6 +122,7 @@ public static class AppStateStore
         },
         ErrorBlock e => new TranscriptDto { Type = "error", Title = e.Title, Body = e.Body },
         WorkingBlock w => new TranscriptDto { Type = "working", Text = w.Text },
+        ApprovalBlock p => new TranscriptDto { Type = "approval", ToolUseId = p.RequestId, Name = p.ToolName, Body = p.InputSummary, Stat = p.State },
         _ => new TranscriptDto { Type = "unknown" },
     };
 
@@ -138,6 +140,8 @@ public static class AppStateStore
         },
         "error" => new ErrorBlock(dto.Title, dto.Body),
         "working" => new WorkingBlock(dto.Text),
+        // pending approvals can't survive a restart — the engine is gone
+        "approval" => new ApprovalBlock(dto.ToolUseId, dto.Name, dto.Body) { State = dto.Stat == "pending" ? "expired" : dto.Stat },
         _ => new WorkingBlock("복원할 수 없는 transcript block"),
     };
 }

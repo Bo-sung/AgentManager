@@ -60,6 +60,10 @@ public sealed class SessionViewModel : ObservableObject
     private Core.Agents.SandboxMode _sandbox = Core.Agents.SandboxMode.DangerFullAccess;
     public Core.Agents.SandboxMode Sandbox { get => _sandbox; set => Set(ref _sandbox, value); }
 
+    /// <summary>승인 broker Stage 1 (Claude만): true면 툴 실행 전 사용자 승인 요구.</summary>
+    private bool _requireApproval;
+    public bool RequireApproval { get => _requireApproval; set => Set(ref _requireApproval, value); }
+
     private string _status = "idle";
     public string Status
     {

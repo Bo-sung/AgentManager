@@ -99,6 +99,22 @@ public sealed class ErrorBlock(string title, string body) : TranscriptItem
     public string Body { get; } = body;
 }
 
+/// <summary>Engine asked permission to run a tool; resolves to allowed/denied/expired.</summary>
+public sealed class ApprovalBlock(string requestId, string toolName, string inputSummary) : TranscriptItem
+{
+    public string RequestId { get; } = requestId;
+    public string ToolName { get; } = toolName;
+    public string InputSummary { get; } = inputSummary;
+
+    private string _state = "pending"; // pending | allowed | denied | expired
+    public string State
+    {
+        get => _state;
+        set { if (Set(ref _state, value)) OnChanged(nameof(IsPending)); }
+    }
+    public bool IsPending => _state == "pending";
+}
+
 public sealed class WorkingBlock : TranscriptItem
 {
     private string _text;
