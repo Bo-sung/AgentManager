@@ -38,8 +38,8 @@
 > 기능(Core/VM) 우선 + View 일괄 + 멀티세션 위임 방식으로 **로직·UI 패스 모두 종료**.
 
 ## 🔜 다음
-1. **UI 폴리시 패스 (Gemini 위임)** — 단축키 · 메시지 복사 · 창 상태 기억 · 트랜스크립트 내보내기 등 (docs/UI_POLISH_PROMPT_GEMINI.md)
-2. 승인 Stage 2+(Codex app-server 스파이크 · Antigravity) · 풀 MCP(수요 시)
+1. 승인 Stage 2+ — Codex app-server 스파이크 · Antigravity 어댑터(전환 후)
+2. 풀 MCP registry (수요 시) · 마크다운 고급 렌더링 · 멀티폴더 project
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
