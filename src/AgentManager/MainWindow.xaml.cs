@@ -16,6 +16,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _vm;
         _vm.PropertyChanged += Vm_PropertyChanged;
+        RestoreWindowPlacement();
+        Closing += (_, _) => SaveWindowPlacement();
     }
 
     private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -90,6 +92,36 @@ public partial class MainWindow : Window
             if (_vm.ShowNewAgent) { _vm.ShowNewAgent = false; e.Handled = true; }
             else if (_vm.ShowNewProject) { _vm.ShowNewProject = false; e.Handled = true; }
         }
+    }
+
+    private static readonly string WindowStatePath =
+        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AgentManager", "window.json");
+
+    private void RestoreWindowPlacement()
+    {
+        try
+        {
+            if (!System.IO.File.Exists(WindowStatePath)) return;
+            var parts = System.IO.File.ReadAllText(WindowStatePath).Split(',');
+            if (parts.Length == 4
+                && double.TryParse(parts[0], out var l) && double.TryParse(parts[1], out var t)
+                && double.TryParse(parts[2], out var w) && double.TryParse(parts[3], out var h)
+                && w > 200 && h > 200)
+            { Left = l; Top = t; Width = w; Height = h; }
+        }
+        catch { }
+    }
+
+    private void SaveWindowPlacement()
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(WindowStatePath)!);
+            System.IO.File.WriteAllText(WindowStatePath,
+                string.Join(",", Left, Top, Width, Height));
+        }
+        catch { }
     }
 }
 
