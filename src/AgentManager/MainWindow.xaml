@@ -593,9 +593,51 @@
                                     Command="{Binding DataContext.OpenIdeCommand, ElementName=Root}"/>
                             <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="⤓ Export" Margin="0,0,8,0"
                                     ToolTip="트랜스크립트를 Markdown으로 내보내기" Click="ExportTranscript_Click"/>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="▣" Width="34" Padding="0"
-                                    ToolTip="Diff review"
-                                    Command="{Binding DataContext.ToggleReviewCommand, ElementName=Root}"/>
+                            <Button DockPanel.Dock="Right" Width="30" Height="30" Margin="0,0,8,0"
+                                    ToolTip="Diff review 패널 열기/닫기 (Ctrl+R)"
+                                    Command="{Binding DataContext.ToggleReviewCommand, ElementName=Root}">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="1" CornerRadius="6">
+                                                        <Viewbox Width="16" Height="16">
+                                                            <Canvas Width="24" Height="24">
+                                                                <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6"
+                                                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                                                                    <Path.Data>
+                                                                        <GeometryGroup>
+                                                                            <RectangleGeometry Rect="3.5,4.5,17,15" RadiusX="1.5" RadiusY="1.5"/>
+                                                                            <LineGeometry StartPoint="15,4.5" EndPoint="15,19.5"/>
+                                                                        </GeometryGroup>
+                                                                    </Path.Data>
+                                                                </Path>
+                                                            </Canvas>
+                                                        </Viewbox>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource LineBright}"/>
+                                            </Trigger>
+                                            <DataTrigger Binding="{Binding DataContext.IsReviewOpen, ElementName=Root}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                         </DockPanel>
                     </Border>
