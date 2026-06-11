@@ -25,8 +25,15 @@
     <SolidColorBrush x:Key="Err" Color="#FFFF4D5E"/>
     <SolidColorBrush x:Key="Info" Color="#FF5B9BFF"/>
     <SolidColorBrush x:Key="Add" Color="#FF2FAE7A"/>
+    <SolidColorBrush x:Key="AddBg" Color="#1A2FAE7A"/>
     <SolidColorBrush x:Key="Del" Color="#FFE05566"/>
+    <SolidColorBrush x:Key="DelBg" Color="#17E05566"/>
+    <SolidColorBrush x:Key="Run" Color="#FFFF5A2C"/>
     <SolidColorBrush x:Key="AccentText" Color="#FF1A0C06"/>
+
+    <CornerRadius x:Key="RSm">4</CornerRadius>
+    <CornerRadius x:Key="RMd">7</CornerRadius>
+    <CornerRadius x:Key="RLg">10</CornerRadius>
 
     <FontFamily x:Key="Sans">Segoe UI, sans-serif</FontFamily>
     <FontFamily x:Key="Mono">Consolas, Cascadia Mono, monospace</FontFamily>

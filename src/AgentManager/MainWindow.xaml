@@ -68,10 +68,12 @@
                                       IsChecked="{Binding ShowOriginal, Mode=TwoWay}"
                                       Visibility="{Binding HasOriginal, Converter={StaticResource BoolVis}}"
                                       Margin="9,0,0,0" ToolTip="Show original response"/>
-                        <Button Content="⧉" FontSize="11" Margin="9,0,0,0" Padding="4,0"
+                        <Button Margin="9,0,0,0" Padding="4,0"
                                 Background="Transparent" BorderThickness="0" Cursor="Hand"
                                 Foreground="{StaticResource Txt3}" ToolTip="복사"
-                                Click="CopyAgentText_Click"/>
+                                Click="CopyAgentText_Click">
+                            <controls:IconView Icon="{StaticResource IconCopy}" Width="13" Height="13"/>
+                        </Button>
                     </StackPanel>
                     <controls:MarkdownViewer Text="{Binding DisplayText}"/>
                 </StackPanel>
@@ -299,15 +301,29 @@
             <Border Grid.Column="0" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,1,0">
                 <DockPanel>
                     <Button DockPanel.Dock="Top" Style="{StaticResource AccentButton}" Margin="12,12,12,8"
-                            Command="{Binding NewAgentCommand}" Content="+  New Agent"/>
+                            Command="{Binding NewAgentCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <controls:IconView Icon="{StaticResource IconPlus}" Width="14" Height="14"
+                                               Foreground="{StaticResource AccentText}" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="New Agent" Foreground="{StaticResource AccentText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                    <StackPanel DockPanel.Dock="Top" Margin="8,0,8,4">
-                        <TextBlock Text="◰  Orchestrator" Foreground="{StaticResource Txt0}" Padding="9,7"
-                                   ToolTip="현재 화면"/>
-                        <TextBlock Text="◷  Activity History" Foreground="{StaticResource Txt3}" Padding="9,7"
-                                   ToolTip="예정 (P2) — 세션 횡단 활동 이력 뷰"/>
-                        <TextBlock Text="▦  Scheduled Tasks" Foreground="{StaticResource Txt3}" Padding="9,7"
-                                   ToolTip="예정 (P2) — 예약 에이전트 실행"/>
+                    <StackPanel DockPanel.Dock="Top" Margin="8,0,8,4" TextElement.Foreground="{StaticResource Txt0}">
+                        <StackPanel Orientation="Horizontal" Margin="9,7" ToolTip="현재 화면">
+                            <controls:IconView Icon="{StaticResource IconGrid}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Orchestrator" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="9,7" TextElement.Foreground="{StaticResource Txt3}"
+                                    ToolTip="예정 (P2) — 세션 횡단 활동 이력 뷰">
+                            <controls:IconView Icon="{StaticResource IconHistory}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Activity History" Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="9,7" TextElement.Foreground="{StaticResource Txt3}"
+                                    ToolTip="예정 (P2) — 예약 에이전트 실행">
+                            <controls:IconView Icon="{StaticResource IconCalendar}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Scheduled Tasks" Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- footer -->
@@ -414,8 +430,10 @@
                                 <TextBlock Grid.Column="1" Text="{Binding ProjectSessions.Count}" FontFamily="{StaticResource Mono}"
                                            FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                 <Border Grid.Column="2" Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="8,0"/>
-                                <Button Grid.Column="3" Style="{StaticResource HeaderIconButton}" Content="+"
-                                        ToolTip="프로젝트 추가" Command="{Binding NewProjectCommand}"/>
+                                <Button Grid.Column="3" Style="{StaticResource HeaderIconButton}"
+                                        ToolTip="프로젝트 추가" Command="{Binding NewProjectCommand}">
+                                    <controls:IconView Icon="{StaticResource IconPlus}" Width="12" Height="12"/>
+                                </Button>
                             </Grid>
                             <ItemsControl ItemsSource="{Binding ProjectSessions}">
                                 <ItemsControl.ItemTemplate>
@@ -588,9 +606,15 @@
                             <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"/>
                             </Border>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="Open IDE" Margin="0,0,8,0"
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
                                     ToolTip="활성 세션 worktree를 VS Code로 열기 (없으면 탐색기)"
-                                    Command="{Binding DataContext.OpenIdeCommand, ElementName=Root}"/>
+                                    Command="{Binding DataContext.OpenIdeCommand, ElementName=Root}">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconIde}" Width="13" Height="13"
+                                                       Foreground="{StaticResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Open IDE" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                             <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="⤓ Export" Margin="0,0,8,0"
                                     ToolTip="트랜스크립트를 Markdown으로 내보내기" Click="ExportTranscript_Click"/>
                             <Button DockPanel.Dock="Right" Width="30" Height="30" Margin="0,0,8,0"
@@ -608,19 +632,8 @@
                                                     <Border Background="{TemplateBinding Background}"
                                                             BorderBrush="{TemplateBinding BorderBrush}"
                                                             BorderThickness="1" CornerRadius="6">
-                                                        <Viewbox Width="16" Height="16">
-                                                            <Canvas Width="24" Height="24">
-                                                                <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6"
-                                                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round">
-                                                                    <Path.Data>
-                                                                        <GeometryGroup>
-                                                                            <RectangleGeometry Rect="3.5,4.5,17,15" RadiusX="1.5" RadiusY="1.5"/>
-                                                                            <LineGeometry StartPoint="15,4.5" EndPoint="15,19.5"/>
-                                                                        </GeometryGroup>
-                                                                    </Path.Data>
-                                                                </Path>
-                                                            </Canvas>
-                                                        </Viewbox>
+                                                        <controls:IconView Icon="{StaticResource IconPanel}"
+                                                                           Foreground="{TemplateBinding Foreground}"/>
                                                     </Border>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -720,9 +733,11 @@
                                     <Border DockPanel.Dock="Bottom" Padding="9,0,9,8" Height="46">
                                         <DockPanel VerticalAlignment="Bottom" LastChildFill="True">
                                             <Button DockPanel.Dock="Left" Style="{StaticResource ComposerIconButton}"
-                                                    Content="⊞" Margin="0,0,8,0"
+                                                    Margin="0,0,8,0"
                                                     ToolTip="이미지 첨부 (또는 입력창에 Ctrl+V 붙여넣기)"
-                                                    Click="AttachImage_Click"/>
+                                                    Click="AttachImage_Click">
+                                                <controls:IconView Icon="{StaticResource IconAttach}" Width="15" Height="15"/>
+                                            </Button>
                                             <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
                                                     ToolTip="{Binding Branch}">
                                                 <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"
@@ -775,10 +790,11 @@
                                                     </Border>
                                                 </Popup>
                                             </Grid>
-                                            <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Content="◼" Foreground="White"
+                                            <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Foreground="White"
                                                     Margin="6,0,0,0" ToolTip="중지"
                                                     Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding DataContext.StopCommand, ElementName=Root}">
+                                                <controls:IconView Icon="{StaticResource IconStop}" Filled="True" Width="14" Height="14"/>
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border x:Name="sb" Background="{StaticResource Err}" CornerRadius="7">
@@ -792,13 +808,17 @@
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
-                                            <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}" Content="➤"
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}"
                                                     Foreground="{StaticResource AccentText}" ToolTip="보내기 (Enter)"
-                                                    Command="{Binding DataContext.SendCommand, ElementName=Root}"/>
+                                                    Command="{Binding DataContext.SendCommand, ElementName=Root}">
+                                                <controls:IconView Icon="{StaticResource IconSend}" Width="15" Height="15"/>
+                                            </Button>
                                             <Button DockPanel.Dock="Right" Style="{StaticResource ComposerIconButton}"
-                                                    Content="♩" Margin="0,0,8,0"
+                                                    Margin="0,0,8,0"
                                                     IsEnabled="False" ToolTipService.ShowOnDisabled="True"
-                                                    ToolTip="보류 — 음성 입력(계획 없음)"/>
+                                                    ToolTip="보류 — 음성 입력(계획 없음)">
+                                                <controls:IconView Icon="{StaticResource IconMic}" Width="15" Height="15"/>
+                                            </Button>
                                             <TextBlock/>
                                         </DockPanel>
                                     </Border>
@@ -874,12 +894,16 @@
                                        VerticalAlignment="Center" Margin="0,0,9,0"/>
                             <TextBlock Text="{Binding ReviewStatus}" FontFamily="{StaticResource Mono}" FontSize="10.5"
                                        Foreground="{StaticResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="✕" Width="30"
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="30"
                                     ToolTip="닫기"
-                                    Command="{Binding DataContext.ToggleReviewCommand, ElementName=Root}"/>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="↻" Width="30"
+                                    Command="{Binding DataContext.ToggleReviewCommand, ElementName=Root}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="30"
                                     ToolTip="변경 목록 새로고침"
-                                    Command="{Binding DataContext.RefreshReviewCommand, ElementName=Root}"/>
+                                    Command="{Binding DataContext.RefreshReviewCommand, ElementName=Root}">
+                                <controls:IconView Icon="{StaticResource IconRefresh}" Width="13" Height="13"/>
+                            </Button>
                         </DockPanel>
                     </Border>
 
@@ -998,11 +1022,13 @@
                     <StackPanel DockPanel.Dock="Bottom">
                         <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="12,10">
                             <DockPanel>
-                                <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}" Content="➤"
+                                <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}"
                                         Foreground="{StaticResource AccentText}" Margin="8,0,0,0"
                                         Command="{Binding DataContext.SendDiffFeedbackCommand, ElementName=Root}"
                                         CommandParameter="{Binding Text, ElementName=DiffFeedbackBox}"
-                                        Click="DiffFeedbackSend_Click"/>
+                                        Click="DiffFeedbackSend_Click">
+                                    <controls:IconView Icon="{StaticResource IconSend}" Width="15" Height="15"/>
+                                </Button>
                                 <TextBox x:Name="DiffFeedbackBox" Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}"
                                          BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="9"
                                          AcceptsReturn="False" MinHeight="32"
@@ -1056,7 +1082,9 @@
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Left" Text="NEW WORKER" Style="{StaticResource Lbl}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="✕" Command="{Binding CancelNewAgentCommand}"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Command="{Binding CancelNewAgentCommand}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
                             <TextBlock Text="Spawn an agent" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
                         </DockPanel>
                     </Border>
@@ -1092,7 +1120,13 @@
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Style="{StaticResource ChipButton}" Content="Cancel" Margin="0,0,9,0" Command="{Binding CancelNewAgentCommand}"/>
-                            <Button Style="{StaticResource AccentButton}" Content="⚡ Launch agent" Command="{Binding CreateSessionCommand}"/>
+                            <Button Style="{StaticResource AccentButton}" Command="{Binding CreateSessionCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconBolt}" Width="13" Height="13"
+                                                       Foreground="{StaticResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Launch agent" Foreground="{StaticResource AccentText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -1107,7 +1141,9 @@
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Left" Text="NEW PROJECT" Style="{StaticResource Lbl}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="✕" Command="{Binding CancelNewProjectCommand}"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Command="{Binding CancelNewProjectCommand}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
                             <TextBlock Text="Register a workspace folder" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
                         </DockPanel>
                     </Border>
@@ -1127,7 +1163,13 @@
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Style="{StaticResource ChipButton}" Content="Cancel" Margin="0,0,9,0" Command="{Binding CancelNewProjectCommand}"/>
-                            <Button Style="{StaticResource AccentButton}" Content="+  Add project" Command="{Binding CreateProjectCommand}"/>
+                            <Button Style="{StaticResource AccentButton}" Command="{Binding CreateProjectCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconPlus}" Width="13" Height="13"
+                                                       Foreground="{StaticResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Add project" Foreground="{StaticResource AccentText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -1141,7 +1183,9 @@
                 <StackPanel>
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
                         <DockPanel>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Content="✕" Command="{Binding CancelSettingsCommand}"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Command="{Binding CancelSettingsCommand}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
                             <TextBlock DockPanel.Dock="Left" Text="SETTINGS" Style="{StaticResource Lbl}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <TextBlock Text="Runtime and translation defaults" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
                         </DockPanel>
