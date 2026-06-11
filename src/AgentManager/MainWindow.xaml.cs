@@ -123,6 +123,37 @@ public partial class MainWindow : Window
         return null;
     }
 
+    /// <summary>타이틀바 메뉴 버튼: 좌클릭으로 ContextMenu를 드롭다운처럼 연다.</summary>
+    private void MenuButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button b && b.ContextMenu is { } m)
+        {
+            m.DataContext ??= DataContext;
+            m.PlacementTarget = b;
+            m.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            m.IsOpen = true;
+        }
+    }
+
+    private void HelpAbout_Click(object sender, RoutedEventArgs e)
+    {
+        var ver = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "dev";
+        MessageBox.Show(this,
+            $"AgentManager {ver}\n\nMulti-Agent Development Control Plane\nClaude Code · Codex / 로컬 LLM 한↔영 번역 레이어\n\nMIT License",
+            "About AgentManager", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void HelpDocs_Click(object sender, RoutedEventArgs e)
+    {
+        var docs = System.IO.Path.Combine(AppContext.BaseDirectory, "docs");
+        if (!System.IO.Directory.Exists(docs))
+            docs = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "docs"));
+        if (System.IO.Directory.Exists(docs))
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = docs, UseShellExecute = true });
+        else
+            MessageBox.Show(this, "docs 폴더를 찾을 수 없습니다.", "Help", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
     private void MinBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void MaxBtn_Click(object sender, RoutedEventArgs e)
@@ -266,6 +297,18 @@ public partial class MainWindow : Window
     {
         if ((sender as FrameworkElement)?.DataContext is CliHistoryItemViewModel h)
             _vm.ImportCliSessionCommand.Execute(h);
+    }
+
+    private void AddExtraPath_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.ActiveProject is null) return;
+        var dlg = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "추가 루트 폴더 선택",
+            InitialDirectory = _vm.ActiveProject.Path,
+        };
+        if (dlg.ShowDialog(this) == true)
+            _vm.AddExtraPath(dlg.FolderName);
     }
 
     private void BrowseProjectFolder_Click(object sender, RoutedEventArgs e)

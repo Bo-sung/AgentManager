@@ -250,17 +250,39 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Style="{StaticResource MenuButton}" Content="File" IsEnabled="False"
-                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 기능은 화면 버튼으로 제공됩니다"/>
+                    <Button Style="{StaticResource MenuButton}" Content="File" Click="MenuButton_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="New Agent" InputGestureText="Ctrl+N" Command="{Binding NewAgentCommand}"/>
+                                <MenuItem Header="New Project" Command="{Binding NewProjectCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="Settings" Command="{Binding ShowSettingsCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="Exit" Click="CloseBtn_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                     <Button Style="{StaticResource MenuButton}" Content="Edit" IsEnabled="False"
-                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 기능은 화면 버튼으로 제공됩니다"/>
-                    <Button Style="{StaticResource MenuButton}" Content="View" IsEnabled="False"
-                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 기능은 화면 버튼으로 제공됩니다"/>
+                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 복사/검색은 화면 버튼으로 제공됩니다"/>
+                    <Button Style="{StaticResource MenuButton}" Content="View" Click="MenuButton_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Toggle Review pane" InputGestureText="Ctrl+R" Command="{Binding ToggleReviewCommand}"/>
+                                <MenuItem Header="Maximize / Restore" Click="MaxBtn_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                     <Button Style="{StaticResource MenuButton}" Content="Agents" IsEnabled="False"
                             ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 엔진 설정은 Settings에서"/>
                     <Button Style="{StaticResource MenuButton}" Content="Settings" Command="{Binding ShowSettingsCommand}"/>
-                    <Button Style="{StaticResource MenuButton}" Content="Help" IsEnabled="False"
-                            ToolTipService.ShowOnDisabled="True" ToolTip="보류"/>
+                    <Button Style="{StaticResource MenuButton}" Content="Help" Click="MenuButton_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="About AgentManager" Click="HelpAbout_Click"/>
+                                <MenuItem Header="Open docs folder" Click="HelpDocs_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                 </StackPanel>
 
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0"
@@ -734,8 +756,14 @@
                                     <TextBlock Text="Open IDE" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="⤓ Export" Margin="0,0,8,0"
-                                    ToolTip="트랜스크립트를 Markdown으로 내보내기" Click="ExportTranscript_Click"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                    ToolTip="트랜스크립트를 Markdown으로 내보내기" Click="ExportTranscript_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconFile}" Width="12" Height="12"
+                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Export" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                             <Button DockPanel.Dock="Right" Width="30" Height="30" Margin="0,0,8,0"
                                     ToolTip="Diff review 패널 열기/닫기 (Ctrl+R)"
                                     Command="{Binding DataContext.ToggleReviewCommand, ElementName=Root}">
@@ -859,17 +887,26 @@
                                             </Button>
                                             <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
                                                     ToolTip="{Binding Branch}">
-                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"
-                                                           VerticalAlignment="Center">
-                                                    <Run Text="⌥ Worktree · " Foreground="{StaticResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
-                                                </TextBlock>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <controls:IconView Icon="{StaticResource IconBranch}" Width="11" Height="11"
+                                                                       Foreground="{StaticResource Txt2}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"
+                                                               VerticalAlignment="Center">
+                                                        <Run Text="Worktree · " Foreground="{StaticResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
+                                                    </TextBlock>
+                                                </StackPanel>
                                             </Border>
                                             <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
                                                 <ToggleButton x:Name="ModelMenuBtn" Style="{StaticResource TogglePillButton}"
                                                               Height="26" Padding="10,0" Cursor="Hand" ToolTip="모델 선택">
-                                                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" VerticalAlignment="Center">
-                                                        <Run Text="✧ " Foreground="{StaticResource Txt2}"/><Run Text="{Binding Model}" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/><Run Text="  ⌃" Foreground="{StaticResource Txt2}"/>
-                                                    </TextBlock>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <controls:IconView Icon="{StaticResource IconSpark}" Width="11" Height="11"
+                                                                           Foreground="{StaticResource Txt2}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" VerticalAlignment="Center"
+                                                                   Text="{Binding Model}" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
+                                                        <controls:IconView Icon="{StaticResource IconChevDown}" Width="10" Height="10"
+                                                                           Foreground="{StaticResource Txt2}" Margin="6,1,0,0" VerticalAlignment="Center"/>
+                                                    </StackPanel>
                                                 </ToggleButton>
                                                 <Popup IsOpen="{Binding IsChecked, ElementName=ModelMenuBtn, Mode=TwoWay}"
                                                        StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
@@ -1396,6 +1433,38 @@
                         <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
                                  Text="{Binding ActiveProject.McpConfigPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <DockPanel Margin="0,14,0,0">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}"
+                                    ToolTip="에이전트가 접근할 추가 루트 폴더 (claude --add-dir / codex writable_roots)"
+                                    Click="AddExtraPath_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconPlus}" Width="11" Height="11"
+                                                       Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Add folder" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Text="EXTRA FOLDERS (멀티폴더 — 주 폴더 외 접근 허용 루트)" Style="{StaticResource Lbl}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <ItemsControl ItemsSource="{Binding ActiveProject.ExtraPaths}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,0,0,4">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="26"
+                                                ToolTip="제거"
+                                                Command="{Binding DataContext.RemoveExtraPathCommand, ElementName=Root}"
+                                                CommandParameter="{Binding}">
+                                            <controls:IconView Icon="{StaticResource IconX}" Width="10" Height="10"/>
+                                        </Button>
+                                        <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                                CornerRadius="6" Padding="9,6" Margin="0,0,6,0">
+                                            <TextBlock Text="{Binding}" FontFamily="{StaticResource Mono}" FontSize="10.5"
+                                                       Foreground="{StaticResource Txt1}" TextTrimming="CharacterEllipsis"/>
+                                        </Border>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
                         <DockPanel Margin="0,16,0,0">
                             <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
