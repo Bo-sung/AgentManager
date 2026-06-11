@@ -57,8 +57,10 @@
 | **리뷰 보정** (재스캔 헤더 상시 표시 — 빈 목록일 때 버튼 실종 모순 해소) | 87090cc, 23f8d5b |
 | **멀티폴더 project** — SessionOptions.AdditionalDirectories → claude `--add-dir` / codex writable_roots, Settings EXTRA FOLDERS UI, Smoke 어서션 PASS | 44dd3a6, 9d9c419 |
 | **UI 마무리** — 모델피커(spark+chevron)/Worktree필(branch)/Export(file) 벡터 아이콘, File/View/Help 메뉴 실동작(New Agent·New Project·Settings·Exit / Review 토글·최대화 / About·docs) | 9d9c419 |
+| **Task A: Activity History 창** — 저장된 app state를 직접 읽는 세션 횡단 이력 창, 검색 필터, 토큰/비용/블록 수 표시 | bc6c14e |
+| **Task B: docs refresh** — README 주요 기능, FEATURES_KO 기능표, PROGRESS_KO 진행 로그 갱신 | (this) |
 
-| **승인 Stage 2 스파이크** — codex app-server 실측(스키마 덤프 + Smoke --appserver-probe 실 왕복 PASS: initialize→thread/start→turn/start→commandExecution/requestApproval→accept→파일생성→turn/completed). 함정 포함 문서화 (PHASE0_CODEX_APPSERVER_KO.md) | (this) |
+| **승인 Stage 2 스파이크** — codex app-server 실측(스키마 덤프 + Smoke --appserver-probe 실 왕복 PASS: initialize→thread/start→turn/start→commandExecution/requestApproval→accept→파일생성→turn/completed). 함정 포함 문서화 (PHASE0_CODEX_APPSERVER_KO.md) | 113c8c9 |
 
 ## 🔜 다음
 1. **승인 Stage 2 통합** — CodexAppServerAdapter (EngineWriteback 메커니즘 + PermissionRequest 매핑, RequireApproval=true인 codex 세션만)

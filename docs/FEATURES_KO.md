@@ -48,6 +48,11 @@
 | 12 | 번역 토글 + 원본보기 + 인디케이터 | 🟡 세션별 토글/ORIGINAL✅, 인디케이터⬜ | 우리 |
 | 13 | 설정 (provider 경로, Ollama 모델/URL, 기본값) | 🟡 provider/Ollama/번역 기본값✅ | 공통 |
 | 14 | 마크다운 렌더링 | 🟡 기본 렌더링✅, 고급 Markdown⬜ | 공통 |
+| 15 | 사이드바 PROJECTS 목록 (전 프로젝트 표시/전환, Rename/Remove) | ✅ | 공통 |
+| 16 | 세션 검색·필터 (Title/Branch/Project) | ✅ | VSCode |
+| 17 | CLI HISTORY (외부 claude/codex 세션 발견→가져오기→resume, 트랜스크립트 복원, 재스캔) | ✅ | 공통 |
+| 18 | 프로젝트 폴더 생성 (Browse + 미존재 경로 자동 생성) | ✅ | 공통 |
+| 19 | Activity History 창 (저장된 세션 횡단 이력 읽기 전용 조회) | ✅ | VSCode |
 
 ### P1 — 제품 경쟁력
 | 기능 | 상태 | 출처 |
@@ -56,16 +61,19 @@
 | 권한/샌드박스 모드 선택 | 🟡 로직✅ (Codex --sandbox, Claude ReadOnly→plan) · UI⬜ | 공통 |
 | Merge / Discard / Commit (worktree→main) | ✅ Merge·Discard·Commit-only(로직) | VSCode |
 | Session fork (context 상속 분기) | 🟡 로직✅ (transcript+engine세션 상속) · UI⬜ | VSCode |
-| Diff 인라인 피드백 → agent 재지시 | 🟡 로직✅ (diff+피드백→후속 턴) · UI⬜ | VSCode |
+| Diff 인라인 피드백 → agent 재지시 | ✅ 로직+UI | VSCode |
 | 모델 선택 실제 연결 / Agent target 선택 | ✅ SessionOptions.Model → --model/-m | VSCode |
 | Artifacts 패널 (plan/task list/test result) | ⬜ | AG |
 | MCP registry (project별 allowlist) | ⬜ | 공통 |
 | 경과타이머 / 비용 / 집계 대시보드 | 🟡 경과✅ · 비용/집계 로직✅(UI 노출 대기) | 공통 |
-| 사이드바 grouping (project/상태) | ✅ Active/Project 그룹 + 아카이브 그룹(로직) | VSCode |
-| 세션 수명주기 (삭제/보관/이름변경) | 🟡 로직✅(커맨드·영속성) · UI(컨텍스트 메뉴)⬜ | 공통 |
-| 동시 실행 cap (병렬 세션 수 제한) | 🟡 로직✅ (기본 3, 영속) · 설정 UI⬜ | 공통 |
+| 사이드바 grouping (project/상태) | ✅ Active/Project/Archived + PROJECTS 목록 | VSCode |
+| 세션 수명주기 (삭제/보관/이름변경) | ✅ 로직+컨텍스트 메뉴+영속성 | 공통 |
+| 동시 실행 cap (병렬 세션 수 제한) | ✅ 기본 3, 영속, 설정 UI | 공통 |
 | **IDE 핸드오프** (Open IDE — 활성 세션 worktree를 에디터로) | ✅ VS Code로 열기, 미설치 시 탐색기 폴백 | VSCode+AG |
 | **이미지 첨부** (컴포저 ⊞ — 엔진 `-i`/base64 전달) | ✅ Ctrl+V 붙여넣기 + 파일선택 + 칩 표시 | 공통 |
+| 실행 중 Review 라이브 갱신 | ✅ ToolResult/주기 갱신 + 선택 diff 유지 | VSCode |
+| 트랜스크립트 UI 가독화 | ✅ 본문 선택/복사, 내부 스크롤 중계, 탭바 정렬 | 공통 |
+| 타이틀바 File/View/Help 메뉴 | ✅ New Agent/New Project/Settings/Review/About/docs | 공통 |
 
 ### P2 — 고급/차별화
 | 기능 | 비고 |
@@ -74,7 +82,7 @@
 | Antigravity CLI 어댑터 | 전환(6/18)·표면 확정 후 |
 | Browser QA / screenshot 검증 | AG 강점, 매우 무거움 |
 | Scheduled tasks (cron) | sidecar 필요. 사이드바에 비활성 자리 존재 |
-| Activity History 뷰 (세션 횡단 활동 이력) | 사이드바에 비활성 자리 존재 |
+| Activity History 뷰 (세션 횡단 활동 이력) | ✅ Task A에서 읽기 전용 창 구현 |
 | Skills/Hooks registry | 확장 |
 | SSH/원격 runner, 컨테이너 격리 | 매우 무거움 |
 | Subagent orchestration / Judge agent | 고급 |
