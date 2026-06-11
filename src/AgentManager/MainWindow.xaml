@@ -579,8 +579,8 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <DockPanel Margin="14,18,14,6"
-                                       Visibility="{Binding HasCliHistory, Converter={StaticResource BoolVis}}">
+                            <!-- 헤더는 항상 표시: 목록이 비어도 재스캔 버튼으로 새 CLI 세션을 발견할 수 있어야 함 -->
+                            <DockPanel Margin="14,18,14,6">
                                 <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="24" Height="20" Padding="0"
                                         Foreground="{StaticResource Txt3}" ToolTip="CLI 기록 다시 스캔"
                                         Command="{Binding RefreshCliHistoryCommand}">
