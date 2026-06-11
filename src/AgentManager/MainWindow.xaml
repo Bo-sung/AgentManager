@@ -890,9 +890,22 @@
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
-                            <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10">
+                            <Border Background="{StaticResource Bg3}" BorderThickness="1.5" CornerRadius="10">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding AgentId}" Value="cc">
+                                                <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <DockPanel LastChildFill="True">
-                                    <Border DockPanel.Dock="Bottom" Padding="9,0,9,8" Height="46">
+                                    <Border DockPanel.Dock="Bottom" Padding="9,0,9,9" Height="50">
                                         <DockPanel VerticalAlignment="Bottom" LastChildFill="True">
                                             <Button DockPanel.Dock="Left" Style="{StaticResource ComposerIconButton}"
                                                     Margin="0,0,8,0"
@@ -900,12 +913,48 @@
                                                     Click="AttachImage_Click">
                                                 <controls:IconView Icon="{StaticResource IconAttach}" Width="15" Height="15"/>
                                             </Button>
+                                            <Border DockPanel.Dock="Left" Height="30" CornerRadius="15" Padding="12,0" BorderThickness="1"
+                                                    Margin="0,0,8,0" VerticalAlignment="Center"
+                                                    ToolTip="이 세션의 엔진">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{StaticResource Bg1}"/>
+                                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding AgentId}" Value="cc">
+                                                                <Setter Property="Background" Value="{StaticResource AccentDim}"/>
+                                                                <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                                <Setter Property="Background" Value="{StaticResource GxDim}"/>
+                                                                <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" FontWeight="SemiBold"
+                                                           VerticalAlignment="Center" Text="{Binding Badge}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding AgentId}" Value="cc">
+                                                                    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                                    <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
                                             <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
-                                                    ToolTip="{Binding Branch}">
+                                                    VerticalAlignment="Center" ToolTip="{Binding Branch}">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <controls:IconView Icon="{StaticResource IconBranch}" Width="11" Height="11"
-                                                                       Foreground="{StaticResource Txt2}" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"
+                                                    <controls:IconView Icon="{StaticResource IconBranch}" Width="13" Height="13"
+                                                                       Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" Foreground="{StaticResource Txt1}"
                                                                VerticalAlignment="Center">
                                                         <Run Text="Worktree · " Foreground="{StaticResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
                                                     </TextBlock>
@@ -913,14 +962,25 @@
                                             </Border>
                                             <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
                                                 <ToggleButton x:Name="ModelMenuBtn" Style="{StaticResource TogglePillButton}"
-                                                              Height="26" Padding="10,0" Cursor="Hand" ToolTip="모델 선택">
+                                                              Height="30" Padding="12,0" Cursor="Hand" ToolTip="모델 선택">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <controls:IconView Icon="{StaticResource IconSpark}" Width="11" Height="11"
-                                                                           Foreground="{StaticResource Txt2}" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="10.5" VerticalAlignment="Center"
-                                                                   Text="{Binding Model}" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
-                                                        <controls:IconView Icon="{StaticResource IconChevDown}" Width="10" Height="10"
-                                                                           Foreground="{StaticResource Txt2}" Margin="6,1,0,0" VerticalAlignment="Center"/>
+                                                        <controls:IconView Icon="{StaticResource IconSpark}" Width="13" Height="13"
+                                                                           Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
+                                                                   Text="{Binding Model}" FontWeight="SemiBold">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
+                                                                           Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </ToggleButton>
                                                 <Popup IsOpen="{Binding IsChecked, ElementName=ModelMenuBtn, Mode=TwoWay}"
@@ -948,6 +1008,55 @@
                                                                                     <ControlTemplate.Triggers>
                                                                                         <Trigger Property="IsMouseOver" Value="True">
                                                                                             <Setter TargetName="mi" Property="Background" Value="{StaticResource Bg4}"/>
+                                                                                        </Trigger>
+                                                                                    </ControlTemplate.Triggers>
+                                                                                </ControlTemplate>
+                                                                            </Button.Template>
+                                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt0}" Text="{Binding}"/>
+                                                                        </Button>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Popup>
+                                            </Grid>
+                                            <Grid DockPanel.Dock="Left" Margin="0,0,8,0"
+                                                  Visibility="{Binding IsCodex, Converter={StaticResource BoolVis}}">
+                                                <ToggleButton x:Name="EffortMenuBtn" Style="{StaticResource TogglePillButton}"
+                                                              Height="30" Padding="12,0" Cursor="Hand" ToolTip="추론 강도 (reasoning effort) — 코덱스 전용">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <controls:IconView Icon="{StaticResource IconBolt}" Width="13" Height="13"
+                                                                           Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
+                                                                   Text="{Binding ReasoningEffort}" FontWeight="SemiBold" Foreground="{StaticResource Gx}"/>
+                                                        <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
+                                                                           Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </ToggleButton>
+                                                <Popup IsOpen="{Binding IsChecked, ElementName=EffortMenuBtn, Mode=TwoWay}"
+                                                       StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
+                                                    <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource LineBright}" BorderThickness="1"
+                                                            CornerRadius="7" Padding="5" Margin="8" MinWidth="160">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
+                                                        </Border.Effect>
+                                                        <StackPanel>
+                                                            <TextBlock Style="{StaticResource Lbl}" Margin="9,5,9,7" Text="reasoning effort"/>
+                                                            <ItemsControl ItemsSource="{x:Static vm:SessionViewModel.CodexEffortOptions}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Button Click="EffortOption_Click" Cursor="Hand"
+                                                                                Background="Transparent" BorderThickness="0"
+                                                                                HorizontalContentAlignment="Stretch" Padding="0">
+                                                                            <Button.Template>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Border x:Name="ei" Background="Transparent" CornerRadius="4" Padding="9,7">
+                                                                                        <ContentPresenter/>
+                                                                                    </Border>
+                                                                                    <ControlTemplate.Triggers>
+                                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                                            <Setter TargetName="ei" Property="Background" Value="{StaticResource Bg4}"/>
                                                                                         </Trigger>
                                                                                     </ControlTemplate.Triggers>
                                                                                 </ControlTemplate>

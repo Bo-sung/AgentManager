@@ -607,6 +607,9 @@ static void AssertSandboxAndModelArgs()
     var xm = new CodexAdapter().BuildStartInfo("codex",
         new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, Model = "gpt-5.1" }, "p").ArgumentList.ToArray();
     Assert(xm.Contains("-m") && xm.Contains("gpt-5.1"), "Codex -m");
+    var xe = new CodexAdapter().BuildStartInfo("codex",
+        new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, ReasoningEffort = "high" }, "p").ArgumentList.ToArray();
+    Assert(xe.Contains("model_reasoning_effort=\"high\""), "Codex reasoning effort -c");
 
     // MCP passthrough: existing file → --mcp-config; missing file → omitted
     var mcpFile = Path.GetTempFileName();

@@ -36,6 +36,8 @@ public sealed record SessionOptions
     /// <summary>멀티폴더 project: 주 폴더(WorkingDirectory) 외에 에이전트가 접근할 루트들.
     /// Claude: --add-dir 반복; Codex: workspace-write 샌드박스의 writable_roots 오버라이드.</summary>
     public IReadOnlyList<string> AdditionalDirectories { get; init; } = [];
+    /// <summary>코덱스 추론 강도(low/medium/high/xhigh). null/빈값 = 엔진 기본. Claude는 무시.</summary>
+    public string? ReasoningEffort { get; init; }
 }
 
 /// <summary>

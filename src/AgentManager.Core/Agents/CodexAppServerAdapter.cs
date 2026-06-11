@@ -242,6 +242,7 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
                 threadId = _threadId,
                 input,
                 model = string.IsNullOrWhiteSpace(_options.Model) ? null : _options.Model,
+                effort = string.IsNullOrWhiteSpace(_options.ReasoningEffort) ? null : _options.ReasoningEffort,
             },
         });
     }

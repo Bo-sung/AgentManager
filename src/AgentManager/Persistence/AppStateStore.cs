@@ -64,6 +64,8 @@ public sealed record SessionDto
     public bool IsArchived { get; init; }
     public string Sandbox { get; init; } = "DangerFullAccess";
     public bool RequireApproval { get; init; }
+    /// <summary>코덱스 추론 강도 (low/medium/high/xhigh, 빈값 = 기본).</summary>
+    public string ReasoningEffort { get; init; } = "";
     public List<ArtifactDto> Artifacts { get; init; } = [];
     public DateTime StartedAt { get; init; }
     public string? WorktreePath { get; init; }

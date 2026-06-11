@@ -852,6 +852,8 @@ public sealed class AppViewModel : ObservableObject
                 IsArchived = dto.IsArchived,
                 Sandbox = Enum.TryParse<SandboxMode>(dto.Sandbox, out var sb) ? sb : SandboxMode.DangerFullAccess,
                 RequireApproval = dto.RequireApproval,
+                ReasoningEffort = !string.IsNullOrWhiteSpace(dto.ReasoningEffort) ? dto.ReasoningEffort
+                    : dto.AgentId == "gx" ? "medium" : "",
                 TranslationEnabled = dto.TranslationEnabled ?? true,
                 EngineSessionId = dto.EngineSessionId,
             };
@@ -906,6 +908,7 @@ public sealed class AppViewModel : ObservableObject
                     IsArchived = s.IsArchived,
                     Sandbox = s.Sandbox.ToString(),
                     RequireApproval = s.RequireApproval,
+                    ReasoningEffort = s.ReasoningEffort,
                     Artifacts = s.Artifacts.Select(a => new ArtifactDto { Kind = a.Kind, Title = a.Title, Content = a.Content, IsError = a.IsError }).ToList(),
                     StartedAt = s.StartedAt,
                     WorktreePath = s.WorktreePath,
@@ -1008,6 +1011,7 @@ public sealed class AppViewModel : ObservableObject
             McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
             Images = images ?? [],
             AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
+            ReasoningEffort = s.IsCodex && !string.IsNullOrWhiteSpace(s.ReasoningEffort) ? s.ReasoningEffort : null,
         };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;

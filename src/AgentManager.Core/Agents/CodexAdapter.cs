@@ -69,6 +69,8 @@ public sealed class CodexAdapter : IAgentAdapter
             }
         }
         if (!string.IsNullOrWhiteSpace(options.Model)) { psi.ArgumentList.Add("-m"); psi.ArgumentList.Add(options.Model); }
+        if (!string.IsNullOrWhiteSpace(options.ReasoningEffort))
+        { psi.ArgumentList.Add("-c"); psi.ArgumentList.Add($"model_reasoning_effort=\"{options.ReasoningEffort}\""); }
         foreach (var img in options.Images)
             if (File.Exists(img)) { psi.ArgumentList.Add("-i"); psi.ArgumentList.Add(img); }
         if (!resuming) { psi.ArgumentList.Add("-C"); psi.ArgumentList.Add(options.WorkingDirectory); }

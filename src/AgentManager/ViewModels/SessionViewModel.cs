@@ -51,6 +51,7 @@ public sealed class SessionViewModel : ObservableObject
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
         _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
         AvailableModels = engine.Models;
+        if (engine.Id == "gx") _reasoningEffort = "medium";
         StartedAt = startedAt ?? DateTime.Now;
     }
 
@@ -59,6 +60,15 @@ public sealed class SessionViewModel : ObservableObject
 
     /// <summary>Models offered by this session's engine (for the composer model menu).</summary>
     public string[] AvailableModels { get; private set; } = [];
+
+    /// <summary>엔진별 컴포저 분기: 코덱스만 추론 강도 선택 노출 + 보라 테두리.</summary>
+    public bool IsCodex => AgentId == "gx";
+    public bool IsClaude => AgentId == "cc";
+
+    /// <summary>코덱스 추론 강도 (model/list 실측: low/medium/high/xhigh).</summary>
+    public static string[] CodexEffortOptions { get; } = ["low", "medium", "high", "xhigh"];
+    private string _reasoningEffort = "";
+    public string ReasoningEffort { get => _reasoningEffort; set => Set(ref _reasoningEffort, value); }
 
     /// <summary>Last segment of the branch, e.g. "agent/foo-bar" → "foo-bar" (composer pill).</summary>
     public string BranchTail => Branch.Contains('/') ? Branch[(Branch.LastIndexOf('/') + 1)..] : Branch;

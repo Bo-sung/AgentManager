@@ -263,6 +263,14 @@ public partial class MainWindow : Window
             t.IsChecked = false;
     }
 
+    private void EffortOption_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is string effort && _vm.ActiveSession is { } s)
+            s.ReasoningEffort = effort;
+        if (FindName("EffortMenuBtn") is System.Windows.Controls.Primitives.ToggleButton t)
+            t.IsChecked = false;
+    }
+
     private void CopyAgentText_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is AgentTextBlock b)
