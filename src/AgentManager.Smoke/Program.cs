@@ -20,6 +20,154 @@ if (args.Contains("--e2e"))
     return;
 }
 
+// Stage 2 spike: codex app-server JSON-RPC round-trip incl. interactive approval.
+// dotnet run -- --appserver-probe
+if (args.Contains("--appserver-probe"))
+{
+    await AppServerProbeAsync();
+    return;
+}
+
+static async Task AppServerProbeAsync()
+{
+    static string? FindCodex()
+    {
+        var ext = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".vscode", "extensions");
+        if (!Directory.Exists(ext)) return null;
+        return Directory.EnumerateDirectories(ext, "openai.chatgpt-*")
+            .Select(d => Path.Combine(d, "bin", "windows-x86_64", "codex.exe"))
+            .FirstOrDefault(File.Exists);
+    }
+
+    var codex = FindCodex();
+    if (codex is null) { Console.WriteLine("[appserver] codex.exe not found"); return; }
+
+    var tmp = Path.Combine(Path.GetTempPath(), "am_aps_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(tmp);
+    Console.WriteLine($"[appserver] exe={codex}");
+    Console.WriteLine($"[appserver] cwd={tmp}");
+
+    var utf8 = new System.Text.UTF8Encoding(false);
+    var psi = new System.Diagnostics.ProcessStartInfo
+    {
+        FileName = codex,
+        RedirectStandardInput = true,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true,
+        StandardOutputEncoding = utf8,
+        StandardErrorEncoding = utf8,
+        StandardInputEncoding = utf8,
+    };
+    psi.ArgumentList.Add("app-server");
+    using var p = System.Diagnostics.Process.Start(psi)!;
+    _ = Task.Run(async () => { while (await p.StandardError.ReadLineAsync() is { } e) Console.WriteLine("[stderr] " + e); });
+
+    async Task Send(object msg)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(msg);
+        Console.WriteLine("--> " + (json.Length > 220 ? json[..220] + "…" : json));
+        await p.StandardInput.WriteLineAsync(json);
+        await p.StandardInput.FlushAsync();
+    }
+
+    await Send(new { id = 1, method = "initialize", @params = new { clientInfo = new { name = "AgentManager", title = "AgentManager", version = "0.1.0" } } });
+
+    string? threadId = null;
+    var approvals = 0;
+    var ok = false;
+    var deadline = DateTime.UtcNow.AddSeconds(180);
+    while (DateTime.UtcNow < deadline)
+    {
+        var readTask = p.StandardOutput.ReadLineAsync();
+        if (await Task.WhenAny(readTask, Task.Delay(TimeSpan.FromSeconds(30))) != readTask) { Console.WriteLine("[appserver] read timeout"); break; }
+        var line = readTask.Result;
+        if (line is null) { Console.WriteLine("[appserver] EOF"); break; }
+        Console.WriteLine("<-- " + (line.Length > 220 ? line[..220] + "…" : line));
+
+        System.Text.Json.JsonDocument doc;
+        try { doc = System.Text.Json.JsonDocument.Parse(line); } catch { continue; }
+        using var _d = doc;
+        var root = doc.RootElement;
+        var method = root.TryGetProperty("method", out var mEl) ? mEl.GetString() : null;
+        var hasId = root.TryGetProperty("id", out var idEl);
+
+        if (method is null && hasId) // response to one of our requests
+        {
+            var id = idEl.GetInt32();
+            if (id == 1)
+            {
+                await Send(new { method = "initialized" });
+                // sandbox는 danger-full-access: 이 환경에서 codex 윈도우 샌드박스 spawn이 실패하고
+                // (제품 모델도 "샌드박스 대신 승인 게이트"), 승인은 approvalPolicy가 강제한다
+                await Send(new
+                {
+                    id = 2,
+                    method = "thread/start",
+                    @params = new { cwd = tmp, approvalPolicy = "untrusted", sandbox = "danger-full-access" }
+                });
+            }
+            else if (id == 2)
+            {
+                // ThreadStartResponse: find the thread id wherever it lives
+                threadId = FindString(root, "threadId") ?? FindString(root, "id");
+                Console.WriteLine($"[appserver] threadId={threadId}");
+                await Send(new
+                {
+                    id = 3,
+                    method = "turn/start",
+                    @params = new
+                    {
+                        threadId,
+                        input = new object[] { new { type = "text", text = "Run a shell command that writes the exact text stage2-approval-spike into a new file named probe.txt, then stop." } },
+                    }
+                });
+            }
+            continue;
+        }
+
+        if (method is not null && hasId) // server -> client request (approval etc.)
+        {
+            Console.WriteLine($"[appserver] SERVER REQUEST {method}");
+            if (method.Contains("requestApproval") || method is "execCommandApproval" or "applyPatchApproval")
+            {
+                approvals++;
+                await Send(new { id = idEl.GetInt32(), result = new { decision = "accept" } });
+            }
+            continue;
+        }
+
+        if (method == "turn/completed") { ok = true; break; }
+        if (method == "error") Console.WriteLine("[appserver] ERROR notification");
+    }
+
+    var probe = Path.Combine(tmp, "probe.txt");
+    var fileOk = File.Exists(probe) && (await File.ReadAllTextAsync(probe)).Contains("stage2-approval-spike");
+    Console.WriteLine($"[appserver] approvals={approvals} turnCompleted={ok} fileOk={fileOk}");
+    Console.WriteLine(ok && fileOk && approvals > 0 ? "appserver probe PASS" : "appserver probe FAIL");
+    try { p.Kill(entireProcessTree: true); } catch { }
+    try { Directory.Delete(tmp, recursive: true); } catch { }
+
+    static string? FindString(System.Text.Json.JsonElement el, string name)
+    {
+        if (el.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            foreach (var prop in el.EnumerateObject())
+            {
+                if (prop.Name == name && prop.Value.ValueKind == System.Text.Json.JsonValueKind.String) return prop.Value.GetString();
+                if (FindString(prop.Value, name) is { } s) return s;
+            }
+        }
+        else if (el.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var item in el.EnumerateArray())
+                if (FindString(item, name) is { } s) return s;
+        }
+        return null;
+    }
+}
+
 // External CLI session discovery against the real disk: dotnet run -- --cli-history <projectPath>
 if (args.Length >= 2 && args[0] == "--cli-history")
 {

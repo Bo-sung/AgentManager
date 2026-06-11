@@ -58,8 +58,10 @@
 | **멀티폴더 project** — SessionOptions.AdditionalDirectories → claude `--add-dir` / codex writable_roots, Settings EXTRA FOLDERS UI, Smoke 어서션 PASS | 44dd3a6, 9d9c419 |
 | **UI 마무리** — 모델피커(spark+chevron)/Worktree필(branch)/Export(file) 벡터 아이콘, File/View/Help 메뉴 실동작(New Agent·New Project·Settings·Exit / Review 토글·최대화 / About·docs) | 9d9c419 |
 
+| **승인 Stage 2 스파이크** — codex app-server 실측(스키마 덤프 + Smoke --appserver-probe 실 왕복 PASS: initialize→thread/start→turn/start→commandExecution/requestApproval→accept→파일생성→turn/completed). 함정 포함 문서화 (PHASE0_CODEX_APPSERVER_KO.md) | (this) |
+
 ## 🔜 다음
-1. **승인 Stage 2** — Codex app-server 프로토콜 스파이크 → Approve/Deny
+1. **승인 Stage 2 통합** — CodexAppServerAdapter (EngineWriteback 메커니즘 + PermissionRequest 매핑, RequireApproval=true인 codex 세션만)
 2. **뒤로 미룸(결정)**: Antigravity 어댑터(6/18 전환 후) · 풀 MCP
 
 ## ⏸ 보류 / 후순위
