@@ -44,6 +44,8 @@
 | **README 재작성 (Gemini, 검증·보정 완료)** | c4995af, 2d88507 |
 
 | **실행 중 Review 라이브 갱신** (ToolResult마다 0.8s 디바운스 새로고침, 선택 파일 유지) + **Smoke --e2e** (헤드리스 풀 파이프라인: 한글→번역→Claude→worktree 파일→diff→merge, PASS) | de295df |
+| **라이브 갱신 보강** (실행 중 주기 갱신 + quiet 모드로 깜빡임 제거) · **Review pane 기본 열림+영속** | 40341f7, f405039 |
+| **원본 디자인 리소스 추출** (아이콘 34종 Geometry + IconView 컨트롤 + AddBg/DelBg/Run/radii 토큰, 글리프 대체 일괄 적용) | b0487bf |
 
 ## 🔜 다음
 1. 소형 잔여: 세션 검색/필터 · 멀티폴더 project
