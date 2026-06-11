@@ -3,7 +3,10 @@ namespace AgentManager.ViewModels;
 public sealed class ProjectViewModel(string id, string name, string path) : ObservableObject
 {
     public string Id { get; } = id;
-    public string Name { get; } = name;
+
+    private string _name = name;
+    public string Name { get => _name; set => Set(ref _name, value); }
+
     public string Path { get; } = path;
 
     private int _sessionCount;

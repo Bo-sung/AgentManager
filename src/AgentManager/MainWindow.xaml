@@ -437,6 +437,21 @@
                                     <DataTemplate>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,7" Cursor="Hand"
                                                 MouseLeftButtonUp="ProjectRow_Click" ToolTip="{Binding Path}">
+                                            <Border.ContextMenu>
+                                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                    <MenuItem Header="Remove project" Command="{Binding DataContext.RemoveProjectCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <Separator/>
+                                                    <StackPanel Width="190" Margin="8,6">
+                                                        <TextBlock Text="RENAME" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                        <TextBox x:Name="ProjRenameBox" Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}"
+                                                                 BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="8"
+                                                                 AcceptsReturn="False" Text="{Binding Name, Mode=OneWay}"/>
+                                                        <Button Style="{StaticResource ChipButton}" Content="Apply" Margin="0,8,0,0"
+                                                                Command="{Binding DataContext.RenameProjectCommand, Source={x:Reference Root}}"
+                                                                CommandParameter="{Binding ElementName=ProjRenameBox}"/>
+                                                    </StackPanel>
+                                                </ContextMenu>
+                                            </Border.ContextMenu>
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="Transparent"/>

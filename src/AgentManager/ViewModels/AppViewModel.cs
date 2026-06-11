@@ -63,6 +63,14 @@ public sealed class AppViewModel : ObservableObject
         DeleteSessionCommand = new RelayCommand(p => _ = DeleteSessionAsync(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         ArchiveSessionCommand = new RelayCommand(p => ToggleArchive(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         RenameSessionCommand = new RelayCommand(p => { if (p is string t) RenameSession(ActiveSession, t); }, _ => ActiveSession is not null);
+        RenameProjectCommand = new RelayCommand(p =>
+        {
+            if (p is System.Windows.Controls.TextBox tb && tb.DataContext is ProjectViewModel proj && !string.IsNullOrWhiteSpace(tb.Text))
+            {
+                RenameProject(proj, tb.Text);
+            }
+        });
+        RemoveProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel proj) RemoveProject(proj); });
         CommitReviewCommand = new RelayCommand(_ => _ = CommitReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
         ForkSessionCommand = new RelayCommand(p => ForkSession(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         SendDiffFeedbackCommand = new RelayCommand(p => { if (p is string f) _ = SendDiffFeedbackAsync(ActiveSession, f); },
@@ -201,6 +209,8 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand DeleteSessionCommand { get; }
     public RelayCommand ArchiveSessionCommand { get; }
     public RelayCommand RenameSessionCommand { get; }
+    public RelayCommand RenameProjectCommand { get; }
+    public RelayCommand RemoveProjectCommand { get; }
     public RelayCommand CommitReviewCommand { get; }
     public RelayCommand ForkSessionCommand { get; }
     public RelayCommand SendDiffFeedbackCommand { get; }
@@ -307,6 +317,51 @@ public sealed class AppViewModel : ObservableObject
     {
         if (s is null || string.IsNullOrWhiteSpace(newTitle)) return;
         s.Title = newTitle.Trim();
+        SaveState();
+    }
+
+    public void RenameProject(ProjectViewModel proj, string newName)
+    {
+        proj.Name = newName.Trim();
+        if (ReferenceEquals(ActiveProject, proj))
+        {
+            OnChanged(nameof(Project));
+        }
+        SaveState();
+    }
+
+    public void RemoveProject(ProjectViewModel? p)
+    {
+        if (p is null) return;
+
+        var sessionsToRemove = _allSessions.Where(s => s.ProjectId == p.Id).ToList();
+        if (sessionsToRemove.Any())
+        {
+            var res = MessageBox.Show($"세션 {sessionsToRemove.Count}개가 함께 제거됩니다. 계속하시겠습니까?", "프로젝트 제거", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (res != MessageBoxResult.Yes)
+                return;
+        }
+
+        foreach (var s in sessionsToRemove)
+        {
+            if (_running.TryGetValue(s.Id, out var cts))
+            {
+                try { cts.Cancel(); } catch { }
+            }
+            s.PropertyChanged -= SessionStatusWatch;
+            _allSessions.Remove(s);
+        }
+
+        Projects.Remove(p);
+
+        if (ReferenceEquals(ActiveProject, p))
+        {
+            ActiveProject = Projects.FirstOrDefault();
+        }
+
+        RefreshProjectSessions();
+        RefreshCounts();
+        RefreshProjectCounts();
         SaveState();
     }
 
