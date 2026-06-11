@@ -468,6 +468,11 @@ public sealed class AppViewModel : ObservableObject
     public string SettingsOllamaModel { get => _settingsOllamaModel; set => Set(ref _settingsOllamaModel, value); }
     private bool _settingsDefaultTranslationEnabled = true;
     public bool SettingsDefaultTranslationEnabled { get => _settingsDefaultTranslationEnabled; set => Set(ref _settingsDefaultTranslationEnabled, value); }
+    private bool _settingsWarnNoWorktree;
+    public bool SettingsWarnNoWorktree { get => _settingsWarnNoWorktree; set => Set(ref _settingsWarnNoWorktree, value); }
+
+    /// <summary>비-git 폴더에서 "격리 없이 실행" 안내를 띄울지 (기본 끔 — 비-git 사용이 일반 흐름인 사용자 배려).</summary>
+    private bool _warnNoWorktree;
 
     // provider detection status (settings panel)
     public string ClaudeDetectLabel => DetectLabel("cc", _claudePath);
@@ -690,6 +695,7 @@ public sealed class AppViewModel : ObservableObject
         SettingsOllamaEndpoint = _ollamaEndpoint;
         SettingsOllamaModel = _ollamaModel;
         SettingsDefaultTranslationEnabled = TranslationEnabled;
+        SettingsWarnNoWorktree = _warnNoWorktree;
         SettingsStatus = "";
         ShowSettings = true;
     }
@@ -702,6 +708,7 @@ public sealed class AppViewModel : ObservableObject
         _ollamaEndpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint.Trim();
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();
         TranslationEnabled = SettingsDefaultTranslationEnabled;
+        _warnNoWorktree = SettingsWarnNoWorktree;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
         SettingsStatus = "Settings saved";
         ShowSettings = false;
@@ -799,6 +806,7 @@ public sealed class AppViewModel : ObservableObject
         TranslationEnabled = state.Settings.TranslationEnabled;
         MaxConcurrentSessions = state.Settings.MaxConcurrentSessions;
         _isReviewOpen = state.Settings.ReviewPaneOpen;
+        _warnNoWorktree = state.Settings.WarnNoWorktree;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
 
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
@@ -875,6 +883,7 @@ public sealed class AppViewModel : ObservableObject
                     TranslationEnabled = TranslationEnabled,
                     MaxConcurrentSessions = MaxConcurrentSessions,
                     ReviewPaneOpen = IsReviewOpen,
+                    WarnNoWorktree = _warnNoWorktree,
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
@@ -926,7 +935,8 @@ public sealed class AppViewModel : ObservableObject
             Directory.CreateDirectory(projectWorktreesRoot);
             var wt = await GitWorktree.CreateAsync(s.ProjectPath, s.Id, s.Branch, projectWorktreesRoot);
             if (wt is not null) { s.WorktreePath = wt.Path; s.Isolated = true; }
-            else s.Transcript.Add(new WorkingBlock("⚠ git 레포가 아니어서 격리(worktree) 없이 실행합니다"));
+            else if (_warnNoWorktree)
+                s.Transcript.Add(new WorkingBlock("⚠ git 레포가 아니어서 격리(worktree) 없이 실행합니다"));
         }
         catch (Exception ex)
         {

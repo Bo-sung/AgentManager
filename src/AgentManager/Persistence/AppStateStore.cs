@@ -21,6 +21,8 @@ public sealed record AppSettingsDto
     public bool TranslationEnabled { get; init; } = true;
     public int MaxConcurrentSessions { get; init; } = 3;
     public bool ReviewPaneOpen { get; init; } = true;
+    /// <summary>비-git 폴더에서 "격리 없이 실행" 안내 표시 여부 (기본 끔).</summary>
+    public bool WarnNoWorktree { get; init; }
 }
 
 public sealed record ProjectDto

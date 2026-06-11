@@ -1485,6 +1485,10 @@
                             <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
                                           IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}"
                                           Content="DEFAULT TRANSLATION"/>
+                            <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}" Margin="8,0,0,0"
+                                          IsChecked="{Binding SettingsWarnNoWorktree, Mode=TwoWay}"
+                                          Content="NON-GIT NOTICE"
+                                          ToolTip="비-git 폴더에서 세션 시작 시 '격리(worktree) 없이 실행' 안내를 표시"/>
                             <TextBlock Text="{Binding SettingsStatus}" FontFamily="{StaticResource Mono}" FontSize="10"
                                        Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                         </DockPanel>
