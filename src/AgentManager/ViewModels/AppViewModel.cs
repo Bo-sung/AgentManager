@@ -446,6 +446,10 @@ public sealed class AppViewModel : ObservableObject
         foreach (var session in _allSessions)
             if (session.IsRunning)
                 session.RefreshRuntimeLabels();
+
+        // live review: pick up files a still-running tool is writing (debounced inside)
+        if (ActiveSession is { IsRunning: true } run)
+            _ = QueueLiveReviewRefreshAsync(run);
     }
 
     private void CreateSession()
@@ -825,7 +829,7 @@ public sealed class AppViewModel : ObservableObject
         await LoadReviewDiffAsync(s, change);
     }
 
-    private async Task LoadReviewDiffAsync(SessionViewModel s, ReviewChangeViewModel? change)
+    private async Task LoadReviewDiffAsync(SessionViewModel s, ReviewChangeViewModel? change, bool quiet = false)
     {
         s.SelectedChange = change;
         if (change is null || string.IsNullOrWhiteSpace(s.WorktreePath))
@@ -834,12 +838,13 @@ public sealed class AppViewModel : ObservableObject
             return;
         }
 
-        s.DiffText = "Loading diff...";
+        if (!quiet) s.DiffText = "Loading diff...";
         try
         {
             var diff = await GitWorktree.GetDiffAsync(s.WorktreePath, change.Path);
-            s.DiffText = string.IsNullOrWhiteSpace(diff) ? "No textual diff." : diff;
-            SaveState();
+            var text = string.IsNullOrWhiteSpace(diff) ? "No textual diff." : diff;
+            if (s.DiffText != text) s.DiffText = text;
+            if (!quiet) SaveState();
         }
         catch (Exception ex)
         {
@@ -858,12 +863,12 @@ public sealed class AppViewModel : ObservableObject
         {
             await Task.Delay(800);
             if (ReferenceEquals(s, ActiveSession))
-                await RefreshReviewAsync(s);
+                await RefreshReviewAsync(s, quiet: true);
         }
         finally { _liveReviewQueued = false; }
     }
 
-    private async Task RefreshReviewAsync(SessionViewModel? s)
+    private async Task RefreshReviewAsync(SessionViewModel? s, bool quiet = false)
     {
         if (s is null) return;
         if (string.IsNullOrWhiteSpace(s.WorktreePath))
@@ -875,20 +880,29 @@ public sealed class AppViewModel : ObservableObject
             return;
         }
 
-        s.ReviewStatus = "Scanning changes...";
+        if (!quiet) s.ReviewStatus = "Scanning changes...";
         try
         {
             var selectedPath = s.SelectedChange?.Path; // keep the user's selection across live refreshes
             var changes = await GitWorktree.GetChangedFilesAsync(s.WorktreePath);
-            s.Changes.Clear();
-            foreach (var change in changes)
-                s.Changes.Add(new ReviewChangeViewModel(change));
+
+            // rebuild the list only when it actually changed, so live refreshes don't flicker
+            var same = s.Changes.Count == changes.Count;
+            for (var i = 0; same && i < changes.Count; i++)
+                same = s.Changes[i].Path == changes[i].Path && s.Changes[i].Kind == changes[i].Kind
+                    && s.Changes[i].Added == changes[i].Added && s.Changes[i].Deleted == changes[i].Deleted;
+            if (!same)
+            {
+                s.Changes.Clear();
+                foreach (var change in changes)
+                    s.Changes.Add(new ReviewChangeViewModel(change));
+            }
 
             s.ReviewStatus = changes.Count == 0 ? "No changes" : $"{changes.Count} changed file(s)";
             if (s.Changes.Count > 0)
             {
                 var keep = selectedPath is null ? null : s.Changes.FirstOrDefault(c => c.Path == selectedPath);
-                await LoadReviewDiffAsync(s, keep ?? s.Changes[0]);
+                await LoadReviewDiffAsync(s, keep ?? s.Changes[0], quiet);
             }
             else
             {
