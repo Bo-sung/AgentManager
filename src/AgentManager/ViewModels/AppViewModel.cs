@@ -536,6 +536,30 @@ public sealed class AppViewModel : ObservableObject
         RefreshCounts();
         RefreshProjectCounts();
         SaveState();
+        _ = PopulateImportedTranscriptAsync(s, item);
+    }
+
+    /// <summary>가져온 CLI 세션의 과거 대화를 기록 파일에서 복원해 트랜스크립트 앞부분에 채운다.</summary>
+    private async Task PopulateImportedTranscriptAsync(SessionViewModel s, CliHistoryItemViewModel item)
+    {
+        List<CliSessionDiscovery.CliTranscriptItem> history;
+        try { history = await Task.Run(() => CliSessionDiscovery.LoadTranscript(item.Entry.EngineId, item.Entry.FilePath)); }
+        catch { return; }
+        if (history.Count == 0) return;
+
+        var insertAt = 0;
+        foreach (var h in history)
+        {
+            TranscriptItem block = h.Role switch
+            {
+                "user" => new UserBlock(h.Text),
+                "assistant" => new AgentTextBlock(h.Text),
+                "thinking" => new ThinkingBlock(h.Text),
+                _ => new ToolBlock("import-" + insertAt, KindOf(h.Name), h.Name) { Body = h.Text, Stat = "done" },
+            };
+            s.Transcript.Insert(insertAt++, block);
+        }
+        SaveState();
     }
 
     private void CreateProject()

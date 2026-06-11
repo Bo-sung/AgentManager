@@ -155,6 +155,104 @@ public static class CliSessionDiscovery
         return null;
     }
 
+    // ----- transcript reconstruction -----
+
+    /// <summary>가져온 CLI 세션의 과거 대화 한 항목. Role: user | assistant | thinking | tool.</summary>
+    public sealed record CliTranscriptItem(string Role, string Name, string Text);
+
+    /// <summary>CLI 기록 파일에서 대화를 복원한다 (표시용 — 도구 출력 등 부피 큰 내용은 요약/생략).</summary>
+    public static List<CliTranscriptItem> LoadTranscript(string engineId, string filePath, int maxItems = 400)
+        => engineId == "cc" ? LoadClaudeTranscript(filePath, maxItems) : LoadCodexTranscript(filePath, maxItems);
+
+    private static List<CliTranscriptItem> LoadClaudeTranscript(string path, int maxItems)
+    {
+        var items = new List<CliTranscriptItem>();
+        foreach (var line in ReadLinesSafe(path, int.MaxValue))
+        {
+            if (items.Count >= maxItems) break;
+            if (!line.Contains("\"message\"", StringComparison.Ordinal)) continue;
+            try
+            {
+                using var doc = JsonDocument.Parse(line);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("isSidechain", out var sc) && sc.ValueKind == JsonValueKind.True) continue;
+                var type = root.TryGetProperty("type", out var t) ? t.GetString() : null;
+                if (type is not ("user" or "assistant")) continue;
+                if (!root.TryGetProperty("message", out var msg) || !msg.TryGetProperty("content", out var content)) continue;
+
+                if (content.ValueKind == JsonValueKind.String)
+                {
+                    var s = content.GetString();
+                    if (!string.IsNullOrWhiteSpace(s)) items.Add(new(type!, "", s!));
+                    continue;
+                }
+                if (content.ValueKind != JsonValueKind.Array) continue;
+                foreach (var part in content.EnumerateArray())
+                {
+                    var pt = part.TryGetProperty("type", out var ptEl) ? ptEl.GetString() : null;
+                    switch (pt)
+                    {
+                        case "text" when part.TryGetProperty("text", out var txt) && !string.IsNullOrWhiteSpace(txt.GetString()):
+                            items.Add(new(type!, "", txt.GetString()!));
+                            break;
+                        case "thinking" when type == "assistant" && part.TryGetProperty("thinking", out var th) && !string.IsNullOrWhiteSpace(th.GetString()):
+                            items.Add(new("thinking", "", th.GetString()!));
+                            break;
+                        case "tool_use" when type == "assistant":
+                            var name = part.TryGetProperty("name", out var nm) ? nm.GetString() ?? "tool" : "tool";
+                            var input = part.TryGetProperty("input", out var inp) ? inp.GetRawText() : "";
+                            items.Add(new("tool", name, input.Length > 300 ? input[..300] + "…" : input));
+                            break;
+                    }
+                }
+            }
+            catch { }
+        }
+        return items;
+    }
+
+    private static List<CliTranscriptItem> LoadCodexTranscript(string path, int maxItems)
+    {
+        var items = new List<CliTranscriptItem>();
+        foreach (var line in ReadLinesSafe(path, int.MaxValue))
+        {
+            if (items.Count >= maxItems) break;
+            try
+            {
+                using var doc = JsonDocument.Parse(line);
+                var root = doc.RootElement;
+                var type = root.TryGetProperty("type", out var t) ? t.GetString() : null;
+                if (!root.TryGetProperty("payload", out var p)) continue;
+                var pt = p.TryGetProperty("type", out var ptEl) ? ptEl.GetString() : null;
+
+                // response_item의 user role은 환경 컨텍스트 덤프가 섞여 있어 event_msg만 신뢰한다
+                if (type == "event_msg")
+                {
+                    switch (pt)
+                    {
+                        case "user_message" when p.TryGetProperty("message", out var um) && !string.IsNullOrWhiteSpace(um.GetString()):
+                            items.Add(new("user", "", um.GetString()!));
+                            break;
+                        case "agent_message" when p.TryGetProperty("message", out var am) && !string.IsNullOrWhiteSpace(am.GetString()):
+                            items.Add(new("assistant", "", am.GetString()!));
+                            break;
+                        case "agent_reasoning" when p.TryGetProperty("text", out var rt) && !string.IsNullOrWhiteSpace(rt.GetString()):
+                            items.Add(new("thinking", "", rt.GetString()!));
+                            break;
+                    }
+                }
+                else if (type == "response_item" && pt is "function_call" or "local_shell_call" or "custom_tool_call")
+                {
+                    var name = p.TryGetProperty("name", out var nm) ? nm.GetString() ?? "tool" : "tool";
+                    var args = p.TryGetProperty("arguments", out var ar) ? ar.GetString() ?? "" : "";
+                    items.Add(new("tool", name, args.Length > 300 ? args[..300] + "…" : args));
+                }
+            }
+            catch { }
+        }
+        return items;
+    }
+
     // ----- shared -----
 
     private static IEnumerable<string> ReadLinesSafe(string path, int maxLines)

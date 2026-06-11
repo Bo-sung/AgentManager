@@ -27,6 +27,13 @@ if (args.Length >= 2 && args[0] == "--cli-history")
     Console.WriteLine($"[cli-history] {args[1]} -> {found.Count} entries");
     foreach (var e in found)
         Console.WriteLine($"  {e.EngineId} {e.SessionId[..Math.Min(12, e.SessionId.Length)]}… {e.LastWriteUtc:MM-dd HH:mm} | {e.Title}");
+    foreach (var e in found.GroupBy(x => x.EngineId).Select(g => g.First()))
+    {
+        var tr = CliSessionDiscovery.LoadTranscript(e.EngineId, e.FilePath);
+        Console.WriteLine($"[transcript] {e.EngineId} {e.SessionId[..8]}… -> {tr.Count} items");
+        foreach (var it in tr.Take(6))
+            Console.WriteLine($"  {it.Role,-9} {it.Name,-12} {(it.Text.Length > 70 ? it.Text[..70].Replace('\n', ' ') + "…" : it.Text.Replace('\n', ' '))}");
+    }
     return;
 }
 
