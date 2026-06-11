@@ -3,6 +3,7 @@
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
 using AgentManager.Core.Session;
+using AgentManager.Core.Translation;
 using AgentManager.Core.Workspace;
 
 // Live approval round-trip (costs a few engine tokens): dotnet run -- --live-approval
@@ -10,6 +11,81 @@ if (args.Contains("--live-approval"))
 {
     await LiveApprovalAsync();
     return;
+}
+
+// Full product E2E (real Claude + Ollama translation + worktree + merge): dotnet run -- --e2e
+if (args.Contains("--e2e"))
+{
+    await E2EAsync();
+    return;
+}
+
+static async Task E2EAsync()
+{
+    static string Pass(bool ok) => ok ? "PASS" : "FAIL";
+    var tmp = Path.Combine(Path.GetTempPath(), "am_e2e_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(tmp);
+    var wtRoot = Path.Combine(tmp, "_wts");
+    try
+    {
+        static async Task Git(string dir, params string[] a)
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo { FileName = "git", WorkingDirectory = dir, UseShellExecute = false, CreateNoWindow = true };
+            foreach (var x in a) psi.ArgumentList.Add(x);
+            using var p = System.Diagnostics.Process.Start(psi)!; await p.WaitForExitAsync();
+        }
+        // 1. project git repo
+        await Git(tmp, "init", "-q");
+        await Git(tmp, "config", "user.email", "t@t"); await Git(tmp, "config", "user.name", "t");
+        await File.WriteAllTextAsync(Path.Combine(tmp, "README.md"), "# e2e\n");
+        await Git(tmp, "add", "-A"); await Git(tmp, "commit", "-qm", "init");
+        Console.WriteLine("[1] project repo ready");
+
+        // 2. worktree isolation
+        var wt = await GitWorktree.CreateAsync(tmp, "s1", "agent/e2e", wtRoot);
+        Console.WriteLine($"[2] worktree isolation .......... {Pass(wt is not null && Directory.Exists(wt!.Path))}");
+        if (wt is null) { Console.WriteLine("E2E ABORTED (not a git repo?)"); return; }
+
+        // 3. translation + engine: Korean prompt -> KO->EN -> Claude writes a file -> EN->KO response
+        var exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin", "claude.exe");
+        var translator = new OllamaTranslator(new OllamaOptions());
+        var session = new AgentSession(new ClaudeAdapter(), File.Exists(exe) ? exe : "claude", translator, translationEnabled: true);
+
+        string? koreanReply = null; bool sawTool = false;
+        session.EventReceived += ev =>
+        {
+            switch (ev)
+            {
+                case ToolUseStarted u: sawTool = true; Console.WriteLine($"    tool: {u.Name}"); break;
+                case AssistantText t: koreanReply = t.Text; break;
+            }
+        };
+        var opts = new SessionOptions { WorkingDirectory = wt.Path, BypassPermissions = true };
+        Console.WriteLine("[3] running Claude with Korean prompt (translation ON)…");
+        await session.RunAsync(opts, "fibonacci.txt 파일을 만들어서 피보나치 수열의 처음 8개 숫자를 적어줘. Write 도구를 쓰고 끝나면 멈춰.");
+
+        var file = Path.Combine(wt.Path, "fibonacci.txt");
+        var fileMade = File.Exists(file);
+        var replyKorean = koreanReply is not null && System.Text.RegularExpressions.Regex.IsMatch(koreanReply, "[가-힣]");
+        Console.WriteLine($"[3a] engine used a tool ......... {Pass(sawTool)}");
+        Console.WriteLine($"[3b] file created in worktree ... {Pass(fileMade)}  ({(fileMade ? "fibonacci.txt" : "missing")})");
+        Console.WriteLine($"[3c] reply translated to KO ..... {Pass(replyKorean)}  (\"{(koreanReply ?? "").Replace("\n", " ")[..Math.Min(60, (koreanReply ?? "").Length)]}\")");
+
+        // 4. review: changed files + diff
+        var changes = await GitWorktree.GetChangedFilesAsync(wt.Path);
+        var diff = await GitWorktree.GetDiffAsync(wt.Path);
+        Console.WriteLine($"[4] review: {changes.Count} changed file(s), diff {diff.Length} chars .. {Pass(changes.Count >= 1 && diff.Length > 0)}");
+
+        // 5. merge -> main updated, then cleanup worktree
+        var (mok, mmsg) = await GitWorktree.MergeAsync(tmp, "agent/e2e", "agent: e2e", wt.Path);
+        var onMain = File.Exists(Path.Combine(tmp, "fibonacci.txt"));
+        Console.WriteLine($"[5] merge to main .............. {Pass(mok && onMain)}  ({mmsg})");
+        await GitWorktree.RemoveAsync(tmp, wt.Path);
+
+        var allOk = wt is not null && fileMade && sawTool && replyKorean && changes.Count >= 1 && mok && onMain;
+        Console.WriteLine(allOk ? "\nE2E OK — full product path verified" : "\nE2E had failures (see above)");
+    }
+    finally { try { Directory.Delete(tmp, true); } catch { } }
 }
 
 static async Task LiveApprovalAsync()

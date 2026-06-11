@@ -847,6 +847,22 @@ public sealed class AppViewModel : ObservableObject
         }
     }
 
+    /// <summary>실행 중 라이브 갱신: 툴이 끝날 때마다 호출되며, 버스트를 디바운스(0.8s)해
+    /// 활성 세션의 Review pane을 갱신한다 (git status는 가볍지만 연타 방지).</summary>
+    private bool _liveReviewQueued;
+    private async Task QueueLiveReviewRefreshAsync(SessionViewModel s)
+    {
+        if (_liveReviewQueued || !ReferenceEquals(s, ActiveSession) || s.WorktreePath is null) return;
+        _liveReviewQueued = true;
+        try
+        {
+            await Task.Delay(800);
+            if (ReferenceEquals(s, ActiveSession))
+                await RefreshReviewAsync(s);
+        }
+        finally { _liveReviewQueued = false; }
+    }
+
     private async Task RefreshReviewAsync(SessionViewModel? s)
     {
         if (s is null) return;
@@ -862,6 +878,7 @@ public sealed class AppViewModel : ObservableObject
         s.ReviewStatus = "Scanning changes...";
         try
         {
+            var selectedPath = s.SelectedChange?.Path; // keep the user's selection across live refreshes
             var changes = await GitWorktree.GetChangedFilesAsync(s.WorktreePath);
             s.Changes.Clear();
             foreach (var change in changes)
@@ -869,7 +886,10 @@ public sealed class AppViewModel : ObservableObject
 
             s.ReviewStatus = changes.Count == 0 ? "No changes" : $"{changes.Count} changed file(s)";
             if (s.Changes.Count > 0)
-                await LoadReviewDiffAsync(s, s.Changes[0]);
+            {
+                var keep = selectedPath is null ? null : s.Changes.FirstOrDefault(c => c.Path == selectedPath);
+                await LoadReviewDiffAsync(s, keep ?? s.Changes[0]);
+            }
             else
             {
                 s.SelectedChange = null;
@@ -963,6 +983,8 @@ public sealed class AppViewModel : ObservableObject
                         Stat = r.IsError ? "error" : "done"
                     });
                 }
+                // live review: a finished tool may have changed files in the worktree
+                _ = QueueLiveReviewRefreshAsync(s);
                 break;
             case TokenUsage k:
                 // live accumulation; TurnCompleted.Usage reconciles to the turn total
