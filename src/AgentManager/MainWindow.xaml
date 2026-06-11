@@ -36,7 +36,8 @@
                         CornerRadius="10,10,2,10" Padding="13,11">
                     <StackPanel>
                         <TextBlock Style="{StaticResource Lbl}" Text="YOU" Margin="0,0,0,5"/>
-                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="{StaticResource Txt0}"/>
+                        <TextBox Style="{StaticResource SelectableText}" Text="{Binding Text, Mode=OneWay}"
+                                 Foreground="{StaticResource Txt0}"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -107,10 +108,9 @@
                     <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0"
                             Padding="12,10" MaxHeight="220"
                             Visibility="{Binding IsOpen, Converter={StaticResource BoolVis}}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <TextBlock Text="{Binding DisplayBody}" FontFamily="{StaticResource Mono}" FontSize="11"
-                                       Foreground="{StaticResource Txt1}" TextWrapping="Wrap"/>
-                        </ScrollViewer>
+                        <TextBox Style="{StaticResource SelectableText}" Text="{Binding DisplayBody, Mode=OneWay}"
+                                 FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt1}"
+                                 VerticalScrollBarVisibility="Auto"/>
                     </Border>
                 </StackPanel>
             </Border>
@@ -122,8 +122,8 @@
                 <StackPanel>
                     <TextBlock Text="{Binding Title}" FontFamily="{StaticResource Mono}" FontSize="10.5"
                                Foreground="{StaticResource Err}" Margin="0,0,0,6"/>
-                    <TextBlock Text="{Binding Body}" FontFamily="{StaticResource Mono}" FontSize="11"
-                               Foreground="{StaticResource Txt1}" TextWrapping="Wrap"/>
+                    <TextBox Style="{StaticResource SelectableText}" Text="{Binding Body, Mode=OneWay}"
+                             FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt1}"/>
                 </StackPanel>
             </Border>
         </DataTemplate>
@@ -158,8 +158,8 @@
                 </ToggleButton>
                 <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="2,0,0,0" Padding="12,4,0,2" Margin="2,2,0,0"
                         Visibility="{Binding IsOpen, Converter={StaticResource BoolVis}}">
-                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontStyle="Italic" FontSize="12"
-                               Foreground="{StaticResource Txt2}" LineHeight="18"/>
+                    <TextBox Style="{StaticResource SelectableText}" Text="{Binding Text, Mode=OneWay}"
+                             FontStyle="Italic" FontSize="12" Foreground="{StaticResource Txt2}"/>
                 </Border>
             </StackPanel>
         </DataTemplate>
@@ -179,10 +179,9 @@
                     </DockPanel>
                     <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1"
                             CornerRadius="4" Margin="13,9" Padding="11,8" MaxHeight="120">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <TextBlock Text="{Binding InputSummary}" FontFamily="{StaticResource Mono}" FontSize="11"
-                                       Foreground="{StaticResource Txt1}" TextWrapping="Wrap"/>
-                        </ScrollViewer>
+                        <TextBox Style="{StaticResource SelectableText}" Text="{Binding InputSummary, Mode=OneWay}"
+                                 FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt1}"
+                                 VerticalScrollBarVisibility="Auto"/>
                     </Border>
                     <StackPanel Orientation="Horizontal" Margin="13,0,13,12"
                                 Visibility="{Binding IsPending, Converter={StaticResource BoolVis}}">
@@ -878,7 +877,8 @@
                     </Border>
 
                     <!-- transcript -->
-                    <ScrollViewer x:Name="TranscriptScroll" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer x:Name="TranscriptScroll" VerticalScrollBarVisibility="Auto"
+                                  PreviewMouseWheel="TranscriptScroll_PreviewMouseWheel">
                         <ItemsControl ItemsSource="{Binding Transcript}" Margin="28,20,28,16" MaxWidth="880" HorizontalAlignment="Stretch"/>
                     </ScrollViewer>
                 </DockPanel>

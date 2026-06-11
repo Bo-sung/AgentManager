@@ -80,12 +80,26 @@
     </Style>
 
     <!-- ===== Ghost / chip button ===== -->
+    <!-- 트랜스크립트 본문용: 선택/복사 가능한 읽기전용 텍스트 (TextBlock 대체) -->
+    <Style x:Key="SelectableText" TargetType="TextBox">
+        <Setter Property="IsReadOnly" Value="True"/>
+        <Setter Property="IsReadOnlyCaretVisible" Value="False"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="SelectionBrush" Value="#3DFF5A2C"/>
+        <Setter Property="Cursor" Value="IBeam"/>
+    </Style>
+
     <Style x:Key="ChipButton" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource Bg3}"/>
         <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
         <Setter Property="FontFamily" Value="{StaticResource Sans}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Padding" Value="11,6"/>
         <Setter Property="Template">
             <Setter.Value>

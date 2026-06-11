@@ -72,7 +72,40 @@ public partial class MainWindow : Window
     }
 
     private void Transcript_Changed(object? sender, NotifyCollectionChangedEventArgs e)
-        => Dispatcher.InvokeAsync(() => TranscriptScroll?.ScrollToEnd());
+        => Dispatcher.InvokeAsync(() =>
+        {
+            // auto-follow only when the user is already near the bottom; never yank them back mid-read
+            if (TranscriptScroll is { } sv && sv.ScrollableHeight - sv.VerticalOffset < 80)
+                sv.ScrollToEnd();
+        });
+
+    /// <summary>중앙 트랜스크립트 휠 스크롤 보장: 내부 스크롤러(마크다운 FlowDocument, 툴 출력,
+    /// 읽기전용 TextBox 등)가 더 스크롤할 게 없으면 휠을 가로채 바깥 트랜스크립트를 움직인다.</summary>
+    private void TranscriptScroll_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        var inner = FindInnerScrollViewer(e.OriginalSource as DependencyObject);
+        if (inner is not null)
+        {
+            var canScroll = e.Delta > 0 ? inner.VerticalOffset > 0.5 : inner.VerticalOffset < inner.ScrollableHeight - 0.5;
+            if (canScroll) return; // let the inner scroller consume the wheel
+        }
+        TranscriptScroll.ScrollToVerticalOffset(TranscriptScroll.VerticalOffset - e.Delta);
+        e.Handled = true;
+    }
+
+    /// <summary>OriginalSource에서 TranscriptScroll까지 올라가며 처음 만나는 내부 ScrollViewer를 찾는다.
+    /// (FlowDocument의 Run 등 비주얼이 아닌 노드는 논리 트리로 우회)</summary>
+    private ScrollViewer? FindInnerScrollViewer(DependencyObject? node)
+    {
+        while (node is not null && !ReferenceEquals(node, TranscriptScroll))
+        {
+            if (node is ScrollViewer sv) return sv;
+            node = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                ? System.Windows.Media.VisualTreeHelper.GetParent(node)
+                : LogicalTreeHelper.GetParent(node);
+        }
+        return null;
+    }
 
     private void MinBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 

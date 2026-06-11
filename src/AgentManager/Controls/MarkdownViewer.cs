@@ -34,7 +34,11 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
         Background = Brushes.Transparent;
         BorderThickness = new Thickness(0);
         IsToolBarVisible = false;
-        Focusable = false;
+        // text selection needs focus (TextEditor focuses on mouse-down); keep selectable but out of tab order
+        Focusable = true;
+        IsTabStop = false;
+        IsSelectionEnabled = true;
+        SelectionBrush = Brush("#3DFF5A2C");
         Render("");
     }
 
