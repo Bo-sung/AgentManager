@@ -54,11 +54,13 @@
 | **Task A: 프로젝트 우클릭 메뉴** (이름 변경 및 프로젝트 제거, 관련 세션 동시 취소/제거) | 2daaa88 |
 | **Task B: 세션 검색 및 필터링** (사이드바 검색 박스, Title/Branch/Project 대소문자 무구분 필터) | 5081146 |
 | **Task C: CLI HISTORY 재스캔** (사이드바 헤더에 새로고침 아이콘 배치, 클릭 시 동적 재탐색) | 1a83a9f |
+| **리뷰 보정** (재스캔 헤더 상시 표시 — 빈 목록일 때 버튼 실종 모순 해소) | 87090cc, 23f8d5b |
+| **멀티폴더 project** — SessionOptions.AdditionalDirectories → claude `--add-dir` / codex writable_roots, Settings EXTRA FOLDERS UI, Smoke 어서션 PASS | 44dd3a6, 9d9c419 |
+| **UI 마무리** — 모델피커(spark+chevron)/Worktree필(branch)/Export(file) 벡터 아이콘, File/View/Help 메뉴 실동작(New Agent·New Project·Settings·Exit / Review 토글·최대화 / About·docs) | 9d9c419 |
 
 ## 🔜 다음
-1. 소형 잔여: 멀티폴더 project
-2. UI 마무리: 모델 피커 글리프(✧/⌃)·Export(⤓) 아이콘 교체 · 긴 가져오기(400+ 항목) 지연 로드
-3. **뒤로 미룸(결정)**: 승인 Stage 2(Codex app-server) · Antigravity 어댑터 · 풀 MCP
+1. **승인 Stage 2** — Codex app-server 프로토콜 스파이크 → Approve/Deny
+2. **뒤로 미룸(결정)**: Antigravity 어댑터(6/18 전환 후) · 풀 MCP
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
