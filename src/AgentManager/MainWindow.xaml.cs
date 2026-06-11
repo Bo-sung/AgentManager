@@ -246,6 +246,19 @@ public partial class MainWindow : Window
         catch { }
     }
 
+    private void BrowseProjectFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "프로젝트 폴더 선택 (새 폴더 버튼으로 생성 가능)",
+            InitialDirectory = System.IO.Directory.Exists(_vm.NewProjectPath?.Trim().Trim('"'))
+                ? System.IO.Path.GetFullPath(_vm.NewProjectPath!.Trim().Trim('"'))
+                : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+        };
+        if (dlg.ShowDialog(this) == true)
+            _vm.NewProjectPath = dlg.FolderName;
+    }
+
     private void ExportTranscript_Click(object sender, RoutedEventArgs e)
     {
         var s = _vm.ActiveSession;

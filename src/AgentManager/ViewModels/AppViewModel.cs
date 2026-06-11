@@ -479,10 +479,19 @@ public sealed class AppViewModel : ObservableObject
     private void CreateProject()
     {
         var path = NewProjectPath.Trim().Trim('"');
+        if (!Path.IsPathRooted(path))
+        {
+            NewProjectError = "전체 경로를 입력하세요 (예: J:\\prj\\myapp).";
+            return;
+        }
         if (!Directory.Exists(path))
         {
-            NewProjectError = "폴더를 찾을 수 없습니다.";
-            return;
+            try { Directory.CreateDirectory(path); }
+            catch (Exception ex)
+            {
+                NewProjectError = "폴더 생성 실패: " + ex.Message;
+                return;
+            }
         }
 
         var fullPath = Path.GetFullPath(path);

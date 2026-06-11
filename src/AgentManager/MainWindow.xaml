@@ -1154,11 +1154,23 @@
                                  Text="{Binding NewProjectName, UpdateSourceTrigger=PropertyChanged}"/>
 
                         <TextBlock Text="FOLDER PATH" Style="{StaticResource Lbl}" Margin="0,16,0,8"/>
-                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
-                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
-                                 Text="{Binding NewProjectPath, UpdateSourceTrigger=PropertyChanged}"/>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="8,0,0,0"
+                                    ToolTip="폴더 선택 (다이얼로그에서 새 폴더 생성 가능)" Click="BrowseProjectFolder_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconFolder}" Width="13" Height="13"
+                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Browse" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                     BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                     Text="{Binding NewProjectPath, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DockPanel>
+                        <TextBlock Text="존재하지 않는 경로는 등록 시 새 폴더로 생성됩니다." FontFamily="{StaticResource Mono}"
+                                   FontSize="10" Foreground="{StaticResource Txt3}" Margin="0,8,0,0"/>
                         <TextBlock Text="{Binding NewProjectError}" FontFamily="{StaticResource Mono}" FontSize="10"
-                                   Foreground="{StaticResource Err}" Margin="0,8,0,0"/>
+                                   Foreground="{StaticResource Err}" Margin="0,4,0,0"/>
                     </StackPanel>
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
