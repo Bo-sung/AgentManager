@@ -853,7 +853,7 @@ public sealed class AppViewModel : ObservableObject
                 Sandbox = Enum.TryParse<SandboxMode>(dto.Sandbox, out var sb) ? sb : SandboxMode.DangerFullAccess,
                 RequireApproval = dto.RequireApproval,
                 ReasoningEffort = !string.IsNullOrWhiteSpace(dto.ReasoningEffort) ? dto.ReasoningEffort
-                    : dto.AgentId == "gx" ? "medium" : "",
+                    : dto.AgentId == "gx" ? "medium" : "default",
                 TranslationEnabled = dto.TranslationEnabled ?? true,
                 EngineSessionId = dto.EngineSessionId,
             };
@@ -1011,7 +1011,7 @@ public sealed class AppViewModel : ObservableObject
             McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
             Images = images ?? [],
             AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
-            ReasoningEffort = s.IsCodex && !string.IsNullOrWhiteSpace(s.ReasoningEffort) ? s.ReasoningEffort : null,
+            ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
         };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;
@@ -1190,7 +1190,7 @@ public sealed class AppViewModel : ObservableObject
                     ub.SentText = pt.SentText;
                 break;
             case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
-                s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText });
+                s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText, ModelUsed = s.Model });
                 s.Activity = "receiving response";
                 break;
             case Thinking th when !string.IsNullOrWhiteSpace(th.Text):

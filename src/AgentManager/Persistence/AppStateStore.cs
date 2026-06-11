@@ -126,7 +126,7 @@ public static class AppStateStore
     public static TranscriptDto ToDto(TranscriptItem item) => item switch
     {
         UserBlock u => new TranscriptDto { Type = "user", Text = u.Text, SentText = u.SentText ?? "" },
-        AgentTextBlock a => new TranscriptDto { Type = "agent", Text = a.Text, OriginalText = a.OriginalText ?? "", ShowOriginal = a.ShowOriginal },
+        AgentTextBlock a => new TranscriptDto { Type = "agent", Text = a.Text, OriginalText = a.OriginalText ?? "", ShowOriginal = a.ShowOriginal, Name = a.ModelUsed ?? "" },
         ToolBlock t => new TranscriptDto
         {
             Type = "tool",
@@ -149,7 +149,7 @@ public static class AppStateStore
     public static TranscriptItem FromDto(TranscriptDto dto) => dto.Type switch
     {
         "user" => new UserBlock(dto.Text) { SentText = dto.SentText },
-        "agent" => new AgentTextBlock(dto.Text) { OriginalText = dto.OriginalText, ShowOriginal = dto.ShowOriginal },
+        "agent" => new AgentTextBlock(dto.Text) { OriginalText = dto.OriginalText, ShowOriginal = dto.ShowOriginal, ModelUsed = dto.Name },
         "tool" => new ToolBlock(dto.ToolUseId, dto.Kind, dto.Name)
         {
             Stat = dto.Stat,

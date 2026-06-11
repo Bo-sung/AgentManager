@@ -610,6 +610,12 @@ static void AssertSandboxAndModelArgs()
     var xe = new CodexAdapter().BuildStartInfo("codex",
         new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, ReasoningEffort = "high" }, "p").ArgumentList.ToArray();
     Assert(xe.Contains("model_reasoning_effort=\"high\""), "Codex reasoning effort -c");
+    var ce = new ClaudeAdapter().BuildStartInfo("claude",
+        new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, ReasoningEffort = "max" }, "p").ArgumentList.ToArray();
+    Assert(ce.Contains("--effort") && ce.Contains("max"), "Claude --effort");
+    var cd = new ClaudeAdapter().BuildStartInfo("claude",
+        new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, ReasoningEffort = "default" }, "p").ArgumentList.ToArray();
+    Assert(!cd.Contains("--effort"), "Claude default effort omitted");
 
     // MCP passthrough: existing file → --mcp-config; missing file → omitted
     var mcpFile = Path.GetTempFileName();

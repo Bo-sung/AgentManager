@@ -10,7 +10,8 @@ public static class EngineRegistry
 {
     public static readonly EngineDef[] All =
     [
-        new("cc", "CC", "Claude Code",     "claude",      ["sonnet", "opus", "haiku"],        "anthropic · cli", true),
+        // 버전 명시 풀네임 (claude --model은 별칭/풀네임 모두 허용 — 실측; sonnet[1m] = 1M 컨텍스트 별칭)
+        new("cc", "CC", "Claude Code",     "claude",      ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5", "sonnet[1m]"], "anthropic · cli", true),
         new("gx", "GX", "GPT / Codex",     "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true),
         new("ag", "AG", "Antigravity CLI", "antigravity", ["gemini-3-flash", "gemini-3-pro"], "google · cli",    false),
     ];

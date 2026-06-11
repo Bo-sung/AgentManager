@@ -68,9 +68,8 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,7">
                         <TextBlock Text="{Binding DataContext.AgentName, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                    FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" Margin="0,0,8,0"/>
-                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}">
-                            <Run Text="/ "/><Run Text="{Binding DataContext.Model, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
-                        </TextBlock>
+                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}"
+                                   Text="{Binding ModelLabel, Mode=OneWay}"/>
                         <ToggleButton Style="{StaticResource TogglePillButton}" Content="ORIGINAL"
                                       IsChecked="{Binding ShowOriginal, Mode=TwoWay}"
                                       Visibility="{Binding HasOriginal, Converter={StaticResource BoolVis}}"
@@ -1021,15 +1020,26 @@
                                                     </Border>
                                                 </Popup>
                                             </Grid>
-                                            <Grid DockPanel.Dock="Left" Margin="0,0,8,0"
-                                                  Visibility="{Binding IsCodex, Converter={StaticResource BoolVis}}">
+                                            <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
                                                 <ToggleButton x:Name="EffortMenuBtn" Style="{StaticResource TogglePillButton}"
-                                                              Height="30" Padding="12,0" Cursor="Hand" ToolTip="추론 강도 (reasoning effort) — 코덱스 전용">
+                                                              Height="30" Padding="12,0" Cursor="Hand"
+                                                              ToolTip="추론 강도 (claude: default~max 6단계 / codex: low~xhigh 4단계)">
                                                     <StackPanel Orientation="Horizontal">
                                                         <controls:IconView Icon="{StaticResource IconBolt}" Width="13" Height="13"
                                                                            Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
-                                                                   Text="{Binding ReasoningEffort}" FontWeight="SemiBold" Foreground="{StaticResource Gx}"/>
+                                                                   Text="{Binding ReasoningEffort}" FontWeight="SemiBold">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
                                                         <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
                                                                            Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
                                                     </StackPanel>
@@ -1043,7 +1053,7 @@
                                                         </Border.Effect>
                                                         <StackPanel>
                                                             <TextBlock Style="{StaticResource Lbl}" Margin="9,5,9,7" Text="reasoning effort"/>
-                                                            <ItemsControl ItemsSource="{x:Static vm:SessionViewModel.CodexEffortOptions}">
+                                                            <ItemsControl ItemsSource="{Binding EffortOptions}">
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
                                                                         <Button Click="EffortOption_Click" Cursor="Hand"

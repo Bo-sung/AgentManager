@@ -51,7 +51,7 @@ public sealed class SessionViewModel : ObservableObject
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
         _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
         AvailableModels = engine.Models;
-        if (engine.Id == "gx") _reasoningEffort = "medium";
+        _reasoningEffort = engine.Id == "gx" ? "medium" : "default";
         StartedAt = startedAt ?? DateTime.Now;
     }
 
@@ -65,8 +65,10 @@ public sealed class SessionViewModel : ObservableObject
     public bool IsCodex => AgentId == "gx";
     public bool IsClaude => AgentId == "cc";
 
-    /// <summary>코덱스 추론 강도 (model/list 실측: low/medium/high/xhigh).</summary>
-    public static string[] CodexEffortOptions { get; } = ["low", "medium", "high", "xhigh"];
+    /// <summary>추론 강도 옵션 — 엔진별 가짓수가 다름 (실측: claude --effort 5단계 + default, codex 4단계).</summary>
+    public string[] EffortOptions => IsCodex
+        ? ["low", "medium", "high", "xhigh"]
+        : ["default", "low", "medium", "high", "xhigh", "max"];
     private string _reasoningEffort = "";
     public string ReasoningEffort { get => _reasoningEffort; set => Set(ref _reasoningEffort, value); }
 

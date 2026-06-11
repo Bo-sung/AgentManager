@@ -37,6 +37,10 @@ public sealed class AgentTextBlock : TranscriptItem
 {
     private string _text;
     public AgentTextBlock(string text) => _text = text;
+
+    /// <summary>이 응답을 생성한 모델 (생성 시점 스탬프 — 세션 모델을 바꿔도 과거 기록은 불변).</summary>
+    public string? ModelUsed { get; set; }
+    public string ModelLabel => string.IsNullOrWhiteSpace(ModelUsed) ? "" : "/ " + ModelUsed;
     public string Text
     {
         get => _text;
