@@ -547,17 +547,23 @@ public sealed class AppViewModel : ObservableObject
         catch { return; }
         if (history.Count == 0) return;
 
+        // UI 스레드를 독점하지 않도록 청크로 나눠 삽입 (가상화 덕에 화면 밖 블록은 생성 비용 없음)
         var insertAt = 0;
-        foreach (var h in history)
+        foreach (var chunk in history.Chunk(50))
         {
-            TranscriptItem block = h.Role switch
+            if (!_allSessions.Contains(s)) return; // 그 사이 세션이 삭제됨
+            foreach (var h in chunk)
             {
-                "user" => new UserBlock(h.Text),
-                "assistant" => new AgentTextBlock(h.Text),
-                "thinking" => new ThinkingBlock(h.Text),
-                _ => new ToolBlock("import-" + insertAt, KindOf(h.Name), h.Name) { Body = h.Text, Stat = "done" },
-            };
-            s.Transcript.Insert(insertAt++, block);
+                TranscriptItem block = h.Role switch
+                {
+                    "user" => new UserBlock(h.Text),
+                    "assistant" => new AgentTextBlock(h.Text),
+                    "thinking" => new ThinkingBlock(h.Text),
+                    _ => new ToolBlock("import-" + insertAt, KindOf(h.Name), h.Name) { Body = h.Text, Stat = "done" },
+                };
+                s.Transcript.Insert(insertAt++, block);
+            }
+            await Task.Delay(16); // 한 프레임 양보
         }
         SaveState();
     }

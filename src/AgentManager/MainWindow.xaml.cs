@@ -61,6 +61,21 @@ public partial class MainWindow : Window
         catch { }
     }
 
+    /// <summary>가상화 때문에 ScrollViewer는 TranscriptList 템플릿 내부에 있다 (PART_TranscriptScroll).</summary>
+    private ScrollViewer? _transcriptScrollCache;
+    private ScrollViewer? TranscriptScroll
+    {
+        get
+        {
+            if (_transcriptScrollCache is null)
+            {
+                TranscriptList.ApplyTemplate();
+                _transcriptScrollCache = TranscriptList.Template.FindName("PART_TranscriptScroll", TranscriptList) as ScrollViewer;
+            }
+            return _transcriptScrollCache;
+        }
+    }
+
     private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(AppViewModel.ActiveSession) && _vm.ActiveSession is { } s)
@@ -83,21 +98,22 @@ public partial class MainWindow : Window
     /// 읽기전용 TextBox 등)가 더 스크롤할 게 없으면 휠을 가로채 바깥 트랜스크립트를 움직인다.</summary>
     private void TranscriptScroll_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        var inner = FindInnerScrollViewer(e.OriginalSource as DependencyObject);
+        if (TranscriptScroll is not { } outer) return;
+        var inner = FindInnerScrollViewer(e.OriginalSource as DependencyObject, outer);
         if (inner is not null)
         {
             var canScroll = e.Delta > 0 ? inner.VerticalOffset > 0.5 : inner.VerticalOffset < inner.ScrollableHeight - 0.5;
             if (canScroll) return; // let the inner scroller consume the wheel
         }
-        TranscriptScroll.ScrollToVerticalOffset(TranscriptScroll.VerticalOffset - e.Delta);
+        outer.ScrollToVerticalOffset(outer.VerticalOffset - e.Delta);
         e.Handled = true;
     }
 
     /// <summary>OriginalSource에서 TranscriptScroll까지 올라가며 처음 만나는 내부 ScrollViewer를 찾는다.
     /// (FlowDocument의 Run 등 비주얼이 아닌 노드는 논리 트리로 우회)</summary>
-    private ScrollViewer? FindInnerScrollViewer(DependencyObject? node)
+    private static ScrollViewer? FindInnerScrollViewer(DependencyObject? node, ScrollViewer outer)
     {
-        while (node is not null && !ReferenceEquals(node, TranscriptScroll))
+        while (node is not null && !ReferenceEquals(node, outer))
         {
             if (node is ScrollViewer sv) return sv;
             node = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D

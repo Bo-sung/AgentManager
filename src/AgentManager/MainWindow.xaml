@@ -962,10 +962,27 @@
                     </Border>
 
                     <!-- transcript -->
-                    <ScrollViewer x:Name="TranscriptScroll" VerticalScrollBarVisibility="Auto"
+                    <!-- 가상화 필수: 긴 트랜스크립트(CLI 가져오기 수백 블록)에서 보이는 항목만 생성한다.
+                         가상화가 동작하려면 ScrollViewer가 ItemsControl 템플릿 안에 있어야 함 -->
+                    <ItemsControl x:Name="TranscriptList" ItemsSource="{Binding Transcript}"
+                                  ScrollViewer.CanContentScroll="True"
+                                  VirtualizingPanel.IsVirtualizing="True"
+                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                  VirtualizingPanel.ScrollUnit="Pixel"
                                   PreviewMouseWheel="TranscriptScroll_PreviewMouseWheel">
-                        <ItemsControl ItemsSource="{Binding Transcript}" Margin="28,20,28,16" MaxWidth="880" HorizontalAlignment="Stretch"/>
-                    </ScrollViewer>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.Template>
+                            <ControlTemplate TargetType="ItemsControl">
+                                <ScrollViewer x:Name="PART_TranscriptScroll" VerticalScrollBarVisibility="Auto" Focusable="False">
+                                    <ItemsPresenter Margin="28,20,28,16" MaxWidth="880"/>
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ItemsControl.Template>
+                    </ItemsControl>
                 </DockPanel>
             </Grid>
 
