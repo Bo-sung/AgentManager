@@ -959,7 +959,7 @@ public sealed class AppViewModel : ObservableObject
         s.Status = "running";
         s.MarkRunStarted(s.TranslationEnabled ? "translating prompt / preparing run" : "preparing run");
 
-        var adapter = EngineRegistry.CreateAdapter(s.AgentId);
+        var adapter = EngineRegistry.CreateAdapter(s.AgentId, s.RequireApproval);
         var exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath);
         if (adapter is null || exe is null)
         {

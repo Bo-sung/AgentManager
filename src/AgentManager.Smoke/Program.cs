@@ -28,6 +28,68 @@ if (args.Contains("--appserver-probe"))
     return;
 }
 
+// Stage 2 integration test: the real product path (AgentSession + CodexAppServerAdapter)
+// with an auto-accepting PermissionHandler. dotnet run -- --live-stage2
+if (args.Contains("--live-stage2"))
+{
+    await LiveStage2Async();
+    return;
+}
+
+static async Task LiveStage2Async()
+{
+    static string? FindCodexExe()
+    {
+        var ext = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".vscode", "extensions");
+        if (!Directory.Exists(ext)) return null;
+        return Directory.EnumerateDirectories(ext, "openai.chatgpt-*")
+            .Select(d => Path.Combine(d, "bin", "windows-x86_64", "codex.exe"))
+            .FirstOrDefault(File.Exists);
+    }
+
+    var exe = FindCodexExe();
+    if (exe is null) { Console.WriteLine("[stage2] codex.exe not found"); return; }
+    var tmp = Path.Combine(Path.GetTempPath(), "am_st2_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(tmp);
+    Console.WriteLine($"[stage2] cwd={tmp}");
+
+    var approvals = 0;
+    string? sessionId = null;
+    var sawToolStartAndResult = (start: false, result: false);
+    var turnDone = false;
+
+    var session = new AgentSession(new CodexAppServerAdapter(), exe);
+    session.PermissionHandler = pr =>
+    {
+        approvals++;
+        Console.WriteLine($"[stage2] APPROVAL {pr.ToolName} req={pr.RequestId} -> accept");
+        return Task.FromResult(new PermissionDecision(true));
+    };
+    session.EventReceived += ev =>
+    {
+        Console.WriteLine("  " + Describe(ev));
+        switch (ev)
+        {
+            case SessionStarted s: sessionId = s.SessionId; break;
+            case ToolUseStarted: sawToolStartAndResult.start = true; break;
+            case ToolResult: sawToolStartAndResult.result = true; break;
+            case TurnCompleted: turnDone = true; break;
+        }
+    };
+
+    using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(4));
+    await session.RunAsync(
+        new SessionOptions { WorkingDirectory = tmp },
+        "Run a shell command that writes the exact text stage2-integration into a new file named probe.txt, then stop.",
+        cts.Token);
+
+    var ok = File.Exists(Path.Combine(tmp, "probe.txt"))
+             && (await File.ReadAllTextAsync(Path.Combine(tmp, "probe.txt"))).Contains("stage2-integration");
+    Console.WriteLine($"[stage2] approvals={approvals} session={sessionId} tool={sawToolStartAndResult} turnDone={turnDone} fileOk={ok}");
+    Console.WriteLine(ok && approvals > 0 && turnDone && sessionId is not null ? "stage2 integration PASS" : "stage2 integration FAIL");
+    try { Directory.Delete(tmp, recursive: true); } catch { }
+}
+
 static async Task AppServerProbeAsync()
 {
     static string? FindCodex()
@@ -336,6 +398,63 @@ Run("Codex exec --json", new CodexAdapter(), codexLines);
 AssertResumeArgs();
 AssertSandboxAndModelArgs();
 AssertPermissionResponse();
+AssertAppServerAdapter();
+
+static void AssertAppServerAdapter()
+{
+    var cwd = Environment.CurrentDirectory;
+
+    static List<NormalizedEvent> Parse(IAgentAdapter a, string line) => a.ParseLine(line).ToList();
+
+    // --- handshake: initialize 응답 → initialized + thread/start writeback ---
+    var ad = (IAgentAdapter)new CodexAppServerAdapter();
+    var init = ad.InitialStdinLines("hello", new SessionOptions { WorkingDirectory = cwd });
+    Assert(init.Count == 1 && init[0].Contains("\"initialize\"") && init[0].Contains("AgentManager"), "appserver initialize line");
+
+    var wb1 = Parse(ad, """{"id":1,"result":{"userAgent":"x"}}""");
+    Assert(wb1.Count == 2 && wb1.All(e => e is EngineWriteback), "appserver init response -> 2 writebacks");
+    Assert(((EngineWriteback)wb1[0]).Line.Contains("\"initialized\""), "appserver initialized notification");
+    var ts = ((EngineWriteback)wb1[1]).Line;
+    Assert(ts.Contains("thread/start") && ts.Contains("untrusted") && ts.Contains("danger-full-access"), "appserver thread/start policy");
+
+    // --- thread/start 응답 → SessionStarted + turn/start writeback ---
+    var wb2 = Parse(ad, """{"id":2,"result":{"thread":{"id":"th-123","sessionId":"th-123"}}}""");
+    Assert(wb2.Count == 2 && wb2[0] is SessionStarted { SessionId: "th-123" }, "appserver SessionStarted");
+    var turn = ((EngineWriteback)wb2[1]).Line;
+    Assert(turn.Contains("turn/start") && turn.Contains("th-123") && turn.Contains("hello"), "appserver turn/start payload");
+
+    // --- 승인 요청 → PermissionRequest → accept/decline 응답 포맷 ---
+    var req = Parse(ad, """{"method":"item/commandExecution/requestApproval","id":0,"params":{"threadId":"th-123","itemId":"call_1"}}""");
+    Assert(req.Count == 1 && req[0] is PermissionRequest { RequestId: "0", ToolName: "shell", ToolUseId: "call_1" }, "appserver PermissionRequest");
+    var allow = ad.BuildPermissionResponse((PermissionRequest)req[0], new PermissionDecision(true));
+    Assert(allow == """{"id":0,"result":{"decision":"accept"}}""", "appserver accept json");
+    var deny = ad.BuildPermissionResponse((PermissionRequest)req[0], new PermissionDecision(false, "no"));
+    Assert(deny == """{"id":0,"result":{"decision":"decline"}}""", "appserver decline json");
+
+    // --- 아이템/턴 매핑 ---
+    var tool = Parse(ad, """{"method":"item/started","params":{"item":{"type":"commandExecution","id":"call_1","command":"echo hi"}}}""");
+    Assert(tool.Count == 1 && tool[0] is ToolUseStarted { Name: "shell", ToolUseId: "call_1" }, "appserver ToolUseStarted");
+    var toolDone = Parse(ad, """{"method":"item/completed","params":{"item":{"type":"commandExecution","id":"call_1","aggregatedOutput":"hi","exitCode":0,"status":"completed"}}}""");
+    Assert(toolDone.Count == 1 && toolDone[0] is ToolResult { Content: "hi", IsError: false }, "appserver ToolResult");
+    var msg = Parse(ad, """{"method":"item/completed","params":{"item":{"type":"agentMessage","id":"m1","text":"done!"}}}""");
+    Assert(msg.Count == 1 && msg[0] is AssistantText { Text: "done!" }, "appserver AssistantText");
+    Parse(ad, """{"method":"thread/tokenUsage/updated","params":{"tokenUsage":{"total":{"inputTokens":100,"outputTokens":7,"cachedInputTokens":50}}}}""");
+    var done = Parse(ad, """{"method":"turn/completed","params":{"turn":{"id":"t1","status":"completed"}}}""");
+    Assert(done.Count == 1 && done[0] is TurnCompleted { IsError: false, Usage: { InputTokens: 100, OutputTokens: 7, CacheReadTokens: 50 } }, "appserver TurnCompleted+usage");
+
+    // --- 미지원 서버 요청은 에러 응답으로 차단 해제 ---
+    var unsup = Parse(ad, """{"method":"item/tool/requestUserInput","id":9,"params":{}}""");
+    Assert(unsup.Count == 2 && unsup[0] is EngineWriteback w && w.Line.Contains("-32601") && unsup[1] is EngineError, "appserver unsupported server request");
+
+    // --- resume 경로 ---
+    var ad2 = (IAgentAdapter)new CodexAppServerAdapter();
+    ad2.InitialStdinLines("again", new SessionOptions { WorkingDirectory = cwd, ResumeSessionId = "th-old" });
+    var rs = Parse(ad2, """{"id":1,"result":{}}""");
+    var resume = ((EngineWriteback)rs[1]).Line;
+    Assert(resume.Contains("thread/resume") && resume.Contains("th-old"), "appserver thread/resume");
+
+    Console.WriteLine("codex app-server adapter asserts OK");
+}
 await TestGitWorktreeAsync();
 Console.WriteLine("smoke OK");
 

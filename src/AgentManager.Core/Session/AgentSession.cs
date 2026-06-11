@@ -62,6 +62,17 @@ public sealed class AgentSession(
         while ((outLine = await proc.StandardOutput.ReadLineAsync(ct)) is not null)
             foreach (var ev in adapter.ParseLine(outLine))
             {
+                // Stateful handshake (codex app-server): the adapter asks us to send a line.
+                if (ev is EngineWriteback wb)
+                {
+                    if (stdinOpen)
+                    {
+                        await proc.StandardInput.WriteLineAsync(wb.Line.AsMemory(), ct);
+                        await proc.StandardInput.FlushAsync(ct);
+                    }
+                    continue; // internal — never surfaces to translation/UI
+                }
+
                 await EmitTranslatedAsync(ev, ct);
 
                 // Approval round-trip: the engine blocks until we answer on stdin.
@@ -84,6 +95,11 @@ public sealed class AgentSession(
                 {
                     proc.StandardInput.Close();
                     stdinOpen = false;
+                    // Server-style engines (codex app-server) keep running after stdin EOF.
+                    if (adapter.KillAfterTurnCompleted)
+                    {
+                        try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+                    }
                 }
             }
 

@@ -51,6 +51,10 @@ public interface IAgentAdapter
     /// <summary>Codex exec hangs unless stdin is closed after the prompt; Claude keeps stdin open.</summary>
     bool CloseStdinAfterStart { get; }
 
+    /// <summary>턴 완료 후에도 살아있는 서버형 엔진(codex app-server)은 stdin 종료만으로 안 끝날 수 있다 —
+    /// true면 AgentSession이 TurnCompleted 직후 프로세스를 종료한다.</summary>
+    bool KillAfterTurnCompleted => false;
+
     /// <summary>Build the process start info. <paramref name="prompt"/> is already translated to English.</summary>
     ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt);
 

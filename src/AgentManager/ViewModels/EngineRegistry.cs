@@ -17,10 +17,11 @@ public static class EngineRegistry
 
     public static EngineDef Get(string id) => Array.Find(All, e => e.Id == id) ?? All[0];
 
-    public static IAgentAdapter? CreateAdapter(string id) => id switch
+    /// <summary>requireApproval인 codex는 app-server 경로(Stage 2 승인 게이트), 아니면 기존 exec --json.</summary>
+    public static IAgentAdapter? CreateAdapter(string id, bool requireApproval = false) => id switch
     {
         "cc" => new ClaudeAdapter(),
-        "gx" => new CodexAdapter(),
+        "gx" => requireApproval ? new CodexAppServerAdapter() : new CodexAdapter(),
         _ => null, // antigravity not wired yet
     };
 

@@ -44,3 +44,7 @@ public sealed record EngineError(string Message) : NormalizedEvent;
 
 /// <summary>Unrecognized event type — kept for forward-compat, safely ignored by consumers.</summary>
 public sealed record RawUnknown(string Type, string Raw) : NormalizedEvent;
+
+/// <summary>어댑터 내부 프로토콜용: 파싱 중 stdin으로 보내야 할 라인 (상태형 핸드셰이크 —
+/// codex app-server의 initialized/thread.start/turn.start 등). AgentSession이 기록하고 UI로는 전달하지 않는다.</summary>
+public sealed record EngineWriteback(string Line) : NormalizedEvent;
