@@ -581,10 +581,15 @@
 
                             <DockPanel Margin="14,18,14,6"
                                        Visibility="{Binding HasCliHistory, Converter={StaticResource BoolVis}}">
+                                <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="24" Height="20" Padding="0"
+                                        Foreground="{StaticResource Txt3}" ToolTip="CLI 기록 다시 스캔"
+                                        Command="{Binding RefreshCliHistoryCommand}">
+                                    <controls:IconView Icon="{StaticResource IconRefresh}" Width="11" Height="11"/>
+                                </Button>
                                 <TextBlock DockPanel.Dock="Left" Text="CLI HISTORY" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt2}" Margin="0,0,8,0"
                                            ToolTip="이 폴더에서 AgentManager 밖에서 돌린 claude/codex 세션 — 클릭하면 가져와서 이어갑니다"/>
                                 <TextBlock DockPanel.Dock="Left" Text="{Binding CliHistory.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt3}"/>
-                                <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="8,0,8,0"/>
                             </DockPanel>
                             <ItemsControl ItemsSource="{Binding CliHistory}">
                                 <ItemsControl.ItemTemplate>

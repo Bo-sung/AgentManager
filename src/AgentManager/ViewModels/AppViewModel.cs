@@ -71,6 +71,7 @@ public sealed class AppViewModel : ObservableObject
             }
         });
         RemoveProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel proj) RemoveProject(proj); });
+        RefreshCliHistoryCommand = new RelayCommand(_ => _ = LoadCliHistoryAsync(ActiveProject));
         CommitReviewCommand = new RelayCommand(_ => _ = CommitReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
         ForkSessionCommand = new RelayCommand(p => ForkSession(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         SendDiffFeedbackCommand = new RelayCommand(p => { if (p is string f) _ = SendDiffFeedbackAsync(ActiveSession, f); },
@@ -211,6 +212,7 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand RenameSessionCommand { get; }
     public RelayCommand RenameProjectCommand { get; }
     public RelayCommand RemoveProjectCommand { get; }
+    public RelayCommand RefreshCliHistoryCommand { get; }
     public RelayCommand CommitReviewCommand { get; }
     public RelayCommand ForkSessionCommand { get; }
     public RelayCommand SendDiffFeedbackCommand { get; }
