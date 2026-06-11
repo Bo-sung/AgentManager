@@ -167,6 +167,11 @@ public partial class MainWindow : Window
             _vm.ActiveSession = s;
     }
 
+    private void ActivityHistory_Click(object sender, MouseButtonEventArgs e)
+    {
+        new Views.ActivityHistoryWindow { Owner = this }.ShowDialog();
+    }
+
     private void ProjectRow_Click(object sender, MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is ProjectViewModel p)
@@ -362,4 +367,3 @@ public partial class MainWindow : Window
         catch { }
     }
 }
-
