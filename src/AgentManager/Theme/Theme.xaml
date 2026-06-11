@@ -237,35 +237,6 @@
         </Setter>
     </Style>
 
-    <Style TargetType="ContextMenu">
-        <Setter Property="Background" Value="{StaticResource Bg2}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource LineBright}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="4"/>
-    </Style>
-
-    <Style TargetType="MenuItem">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
-        <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Padding" Value="10,6"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="MenuItem">
-                    <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="b" Property="Background" Value="{StaticResource Bg3}"/>
-                            <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <!-- ===== Titlebar menu button ===== -->
     <Style x:Key="MenuButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
