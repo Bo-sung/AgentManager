@@ -20,6 +20,7 @@ public sealed record AppSettingsDto
     public string OllamaModel { get; init; } = "exaone3.5:7.8b";
     public bool TranslationEnabled { get; init; } = true;
     public int MaxConcurrentSessions { get; init; } = 3;
+    public bool ReviewPaneOpen { get; init; } = true;
 }
 
 public sealed record ProjectDto

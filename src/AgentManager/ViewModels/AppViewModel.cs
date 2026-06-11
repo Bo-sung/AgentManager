@@ -315,11 +315,11 @@ public sealed class AppViewModel : ObservableObject
 
     public string PersistencePath => AppStateStore.StatePath;
 
-    private bool _isReviewOpen;
+    private bool _isReviewOpen = true;
     public bool IsReviewOpen
     {
         get => _isReviewOpen;
-        set { if (Set(ref _isReviewOpen, value)) OnChanged(nameof(ReviewPaneWidth)); }
+        set { if (Set(ref _isReviewOpen, value)) { OnChanged(nameof(ReviewPaneWidth)); SaveState(); } }
     }
     public GridLength ReviewPaneWidth => IsReviewOpen ? new GridLength(420) : new GridLength(0);
 
@@ -601,6 +601,7 @@ public sealed class AppViewModel : ObservableObject
         _ollamaModel = string.IsNullOrWhiteSpace(state.Settings.OllamaModel) ? _ollamaModel : state.Settings.OllamaModel;
         TranslationEnabled = state.Settings.TranslationEnabled;
         MaxConcurrentSessions = state.Settings.MaxConcurrentSessions;
+        _isReviewOpen = state.Settings.ReviewPaneOpen;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
 
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
@@ -669,6 +670,7 @@ public sealed class AppViewModel : ObservableObject
                     OllamaModel = _ollamaModel,
                     TranslationEnabled = TranslationEnabled,
                     MaxConcurrentSessions = MaxConcurrentSessions,
+                    ReviewPaneOpen = IsReviewOpen,
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
