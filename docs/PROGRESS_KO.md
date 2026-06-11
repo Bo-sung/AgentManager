@@ -62,9 +62,10 @@
 
 | **승인 Stage 2 스파이크** — codex app-server 실측(스키마 덤프 + Smoke --appserver-probe 실 왕복 PASS: initialize→thread/start→turn/start→commandExecution/requestApproval→accept→파일생성→turn/completed). 함정 포함 문서화 (PHASE0_CODEX_APPSERVER_KO.md) | 113c8c9 |
 
+| **승인 Stage 2 통합** — EngineWriteback + CodexAppServerAdapter (RequireApproval=true인 codex 세션 → app-server 경로, danger+untrusted 게이트, thread/resume 호환, KillAfterTurnCompleted). 오프라인 어서션 + --live-stage2 실제품 경로 PASS | e01f697 |
+
 ## 🔜 다음
-1. **승인 Stage 2 통합** — CodexAppServerAdapter (EngineWriteback 메커니즘 + PermissionRequest 매핑, RequireApproval=true인 codex 세션만)
-2. **뒤로 미룸(결정)**: Antigravity 어댑터(6/18 전환 후) · 풀 MCP
+1. **뒤로 미룸(결정)**: Antigravity 어댑터(6/18 전환 후) · 풀 MCP
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
