@@ -820,6 +820,8 @@ public sealed class AppViewModel : ObservableObject
             var project = Projects.FirstOrDefault(p => p.Id == dto.ProjectId);
             if (project is null) continue;
             var engine = EngineRegistry.Get(dto.AgentId);
+            // 모델 카탈로그가 바뀌면(예: codex gpt-5.1 계열 폐기) 저장된 구 모델 id를 현행 기본값으로 정규화
+            var model = engine.Models.Contains(dto.Model) ? dto.Model : engine.Models[0];
             var s = new SessionViewModel(
                 dto.Id,
                 engine,
@@ -828,7 +830,7 @@ public sealed class AppViewModel : ObservableObject
                 dto.ProjectId,
                 dto.Project,
                 dto.ProjectPath,
-                dto.Model,
+                model,
                 dto.StartedAt)
             {
                 WorktreePath = Directory.Exists(dto.WorktreePath) ? dto.WorktreePath : null,

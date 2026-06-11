@@ -100,6 +100,13 @@ public sealed class CodexAdapter : IAgentAdapter
                                 Str(item, "aggregated_output") ?? "",
                                 item.TryGetProperty("exit_code", out var ec) && ec.ValueKind == JsonValueKind.Number && ec.GetInt32() != 0);
                     }
+                    else if (itemType == "file_change")
+                    {
+                        if (type == "item.started")
+                            yield return new ToolUseStarted(id, "apply_patch", item.GetRawText());
+                        else
+                            yield return new ToolResult(id, item.GetRawText(), Str(item, "status") == "failed");
+                    }
                     else if (itemType == "agent_message" && type == "item.completed")
                     {
                         var text = Str(item, "text");
@@ -119,6 +126,17 @@ public sealed class CodexAdapter : IAgentAdapter
                         CacheReadTokens: Lng(u, "cached_input_tokens"),
                         ReasoningTokens: Lng(u, "reasoning_output_tokens"));
                 yield return new TurnCompleted(null, false, null, null);
+                break;
+
+            case "error":
+                // e.g. 400 invalid model — surface it instead of dying silently
+                yield return new EngineError(Str(root, "message") ?? line);
+                break;
+
+            case "turn.failed":
+                var reason = root.TryGetProperty("error", out var fe) ? Str(fe, "message") : null;
+                if (!string.IsNullOrWhiteSpace(reason)) yield return new EngineError(reason!);
+                yield return new TurnCompleted(null, true, null, null);
                 break;
 
             default:

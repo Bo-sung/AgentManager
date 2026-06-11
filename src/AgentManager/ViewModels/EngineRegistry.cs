@@ -11,7 +11,7 @@ public static class EngineRegistry
     public static readonly EngineDef[] All =
     [
         new("cc", "CC", "Claude Code",     "claude",      ["sonnet", "opus", "haiku"],        "anthropic · cli", true),
-        new("gx", "GX", "GPT / Codex",     "codex",       ["gpt-5.1-codex", "gpt-5.1"],       "openai · cli",    true),
+        new("gx", "GX", "GPT / Codex",     "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true),
         new("ag", "AG", "Antigravity CLI", "antigravity", ["gemini-3-flash", "gemini-3-pro"], "google · cli",    false),
     ];
 

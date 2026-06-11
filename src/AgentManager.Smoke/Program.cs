@@ -36,6 +36,109 @@ if (args.Contains("--live-stage2"))
     return;
 }
 
+// Repro: run codex through BOTH product paths exactly like the app does
+// (model arg included). dotnet run -- --codex-check
+if (args.Contains("--codex-check"))
+{
+    await CodexCheckAsync();
+    return;
+}
+
+// Query supported model ids from app-server. dotnet run -- --codex-models
+if (args.Contains("--codex-models"))
+{
+    await CodexModelsAsync();
+    return;
+}
+
+static async Task CodexModelsAsync()
+{
+    var ext = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".vscode", "extensions");
+    var exe = Directory.EnumerateDirectories(ext, "openai.chatgpt-*")
+        .Select(d => Path.Combine(d, "bin", "windows-x86_64", "codex.exe")).FirstOrDefault(File.Exists);
+    if (exe is null) { Console.WriteLine("codex.exe not found"); return; }
+
+    var utf8 = new System.Text.UTF8Encoding(false);
+    var psi = new System.Diagnostics.ProcessStartInfo
+    {
+        FileName = exe, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
+        UseShellExecute = false, CreateNoWindow = true,
+        StandardOutputEncoding = utf8, StandardErrorEncoding = utf8, StandardInputEncoding = utf8,
+    };
+    psi.ArgumentList.Add("app-server");
+    using var p = System.Diagnostics.Process.Start(psi)!;
+    await p.StandardInput.WriteLineAsync("""{"id":1,"method":"initialize","params":{"clientInfo":{"name":"AgentManager","version":"0.1.0"}}}""");
+    await p.StandardInput.FlushAsync();
+    var deadline = DateTime.UtcNow.AddSeconds(30);
+    while (DateTime.UtcNow < deadline && await p.StandardOutput.ReadLineAsync() is { } line)
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(line);
+        if (!doc.RootElement.TryGetProperty("id", out var id) || id.ValueKind != System.Text.Json.JsonValueKind.Number) continue;
+        if (id.GetInt32() == 1)
+        {
+            await p.StandardInput.WriteLineAsync("""{"method":"initialized"}""");
+            await p.StandardInput.WriteLineAsync("""{"id":2,"method":"model/list","params":{}}""");
+            await p.StandardInput.FlushAsync();
+        }
+        else if (id.GetInt32() == 2)
+        {
+            Console.WriteLine(doc.RootElement.GetRawText());
+            break;
+        }
+    }
+    try { p.Kill(entireProcessTree: true); } catch { }
+}
+
+static async Task CodexCheckAsync()
+{
+    static string? FindCodexExe2()
+    {
+        var ext = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".vscode", "extensions");
+        if (!Directory.Exists(ext)) return null;
+        return Directory.EnumerateDirectories(ext, "openai.chatgpt-*")
+            .Select(d => Path.Combine(d, "bin", "windows-x86_64", "codex.exe"))
+            .FirstOrDefault(File.Exists);
+    }
+
+    var exe = FindCodexExe2();
+    if (exe is null) { Console.WriteLine("[codex-check] codex.exe not found"); return; }
+    const string promptEn = "Implement the Fibonacci sequence using a recursive function, in a new file fib.py.";
+    const string model = "gpt-5.5"; // app default: EngineRegistry Models[0]
+
+    async Task RunPath(string label, IAgentAdapter adapter, SessionOptions opts)
+    {
+        Console.WriteLine($"==== {label} (model={opts.Model}) ====");
+        var done = false; var err = false;
+        var session = new AgentSession(adapter, exe);
+        session.PermissionHandler = pr =>
+        {
+            Console.WriteLine($"  APPROVAL {pr.ToolName} -> accept");
+            return Task.FromResult(new PermissionDecision(true));
+        };
+        session.EventReceived += ev =>
+        {
+            Console.WriteLine("  " + Describe(ev));
+            if (ev is TurnCompleted tc) { done = true; err = tc.IsError; }
+            if (ev is EngineError) err = true;
+        };
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(4));
+        try { await session.RunAsync(opts, promptEn, cts.Token); }
+        catch (Exception ex) { Console.WriteLine("  EXCEPTION " + ex.Message); err = true; }
+        var fib = Path.Combine(opts.WorkingDirectory, "fib.py");
+        Console.WriteLine($"  -> turnDone={done} err={err} fib.py={(File.Exists(fib) ? "created" : "MISSING")}");
+    }
+
+    var tmp1 = Directory.CreateTempSubdirectory("am_cx_exec_").FullName;
+    await RunPath("exec --json (bypass, app default)", new CodexAdapter(),
+        new SessionOptions { WorkingDirectory = tmp1, BypassPermissions = true, Sandbox = SandboxMode.DangerFullAccess, Model = model });
+
+    var tmp2 = Directory.CreateTempSubdirectory("am_cx_aps_").FullName;
+    await RunPath("app-server (approval)", new CodexAppServerAdapter(),
+        new SessionOptions { WorkingDirectory = tmp2, BypassPermissions = false, Sandbox = SandboxMode.DangerFullAccess, Model = model });
+
+    try { Directory.Delete(tmp1, true); Directory.Delete(tmp2, true); } catch { }
+}
+
 static async Task LiveStage2Async()
 {
     static string? FindCodexExe()
