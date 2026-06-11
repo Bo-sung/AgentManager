@@ -1171,6 +1171,10 @@ public sealed class AppViewModel : ObservableObject
                 else
                     s.MarkRunSignal("connected");
                 break;
+            case PromptTranslated pt:
+                if (s.Transcript.OfType<UserBlock>().LastOrDefault() is { } ub)
+                    ub.SentText = pt.SentText;
+                break;
             case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
                 s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText });
                 s.Activity = "receiving response";

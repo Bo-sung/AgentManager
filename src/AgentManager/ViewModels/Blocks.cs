@@ -6,6 +6,31 @@ public abstract class TranscriptItem : ObservableObject { }
 public sealed class UserBlock(string text) : TranscriptItem
 {
     public string Text { get; } = text;
+
+    /// <summary>KO→EN 번역이 적용됐을 때 실제로 엔진에 전송된 영문 (검수용 토글).</summary>
+    private string? _sentText;
+    public string? SentText
+    {
+        get => _sentText;
+        set
+        {
+            if (Set(ref _sentText, string.IsNullOrWhiteSpace(value) ? null : value))
+            {
+                OnChanged(nameof(HasSent));
+                OnChanged(nameof(DisplayText));
+            }
+        }
+    }
+
+    private bool _showSent;
+    public bool ShowSent
+    {
+        get => _showSent;
+        set { if (Set(ref _showSent, value)) OnChanged(nameof(DisplayText)); }
+    }
+
+    public bool HasSent => !string.IsNullOrWhiteSpace(_sentText);
+    public string DisplayText => ShowSent && HasSent ? _sentText! : Text;
 }
 
 public sealed class AgentTextBlock : TranscriptItem

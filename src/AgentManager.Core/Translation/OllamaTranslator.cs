@@ -29,28 +29,41 @@ public sealed partial class OllamaTranslator(OllamaOptions options, HttpClient? 
     {
         if (string.IsNullOrWhiteSpace(text)) return text;
         if (direction == TranslationDirection.KoToEn && !ContainsKorean(text)) return text;
+        // 에이전트가 이미 한국어로 답한 경우 — 번역 불필요 (변형 위험만 있음)
+        if (direction == TranslationDirection.EnToKo && ContainsKorean(text)) return text;
 
         var (masked, tokens) = Mask(text);
         var prompt = BuildPrompt(direction, masked);
-        try
+
+        // 유휴 후 첫 호출은 모델 콜드로드(수십 초)로 타임아웃이 나기 쉽다 — 한 번 더, 더 길게 재시도.
+        for (var attempt = 0; attempt < 2; attempt++)
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            cts.CancelAfter(_opt.Timeout);
-            using var resp = await _http.PostAsJsonAsync(
-                $"{_opt.Endpoint.TrimEnd('/')}/api/generate",
-                new { model = _opt.Model, prompt, stream = false, options = new { temperature = 0.1 } },
-                cts.Token);
-            resp.EnsureSuccessStatusCode();
-            using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
-            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cts.Token);
-            var outText = doc.RootElement.TryGetProperty("response", out var r) ? r.GetString() : null;
-            if (string.IsNullOrWhiteSpace(outText)) return text;
-            return Restore(outText!.Trim(), tokens);
+            try
+            {
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(attempt == 0 ? _opt.Timeout : _opt.Timeout * 2);
+                using var resp = await _http.PostAsJsonAsync(
+                    $"{_opt.Endpoint.TrimEnd('/')}/api/generate",
+                    // keep_alive 30m: 턴 사이 모델 퇴출로 인한 반복 콜드로드 방지
+                    new { model = _opt.Model, prompt, stream = false, keep_alive = "30m", options = new { temperature = 0.1 } },
+                    cts.Token);
+                resp.EnsureSuccessStatusCode();
+                using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cts.Token);
+                var outText = doc.RootElement.TryGetProperty("response", out var r) ? r.GetString() : null;
+                if (string.IsNullOrWhiteSpace(outText)) return text;
+                return Restore(outText!.Trim(), tokens);
+            }
+            catch when (!ct.IsCancellationRequested && attempt == 0)
+            {
+                // retry once (cold load)
+            }
+            catch
+            {
+                break; // user cancelled or second failure — fall through to original
+            }
         }
-        catch
-        {
-            return text; // never block the user — fall back to original
-        }
+        return text; // never block the user — fall back to original
     }
 
     private static string BuildPrompt(TranslationDirection d, string text)

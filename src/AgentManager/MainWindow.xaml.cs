@@ -329,6 +329,29 @@ public partial class MainWindow : Window
             _vm.NewProjectPath = dlg.FolderName;
     }
 
+    private static string BuildTranscriptMarkdown(SessionViewModel s)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("# " + s.Title).AppendLine();
+        foreach (var item in s.Transcript)
+        {
+            switch (item)
+            {
+                case UserBlock u:
+                    sb.AppendLine("## 🧑 User").AppendLine(u.Text);
+                    if (u.HasSent) sb.AppendLine().AppendLine("> sent (EN): " + u.SentText);
+                    sb.AppendLine();
+                    break;
+                case AgentTextBlock a: sb.AppendLine("## 🤖 " + s.AgentName).AppendLine(a.Text).AppendLine(); break;
+                case ToolBlock t: sb.AppendLine("### 🔧 " + t.Name).AppendLine("```").AppendLine(t.Body).AppendLine("```").AppendLine(); break;
+                case ErrorBlock err: sb.AppendLine("### ❌ " + err.Title).AppendLine(err.Body).AppendLine(); break;
+                case ApprovalBlock p: sb.AppendLine("### ⚠ Approval: " + p.ToolName + " → " + p.State).AppendLine(); break;
+                case WorkingBlock w: sb.AppendLine("> " + w.Text).AppendLine(); break;
+            }
+        }
+        return sb.ToString();
+    }
+
     private void ExportTranscript_Click(object sender, RoutedEventArgs e)
     {
         var s = _vm.ActiveSession;
@@ -339,21 +362,14 @@ public partial class MainWindow : Window
             Filter = "Markdown (*.md)|*.md"
         };
         if (dlg.ShowDialog() != true) return;
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine("# " + s.Title).AppendLine();
-        foreach (var item in s.Transcript)
-        {
-            switch (item)
-            {
-                case UserBlock u: sb.AppendLine("## 🧑 User").AppendLine(u.Text).AppendLine(); break;
-                case AgentTextBlock a: sb.AppendLine("## 🤖 " + s.AgentName).AppendLine(a.Text).AppendLine(); break;
-                case ToolBlock t: sb.AppendLine("### 🔧 " + t.Name).AppendLine("```").AppendLine(t.Body).AppendLine("```").AppendLine(); break;
-                case ErrorBlock err: sb.AppendLine("### ❌ " + err.Title).AppendLine(err.Body).AppendLine(); break;
-                case ApprovalBlock p: sb.AppendLine("### ⚠ Approval: " + p.ToolName + " → " + p.State).AppendLine(); break;
-                case WorkingBlock w: sb.AppendLine("> " + w.Text).AppendLine(); break;
-            }
-        }
-        try { System.IO.File.WriteAllText(dlg.FileName, sb.ToString()); } catch { }
+        try { System.IO.File.WriteAllText(dlg.FileName, BuildTranscriptMarkdown(s)); } catch { }
+    }
+
+    private void CopyTranscript_Click(object sender, RoutedEventArgs e)
+    {
+        var s = _vm.ActiveSession;
+        if (s is null) return;
+        try { Clipboard.SetText(BuildTranscriptMarkdown(s)); } catch { }
     }
 
     private void SaveWindowPlacement()

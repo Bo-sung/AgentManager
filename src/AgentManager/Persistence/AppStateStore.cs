@@ -75,6 +75,7 @@ public sealed record TranscriptDto
     public required string Type { get; init; }
     public string Text { get; init; } = "";
     public string OriginalText { get; init; } = "";
+    public string SentText { get; init; } = "";
     public string Title { get; init; } = "";
     public string Body { get; init; } = "";
     public string OriginalBody { get; init; } = "";
@@ -120,7 +121,7 @@ public static class AppStateStore
 
     public static TranscriptDto ToDto(TranscriptItem item) => item switch
     {
-        UserBlock u => new TranscriptDto { Type = "user", Text = u.Text },
+        UserBlock u => new TranscriptDto { Type = "user", Text = u.Text, SentText = u.SentText ?? "" },
         AgentTextBlock a => new TranscriptDto { Type = "agent", Text = a.Text, OriginalText = a.OriginalText ?? "", ShowOriginal = a.ShowOriginal },
         ToolBlock t => new TranscriptDto
         {
@@ -143,7 +144,7 @@ public static class AppStateStore
 
     public static TranscriptItem FromDto(TranscriptDto dto) => dto.Type switch
     {
-        "user" => new UserBlock(dto.Text),
+        "user" => new UserBlock(dto.Text) { SentText = dto.SentText },
         "agent" => new AgentTextBlock(dto.Text) { OriginalText = dto.OriginalText, ShowOriginal = dto.ShowOriginal },
         "tool" => new ToolBlock(dto.ToolUseId, dto.Kind, dto.Name)
         {

@@ -35,8 +35,14 @@
                 <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1"
                         CornerRadius="10,10,2,10" Padding="13,11">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource Lbl}" Text="YOU" Margin="0,0,0,5"/>
-                        <TextBox Style="{StaticResource SelectableText}" Text="{Binding Text, Mode=OneWay}"
+                        <DockPanel Margin="0,0,0,5">
+                            <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="SENT EN"
+                                          IsChecked="{Binding ShowSent, Mode=TwoWay}"
+                                          Visibility="{Binding HasSent, Converter={StaticResource BoolVis}}"
+                                          Margin="9,0,0,0" ToolTip="실제 엔진에 전송된 영문 프롬프트 보기"/>
+                            <TextBlock Style="{StaticResource Lbl}" Text="YOU" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <TextBox Style="{StaticResource SelectableText}" Text="{Binding DisplayText, Mode=OneWay}"
                                  Foreground="{StaticResource Txt0}"/>
                     </StackPanel>
                 </Border>
@@ -763,6 +769,14 @@
                                     <controls:IconView Icon="{StaticResource IconFile}" Width="12" Height="12"
                                                        Margin="0,0,6,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="Export" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                    ToolTip="대화 전체를 Markdown으로 클립보드에 복사" Click="CopyTranscript_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconCopy}" Width="12" Height="12"
+                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Copy all" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button DockPanel.Dock="Right" Width="30" Height="30" Margin="0,0,8,0"

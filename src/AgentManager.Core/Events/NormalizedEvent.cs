@@ -9,6 +9,9 @@ public abstract record NormalizedEvent;
 /// <summary>Session/thread started. (Claude system/init, Codex thread.started)</summary>
 public sealed record SessionStarted(string SessionId, string? Model, int ToolCount, string? Cwd) : NormalizedEvent;
 
+/// <summary>입력 KO→EN 번역이 적용됐을 때 실제로 엔진에 전송된 프롬프트 (검수용 — 원문과 다를 때만 발생).</summary>
+public sealed record PromptTranslated(string SentText) : NormalizedEvent;
+
 /// <summary>Assistant natural-language text. This is the EN→KO translation target.</summary>
 public sealed record AssistantText(string Text, bool FromSubagent = false, string? OriginalText = null) : NormalizedEvent;
 

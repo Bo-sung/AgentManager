@@ -31,7 +31,11 @@ public sealed class AgentSession(
         // Input: KO → EN before the engine ever sees it (this is what cuts engine tokens).
         var prompt = userPrompt;
         if (TranslationEnabled && translator is not null)
+        {
             prompt = await translator.TranslateAsync(userPrompt, TranslationDirection.KoToEn, ct);
+            if (!string.Equals(prompt, userPrompt, StringComparison.Ordinal))
+                Emit(new PromptTranslated(prompt)); // 검수용: 실제 전송된 영문
+        }
 
         var psi = adapter.BuildStartInfo(executablePath, options, prompt);
         using var proc = new Process { StartInfo = psi };
