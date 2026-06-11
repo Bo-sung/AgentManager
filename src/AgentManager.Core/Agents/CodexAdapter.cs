@@ -32,19 +32,30 @@ public sealed class CodexAdapter : IAgentAdapter
             StandardErrorEncoding = Utf8NoBom,
             StandardInputEncoding = Utf8NoBom,
         };
+        // 주의: `exec resume`은 `exec`과 옵션 표면이 다르다 (-C/--sandbox 미지원 — 실측 0.137).
+        // resume은 세션에 기록된 cwd를 쓰므로 -C가 필요 없고, 샌드박스는 -c sandbox_mode 오버라이드로 전달.
+        var resuming = !string.IsNullOrWhiteSpace(options.ResumeSessionId);
         psi.ArgumentList.Add("exec");
-        if (!string.IsNullOrWhiteSpace(options.ResumeSessionId))
+        if (resuming)
         {
             psi.ArgumentList.Add("resume");
-            psi.ArgumentList.Add(options.ResumeSessionId);
+            psi.ArgumentList.Add(options.ResumeSessionId!);
         }
         psi.ArgumentList.Add("--json");
         if (options.BypassPermissions && options.Sandbox == SandboxMode.DangerFullAccess)
             psi.ArgumentList.Add("--dangerously-bypass-approvals-and-sandbox");
         else
         {
-            psi.ArgumentList.Add("--sandbox");
-            psi.ArgumentList.Add(options.Sandbox == SandboxMode.ReadOnly ? "read-only" : "workspace-write");
+            if (resuming)
+            {
+                psi.ArgumentList.Add("-c");
+                psi.ArgumentList.Add($"sandbox_mode=\"{(options.Sandbox == SandboxMode.ReadOnly ? "read-only" : "workspace-write")}\"");
+            }
+            else
+            {
+                psi.ArgumentList.Add("--sandbox");
+                psi.ArgumentList.Add(options.Sandbox == SandboxMode.ReadOnly ? "read-only" : "workspace-write");
+            }
             if (options.Sandbox == SandboxMode.WorkspaceWrite)
             {
                 // 멀티폴더: 추가 루트를 쓰기 가능 영역에 포함 (-c 값은 TOML 파싱 — 역슬래시 회피용 forward slash)
@@ -60,7 +71,7 @@ public sealed class CodexAdapter : IAgentAdapter
         if (!string.IsNullOrWhiteSpace(options.Model)) { psi.ArgumentList.Add("-m"); psi.ArgumentList.Add(options.Model); }
         foreach (var img in options.Images)
             if (File.Exists(img)) { psi.ArgumentList.Add("-i"); psi.ArgumentList.Add(img); }
-        psi.ArgumentList.Add("-C"); psi.ArgumentList.Add(options.WorkingDirectory);
+        if (!resuming) { psi.ArgumentList.Add("-C"); psi.ArgumentList.Add(options.WorkingDirectory); }
         psi.ArgumentList.Add(prompt); // prompt is a positional arg for Codex
         return psi;
     }

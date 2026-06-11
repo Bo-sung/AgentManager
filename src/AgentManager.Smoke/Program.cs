@@ -105,10 +105,10 @@ static async Task CodexCheckAsync()
     const string promptEn = "Implement the Fibonacci sequence using a recursive function, in a new file fib.py.";
     const string model = "gpt-5.5"; // app default: EngineRegistry Models[0]
 
-    async Task RunPath(string label, IAgentAdapter adapter, SessionOptions opts)
+    async Task<string?> RunPath(string label, IAgentAdapter adapter, SessionOptions opts, string prompt)
     {
         Console.WriteLine($"==== {label} (model={opts.Model}) ====");
-        var done = false; var err = false;
+        var done = false; var err = false; string? sid = null;
         var session = new AgentSession(adapter, exe);
         session.PermissionHandler = pr =>
         {
@@ -118,23 +118,29 @@ static async Task CodexCheckAsync()
         session.EventReceived += ev =>
         {
             Console.WriteLine("  " + Describe(ev));
+            if (ev is SessionStarted ss) sid = ss.SessionId;
             if (ev is TurnCompleted tc) { done = true; err = tc.IsError; }
-            if (ev is EngineError) err = true;
         };
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(4));
-        try { await session.RunAsync(opts, promptEn, cts.Token); }
+        try { await session.RunAsync(opts, prompt, cts.Token); }
         catch (Exception ex) { Console.WriteLine("  EXCEPTION " + ex.Message); err = true; }
         var fib = Path.Combine(opts.WorkingDirectory, "fib.py");
         Console.WriteLine($"  -> turnDone={done} err={err} fib.py={(File.Exists(fib) ? "created" : "MISSING")}");
+        return sid;
     }
 
     var tmp1 = Directory.CreateTempSubdirectory("am_cx_exec_").FullName;
-    await RunPath("exec --json (bypass, app default)", new CodexAdapter(),
-        new SessionOptions { WorkingDirectory = tmp1, BypassPermissions = true, Sandbox = SandboxMode.DangerFullAccess, Model = model });
+    var sid1 = await RunPath("exec --json turn 1 (bypass, app default)", new CodexAdapter(),
+        new SessionOptions { WorkingDirectory = tmp1, BypassPermissions = true, Sandbox = SandboxMode.DangerFullAccess, Model = model }, promptEn);
+
+    if (sid1 is not null)
+        await RunPath("exec --json turn 2 (resume)", new CodexAdapter(),
+            new SessionOptions { WorkingDirectory = tmp1, BypassPermissions = true, Sandbox = SandboxMode.DangerFullAccess, Model = model, ResumeSessionId = sid1 },
+            "Append a doctest-style comment with fib(10)'s value to fib.py.");
 
     var tmp2 = Directory.CreateTempSubdirectory("am_cx_aps_").FullName;
     await RunPath("app-server (approval)", new CodexAppServerAdapter(),
-        new SessionOptions { WorkingDirectory = tmp2, BypassPermissions = false, Sandbox = SandboxMode.DangerFullAccess, Model = model });
+        new SessionOptions { WorkingDirectory = tmp2, BypassPermissions = false, Sandbox = SandboxMode.DangerFullAccess, Model = model }, promptEn);
 
     try { Directory.Delete(tmp1, true); Directory.Delete(tmp2, true); } catch { }
 }
@@ -703,11 +709,20 @@ static void AssertResumeArgs()
 
     var codex = new CodexAdapter().BuildStartInfo(
         "codex",
-        new SessionOptions { WorkingDirectory = cwd, ResumeSessionId = "thread-1" },
+        new SessionOptions { WorkingDirectory = cwd, ResumeSessionId = "thread-1", BypassPermissions = true },
         "next turn");
     var codexArgs = codex.ArgumentList.ToArray();
     Assert(codexArgs.Length >= 3 && codexArgs[0] == "exec" && codexArgs[1] == "resume" && codexArgs[2] == "thread-1",
         "Codex resume args missing");
+    // exec resume은 -C/--sandbox를 지원하지 않는다 (실측 0.137: unexpected argument '-C')
+    Assert(!codexArgs.Contains("-C") && !codexArgs.Contains("--sandbox"), "Codex resume must not pass -C/--sandbox");
+
+    var codexResumeWw = new CodexAdapter().BuildStartInfo(
+        "codex",
+        new SessionOptions { WorkingDirectory = cwd, ResumeSessionId = "thread-1", BypassPermissions = false, Sandbox = SandboxMode.WorkspaceWrite },
+        "next turn").ArgumentList.ToArray();
+    Assert(codexResumeWw.Contains("-c") && codexResumeWw.Any(a => a.StartsWith("sandbox_mode=")) && !codexResumeWw.Contains("--sandbox"),
+        "Codex resume sandbox via -c override");
 }
 
 static void Assert(bool condition, string message)
