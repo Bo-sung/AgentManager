@@ -35,8 +35,9 @@ WPF(.NET 10) 기반의 Windows 데스크톱 애플리케이션으로, 코딩 에
     *   **Commit only**: 변경 사항을 현재 브랜치에 커밋만 수행
     *   **Discard**: 임시 worktree의 모든 변경 사항을 폐기 (`git reset --hard` 및 `git clean`)
     *   **Diff 피드백**: 변경된 diff 내용에 대해 인라인 피드백을 적어 에이전트에게 수정 작업을 연속 지시 가능
-*   **승인 broker (Claude)**
-    *   에이전트가 파일 수정, 명령 실행 등 권한을 요청할 때 이를 차단하고 `Approve / Deny` 선택창 제공 (Stage 1 승인 중개)
+*   **승인 broker (Claude · Codex)**
+    *   에이전트가 파일 수정, 명령 실행 등 권한을 요청할 때 이를 차단하고 `Approve / Deny` 선택창 제공
+    *   Claude는 stream-json 승인 프로토콜(Stage 1), Codex는 app-server JSON-RPC 승인(Stage 2)으로 중개 — 세션의 APPROVAL 토글 하나로 동일하게 동작
     *   세션 옵션에서 `RequireApproval` 강제 여부 설정 및 샌드박스 모드(--sandbox 등) 선택 지원
 *   **로컬 LLM 한↔영 번역 레이어**
     *   **입력 KO→EN**: 한글 입력을 영어로 번역하여 전송 (컨텍스트 토큰 누적 감소 효과)
