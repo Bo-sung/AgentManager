@@ -46,10 +46,15 @@
 | **실행 중 Review 라이브 갱신** (ToolResult마다 0.8s 디바운스 새로고침, 선택 파일 유지) + **Smoke --e2e** (헤드리스 풀 파이프라인: 한글→번역→Claude→worktree 파일→diff→merge, PASS) | de295df |
 | **라이브 갱신 보강** (실행 중 주기 갱신 + quiet 모드로 깜빡임 제거) · **Review pane 기본 열림+영속** | 40341f7, f405039 |
 | **원본 디자인 리소스 추출** (아이콘 34종 Geometry + IconView 컨트롤 + AddBg/DelBg/Run/radii 토큰, 글리프 대체 일괄 적용) | b0487bf |
+| **트랜스크립트 휠 스크롤 수정 + 본문 선택/복사 + 탭바 정렬** (내부 스크롤러 휠 중계, 맨아래 근처일 때만 자동 추적, SelectableText) | bf707ca |
+| **프로젝트 폴더 생성** (Browse 다이얼로그 + 미존재 경로 자동 생성) | d4c5df0 |
+| **사이드바 PROJECTS 목록** (전 프로젝트 표시/전환 — 기존엔 활성 프로젝트만 보여 신규 추가 시 이전 프로젝트 실종) | 4da7dca |
+| **CLI HISTORY** (외부 claude/codex 세션 발견→가져오기→resume + 과거 대화 트랜스크립트 복원, Smoke --cli-history 실측 검증) | 75db923, b154081 |
 
 ## 🔜 다음
-1. 소형 잔여: 세션 검색/필터 · 멀티폴더 project
-2. **뒤로 미룸(결정)**: 승인 Stage 2(Codex app-server) · Antigravity 어댑터 · 풀 MCP
+1. 소형 잔여: 세션 검색/필터 · 멀티폴더 project · 프로젝트 이름변경/제거(컨텍스트 메뉴) · CLI HISTORY 재스캔 버튼
+2. UI 마무리: 모델 피커 글리프(✧/⌃)·Export(⤓) 아이콘 교체 · 긴 가져오기(400+ 항목) 지연 로드
+3. **뒤로 미룸(결정)**: 승인 Stage 2(Codex app-server) · Antigravity 어댑터 · 풀 MCP
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
