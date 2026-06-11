@@ -246,6 +246,12 @@ public partial class MainWindow : Window
         catch { }
     }
 
+    private void CliHistoryRow_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is CliHistoryItemViewModel h)
+            _vm.ImportCliSessionCommand.Execute(h);
+    }
+
     private void BrowseProjectFolder_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new Microsoft.Win32.OpenFolderDialog

@@ -27,6 +27,8 @@ public sealed class AppViewModel : ObservableObject
     public ObservableCollection<SessionViewModel> ActiveSessions { get; } = [];
     public ObservableCollection<SessionViewModel> ProjectSessions { get; } = [];
     public ObservableCollection<SessionViewModel> ArchivedSessions { get; } = [];
+    public ObservableCollection<CliHistoryItemViewModel> CliHistory { get; } = [];
+    public bool HasCliHistory => CliHistory.Count > 0;
     public EngineDef[] Engines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
     public string Project => ActiveProject?.Name ?? "workspace";
     public string WorkingDirectory => ActiveProject?.Path ?? FindRepoRoot();
@@ -34,6 +36,7 @@ public sealed class AppViewModel : ObservableObject
     public AppViewModel()
     {
         NewAgentSelectedEngine = Engines[0];
+        CliHistory.CollectionChanged += (_, _) => OnChanged(nameof(HasCliHistory));
         RestoreState();
         NewProjectPath = WorkingDirectory;
         _runtimeTimer.Tick += (_, _) => RefreshRunningSessions();
@@ -47,6 +50,7 @@ public sealed class AppViewModel : ObservableObject
         CancelNewProjectCommand = new RelayCommand(_ => ShowNewProject = false);
         CreateProjectCommand = new RelayCommand(_ => CreateProject(), _ => !string.IsNullOrWhiteSpace(NewProjectPath));
         SelectProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel vm) ActiveProject = vm; });
+        ImportCliSessionCommand = new RelayCommand(p => { if (p is CliHistoryItemViewModel h) ImportCliSession(h); });
         ShowSettingsCommand = new RelayCommand(_ => OpenSettings());
         CancelSettingsCommand = new RelayCommand(_ => ShowSettings = false);
         SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
@@ -184,6 +188,7 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand CancelNewProjectCommand { get; }
     public RelayCommand CreateProjectCommand { get; }
     public RelayCommand SelectProjectCommand { get; }
+    public RelayCommand ImportCliSessionCommand { get; }
     public RelayCommand ShowSettingsCommand { get; }
     public RelayCommand CancelSettingsCommand { get; }
     public RelayCommand SaveSettingsCommand { get; }
@@ -354,6 +359,7 @@ public sealed class AppViewModel : ObservableObject
                 OnChanged(nameof(Project));
                 OnChanged(nameof(WorkingDirectory));
                 RefreshProjectSessions();
+                _ = LoadCliHistoryAsync(value);
                 SaveState();
             }
         }
@@ -474,6 +480,62 @@ public sealed class AppViewModel : ObservableObject
         RefreshProjectCounts();
         SaveState();
         _ = RunTurnAsync(s, task); // first turn = the task
+    }
+
+    /// <summary>AgentManager 밖에서 돌린 claude/codex CLI 세션 기록을 프로젝트별로 발견해 표시.
+    /// 이미 가져온(EngineSessionId 일치) 항목은 숨긴다.</summary>
+    private async Task LoadCliHistoryAsync(ProjectViewModel? project)
+    {
+        CliHistory.Clear();
+        if (project is null) return;
+        var path = project.Path;
+        List<CliHistoryEntry> found;
+        try { found = await Task.Run(() => CliSessionDiscovery.Discover(path)); }
+        catch { return; }
+        if (!ReferenceEquals(ActiveProject, project)) return; // 그 사이 프로젝트가 바뀜
+
+        var known = _allSessions.Where(s => !string.IsNullOrEmpty(s.EngineSessionId))
+            .Select(s => s.EngineSessionId!).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        CliHistory.Clear();
+        foreach (var e in found.Where(e => !known.Contains(e.SessionId)))
+            CliHistory.Add(new CliHistoryItemViewModel(e));
+    }
+
+    /// <summary>CLI 기록을 AgentManager 세션으로 가져온다. resume은 원래 cwd에서만 이어지므로
+    /// worktree 격리 없이 프로젝트 폴더에서 직접 작업한다.</summary>
+    private void ImportCliSession(CliHistoryItemViewModel item)
+    {
+        var project = ActiveProject;
+        if (project is null) return;
+
+        var existing = _allSessions.FirstOrDefault(s =>
+            string.Equals(s.EngineSessionId, item.Entry.SessionId, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            ActiveSession = existing;
+            CliHistory.Remove(item);
+            return;
+        }
+
+        var engine = EngineRegistry.Get(item.Entry.EngineId);
+        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, item.Title, "(project dir)",
+            project.Id, project.Name, project.Path, engine.Models[0])
+        {
+            TranslationEnabled = TranslationEnabled,
+            EngineSessionId = item.Entry.SessionId,
+            WorktreeAttempted = true, // resume가 세션을 못 찾게 되므로 worktree 생성 금지
+            Activity = "imported from CLI history",
+        };
+        s.Transcript.Add(new WorkingBlock(
+            $"⤵ CLI 세션 가져옴 — {engine.Name} · {item.Entry.SessionId[..Math.Min(8, item.Entry.SessionId.Length)]}… · {item.TimeLabel}. 다음 메시지부터 resume으로 이어집니다."));
+        s.PropertyChanged += SessionStatusWatch;
+        _allSessions.Insert(0, s);
+        ActiveSession = s;
+        RefreshProjectSessions(selectFirstIfMissing: false);
+        CliHistory.Remove(item);
+        RefreshCounts();
+        RefreshProjectCounts();
+        SaveState();
     }
 
     private void CreateProject()

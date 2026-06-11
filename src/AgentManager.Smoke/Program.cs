@@ -20,6 +20,16 @@ if (args.Contains("--e2e"))
     return;
 }
 
+// External CLI session discovery against the real disk: dotnet run -- --cli-history <projectPath>
+if (args.Length >= 2 && args[0] == "--cli-history")
+{
+    var found = CliSessionDiscovery.Discover(args[1]);
+    Console.WriteLine($"[cli-history] {args[1]} -> {found.Count} entries");
+    foreach (var e in found)
+        Console.WriteLine($"  {e.EngineId} {e.SessionId[..Math.Min(12, e.SessionId.Length)]}… {e.LastWriteUtc:MM-dd HH:mm} | {e.Title}");
+    return;
+}
+
 static async Task E2EAsync()
 {
     static string Pass(bool ok) => ok ? "PASS" : "FAIL";

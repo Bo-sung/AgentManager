@@ -549,6 +549,46 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
+                            <DockPanel Margin="14,18,14,6"
+                                       Visibility="{Binding HasCliHistory, Converter={StaticResource BoolVis}}">
+                                <TextBlock DockPanel.Dock="Left" Text="CLI HISTORY" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt2}" Margin="0,0,8,0"
+                                           ToolTip="이 폴더에서 AgentManager 밖에서 돌린 claude/codex 세션 — 클릭하면 가져와서 이어갑니다"/>
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding CliHistory.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt3}"/>
+                                <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding CliHistory}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="6,1" CornerRadius="7" Padding="10,7" Cursor="Hand" Opacity="0.85"
+                                                MouseLeftButtonUp="CliHistoryRow_Click"
+                                                ToolTip="클릭하면 세션으로 가져와 resume으로 이어갑니다">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <DockPanel>
+                                                <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Margin="0,0,9,0"
+                                                        Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                                                    <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10"
+                                                               Foreground="{StaticResource Txt2}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" FontSize="12" Foreground="{StaticResource Txt1}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding TimeLabel}" FontFamily="{StaticResource Mono}" FontSize="10"
+                                                               Foreground="{StaticResource Txt3}" Margin="0,3,0,0"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
                             <DockPanel Margin="14,18,14,6">
                                 <TextBlock DockPanel.Dock="Left" Text="ARCHIVED" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt2}" Margin="0,0,8,0"/>
                                 <TextBlock DockPanel.Dock="Left" Text="{Binding ArchivedSessions.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt3}"/>
