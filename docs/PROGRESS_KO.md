@@ -43,6 +43,8 @@
 
 | **README 재작성 (Gemini, 검증·보정 완료)** | c4995af, 2d88507 |
 
+| **실행 중 Review 라이브 갱신** (ToolResult마다 0.8s 디바운스 새로고침, 선택 파일 유지) + **Smoke --e2e** (헤드리스 풀 파이프라인: 한글→번역→Claude→worktree 파일→diff→merge, PASS) | de295df |
+
 ## 🔜 다음
 1. 소형 잔여: 세션 검색/필터 · 멀티폴더 project
 2. **뒤로 미룸(결정)**: 승인 Stage 2(Codex app-server) · Antigravity 어댑터 · 풀 MCP
