@@ -69,6 +69,11 @@ public sealed class AppViewModel : ObservableObject
             }
         });
         RemoveProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel proj) RemoveProject(proj); });
+        RemoveExtraPathCommand = new RelayCommand(p =>
+        {
+            if (p is string path && ActiveProject is { } proj && proj.ExtraPaths.Remove(path))
+                SaveState();
+        });
         RefreshCliHistoryCommand = new RelayCommand(_ => _ = LoadCliHistoryAsync(ActiveProject));
         CommitReviewCommand = new RelayCommand(_ => _ = CommitReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
         ForkSessionCommand = new RelayCommand(p => ForkSession(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
@@ -210,6 +215,7 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand RenameSessionCommand { get; }
     public RelayCommand RenameProjectCommand { get; }
     public RelayCommand RemoveProjectCommand { get; }
+    public RelayCommand RemoveExtraPathCommand { get; }
     public RelayCommand RefreshCliHistoryCommand { get; }
     public RelayCommand CommitReviewCommand { get; }
     public RelayCommand ForkSessionCommand { get; }
@@ -317,6 +323,17 @@ public sealed class AppViewModel : ObservableObject
     {
         if (s is null || string.IsNullOrWhiteSpace(newTitle)) return;
         s.Title = newTitle.Trim();
+        SaveState();
+    }
+
+    /// <summary>멀티폴더: 활성 프로젝트에 추가 루트 폴더 등록 (중복/주 폴더 제외).</summary>
+    public void AddExtraPath(string path)
+    {
+        if (ActiveProject is not { } proj) return;
+        var full = Path.GetFullPath(path).TrimEnd('\\', '/');
+        if (string.Equals(full, Path.GetFullPath(proj.Path).TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase)) return;
+        if (proj.ExtraPaths.Any(p => string.Equals(Path.GetFullPath(p).TrimEnd('\\', '/'), full, StringComparison.OrdinalIgnoreCase))) return;
+        proj.ExtraPaths.Add(full);
         SaveState();
     }
 
@@ -785,7 +802,12 @@ public sealed class AppViewModel : ObservableObject
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
 
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
-            Projects.Add(new ProjectViewModel(p.Id, p.Name, p.Path) { McpConfigPath = p.McpConfigPath });
+        {
+            var pvm = new ProjectViewModel(p.Id, p.Name, p.Path) { McpConfigPath = p.McpConfigPath };
+            foreach (var extra in p.ExtraPaths.Where(Directory.Exists))
+                pvm.ExtraPaths.Add(extra);
+            Projects.Add(pvm);
+        }
 
         if (Projects.Count == 0)
         {
@@ -852,7 +874,7 @@ public sealed class AppViewModel : ObservableObject
                     MaxConcurrentSessions = MaxConcurrentSessions,
                     ReviewPaneOpen = IsReviewOpen,
                 },
-                Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath }).ToList(),
+                Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
                 {
                     Id = s.Id,
@@ -962,7 +984,8 @@ public sealed class AppViewModel : ObservableObject
         s.TurnBaseIn = s.TokensIn;
         s.TurnBaseOut = s.TokensOut;
 
-        var mcpPath = Projects.FirstOrDefault(p => p.Id == s.ProjectId)?.McpConfigPath;
+        var sessionProject = Projects.FirstOrDefault(p => p.Id == s.ProjectId);
+        var mcpPath = sessionProject?.McpConfigPath;
         var options = new SessionOptions
         {
             WorkingDirectory = cwd,
@@ -972,6 +995,7 @@ public sealed class AppViewModel : ObservableObject
             Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
             McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
             Images = images ?? [],
+            AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
         };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;

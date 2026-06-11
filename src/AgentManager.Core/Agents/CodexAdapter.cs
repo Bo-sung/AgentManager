@@ -45,6 +45,17 @@ public sealed class CodexAdapter : IAgentAdapter
         {
             psi.ArgumentList.Add("--sandbox");
             psi.ArgumentList.Add(options.Sandbox == SandboxMode.ReadOnly ? "read-only" : "workspace-write");
+            if (options.Sandbox == SandboxMode.WorkspaceWrite)
+            {
+                // 멀티폴더: 추가 루트를 쓰기 가능 영역에 포함 (-c 값은 TOML 파싱 — 역슬래시 회피용 forward slash)
+                var extras = options.AdditionalDirectories.Where(Directory.Exists).ToList();
+                if (extras.Count > 0)
+                {
+                    var roots = string.Join(",", extras.Select(d => "\"" + d.Replace('\\', '/') + "\""));
+                    psi.ArgumentList.Add("-c");
+                    psi.ArgumentList.Add($"sandbox_workspace_write.writable_roots=[{roots}]");
+                }
+            }
         }
         if (!string.IsNullOrWhiteSpace(options.Model)) { psi.ArgumentList.Add("-m"); psi.ArgumentList.Add(options.Model); }
         foreach (var img in options.Images)

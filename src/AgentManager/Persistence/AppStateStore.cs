@@ -30,6 +30,8 @@ public sealed record ProjectDto
     public required string Path { get; init; }
     /// <summary>MCP passthrough: user-managed mcp config file → claude --mcp-config.</summary>
     public string McpConfigPath { get; init; } = "";
+    /// <summary>멀티폴더 project: 주 폴더 외 추가 루트.</summary>
+    public List<string> ExtraPaths { get; init; } = [];
 }
 
 public sealed record ArtifactDto

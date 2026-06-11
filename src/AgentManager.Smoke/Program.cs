@@ -244,7 +244,23 @@ static void AssertSandboxAndModelArgs()
         Assert(!without.Contains("--mcp-config"), "missing mcp file omitted");
     }
     finally { File.Delete(mcpFile); }
-    Console.WriteLine("sandbox/model/mcp arg asserts OK");
+
+    // multi-folder: existing extra dir → claude --add-dir / codex writable_roots; missing dir omitted
+    var extra = Directory.CreateTempSubdirectory("am_extra_").FullName;
+    try
+    {
+        var cAdd = new ClaudeAdapter().BuildStartInfo("claude",
+            new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, AdditionalDirectories = [extra, extra + "_missing"] }, "p").ArgumentList.ToArray();
+        Assert(cAdd.Contains("--add-dir") && cAdd.Contains(extra) && !cAdd.Contains(extra + "_missing"), "Claude --add-dir");
+        var xAdd = new CodexAdapter().BuildStartInfo("codex",
+            new SessionOptions { WorkingDirectory = cwd, BypassPermissions = false, Sandbox = SandboxMode.WorkspaceWrite, AdditionalDirectories = [extra] }, "p").ArgumentList.ToArray();
+        Assert(xAdd.Contains("-c") && xAdd.Any(a => a.StartsWith("sandbox_workspace_write.writable_roots=[") && a.Contains(extra.Replace('\\', '/'))), "Codex writable_roots");
+        var xDanger = new CodexAdapter().BuildStartInfo("codex",
+            new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, Sandbox = SandboxMode.DangerFullAccess, AdditionalDirectories = [extra] }, "p").ArgumentList.ToArray();
+        Assert(!xDanger.Any(a => a.Contains("writable_roots")), "Codex danger: no writable_roots needed");
+    }
+    finally { Directory.Delete(extra); }
+    Console.WriteLine("sandbox/model/mcp/add-dir arg asserts OK");
 }
 
 static async Task TestGitWorktreeAsync()

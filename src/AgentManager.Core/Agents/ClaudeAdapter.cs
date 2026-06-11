@@ -46,6 +46,8 @@ public sealed class ClaudeAdapter : IAgentAdapter
         if (!string.IsNullOrWhiteSpace(options.ResumeSessionId)) { psi.ArgumentList.Add("--resume"); psi.ArgumentList.Add(options.ResumeSessionId); }
         if (!string.IsNullOrWhiteSpace(options.McpConfigPath) && File.Exists(options.McpConfigPath))
         { psi.ArgumentList.Add("--mcp-config"); psi.ArgumentList.Add(options.McpConfigPath); }
+        foreach (var dir in options.AdditionalDirectories)
+            if (Directory.Exists(dir)) { psi.ArgumentList.Add("--add-dir"); psi.ArgumentList.Add(dir); }
         return psi;
     }
 
