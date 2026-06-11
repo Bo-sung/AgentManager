@@ -307,7 +307,22 @@
                             <TextBlock Text="New Agent" Foreground="{StaticResource AccentText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-
+ 
+                    <Border DockPanel.Dock="Top" Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}"
+                            BorderThickness="1" CornerRadius="7" Margin="12,0,12,8" Padding="6,0,8,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <controls:IconView Grid.Column="0" Icon="{StaticResource IconSearch}" Width="13" Height="13"
+                                               Foreground="{StaticResource Txt2}" Margin="4,0,6,0" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource ComposerInput}" Background="Transparent"
+                                     BorderThickness="0" Padding="0,7" VerticalAlignment="Center" AcceptsReturn="False"
+                                     Text="{Binding SessionFilter, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                    </Border>
+ 
                     <StackPanel DockPanel.Dock="Top" Margin="8,0,8,4" TextElement.Foreground="{StaticResource Txt0}">
                         <StackPanel Orientation="Horizontal" Margin="9,7" ToolTip="현재 화면">
                             <controls:IconView Icon="{StaticResource IconGrid}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>

@@ -706,6 +706,19 @@ public sealed class AppViewModel : ObservableObject
         }
     }
 
+    private string _sessionFilter = "";
+    public string SessionFilter
+    {
+        get => _sessionFilter;
+        set
+        {
+            if (Set(ref _sessionFilter, value ?? ""))
+            {
+                RefreshProjectSessions(selectFirstIfMissing: false);
+            }
+        }
+    }
+
     private void RefreshProjectSessions(bool selectFirstIfMissing = true)
     {
         var current = ActiveSession;
@@ -715,7 +728,18 @@ public sealed class AppViewModel : ObservableObject
         ArchivedSessions.Clear();
         if (ActiveProject is { } project)
         {
-            foreach (var s in _allSessions.Where(s => s.ProjectId == project.Id))
+            var filtered = _allSessions.Where(s => s.ProjectId == project.Id);
+            if (!string.IsNullOrWhiteSpace(_sessionFilter))
+            {
+                var filter = _sessionFilter.Trim();
+                filtered = filtered.Where(s =>
+                    (s.Title != null && s.Title.Contains(filter, StringComparison.OrdinalIgnoreCase)) ||
+                    (s.Branch != null && s.Branch.Contains(filter, StringComparison.OrdinalIgnoreCase)) ||
+                    (s.Project != null && s.Project.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                );
+            }
+
+            foreach (var s in filtered)
             {
                 Sessions.Add(s);
                 if (s.IsArchived) ArchivedSessions.Add(s);
