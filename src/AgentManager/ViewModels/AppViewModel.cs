@@ -28,7 +28,6 @@ public sealed class AppViewModel : ObservableObject
     public ObservableCollection<SessionViewModel> ProjectSessions { get; } = [];
     public ObservableCollection<SessionViewModel> ArchivedSessions { get; } = [];
     public ObservableCollection<CliHistoryItemViewModel> CliHistory { get; } = [];
-    public bool HasCliHistory => CliHistory.Count > 0;
     public EngineDef[] Engines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
     public string Project => ActiveProject?.Name ?? "workspace";
     public string WorkingDirectory => ActiveProject?.Path ?? FindRepoRoot();
@@ -36,7 +35,6 @@ public sealed class AppViewModel : ObservableObject
     public AppViewModel()
     {
         NewAgentSelectedEngine = Engines[0];
-        CliHistory.CollectionChanged += (_, _) => OnChanged(nameof(HasCliHistory));
         RestoreState();
         NewProjectPath = WorkingDirectory;
         _runtimeTimer.Tick += (_, _) => RefreshRunningSessions();
