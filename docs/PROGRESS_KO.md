@@ -64,8 +64,11 @@
 
 | **승인 Stage 2 통합** — EngineWriteback + CodexAppServerAdapter (RequireApproval=true인 codex 세션 → app-server 경로, danger+untrusted 게이트, thread/resume 호환, KillAfterTurnCompleted). 오프라인 어서션 + --live-stage2 실제품 경로 PASS | e01f697 |
 
+| **Antigravity/Gemini 어댑터** — gemini-cli 0.42 실측(PHASE0_ANTIGRAVITY_GEMINI_KO: --skip-trust 함정, delta 누적, uuid resume) → AntigravityAdapter + 엔진 활성화(파랑 식별색, effort 비노출, antigravity exe 우선→gemini 폴백). 오프라인+라이브 2턴 resume PASS, stderr 노이즈 필터 | (this) |
+
 ## 🔜 다음
-1. **뒤로 미룸(결정)**: Antigravity 어댑터(6/18 전환 후) · 풀 MCP
+1. **Antigravity CLI 전환(6/18) 후 재실측** — exe 교체 자동 승계 확인 + 표면 diff
+2. **뒤로 미룸(결정)**: 풀 MCP · 테마(재시작 적용) · 언어 설정(배포 시점)
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)

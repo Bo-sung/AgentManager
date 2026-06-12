@@ -13,7 +13,8 @@ public static class EngineRegistry
         // 버전 명시 풀네임 (claude --model은 별칭/풀네임 모두 허용 — 실측; sonnet[1m] = 1M 컨텍스트 별칭)
         new("cc", "CC", "Claude Code",     "claude",      ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5", "sonnet[1m]"], "anthropic · cli", true),
         new("gx", "GX", "GPT / Codex",     "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true),
-        new("ag", "AG", "Antigravity CLI", "antigravity", ["gemini-3-flash", "gemini-3-pro"], "google · cli",    false),
+        // 실측 모델 id (PHASE0_ANTIGRAVITY_GEMINI_KO). 전환(6/18) 전에는 gemini CLI로 동작
+        new("ag", "AG", "Antigravity / Gemini", "antigravity", ["gemini-3-flash-preview", "gemini-3-pro-preview", "gemini-2.5-flash"], "google · cli", true),
     ];
 
     public static EngineDef Get(string id) => Array.Find(All, e => e.Id == id) ?? All[0];
@@ -23,7 +24,8 @@ public static class EngineRegistry
     {
         "cc" => new ClaudeAdapter(),
         "gx" => requireApproval ? new CodexAppServerAdapter() : new CodexAdapter(),
-        _ => null, // antigravity not wired yet
+        "ag" => new AntigravityAdapter(),
+        _ => null,
     };
 
     private static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -32,8 +34,26 @@ public static class EngineRegistry
     {
         "cc" => ResolveOverride(claudePath) ?? ResolveClaude(),
         "gx" => ResolveOverride(codexPath) ?? ResolveCodex(),
+        "ag" => ResolveAntigravity(),
         _ => null,
     };
+
+    /// <summary>전환(6/18) 후 antigravity 우선, 그 전엔 gemini(npm .cmd 셸) 폴백.</summary>
+    private static string? ResolveAntigravity()
+    {
+        var npm = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm");
+        foreach (var name in new[] { "antigravity.cmd", "antigravity.exe", "gemini.cmd" })
+        {
+            var p = Path.Combine(npm, name);
+            if (File.Exists(p)) return p;
+        }
+        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
+            foreach (var name in new[] { "antigravity.cmd", "antigravity.exe", "gemini.cmd" })
+            {
+                try { var p = Path.Combine(dir.Trim(), name); if (File.Exists(p)) return p; } catch { }
+            }
+        return null;
+    }
 
     private static string? ResolveOverride(string? path)
     {

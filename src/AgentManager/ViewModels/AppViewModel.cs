@@ -1235,7 +1235,7 @@ public sealed class AppViewModel : ObservableObject
             case QuotaUpdate q:
                 QuotaText = $"QUOTA {q.Utilization:P0} · {q.RateLimitType}";
                 break;
-            case EngineError e when !e.Message.Contains("Reading additional input"):
+            case EngineError e when !IsBenignStderr(e.Message):
                 s.Transcript.Add(new ErrorBlock("stderr", e.Message));
                 break;
             case TurnCompleted c:
@@ -1319,6 +1319,20 @@ public sealed class AppViewModel : ObservableObject
         if (last is null || string.IsNullOrWhiteSpace(last.Text)) return;
         GetOrAddArtifact(s, "summary", "Summary").Content = last.Text;
     }
+
+    /// <summary>엔진들이 stderr로 흘리는 무해한 안내/경고 — 에러 블록으로 띄우지 않는다.
+    /// 진짜 실패는 정규화 이벤트(result/turn.failed/error)로 따로 들어온다.</summary>
+    private static bool IsBenignStderr(string m) =>
+        m.Contains("Reading additional input")            // codex exec 안내
+        || m.Contains("YOLO mode is enabled")             // gemini 승인모드 안내
+        || m.Contains("256-color support")                // gemini 터미널 경고
+        || m.Contains("Ripgrep is not available")         // gemini 폴백 안내
+        || m.Contains("Retrying after")                   // gemini 일시 쿼터 재시도
+        || m.Contains("AttachConsole failed")             // gemini node-pty 무해 오류 (실행엔 영향 없음 실측)
+        || m.Contains("node-pty") || m.Contains("conpty_console_list")
+        || m.Contains("node:internal/") || m.StartsWith("Node.js v")
+        || m.TrimStart().StartsWith("at ") || m.Trim() == "^"
+        || m.Contains("var consoleProcessList");
 
     private static string KindOf(string name) => name switch
     {

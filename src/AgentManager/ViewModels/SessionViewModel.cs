@@ -51,7 +51,7 @@ public sealed class SessionViewModel : ObservableObject
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
         _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
         AvailableModels = engine.Models;
-        _reasoningEffort = engine.Id == "gx" ? "medium" : "default";
+        _reasoningEffort = engine.Id switch { "gx" => "medium", "cc" => "default", _ => "" };
         StartedAt = startedAt ?? DateTime.Now;
     }
 
@@ -65,7 +65,9 @@ public sealed class SessionViewModel : ObservableObject
     public bool IsCodex => AgentId == "gx";
     public bool IsClaude => AgentId == "cc";
 
-    /// <summary>추론 강도 옵션 — 엔진별 가짓수가 다름 (실측: claude --effort 5단계 + default, codex 4단계).</summary>
+    /// <summary>추론 강도 옵션 — 엔진별 가짓수가 다름 (실측: claude --effort 5단계 + default, codex 4단계,
+    /// gemini/antigravity는 플래그 없음 → 피커 비노출).</summary>
+    public bool HasEffort => AgentId != "ag";
     public string[] EffortOptions => IsCodex
         ? ["low", "medium", "high", "xhigh"]
         : ["default", "low", "medium", "high", "xhigh", "max"];

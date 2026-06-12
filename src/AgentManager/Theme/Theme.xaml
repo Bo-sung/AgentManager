@@ -31,10 +31,12 @@
     <SolidColorBrush x:Key="Run" Color="#FFFF5A2C"/>
     <SolidColorBrush x:Key="AccentText" Color="#FF1A0C06"/>
 
-    <!-- 엔진 식별 색: Claude = Accent(주황), Codex = 보라 -->
+    <!-- 엔진 식별 색: Claude = Accent(주황), Codex = 보라, Antigravity/Gemini = 파랑(Info) -->
     <SolidColorBrush x:Key="Gx" Color="#FF8B5CF6"/>
     <SolidColorBrush x:Key="GxLine" Color="#668B5CF6"/>
     <SolidColorBrush x:Key="GxDim" Color="#248B5CF6"/>
+    <SolidColorBrush x:Key="InfoLine" Color="#665B9BFF"/>
+    <SolidColorBrush x:Key="InfoDim" Color="#245B9BFF"/>
 
     <CornerRadius x:Key="RSm">4</CornerRadius>
     <CornerRadius x:Key="RMd">7</CornerRadius>

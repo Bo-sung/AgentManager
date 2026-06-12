@@ -44,6 +44,55 @@ if (args.Contains("--codex-check"))
     return;
 }
 
+// Antigravity/Gemini live test through the real product path (2 turns incl. resume).
+// dotnet run -- --live-ag
+if (args.Contains("--live-ag"))
+{
+    await LiveAgAsync();
+    return;
+}
+
+static async Task LiveAgAsync()
+{
+    var npm = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm");
+    var exe = new[] { "antigravity.cmd", "gemini.cmd" }.Select(n => Path.Combine(npm, n)).FirstOrDefault(File.Exists);
+    if (exe is null) { Console.WriteLine("[ag] CLI not found"); return; }
+    var tmp = Path.Combine(Path.GetTempPath(), "am_ag_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(tmp);
+    Console.WriteLine($"[ag] exe={exe} cwd={tmp}");
+
+    string? sid = null; var turnDone = false; var err = false;
+    async Task Turn(string prompt, string? resume)
+    {
+        turnDone = false; err = false;
+        var session = new AgentSession(new AntigravityAdapter(), exe);
+        session.EventReceived += ev =>
+        {
+            Console.WriteLine("  " + Describe(ev));
+            if (ev is SessionStarted ss) sid = ss.SessionId;
+            if (ev is TurnCompleted tc) { turnDone = true; err = tc.IsError; }
+        };
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(4));
+        await session.RunAsync(new SessionOptions
+        {
+            WorkingDirectory = tmp,
+            BypassPermissions = true,
+            Sandbox = SandboxMode.DangerFullAccess,
+            ResumeSessionId = resume,
+        }, prompt, cts.Token);
+    }
+
+    await Turn("Create a file named probe.txt containing exactly ag-live via a shell command, then stop.", null);
+    var fileOk = File.Exists(Path.Combine(tmp, "probe.txt"));
+    Console.WriteLine($"[ag] turn1 done={turnDone} err={err} file={fileOk} sid={sid}");
+
+    var sid1 = sid;
+    await Turn("What file did you just create? Answer with only the file name.", sid1);
+    Console.WriteLine($"[ag] turn2 done={turnDone} err={err} sameSession={sid == sid1}");
+    Console.WriteLine(fileOk && turnDone && !err && sid == sid1 ? "ag live PASS" : "ag live FAIL");
+    try { Directory.Delete(tmp, true); } catch { }
+}
+
 // Query supported model ids from app-server. dotnet run -- --codex-models
 if (args.Contains("--codex-models"))
 {
@@ -475,6 +524,18 @@ string[] codexLines =
     """{"type":"turn.completed","usage":{"input_tokens":27644,"cached_input_tokens":18688,"output_tokens":47,"reasoning_output_tokens":0}}""",
 ];
 
+// gemini-cli 0.42.0 실측 캡처 (PHASE0_ANTIGRAVITY_GEMINI_KO)
+string[] agLines =
+[
+    """{"type":"init","timestamp":"2026-06-12T01:10:48.984Z","session_id":"44a68ff6-9845-4b41-82ae-bcc1748db696","model":"gemini-3-flash-preview"}""",
+    """{"type":"message","timestamp":"t","role":"user","content":"Run exactly this one shell command and then stop: echo ag-spike > probe.txt"}""",
+    """{"type":"tool_use","timestamp":"t","tool_name":"run_shell_command","tool_id":"run_shell_command_1","parameters":{"command":"echo ag-spike > probe.txt"}}""",
+    """{"type":"tool_result","timestamp":"t","tool_id":"run_shell_command_1","status":"success"}""",
+    """{"type":"message","timestamp":"t","role":"assistant","content":"The requested ","delta":true}""",
+    """{"type":"message","timestamp":"t","role":"assistant","content":"command has been executed.","delta":true}""",
+    """{"type":"result","timestamp":"t","status":"success","stats":{"total_tokens":19763,"input_tokens":19644,"output_tokens":119,"cached":7548,"duration_ms":12720,"tool_calls":2}}""",
+];
+
 void Run(string title, IAgentAdapter adapter, string[] lines)
 {
     Console.WriteLine($"=== {title} ({adapter.Id}) ===");
@@ -504,6 +565,43 @@ static string Trunc(string s) => s.Length > 40 ? s[..40] + "…" : s;
 
 Run("Claude stream-json", new ClaudeAdapter(), claudeLines);
 Run("Codex exec --json", new CodexAdapter(), codexLines);
+Run("Antigravity/Gemini stream-json", new AntigravityAdapter(), agLines);
+AssertAntigravityParsing();
+AssertAntigravityArgs();
+
+void AssertAntigravityParsing()
+{
+    var ad = new AntigravityAdapter();
+    var evs = agLines.SelectMany(ad.ParseLine).ToList();
+    Assert(evs[0] is SessionStarted { SessionId: "44a68ff6-9845-4b41-82ae-bcc1748db696", Model: "gemini-3-flash-preview" }, "ag SessionStarted");
+    Assert(evs.OfType<ToolUseStarted>().Single() is { Name: "run_shell_command" }, "ag ToolUseStarted");
+    // delta 조각이 하나의 AssistantText로 합쳐져야 함
+    Assert(evs.OfType<AssistantText>().Single().Text == "The requested command has been executed.", "ag delta merge");
+    Assert(evs.OfType<TokenUsage>().Single() is { InputTokens: 19644, OutputTokens: 119, CacheReadTokens: 7548 }, "ag usage");
+    Assert(evs.OfType<TurnCompleted>().Single() is { IsError: false }, "ag TurnCompleted");
+
+    var err = new AntigravityAdapter().ParseLine(
+        """{"type":"result","status":"error","error":{"type":"unknown","message":"[API Error: capacity]"}}""").ToList();
+    Assert(err.OfType<EngineError>().Single().Message.Contains("capacity") && err.OfType<TurnCompleted>().Single().IsError, "ag error result");
+}
+
+void AssertAntigravityArgs()
+{
+    var cwd = Environment.CurrentDirectory;
+    string[] Args(SandboxMode sb, bool bypass, string? resume = null) =>
+        new AntigravityAdapter().BuildStartInfo("gemini.cmd",
+            new SessionOptions { WorkingDirectory = cwd, BypassPermissions = bypass, Sandbox = sb, ResumeSessionId = resume }, "p").ArgumentList.ToArray();
+
+    var yolo = Args(SandboxMode.DangerFullAccess, true);
+    Assert(yolo.Contains("-y") && yolo.Contains("--skip-trust") && yolo.Contains("stream-json") && yolo.Contains("-p"), "ag yolo args");
+    var plan = Args(SandboxMode.ReadOnly, false);
+    Assert(plan.Contains("--approval-mode") && plan.Contains("plan") && !plan.Contains("-y"), "ag plan args");
+    var ae = Args(SandboxMode.WorkspaceWrite, false);
+    Assert(ae.Contains("auto_edit"), "ag auto_edit args");
+    var rs = Args(SandboxMode.DangerFullAccess, true, "uuid-1");
+    Assert(rs.Contains("--resume") && rs.Contains("uuid-1"), "ag resume args");
+    Console.WriteLine("antigravity parse/arg asserts OK");
+}
 AssertResumeArgs();
 AssertSandboxAndModelArgs();
 AssertPermissionResponse();

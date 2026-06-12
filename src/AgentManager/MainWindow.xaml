@@ -900,6 +900,9 @@
                                             <DataTrigger Binding="{Binding AgentId}" Value="gx">
                                                 <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                                                <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
@@ -928,6 +931,10 @@
                                                                 <Setter Property="Background" Value="{StaticResource GxDim}"/>
                                                                 <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                                                                <Setter Property="Background" Value="{StaticResource InfoDim}"/>
+                                                                <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
@@ -942,6 +949,9 @@
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="gx">
                                                                     <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                                                                    <Setter Property="Foreground" Value="{StaticResource Info}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -973,6 +983,9 @@
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="gx">
                                                                             <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Info}"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -1020,7 +1033,8 @@
                                                     </Border>
                                                 </Popup>
                                             </Grid>
-                                            <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
+                                            <Grid DockPanel.Dock="Left" Margin="0,0,8,0"
+                                                  Visibility="{Binding HasEffort, Converter={StaticResource BoolVis}}">
                                                 <ToggleButton x:Name="EffortMenuBtn" Style="{StaticResource TogglePillButton}"
                                                               Height="30" Padding="12,0" Cursor="Hand"
                                                               ToolTip="추론 강도 (claude: default~max 6단계 / codex: low~xhigh 4단계)">
