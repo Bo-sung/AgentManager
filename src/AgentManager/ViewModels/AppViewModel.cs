@@ -1235,7 +1235,7 @@ public sealed class AppViewModel : ObservableObject
             case QuotaUpdate q:
                 QuotaText = $"QUOTA {q.Utilization:P0} · {q.RateLimitType}";
                 break;
-            case EngineError e when !IsBenignStderr(e.Message):
+            case EngineError e when !SuppressStderr(s, e.Message):
                 s.Transcript.Add(new ErrorBlock("stderr", e.Message));
                 break;
             case TurnCompleted c:
@@ -1318,6 +1318,27 @@ public sealed class AppViewModel : ObservableObject
         var last = s.Transcript.OfType<AgentTextBlock>().LastOrDefault();
         if (last is null || string.IsNullOrWhiteSpace(last.Text)) return;
         GetOrAddArtifact(s, "summary", "Summary").Content = last.Text;
+    }
+
+    /// <summary>gemini가 셸 실행 시 stderr로 쏟는 멀티라인 덤프(xterm.js Parsing error — JS 객체 수십 줄)를
+    /// 중괄호 깊이로 추적해 통째로 삼킨다. 라인 단위 패턴으로는 못 잡는 형태.</summary>
+    private readonly Dictionary<string, (int Depth, int Ttl)> _stderrDump = [];
+    private bool SuppressStderr(SessionViewModel s, string m)
+    {
+        if (IsBenignStderr(m)) return true;
+        if (_stderrDump.TryGetValue(s.Id, out var st) && st.Depth > 0)
+        {
+            var depth = st.Depth + m.Count(c => c == '{') - m.Count(c => c == '}');
+            var ttl = st.Ttl - 1;
+            _stderrDump[s.Id] = (ttl <= 0 ? 0 : Math.Max(0, depth), ttl); // TTL: 덤프가 잘려도 영원히 삼키지 않게
+            return true;
+        }
+        if (m.Contains("xterm.js: Parsing error"))
+        {
+            _stderrDump[s.Id] = (Math.Max(1, m.Count(c => c == '{') - m.Count(c => c == '}')), 80);
+            return true;
+        }
+        return false;
     }
 
     /// <summary>엔진들이 stderr로 흘리는 무해한 안내/경고 — 에러 블록으로 띄우지 않는다.

@@ -351,7 +351,11 @@ public partial class MainWindow : Window
                     sb.AppendLine();
                     break;
                 case AgentTextBlock a: sb.AppendLine("## 🤖 " + s.AgentName).AppendLine(a.Text).AppendLine(); break;
-                case ToolBlock t: sb.AppendLine("### 🔧 " + t.Name).AppendLine("```").AppendLine(t.Body).AppendLine("```").AppendLine(); break;
+                case ToolBlock t:
+                    sb.AppendLine("### 🔧 " + t.Name);
+                    if (!string.IsNullOrWhiteSpace(t.Body)) sb.AppendLine("```").AppendLine(t.Body.TrimEnd()).AppendLine("```");
+                    sb.AppendLine();
+                    break;
                 case ErrorBlock err: sb.AppendLine("### ❌ " + err.Title).AppendLine(err.Body).AppendLine(); break;
                 case ApprovalBlock p: sb.AppendLine("### ⚠ Approval: " + p.ToolName + " → " + p.State).AppendLine(); break;
                 case WorkingBlock w: sb.AppendLine("> " + w.Text).AppendLine(); break;
