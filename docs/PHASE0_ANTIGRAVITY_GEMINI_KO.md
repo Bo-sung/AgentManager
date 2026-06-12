@@ -1,5 +1,16 @@
 # Phase 0 실측 — Antigravity / Gemini CLI
 
+## ⚠ 추가 실측 (2026-06-12): 신규 `agy` CLI v1.0.7 — 당분간 채택 보류
+- 설치: `irm https://antigravity.google/cli/install.ps1 | iex` → `%LOCALAPPDATA%\agy\bin\agy.exe` (gemini-cli 리브랜드가 아닌 **별도 Go 바이너리**, 내부 gRPC 언어 서버 구동).
+- 표면: `-p/--print`(비대화형, **순수 텍스트 출력 — JSON/이벤트 없음**), `--conversation <id>`/`--continue`(resume),
+  `--dangerously-skip-permissions`, `--add-dir`(반복), `--sandbox`, `models`.
+- 모델 (실측): Gemini 3.5 Flash (Low/Medium/High) · Gemini 3.1 Pro (Low/High) · **Claude Sonnet/Opus 4.6 (Thinking)** · GPT-OSS 120B — 추론 강도가 모델 표시명에 내장.
+- **보류 사유**: ① 구조화 출력이 없어 도구 이벤트/usage/스트리밍/승인 가시성이 전부 사라짐(텍스트 전용 축소 어댑터가 됨).
+  ② 대화형 터미널에서는 인증이 동작하지만 **다른 프로세스가 자식으로 띄우면 "not logged into Antigravity"** (토큰 전달 안 됨 — 관제 앱 치명적).
+- 결정: **ag 엔진은 gemini-cli(stream-json) 경로 유지**. agy가 구조화 출력을 제공하고 자식 프로세스 인증이 풀리면 재평가.
+  exe 해석기는 `agy.exe`를 자동 선택하지 않음(이름이 달라 충돌 없음).
+
+
 > 2026-06-12, `@google/gemini-cli` **0.42.0** (npm 글로벌), Windows.
 > Antigravity CLI 전환(6/18) 전 — 현 gemini CLI 표면으로 어댑터를 만들고,
 > exe 해석을 antigravity 우선 → gemini 폴백으로 두어 전환 시 자동 승계한다.
