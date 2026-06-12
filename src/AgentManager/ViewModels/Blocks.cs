@@ -153,9 +153,24 @@ public sealed class ApprovalBlock(string requestId, string toolName, string inpu
     public string State
     {
         get => _state;
-        set { if (Set(ref _state, value)) OnChanged(nameof(IsPending)); }
+        set
+        {
+            if (Set(ref _state, value))
+            {
+                OnChanged(nameof(IsPending));
+                OnChanged(nameof(StateLabel));
+            }
+        }
     }
     public bool IsPending => _state == "pending";
+    public string StateLabel => _state switch
+    {
+        "allowed" => AgentManager.App.L("L.ApprovalAllowed"),
+        "allowed (session)" => AgentManager.App.L("L.ApprovalAllowedSession"),
+        "denied" => AgentManager.App.L("L.ApprovalDenied"),
+        "expired" => AgentManager.App.L("L.ApprovalExpired"),
+        _ => _state,
+    };
 }
 
 public sealed class WorkingBlock : TranscriptItem

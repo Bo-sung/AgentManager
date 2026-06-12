@@ -15,6 +15,7 @@ namespace AgentManager.ViewModels;
 public sealed class AppViewModel : ObservableObject
 {
     private OllamaTranslator _translator = CreateTranslator("http://localhost:11434", "exaone3.5:7.8b");
+    private static string L(string key, params object?[] args) => AgentManager.App.L(key, args);
     private readonly List<SessionViewModel> _allSessions = [];
     private readonly DispatcherTimer _runtimeTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private string _claudePath = "";
@@ -164,7 +165,7 @@ public sealed class AppViewModel : ObservableObject
             s.Transcript.Add(block);
             _pendingApprovals[pr.RequestId] = (tcs, block, s);
             s.Status = "waiting";
-            s.Activity = $"승인 대기: {pr.ToolName}";
+            s.Activity = L("L.WaitingApproval", pr.ToolName);
             AttentionRequested?.Invoke("approval", s);
         });
         return tcs.Task;
@@ -175,8 +176,8 @@ public sealed class AppViewModel : ObservableObject
         if (!_pendingApprovals.Remove(requestId, out var entry)) return;
         entry.Block.State = allow ? (forSession ? "allowed (session)" : "allowed") : "denied";
         entry.Session.Status = "running";
-        entry.Session.Activity = allow ? $"{entry.Block.ToolName} 승인됨 — 계속" : $"{entry.Block.ToolName} 거부됨";
-        entry.Tcs.TrySetResult(new PermissionDecision(allow, allow ? null : "User denied permission", forSession));
+        entry.Session.Activity = allow ? L("L.ApprovalGrantedContinue", entry.Block.ToolName) : L("L.ApprovalRejected", entry.Block.ToolName);
+        entry.Tcs.TrySetResult(new PermissionDecision(allow, allow ? null : L("L.PermissionDenied"), forSession));
         SaveState();
     }
 
@@ -188,7 +189,7 @@ public sealed class AppViewModel : ObservableObject
             if (_pendingApprovals.Remove(key, out var entry))
             {
                 entry.Block.State = "expired";
-                entry.Tcs.TrySetResult(new PermissionDecision(false, "Session ended"));
+                entry.Tcs.TrySetResult(new PermissionDecision(false, L("L.SessionEnded")));
             }
         }
     }
@@ -240,7 +241,7 @@ public sealed class AppViewModel : ObservableObject
         if (s?.WorktreePath is null) return;
         s.ReviewStatus = "Committing…";
         var (ok, msg) = await GitWorktree.CommitAsync(s.WorktreePath, $"agent: {s.Title}");
-        s.Transcript.Add(ok ? new WorkingBlock("✓ " + msg) : (TranscriptItem)new ErrorBlock("Commit 실패", msg));
+        s.Transcript.Add(ok ? new WorkingBlock("✓ " + msg) : (TranscriptItem)new ErrorBlock(L("L.CommitFailed"), msg));
         await RefreshReviewAsync(s);
         SaveState();
     }
@@ -260,7 +261,7 @@ public sealed class AppViewModel : ObservableObject
         };
         foreach (var item in src.Transcript)
             s.Transcript.Add(CloneTranscriptItem(item));
-        s.Transcript.Add(new WorkingBlock($"⑂ '{src.Title}'에서 분기됨"));
+            s.Transcript.Add(new WorkingBlock(L("L.ForkedFrom", src.Title)));
         s.PropertyChanged += SessionStatusWatch;
         _allSessions.Insert(0, s);
         ActiveSession = s;
@@ -359,7 +360,7 @@ public sealed class AppViewModel : ObservableObject
         var sessionsToRemove = _allSessions.Where(s => s.ProjectId == p.Id).ToList();
         if (sessionsToRemove.Any())
         {
-            var res = MessageBox.Show($"세션 {sessionsToRemove.Count}개가 함께 제거됩니다. 계속하시겠습니까?", "프로젝트 제거", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            var res = MessageBox.Show(L("L.ProjectRemoveConfirm", sessionsToRemove.Count), L("L.ProjectRemoveTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (res != MessageBoxResult.Yes)
                 return;
         }
@@ -493,9 +494,9 @@ public sealed class AppViewModel : ObservableObject
     private static string DetectLabel(string id, string? overridePath)
     {
         var exe = EngineRegistry.ResolveExe(id, id == "cc" ? overridePath : null, id == "gx" ? overridePath : null);
-        if (exe is null) return "✗ 미발견";
-        if (File.Exists(exe)) return "✓ " + exe;
-        return "△ PATH 의존: " + exe; // bare command name — resolved at spawn time
+        if (exe is null) return AgentManager.App.L("L.DetectMissing");
+        if (File.Exists(exe)) return AgentManager.App.L("L.DetectPathPrefix", exe);
+        return AgentManager.App.L("L.DetectPathDependent", exe); // bare command name — resolved at spawn time
     }
     private void RefreshDetectLabels()
     {
@@ -618,10 +619,10 @@ public sealed class AppViewModel : ObservableObject
             TranslationEnabled = TranslationEnabled,
             EngineSessionId = item.Entry.SessionId,
             WorktreeAttempted = true, // resume가 세션을 못 찾게 되므로 worktree 생성 금지
-            Activity = "imported from CLI history",
+            Activity = L("L.ImportedFromCliHistory"),
         };
         s.Transcript.Add(new WorkingBlock(
-            $"⤵ CLI 세션 가져옴 — {engine.Name} · {item.Entry.SessionId[..Math.Min(8, item.Entry.SessionId.Length)]}… · {item.TimeLabel}. 다음 메시지부터 resume으로 이어집니다."));
+            L("L.CliImportMarker", engine.Name, item.Entry.SessionId[..Math.Min(8, item.Entry.SessionId.Length)], item.TimeLabel)));
         s.PropertyChanged += SessionStatusWatch;
         _allSessions.Insert(0, s);
         ActiveSession = s;
@@ -667,7 +668,7 @@ public sealed class AppViewModel : ObservableObject
         var path = NewProjectPath.Trim().Trim('"');
         if (!Path.IsPathRooted(path))
         {
-            NewProjectError = "전체 경로를 입력하세요 (예: J:\\prj\\myapp).";
+            NewProjectError = L("L.RequireFullPath");
             return;
         }
         if (!Directory.Exists(path))
@@ -675,7 +676,7 @@ public sealed class AppViewModel : ObservableObject
             try { Directory.CreateDirectory(path); }
             catch (Exception ex)
             {
-                NewProjectError = "폴더 생성 실패: " + ex.Message;
+                NewProjectError = L("L.FolderCreateFailed", ex.Message);
                 return;
             }
         }
@@ -693,7 +694,7 @@ public sealed class AppViewModel : ObservableObject
         var name = string.IsNullOrWhiteSpace(NewProjectName)
             ? new DirectoryInfo(fullPath).Name
             : NewProjectName.Trim();
-        if (string.IsNullOrWhiteSpace(name)) name = "project";
+        if (string.IsNullOrWhiteSpace(name)) name = L("L.DefaultProjectName");
 
         var project = new ProjectViewModel(Slug(name) + "-" + DateTime.Now.Ticks, name, fullPath);
         Projects.Add(project);
@@ -735,7 +736,7 @@ public sealed class AppViewModel : ObservableObject
         var languageChanged = newLanguage != _language;
         _language = newLanguage;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
-        SettingsStatus = themeChanged || languageChanged ? AgentManager.App.L("L.SettingsSavedRestart") : AgentManager.App.L("L.SettingsSaved");
+        SettingsStatus = themeChanged || languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
         ShowSettings = false;
         SaveState();
     }
@@ -872,7 +873,7 @@ public sealed class AppViewModel : ObservableObject
                 Isolated = dto.Isolated && Directory.Exists(dto.WorktreePath),
                 WorktreeAttempted = dto.WorktreeAttempted,
                 Status = dto.Status is "running" or "waiting" ? "idle" : dto.Status,
-                Activity = dto.Status is "running" or "waiting" ? "restored after restart" : dto.Activity,
+                Activity = dto.Status is "running" or "waiting" ? L("L.RestoredAfterRestart") : dto.Activity,
                 TokensIn = dto.TokensIn,
                 TokensOut = dto.TokensOut,
                 CostUsd = dto.CostUsd,
@@ -968,11 +969,11 @@ public sealed class AppViewModel : ObservableObject
             var wt = await GitWorktree.CreateAsync(s.ProjectPath, s.Id, s.Branch, projectWorktreesRoot);
             if (wt is not null) { s.WorktreePath = wt.Path; s.Isolated = true; }
             else if (_warnNoWorktree)
-                s.Transcript.Add(new WorkingBlock("⚠ git 레포가 아니어서 격리(worktree) 없이 실행합니다"));
+                s.Transcript.Add(new WorkingBlock(L("L.NonGitWorktreeNotice")));
         }
         catch (Exception ex)
         {
-            s.Transcript.Add(new WorkingBlock($"⚠ worktree 생성 실패 — 격리 없이 실행: {ex.Message}"));
+            s.Transcript.Add(new WorkingBlock(L("L.WorktreeCreateFailed", ex.Message)));
         }
     }
 
@@ -993,28 +994,28 @@ public sealed class AppViewModel : ObservableObject
         // concurrency cap: protect the machine/quota from too many parallel engines
         if (_running.Count >= MaxConcurrentSessions)
         {
-            s.Transcript.Add(new ErrorBlock("동시 실행 한도",
-                $"실행 중 세션이 {_running.Count}개입니다 (한도 {MaxConcurrentSessions}). 끝나길 기다리거나 설정에서 한도를 올리세요."));
+            s.Transcript.Add(new ErrorBlock(L("L.ConcurrentLimitErrorTitle"),
+                L("L.ConcurrentLimitErrorBody", _running.Count, MaxConcurrentSessions)));
             return;
         }
 
         var dispatcher = Application.Current.Dispatcher;
         s.Transcript.Add(new UserBlock(prompt));
         s.Status = "running";
-        s.MarkRunStarted(s.TranslationEnabled ? "translating prompt / preparing run" : "preparing run");
+        s.MarkRunStarted(s.TranslationEnabled ? L("L.TranslatingPreparingRun") : L("L.PreparingRun"));
 
         var adapter = EngineRegistry.CreateAdapter(s.AgentId, s.RequireApproval);
         var exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath);
         if (adapter is null || exe is null)
         {
-            s.Transcript.Add(new ErrorBlock("Engine unavailable", $"{s.AgentName} CLI를 찾을 수 없습니다."));
+            s.Transcript.Add(new ErrorBlock(L("L.EngineUnavailableTitle"), L("L.EngineUnavailableBody", s.AgentName)));
             s.Status = "error";
-            s.MarkRunEnded("engine unavailable");
+            s.MarkRunEnded(L("L.EngineUnavailableActivity"));
             return;
         }
 
         // Worktree isolation: each session works in its own git worktree.
-        s.Activity = "preparing worktree";
+        s.Activity = L("L.PreparingWorktree");
         await EnsureWorktreeAsync(s);
         var cwd = s.WorktreePath ?? s.ProjectPath;
 
@@ -1046,22 +1047,22 @@ public sealed class AppViewModel : ObservableObject
         _running[s.Id] = cts;
         try
         {
-            s.Activity = s.TranslationEnabled ? "translating prompt / starting engine" : "starting engine";
+            s.Activity = s.TranslationEnabled ? L("L.TranslatingStartingEngine") : L("L.StartingEngine");
             await Task.Run(() => session.RunAsync(options, prompt, cts.Token), cts.Token);
             if (s.Status == "running") s.Status = "done";
-            if (s.Status == "done") s.MarkRunEnded("completed");
+            if (s.Status == "done") s.MarkRunEnded(L("L.Completed"));
         }
         catch (OperationCanceledException)
         {
-            s.Transcript.Add(new WorkingBlock("⏹ 중지됨"));
+            s.Transcript.Add(new WorkingBlock(L("L.StoppedBlock")));
             s.Status = "idle";
-            s.MarkRunEnded("stopped");
+            s.MarkRunEnded(L("L.Stopped"));
         }
         catch (Exception ex)
         {
-            s.Transcript.Add(new ErrorBlock("Run failed", ex.Message));
+            s.Transcript.Add(new ErrorBlock(L("L.RunFailed"), ex.Message));
             s.Status = "error";
-            s.MarkRunEnded("failed");
+            s.MarkRunEnded(L("L.Failed"));
         }
         finally
         {
@@ -1085,21 +1086,21 @@ public sealed class AppViewModel : ObservableObject
         s.SelectedChange = change;
         if (change is null || string.IsNullOrWhiteSpace(s.WorktreePath))
         {
-            s.DiffText = "변경 파일을 선택하면 diff가 표시됩니다.";
+            s.DiffText = L("L.SelectDiffPrompt");
             return;
         }
 
-        if (!quiet) s.DiffText = "Loading diff...";
+        if (!quiet) s.DiffText = L("L.LoadingDiff");
         try
         {
             var diff = await GitWorktree.GetDiffAsync(s.WorktreePath, change.Path);
-            var text = string.IsNullOrWhiteSpace(diff) ? "No textual diff." : diff;
+            var text = string.IsNullOrWhiteSpace(diff) ? L("L.NoTextualDiff") : diff;
             if (s.DiffText != text) s.DiffText = text;
             if (!quiet) SaveState();
         }
         catch (Exception ex)
         {
-            s.DiffText = "Diff failed: " + ex.Message;
+            s.DiffText = L("L.DiffFailed", ex.Message);
         }
     }
 
@@ -1126,12 +1127,12 @@ public sealed class AppViewModel : ObservableObject
         {
             s.Changes.Clear();
             s.SelectedChange = null;
-            s.DiffText = "세션 worktree가 아직 없습니다.";
-            s.ReviewStatus = "No isolated worktree";
+            s.DiffText = L("L.SessionWorktreeMissing");
+            s.ReviewStatus = L("L.NoIsolatedWorktree");
             return;
         }
 
-        if (!quiet) s.ReviewStatus = "Scanning changes...";
+        if (!quiet) s.ReviewStatus = L("L.ScanningChanges");
         try
         {
             var selectedPath = s.SelectedChange?.Path; // keep the user's selection across live refreshes
@@ -1149,7 +1150,7 @@ public sealed class AppViewModel : ObservableObject
                     s.Changes.Add(new ReviewChangeViewModel(change));
             }
 
-            s.ReviewStatus = changes.Count == 0 ? "No changes" : $"{changes.Count} changed file(s)";
+            s.ReviewStatus = changes.Count == 0 ? L("L.NoChanges") : L("L.ChangedFiles", changes.Count);
             if (s.Changes.Count > 0)
             {
                 var keep = selectedPath is null ? null : s.Changes.FirstOrDefault(c => c.Path == selectedPath);
@@ -1158,12 +1159,12 @@ public sealed class AppViewModel : ObservableObject
             else
             {
                 s.SelectedChange = null;
-                s.DiffText = "No changes in this worktree.";
+                s.DiffText = L("L.NoChangesInWorktree");
             }
         }
         catch (Exception ex)
         {
-            s.ReviewStatus = "Review refresh failed";
+            s.ReviewStatus = L("L.ReviewRefreshFailed");
             s.DiffText = ex.Message;
         }
     }
@@ -1171,7 +1172,7 @@ public sealed class AppViewModel : ObservableObject
     private async Task MergeReviewAsync(SessionViewModel? s)
     {
         if (s?.WorktreePath is null) return;
-        s.ReviewStatus = "Merging…";
+        s.ReviewStatus = L("L.Merging");
         var (ok, msg) = await GitWorktree.MergeAsync(s.ProjectPath, s.Branch, $"agent: {s.Title}", s.WorktreePath);
         if (ok)
         {
@@ -1179,12 +1180,12 @@ public sealed class AppViewModel : ObservableObject
             s.WorktreePath = null;
             s.Isolated = false;
             s.Status = "done";
-            s.Activity = "merged";
+            s.Activity = L("L.Merged");
             s.Transcript.Add(new WorkingBlock("✓ " + msg));
         }
         else
         {
-            s.Transcript.Add(new ErrorBlock("Merge 실패", msg));
+            s.Transcript.Add(new ErrorBlock(L("L.MergeFailed"), msg));
         }
         s.ReviewStatus = msg;
         await RefreshReviewAsync(s);
@@ -1194,9 +1195,9 @@ public sealed class AppViewModel : ObservableObject
     private async Task DiscardReviewAsync(SessionViewModel? s)
     {
         if (s?.WorktreePath is null) return;
-        s.ReviewStatus = "Discarding…";
+        s.ReviewStatus = L("L.Discarding");
         var (ok, msg) = await GitWorktree.DiscardAsync(s.WorktreePath);
-        s.Transcript.Add(ok ? new WorkingBlock("↩ " + msg) : (TranscriptItem)new ErrorBlock("Discard 실패", msg));
+        s.Transcript.Add(ok ? new WorkingBlock("↩ " + msg) : (TranscriptItem)new ErrorBlock(L("L.DiscardFailed"), msg));
         await RefreshReviewAsync(s);
         SaveState();
     }
@@ -1210,9 +1211,9 @@ public sealed class AppViewModel : ObservableObject
                 if (!string.IsNullOrWhiteSpace(started.SessionId))
                     s.EngineSessionId = started.SessionId;
                 if (!string.IsNullOrWhiteSpace(started.Model))
-                    s.MarkRunSignal($"connected · {started.Model}");
+                    s.MarkRunSignal(L("L.ConnectedModel", started.Model));
                 else
-                    s.MarkRunSignal("connected");
+                    s.MarkRunSignal(L("L.Connected"));
                 break;
             case PromptTranslated pt:
                 if (s.Transcript.OfType<UserBlock>().LastOrDefault() is { } ub)
@@ -1227,7 +1228,7 @@ public sealed class AppViewModel : ObservableObject
                     s.Transcript.Add(live);
                 }
                 live.Text += d.Delta;
-                s.Activity = "streaming response";
+                s.Activity = L("L.StreamingResponse");
                 break;
             case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
                 if (_liveText.Remove(s.Id, out var streamed))
@@ -1237,17 +1238,17 @@ public sealed class AppViewModel : ObservableObject
                 }
                 else
                     s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText, ModelUsed = s.Model });
-                s.Activity = "receiving response";
+                s.Activity = L("L.ReceivingResponse");
                 break;
             case Thinking th when !string.IsNullOrWhiteSpace(th.Text):
                 s.Transcript.Add(new ThinkingBlock(th.Text));
-                s.Activity = "thinking…";
+                s.Activity = L("L.ThinkingActivity");
                 break;
             case ToolUseStarted u:
                 var tb = new ToolBlock(u.ToolUseId, KindOf(u.Name), u.Name) { CommandText = ExtractCommand(u) };
                 tools[u.ToolUseId] = tb;
                 s.Transcript.Add(tb);
-                s.MarkRunSignal($"{u.Name}…");
+                s.MarkRunSignal(L("L.ToolRunning", u.Name));
                 if (u.Name == "TodoWrite")
                     UpsertTaskListArtifact(s, u.InputJson);
                 break;
@@ -1256,17 +1257,17 @@ public sealed class AppViewModel : ObservableObject
                 {
                     t.Body = Trim(r.Content, 2000);
                     t.OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000);
-                    t.Stat = r.IsError ? "error" : "done";
+                    t.Stat = r.IsError ? L("L.ToolError") : L("L.ToolDone");
                     if (t.CommandText is { } cmd && IsTestCommand(cmd))
                         UpsertTestArtifact(s, cmd, r.Content, r.IsError);
                 }
                 else
                 {
-                    s.Transcript.Add(new ToolBlock(r.ToolUseId, "RUN", "result")
+                    s.Transcript.Add(new ToolBlock(r.ToolUseId, "RUN", L("L.Result"))
                     {
                         Body = Trim(r.Content, 2000),
                         OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000),
-                        Stat = r.IsError ? "error" : "done"
+                        Stat = r.IsError ? L("L.ToolError") : L("L.ToolDone")
                     });
                 }
                 // live review: a finished tool may have changed files in the worktree
@@ -1282,7 +1283,7 @@ public sealed class AppViewModel : ObservableObject
                 QuotaText = $"QUOTA {q.Utilization:P0} · {q.RateLimitType}";
                 break;
             case EngineError e when !SuppressStderr(s, e.Message):
-                s.Transcript.Add(new ErrorBlock("stderr", e.Message));
+                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), e.Message));
                 break;
             case TurnCompleted c:
                 _liveText.Remove(s.Id); // 스트리밍 잔여 해제 (최종 텍스트 미도착 시 라이브 내용 그대로 유지)
@@ -1296,7 +1297,7 @@ public sealed class AppViewModel : ObservableObject
                 UpsertSummaryArtifact(s);
                 AttentionRequested?.Invoke(c.IsError ? "error" : "done", s);
                 s.Status = c.IsError ? "error" : "done";
-                s.MarkRunEnded(c.IsError ? "failed" : "completed");
+                s.MarkRunEnded(c.IsError ? L("L.Failed") : L("L.Completed"));
                 RefreshTotals();
                 break;
         }
@@ -1344,7 +1345,7 @@ public sealed class AppViewModel : ObservableObject
                 lines.Add($"{mark} {content}");
             }
             if (lines.Count == 0) return;
-            GetOrAddArtifact(s, "tasklist", "Task List").Content = string.Join("\n", lines);
+            GetOrAddArtifact(s, "tasklist", L("L.TaskList")).Content = string.Join("\n", lines);
         }
         catch { /* malformed input — skip */ }
     }
@@ -1356,7 +1357,7 @@ public sealed class AppViewModel : ObservableObject
         var a = GetOrAddArtifact(s, "test", shortCmd);
         a.IsError = isError;
         var tail = output.Length > 1500 ? "…" + output[^1500..] : output;
-        a.Content = (isError ? "❌ FAILED\n" : "✅ PASSED\n") + tail;
+        a.Content = (isError ? L("L.TestFailed") : L("L.TestPassed")) + tail;
     }
 
     /// <summary>턴 종료 시 마지막 어시스턴트 텍스트 → 요약(walkthrough) 아티팩트.</summary>
@@ -1364,7 +1365,7 @@ public sealed class AppViewModel : ObservableObject
     {
         var last = s.Transcript.OfType<AgentTextBlock>().LastOrDefault();
         if (last is null || string.IsNullOrWhiteSpace(last.Text)) return;
-        GetOrAddArtifact(s, "summary", "Summary").Content = last.Text;
+        GetOrAddArtifact(s, "summary", L("L.Summary")).Content = last.Text;
     }
 
     /// <summary>gemini가 셸 실행 시 stderr로 쏟는 멀티라인 덤프(xterm.js Parsing error — JS 객체 수십 줄)를

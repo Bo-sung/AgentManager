@@ -12,8 +12,8 @@ public partial class ActivityHistoryWindow : Window, INotifyPropertyChanged
 {
     private readonly ObservableCollection<HistoryRow> _rows = [];
     private string _filterText = "";
-    private string _summaryText = "0 sessions · 0 projects";
-    private string _filterSummaryText = "0 shown";
+    private string _summaryText = AgentManager.App.L("L.SessionsProjectsSummary", 0, 0);
+    private string _filterSummaryText = AgentManager.App.L("L.Shown", 0);
 
     public ActivityHistoryWindow()
     {
@@ -77,7 +77,7 @@ public partial class ActivityHistoryWindow : Window, INotifyPropertyChanged
             _rows.Add(row);
         }
 
-        SummaryText = $"{sessions.Count} sessions · {projects.Count} projects";
+        SummaryText = AgentManager.App.L("L.SessionsProjectsSummary", sessions.Count, projects.Count);
         RowsView.Refresh();
         UpdateFilterSummary();
     }
@@ -100,8 +100,8 @@ public partial class ActivityHistoryWindow : Window, INotifyPropertyChanged
     {
         var shown = RowsView.Cast<object>().Count();
         FilterSummaryText = string.IsNullOrWhiteSpace(FilterText)
-            ? $"{shown} shown"
-            : $"{shown} shown after filter";
+            ? AgentManager.App.L("L.Shown", shown)
+            : AgentManager.App.L("L.ShownAfterFilter", shown);
     }
 
     private void Refresh_Click(object sender, RoutedEventArgs e) => LoadRows();
@@ -125,9 +125,9 @@ public partial class ActivityHistoryWindow : Window, INotifyPropertyChanged
     {
         public static HistoryRow FromDto(SessionDto session)
         {
-            var title = string.IsNullOrWhiteSpace(session.Title) ? "(untitled)" : session.Title;
-            var project = string.IsNullOrWhiteSpace(session.Project) ? "(no project)" : session.Project;
-            var branch = string.IsNullOrWhiteSpace(session.Branch) ? "(no branch)" : session.Branch;
+            var title = string.IsNullOrWhiteSpace(session.Title) ? AgentManager.App.L("L.Untitled") : session.Title;
+            var project = string.IsNullOrWhiteSpace(session.Project) ? AgentManager.App.L("L.NoProject") : session.Project;
+            var branch = string.IsNullOrWhiteSpace(session.Branch) ? AgentManager.App.L("L.NoBranch") : session.Branch;
             var status = (session.Status ?? "").Trim().ToLowerInvariant();
             var badge = BadgeFor(session.AgentId);
 
@@ -140,7 +140,7 @@ public partial class ActivityHistoryWindow : Window, INotifyPropertyChanged
                 session.StartedAt.ToString("MM-dd HH:mm", CultureInfo.InvariantCulture),
                 $"{session.TokensIn:n0}/{session.TokensOut:n0}",
                 session.CostUsd.ToString("$0.000", CultureInfo.InvariantCulture),
-                $"{session.Transcript.Count:n0} blocks",
+                AgentManager.App.L("L.BlocksCount", session.Transcript.Count.ToString("n0", CultureInfo.CurrentCulture)),
                 session.IsArchived);
         }
 

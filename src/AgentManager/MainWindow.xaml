@@ -177,7 +177,7 @@
                     <DockPanel Margin="13,10,13,0">
                         <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.ApprovalRequired}" FontFamily="{StaticResource Mono}"
                                    FontSize="10.5" Foreground="{StaticResource Warn}" VerticalAlignment="Center"/>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding State}" FontFamily="{StaticResource Mono}"
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding StateLabel}" FontFamily="{StaticResource Mono}"
                                    FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding ToolName}" FontFamily="{StaticResource Mono}" FontSize="11.5"
                                    FontWeight="SemiBold" Foreground="{StaticResource Txt0}" Margin="10,0,0,0" VerticalAlignment="Center"/>

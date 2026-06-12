@@ -63,6 +63,7 @@
 | **승인 Stage 2 스파이크** — codex app-server 실측(스키마 덤프 + Smoke --appserver-probe 실 왕복 PASS: initialize→thread/start→turn/start→commandExecution/requestApproval→accept→파일생성→turn/completed). 함정 포함 문서화 (PHASE0_CODEX_APPSERVER_KO.md) | 113c8c9 |
 
 | **승인 Stage 2 통합** — EngineWriteback + CodexAppServerAdapter (RequireApproval=true인 codex 세션 → app-server 경로, danger+untrusted 게이트, thread/resume 호환, KillAfterTurnCompleted). 오프라인 어서션 + --live-stage2 실제품 경로 PASS | e01f697 |
+| **UI 언어 설정 (KO/EN)** — Strings.Ko/En 리소스 딕셔너리, 재시작 적용 설정 토글, MainWindow/Activity History/C# 표시 문자열 추출 | 214ed3e, b779288, (this) |
 
 | **Antigravity/Gemini 어댑터** — gemini-cli 0.42 실측(PHASE0_ANTIGRAVITY_GEMINI_KO: --skip-trust 함정, delta 누적, uuid resume) → AntigravityAdapter + 엔진 활성화(파랑 식별색, effort 비노출, antigravity exe 우선→gemini 폴백). 오프라인+라이브 2턴 resume PASS, stderr 노이즈 필터 | (this) |
 
@@ -70,7 +71,7 @@
 
 ## 🔜 다음
 1. **agy v2 후보**: --model 포맷 실측 → 모델 선택 활성화 · agy 구조화 출력 추가 시 풀 이벤트 전환
-2. **뒤로 미룸(결정)**: 풀 MCP · 언어 설정(위임 브리프 작성됨 — DELEGATE_CODEX_4)
+2. **뒤로 미룸(결정)**: 풀 MCP
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)

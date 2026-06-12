@@ -107,7 +107,11 @@ public sealed class SessionViewModel : ObservableObject
     }
     public string StatusLabel => _status switch
     {
-        "running" => "Running", "waiting" => "Awaiting input", "done" => "Completed", "error" => "Failed", _ => "Idle"
+        "running" => AgentManager.App.L("L.StatusRunning"),
+        "waiting" => AgentManager.App.L("L.StatusAwaitingInput"),
+        "done" => AgentManager.App.L("L.StatusCompleted"),
+        "error" => AgentManager.App.L("L.StatusFailed"),
+        _ => AgentManager.App.L("L.StatusIdle")
     };
     public bool IsRunning => _status == "running";
     public bool IsLive => _status is "running" or "waiting";
@@ -128,7 +132,7 @@ public sealed class SessionViewModel : ObservableObject
                 OnChanged(nameof(TranslationLabel));
         }
     }
-    public string TranslationLabel => TranslationEnabled ? "TR ON" : "TR OFF";
+    public string TranslationLabel => TranslationEnabled ? AgentManager.App.L("L.TranslationOn") : AgentManager.App.L("L.TranslationOff");
 
     private string? _engineSessionId;
     public string? EngineSessionId
@@ -156,13 +160,13 @@ public sealed class SessionViewModel : ObservableObject
         get
         {
             if (!IsRunning) return string.IsNullOrWhiteSpace(Activity) ? StatusLabel : Activity;
-            var activity = string.IsNullOrWhiteSpace(Activity) ? "waiting for engine output" : Activity;
-            return IsQuiet ? $"{activity} · no output for {Ago(_lastSignalAt ?? _runStartedAt ?? DateTime.Now)}" : activity;
+            var activity = string.IsNullOrWhiteSpace(Activity) ? AgentManager.App.L("L.WaitingEngineOutput") : Activity;
+            return IsQuiet ? AgentManager.App.L("L.NoOutputFor", activity, Ago(_lastSignalAt ?? _runStartedAt ?? DateTime.Now)) : activity;
         }
     }
 
     public string RunningElapsedLabel => IsRunning && _runStartedAt is { } started ? FormatDuration(DateTime.Now - started) : "";
-    public string LastSignalLabel => IsRunning && _lastSignalAt is { } last ? "last signal " + Ago(last) + " ago" : "waiting for first signal";
+    public string LastSignalLabel => IsRunning && _lastSignalAt is { } last ? AgentManager.App.L("L.LastSignalAgo", Ago(last)) : AgentManager.App.L("L.WaitingFirstSignal");
     public bool IsQuiet => IsRunning && _lastSignalAt is { } last && DateTime.Now - last > TimeSpan.FromSeconds(45);
 
     public void MarkRunStarted(string activity)
@@ -202,13 +206,13 @@ public sealed class SessionViewModel : ObservableObject
         set => Set(ref _selectedChange, value);
     }
 
-    private string _diffText = "변경 파일을 선택하면 diff가 표시됩니다.";
+    private string _diffText = AgentManager.App.L("L.SelectDiffPrompt");
     public string DiffText { get => _diffText; set => Set(ref _diffText, value); }
 
-    private string _reviewStatus = "No isolated worktree yet";
+    private string _reviewStatus = AgentManager.App.L("L.NoIsolatedWorktreeYet");
     public string ReviewStatus { get => _reviewStatus; set => Set(ref _reviewStatus, value); }
 
-    public string WorktreeLabel => Isolated && WorktreePath is not null ? WorktreePath : "not isolated";
+    public string WorktreeLabel => Isolated && WorktreePath is not null ? WorktreePath : AgentManager.App.L("L.NotIsolated");
 
     private long _tokensIn, _tokensOut;
     public long TokensIn { get => _tokensIn; set { if (Set(ref _tokensIn, value)) OnChanged(nameof(TokensLabel)); } }
@@ -224,7 +228,7 @@ public sealed class SessionViewModel : ObservableObject
     public double CostUsd { get => _costUsd; set { if (Set(ref _costUsd, value)) OnChanged(nameof(CostLabel)); } }
     /// <summary>Claude는 result.usage의 실비용(USD). Codex/Gemini는 구독(플랜) 정산이라 비용 미보고 — "plan"으로 명시.</summary>
     public string CostLabel => _costUsd > 0 ? "$" + _costUsd.ToString("0.0000")
-        : AgentId != "cc" && TokensIn + TokensOut > 0 ? "plan" : "—";
+        : AgentId != "cc" && TokensIn + TokensOut > 0 ? AgentManager.App.L("L.Plan") : "—";
 
     private string _draft = "";
     public string Draft { get => _draft; set { if (Set(ref _draft, value)) OnChanged(nameof(CanSend)); } }

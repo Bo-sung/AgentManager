@@ -169,8 +169,8 @@ public partial class MainWindow : Window
     {
         var ver = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "dev";
         MessageBox.Show(this,
-            $"AgentManager {ver}\n\nMulti-Agent Development Control Plane\nClaude Code · Codex / 로컬 LLM 한↔영 번역 레이어\n\nMIT License",
-            "About AgentManager", MessageBoxButton.OK, MessageBoxImage.Information);
+            App.L("L.AboutBody", ver),
+            App.L("L.AboutAgentManager"), MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void HelpDocs_Click(object sender, RoutedEventArgs e)
@@ -181,7 +181,7 @@ public partial class MainWindow : Window
         if (System.IO.Directory.Exists(docs))
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = docs, UseShellExecute = true });
         else
-            MessageBox.Show(this, "docs 폴더를 찾을 수 없습니다.", "Help", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, App.L("L.DocsNotFound"), App.L("L.HelpTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void MinBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -272,7 +272,7 @@ public partial class MainWindow : Window
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
             Multiselect = true,
-            Filter = "Images|*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp",
+            Filter = App.L("L.ImagesFilter"),
         };
         if (dlg.ShowDialog() != true) return;
         foreach (var f in dlg.FileNames) s.PendingImages.Add(f);
@@ -347,7 +347,7 @@ public partial class MainWindow : Window
         if (_vm.ActiveProject is null) return;
         var dlg = new Microsoft.Win32.OpenFolderDialog
         {
-            Title = "추가 루트 폴더 선택",
+            Title = App.L("L.AddExtraFolderDialogTitle"),
             InitialDirectory = _vm.ActiveProject.Path,
         };
         if (dlg.ShowDialog(this) == true)
@@ -358,7 +358,7 @@ public partial class MainWindow : Window
     {
         var dlg = new Microsoft.Win32.OpenFolderDialog
         {
-            Title = "프로젝트 폴더 선택 (새 폴더 버튼으로 생성 가능)",
+            Title = App.L("L.ProjectFolderDialogTitle"),
             InitialDirectory = System.IO.Directory.Exists(_vm.NewProjectPath?.Trim().Trim('"'))
                 ? System.IO.Path.GetFullPath(_vm.NewProjectPath!.Trim().Trim('"'))
                 : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -401,7 +401,7 @@ public partial class MainWindow : Window
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
             FileName = "session-" + s.Title + ".md",
-            Filter = "Markdown (*.md)|*.md"
+            Filter = App.L("L.MarkdownFilter")
         };
         if (dlg.ShowDialog() != true) return;
         try { System.IO.File.WriteAllText(dlg.FileName, BuildTranscriptMarkdown(s)); } catch { }

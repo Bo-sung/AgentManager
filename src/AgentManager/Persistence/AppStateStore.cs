@@ -167,6 +167,6 @@ public static class AppStateStore
         "thinking" => new ThinkingBlock(dto.Text),
         // pending approvals can't survive a restart — the engine is gone
         "approval" => new ApprovalBlock(dto.ToolUseId, dto.Name, dto.Body) { State = dto.Stat == "pending" ? "expired" : dto.Stat },
-        _ => new WorkingBlock("복원할 수 없는 transcript block"),
+        _ => new WorkingBlock(AgentManager.App.L("L.UnrestorableTranscriptBlock")),
     };
 }
