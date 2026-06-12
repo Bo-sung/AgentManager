@@ -5,6 +5,7 @@ using AgentManager.Core.Events;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
 using AgentManager.Core.Workspace;
+using AgentManager.Smoke;
 
 // Live approval round-trip (costs a few engine tokens): dotnet run -- --live-approval
 if (args.Contains("--live-approval"))
@@ -58,6 +59,32 @@ if (args.Contains("--agy-check"))
 {
     await AgyCheckAsync();
     return;
+}
+
+// agy PTY 스파이크: ConPTY(의사 콘솔)로 띄우면 출력/인증이 풀리는지 판가름.
+// dotnet run -- --agy-pty-check
+if (args.Contains("--agy-pty-check"))
+{
+    await AgyPtyCheckAsync();
+    return;
+}
+
+static async Task AgyPtyCheckAsync()
+{
+    var agy = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "agy", "bin", "agy.exe");
+    if (!File.Exists(agy)) { Console.WriteLine("[agy-pty] not installed"); return; }
+    var tmp = Directory.CreateTempSubdirectory("am_agypty_").FullName;
+    Console.WriteLine($"[agy-pty] spawning under ConPTY cwd={tmp}");
+
+    var cmd = $"\"{agy}\" -p \"Say exactly OK\" --dangerously-skip-permissions";
+    var (output, exit) = await ConPtyHost.RunAsync(cmd, tmp, TimeSpan.FromMinutes(3));
+    var clean = ConPtyHost.StripVt(output);
+    Console.WriteLine($"[agy-pty] exit={exit} rawLen={output.Length}");
+    var tail = clean.Length > 1200 ? clean[^1200..] : clean;
+    Console.WriteLine("[agy-pty] cleaned output tail:");
+    Console.WriteLine(tail);
+    Console.WriteLine(clean.Contains("OK") ? "agy PTY spike: OUTPUT VISIBLE — PASS" : "agy PTY spike: no expected output — FAIL");
+    try { Directory.Delete(tmp, true); } catch { }
 }
 
 static async Task AgyCheckAsync()
