@@ -66,9 +66,11 @@
 
 | **Antigravity/Gemini 어댑터** — gemini-cli 0.42 실측(PHASE0_ANTIGRAVITY_GEMINI_KO: --skip-trust 함정, delta 누적, uuid resume) → AntigravityAdapter + 엔진 활성화(파랑 식별색, effort 비노출, antigravity exe 우선→gemini 폴백). 오프라인+라이브 2턴 resume PASS, stderr 노이즈 필터 | (this) |
 
+| **agy 엔진 (4번째)** — TTY 전용 agy CLI를 ConPTY로 구동 (IPtyTurnRunner + Core/Hosting/ConPtyHost), 캐시에서 conversation id 추출 → resume. 사용자 세션 라이브 2턴 PASS. 텍스트 전용 v1 (구조화 출력 추가 시 확장) | 53571a8 |
+
 ## 🔜 다음
-1. **Antigravity CLI 전환(6/18) 후 재실측** — exe 교체 자동 승계 확인 + 표면 diff
-2. **뒤로 미룸(결정)**: 풀 MCP · 테마(재시작 적용) · 언어 설정(배포 시점)
+1. **agy v2 후보**: --model 포맷 실측 → 모델 선택 활성화 · agy 구조화 출력 추가 시 풀 이벤트 전환
+2. **뒤로 미룸(결정)**: 풀 MCP · 언어 설정(위임 브리프 작성됨 — DELEGATE_CODEX_4)
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
