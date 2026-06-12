@@ -7,7 +7,11 @@
 - 모델 (실측): Gemini 3.5 Flash (Low/Medium/High) · Gemini 3.1 Pro (Low/High) · **Claude Sonnet/Opus 4.6 (Thinking)** · GPT-OSS 120B — 추론 강도가 모델 표시명에 내장.
 - **보류 사유**: ① 구조화 출력이 없어 도구 이벤트/usage/스트리밍/승인 가시성이 전부 사라짐(텍스트 전용 축소 어댑터가 됨).
   ② 대화형 터미널에서는 인증이 동작하지만 **다른 프로세스가 자식으로 띄우면 "not logged into Antigravity"** (토큰 전달 안 됨 — 관제 앱 치명적).
-- 결정: **ag 엔진은 gemini-cli(stream-json) 경로 유지**. agy가 구조화 출력을 제공하고 자식 프로세스 인증이 풀리면 재평가.
+- **확정 (Smoke --agy-check, 로그인된 사용자 터미널에서 실행)**: 자식 프로세스(stdio 리다이렉트)로 띄우면
+  `agy -p`가 exit 0에 **stdout/stderr 완전 공백** — 같은 명령이 TTY에서는 "OK"를 출력. 즉 agy 1.0.7은
+  **진짜 콘솔(TTY)에만 출력하고 파이프에는 아무것도 쓰지 않는다**. 인증 이전에 출력 자체를 받을 수 없어
+  외부 오케스트레이터가 구동하는 것이 현재 불가능 (ConPTY 의사 터미널 호스팅이 필요한데, 본 제품은 PTY 배제 결정).
+- 결정: **ag 엔진은 gemini-cli(stream-json) 경로 유지**. agy가 headless/구조화 출력을 제공하면 재평가.
   exe 해석기는 `agy.exe`를 자동 선택하지 않음(이름이 달라 충돌 없음).
 
 
