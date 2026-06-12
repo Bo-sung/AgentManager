@@ -478,6 +478,9 @@ public sealed class AppViewModel : ObservableObject
     private bool _settingsLightTheme;
     public bool SettingsLightTheme { get => _settingsLightTheme; set => Set(ref _settingsLightTheme, value); }
     private string _theme = "dark";
+    private bool _settingsEnglishUi;
+    public bool SettingsEnglishUi { get => _settingsEnglishUi; set => Set(ref _settingsEnglishUi, value); }
+    private string _language = "ko";
 
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내를 띄울지 (기본 끔 — 비-git 사용이 일반 흐름인 사용자 배려).</summary>
     private bool _warnNoWorktree;
@@ -711,6 +714,7 @@ public sealed class AppViewModel : ObservableObject
         SettingsDefaultTranslationEnabled = TranslationEnabled;
         SettingsWarnNoWorktree = _warnNoWorktree;
         SettingsLightTheme = _theme == "light";
+        SettingsEnglishUi = _language == "en";
         SettingsStatus = "";
         ShowSettings = true;
     }
@@ -727,8 +731,11 @@ public sealed class AppViewModel : ObservableObject
         var newTheme = SettingsLightTheme ? "light" : "dark";
         var themeChanged = newTheme != _theme;
         _theme = newTheme;
+        var newLanguage = SettingsEnglishUi ? "en" : "ko";
+        var languageChanged = newLanguage != _language;
+        _language = newLanguage;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
-        SettingsStatus = themeChanged ? "Settings saved — 테마는 재시작 후 적용" : "Settings saved";
+        SettingsStatus = themeChanged || languageChanged ? AgentManager.App.L("L.SettingsSavedRestart") : AgentManager.App.L("L.SettingsSaved");
         ShowSettings = false;
         SaveState();
     }
@@ -826,6 +833,7 @@ public sealed class AppViewModel : ObservableObject
         _isReviewOpen = state.Settings.ReviewPaneOpen;
         _warnNoWorktree = state.Settings.WarnNoWorktree;
         _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
+        _language = state.Settings.Language == "en" ? "en" : "ko";
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
 
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
@@ -906,6 +914,7 @@ public sealed class AppViewModel : ObservableObject
                     ReviewPaneOpen = IsReviewOpen,
                     WarnNoWorktree = _warnNoWorktree,
                     Theme = _theme,
+                    Language = _language,
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto

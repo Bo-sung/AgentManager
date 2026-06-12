@@ -25,6 +25,8 @@ public sealed record AppSettingsDto
     public bool WarnNoWorktree { get; init; }
     /// <summary>UI 테마: dark | light (재시작 시 적용).</summary>
     public string Theme { get; init; } = "dark";
+    /// <summary>UI language: ko | en (applies after restart).</summary>
+    public string Language { get; init; } = "ko";
 }
 
 public sealed record ProjectDto

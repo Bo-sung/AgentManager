@@ -1647,6 +1647,10 @@
                                           IsChecked="{Binding SettingsLightTheme, Mode=TwoWay}"
                                           Content="LIGHT THEME"
                                           ToolTip="라이트 테마 — 재시작 후 적용"/>
+                            <ToggleButton Style="{StaticResource TogglePillButton}" Margin="8,0,0,0"
+                                          IsChecked="{Binding SettingsEnglishUi, Mode=TwoWay}"
+                                          Content="{StaticResource L.EnglishUi}"
+                                          ToolTip="{StaticResource L.EnglishUiTip}"/>
                         </StackPanel>
 
                         <Border Height="1" Background="{StaticResource LineSoft}" Margin="0,18,0,16"/>

@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <sys:String x:Key="L.EnglishUi">ENGLISH UI</sys:String>
+    <sys:String x:Key="L.EnglishUiTip">Applies after restart</sys:String>
+    <sys:String x:Key="L.SettingsSaved">Settings saved</sys:String>
+    <sys:String x:Key="L.SettingsSavedRestart">Settings saved - theme/language applies after restart</sys:String>
+</ResourceDictionary>
