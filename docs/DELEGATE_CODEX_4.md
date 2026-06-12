@@ -40,9 +40,30 @@ The light/dark theme works by merging a palette dictionary before `Theme.xaml` a
   Smoke console output, mono badges like "CC"/"GX"/"TR", the brand name AgentManager.
 
 ## Translations
-- `Strings.Ko.xaml` keeps the current Korean/English mix exactly as it is today
-  (today's UI is the source of truth — copy verbatim).
+- `Strings.Ko.xaml`: today's Korean strings verbatim, **but function badges/buttons that are
+  currently English get natural Korean** (user request): e.g. TR ON/OFF → `번역 ON`/`번역 OFF`,
+  APPROVAL → `승인`, RUNNING → `실행 중`, Running/Awaiting input/Completed/Failed/Idle →
+  `실행 중`/`입력 대기`/`완료`/`실패`/`대기`, Approve & run → `승인 후 실행`, Approve for session →
+  `세션 동안 승인`, Reject → `거부`, Copy all → `전체 복사`, Export → `내보내기`, SENT EN → `전송본`,
+  ORIGINAL → `원문`, Merge ▸ main → `메인에 병합`, Commit only → `커밋만`, Discard → `폐기`.
+  Keep mono badges SHORT (they sit in pills). Section headers (PROJECTS, CLI HISTORY, CHANGES,
+  DIFF REVIEW, ARCHIVED, TASK, NAME...) may stay English in Ko if a Korean label would break the
+  uppercase-mono look — use judgment, consistency over literalism.
 - `Strings.En.xaml`: natural English equivalents (concise UI English; keep technical words as-is).
+
+## Function-button / VM-label checklist (must be covered; the user called these out)
+- `SessionViewModel.TranslationLabel` ("TR ON"/"TR OFF") → resource-based with language
+- status-strip APPROVAL toggle, sandbox toggle label text (the SandboxMode enum VALUES in the
+  ComboBox stay technical — do not localize enum names)
+- `SessionViewModel.StatusLabel` (Running/Awaiting input/Completed/Failed/Idle), RUNNING badge,
+  `LastSignalLabel` ("last signal ... ago" / "waiting for first signal"), `CostLabel` ("plan")
+- composer: Worktree pill prefix, model/effort tooltips, placeholder watermark, 보내기/중지 tooltips
+- approval block: APPROVAL REQUIRED header, Approve & run / Approve for session / Reject
+- review pane: DIFF REVIEW, CHANGES, Merge/Commit/Discard buttons, feedback box placeholder,
+  ReviewStatus strings from AppViewModel ("Scanning changes...", "N changed file(s)", "No changes",
+  "세션 worktree가 아직 없습니다" 등)
+- sidebar: New Agent, PROJECTS/CLI HISTORY/ARCHIVED headers + tooltips, nav items
+- transcript blocks: YOU label, thinking 라벨, stderr/error titles, CLI-import marker text
 
 ## Hard rules
 - No edits under `src/AgentManager.Core/**` and `src/AgentManager.Smoke/**`.

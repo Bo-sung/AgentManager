@@ -769,35 +769,8 @@
                         <DockPanel Margin="14,0">
                             <TextBlock DockPanel.Dock="Left" Text="{Binding Project}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
                             <TextBlock DockPanel.Dock="Left" Text="  ›  " Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
-                            <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"/>
-                            </Border>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
-                                    ToolTip="활성 세션 worktree를 VS Code로 열기 (없으면 탐색기)"
-                                    Command="{Binding DataContext.OpenIdeCommand, ElementName=Root}">
-                                <StackPanel Orientation="Horizontal">
-                                    <controls:IconView Icon="{StaticResource IconIde}" Width="13" Height="13"
-                                                       Foreground="{StaticResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Open IDE" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
-                                    ToolTip="트랜스크립트를 Markdown으로 내보내기" Click="ExportTranscript_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <controls:IconView Icon="{StaticResource IconFile}" Width="12" Height="12"
-                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Export" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
-                                    ToolTip="대화 전체를 Markdown으로 클립보드에 복사" Click="CopyTranscript_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <controls:IconView Icon="{StaticResource IconCopy}" Width="12" Height="12"
-                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Copy all" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <Button DockPanel.Dock="Right" Width="30" Height="30" Margin="0,0,8,0"
+                            <!-- 리뷰 토글은 최우측: 패널이 우측에서 열리므로 위치=동작 (사용자 요청) -->
+                            <Button DockPanel.Dock="Right" Width="30" Height="30"
                                     ToolTip="Diff review 패널 열기/닫기 (Ctrl+R)"
                                     Command="{Binding DataContext.ToggleReviewCommand, ElementName=Root}">
                                 <Button.Style>
@@ -830,6 +803,34 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>
+                            </Button>
+                            <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center" Margin="0,0,8,0">
+                                <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"/>
+                            </Border>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                    ToolTip="활성 세션 worktree를 VS Code로 열기 (없으면 탐색기)"
+                                    Command="{Binding DataContext.OpenIdeCommand, ElementName=Root}">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconIde}" Width="13" Height="13"
+                                                       Foreground="{StaticResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Open IDE" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                    ToolTip="트랜스크립트를 Markdown으로 내보내기" Click="ExportTranscript_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconFile}" Width="12" Height="12"
+                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Export" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                    ToolTip="대화 전체를 Markdown으로 클립보드에 복사" Click="CopyTranscript_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconCopy}" Width="12" Height="12"
+                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Copy all" VerticalAlignment="Center"/>
+                                </StackPanel>
                             </Button>
                             <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                         </DockPanel>
