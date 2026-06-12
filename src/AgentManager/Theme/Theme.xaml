@@ -125,6 +125,17 @@
         </Setter>
     </Style>
 
+    <!-- 메뉴 안의 Separator는 암시 스타일이 아니라 이 전용 키로 조회된다 (기본은 밝은 시스템 색 = 흰 줄) -->
+    <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="1" Background="{StaticResource LineSoft}" Margin="6,4"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ===== Base text ===== -->
     <Style TargetType="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
