@@ -8,8 +8,9 @@
     <CornerRadius x:Key="RMd">7</CornerRadius>
     <CornerRadius x:Key="RLg">10</CornerRadius>
 
-    <FontFamily x:Key="Sans">Segoe UI, sans-serif</FontFamily>
-    <FontFamily x:Key="Mono">Consolas, Cascadia Mono, monospace</FontFamily>
+    <!-- 한글 폴백을 명시(Malgun Gothic)해 컨트롤별 폰트 폴백 차이를 제거 -->
+    <FontFamily x:Key="Sans">Segoe UI, Malgun Gothic, sans-serif</FontFamily>
+    <FontFamily x:Key="Mono">Consolas, Malgun Gothic, Cascadia Mono, monospace</FontFamily>
 
     <!-- ===== Dark ToolTip (기본 흰 배경 → 테마 색) ===== -->
     <Style TargetType="ToolTip">
