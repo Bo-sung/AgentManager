@@ -52,6 +52,48 @@ if (args.Contains("--live-ag"))
     return;
 }
 
+// agy 자식 프로세스 인증 검사 — 사용자 터미널에서 실행할 것:
+// dotnet run --project src/AgentManager.Smoke -- --agy-check
+if (args.Contains("--agy-check"))
+{
+    await AgyCheckAsync();
+    return;
+}
+
+static async Task AgyCheckAsync()
+{
+    var agy = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "agy", "bin", "agy.exe");
+    if (!File.Exists(agy)) { Console.WriteLine("[agy] not installed"); return; }
+    var tmp = Directory.CreateTempSubdirectory("am_agy_").FullName;
+    Console.WriteLine($"[agy] spawning as CHILD process (the way the app would) cwd={tmp}");
+
+    var psi = new System.Diagnostics.ProcessStartInfo
+    {
+        FileName = agy,
+        WorkingDirectory = tmp,
+        RedirectStandardInput = true,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true,
+        StandardOutputEncoding = new System.Text.UTF8Encoding(false),
+        StandardErrorEncoding = new System.Text.UTF8Encoding(false),
+    };
+    psi.ArgumentList.Add("-p");
+    psi.ArgumentList.Add("Say exactly OK");
+    psi.ArgumentList.Add("--dangerously-skip-permissions");
+    using var p = System.Diagnostics.Process.Start(psi)!;
+    p.StandardInput.Close();
+    var stdout = await p.StandardOutput.ReadToEndAsync();
+    var stderr = await p.StandardError.ReadToEndAsync();
+    await p.WaitForExitAsync(new CancellationTokenSource(TimeSpan.FromMinutes(3)).Token);
+    Console.WriteLine($"[agy] exit={p.ExitCode}");
+    Console.WriteLine($"[agy] stdout: {(string.IsNullOrWhiteSpace(stdout) ? "(empty)" : stdout.Trim())}");
+    if (!string.IsNullOrWhiteSpace(stderr)) Console.WriteLine($"[agy] stderr: {stderr.Trim()}");
+    Console.WriteLine(stdout.Contains("OK") ? "agy child-process auth PASS" : "agy child-process auth FAIL (or not logged in)");
+    try { Directory.Delete(tmp, true); } catch { }
+}
+
 static async Task LiveAgAsync()
 {
     var npm = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm");
