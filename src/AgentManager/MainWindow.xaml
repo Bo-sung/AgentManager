@@ -31,7 +31,7 @@
 
         <!-- ===== Transcript block templates ===== -->
         <DataTemplate DataType="{x:Type vm:UserBlock}">
-            <Grid Margin="0,14" HorizontalAlignment="Right" MaxWidth="640">
+            <Grid Margin="0,14" HorizontalAlignment="Right" MaxWidth="880">
                 <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1"
                         CornerRadius="10,10,2,10" Padding="13,11">
                     <StackPanel>
@@ -882,7 +882,7 @@
                     </Border>
 
                     <!-- composer (bottom) -->
-                    <Border DockPanel.Dock="Bottom" Margin="28,0,28,18" MaxWidth="880" MinWidth="520" HorizontalAlignment="Stretch">
+                    <Border DockPanel.Dock="Bottom" Margin="14,0,14,14" MinWidth="520" HorizontalAlignment="Stretch">
                         <StackPanel>
                             <Border Margin="4,0,4,8" Background="{StaticResource AccentDim}" BorderThickness="1" CornerRadius="8"
                                     Padding="11,8" Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
@@ -1215,7 +1215,8 @@
                         <ItemsControl.Template>
                             <ControlTemplate TargetType="ItemsControl">
                                 <ScrollViewer x:Name="PART_TranscriptScroll" VerticalScrollBarVisibility="Auto" Focusable="False">
-                                    <ItemsPresenter Margin="28,20,28,16" MaxWidth="880"/>
+                                    <!-- 전폭 사용: 중앙 880px 캡 대신 좌우 최소 여백 (사용자 요청) -->
+                                    <ItemsPresenter Margin="14,16,14,12"/>
                                 </ScrollViewer>
                             </ControlTemplate>
                         </ItemsControl.Template>
