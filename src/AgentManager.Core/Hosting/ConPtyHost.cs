@@ -3,15 +3,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Win32.SafeHandles;
 
-namespace AgentManager.Smoke;
+namespace AgentManager.Core.Hosting;
 
 /// <summary>
-/// 최소 ConPTY 호스트 (스파이크용): 의사 콘솔을 만들어 TTY 전용 CLI(agy)를 띄우고
-/// 화면 출력 바이트를 그대로 수집한다. 제품 코드 아님 — 타당성 판가름 전용.
+/// ConPTY 호스트: 의사 콘솔을 만들어 TTY 전용 CLI(agy)를 띄우고
+/// 화면 출력 바이트를 그대로 수집한다. TTY 전용 CLI(agy)를 외부에서 구동하기 위한 의사 콘솔 실행기.
 /// </summary>
 public static partial class ConPtyHost
 {
-    public static async Task<(string Output, int ExitCode)> RunAsync(string commandLine, string cwd, TimeSpan timeout)
+    public static async Task<(string Output, int ExitCode)> RunAsync(string commandLine, string cwd, TimeSpan timeout, CancellationToken ct = default)
     {
         // pty <-> 호스트 파이프 (input: 호스트→pty, output: pty→호스트)
         if (!CreatePipe(out var inRead, out var inWrite, IntPtr.Zero, 0)) throw new InvalidOperationException("CreatePipe(in) failed");
@@ -57,7 +57,7 @@ public static partial class ConPtyHost
             });
 
             using var proc = System.Diagnostics.Process.GetProcessById((int)pi.dwProcessId);
-            using var cts = new CancellationTokenSource(timeout);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct); cts.CancelAfter(timeout);
             try { await proc.WaitForExitAsync(cts.Token); }
             catch (OperationCanceledException) { try { proc.Kill(entireProcessTree: true); } catch { } }
 

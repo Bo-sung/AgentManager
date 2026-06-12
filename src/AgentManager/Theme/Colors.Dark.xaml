@@ -36,4 +36,7 @@
     <SolidColorBrush x:Key="GxDim" Color="#248B5CF6"/>
     <SolidColorBrush x:Key="InfoLine" Color="#665B9BFF"/>
     <SolidColorBrush x:Key="InfoDim" Color="#245B9BFF"/>
+    <SolidColorBrush x:Key="Agy" Color="#FF2BC5B4"/>
+    <SolidColorBrush x:Key="AgyLine" Color="#662BC5B4"/>
+    <SolidColorBrush x:Key="AgyDim" Color="#242BC5B4"/>
 </ResourceDictionary>

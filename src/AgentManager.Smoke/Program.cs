@@ -5,7 +5,7 @@ using AgentManager.Core.Events;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
 using AgentManager.Core.Workspace;
-using AgentManager.Smoke;
+using AgentManager.Core.Hosting;
 
 // Live approval round-trip (costs a few engine tokens): dotnet run -- --live-approval
 if (args.Contains("--live-approval"))
@@ -51,6 +51,46 @@ if (args.Contains("--live-ag"))
 {
     await LiveAgAsync();
     return;
+}
+
+// agy 어댑터 실제품 경로 테스트 (2턴 resume 포함) — 사용자 터미널에서 실행할 것:
+// dotnet run --project src/AgentManager.Smoke -- --live-agy
+if (args.Contains("--live-agy"))
+{
+    await LiveAgyAsync();
+    return;
+}
+
+static async Task LiveAgyAsync()
+{
+    var exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "agy", "bin", "agy.exe");
+    if (!File.Exists(exe)) { Console.WriteLine("[agy-live] not installed"); return; }
+    var tmp = Directory.CreateTempSubdirectory("am_agylive_").FullName;
+    Console.WriteLine($"[agy-live] cwd={tmp}");
+
+    string? sid = null; var done = false; var err = false;
+    async Task Turn(string prompt, string? resume)
+    {
+        done = false; err = false;
+        var session = new AgentSession(new AgyAdapter(), exe);
+        session.EventReceived += ev =>
+        {
+            Console.WriteLine("  " + Describe(ev));
+            if (ev is SessionStarted ss) sid = ss.SessionId;
+            if (ev is TurnCompleted tc) { done = true; err = tc.IsError; }
+        };
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+        await session.RunAsync(new SessionOptions { WorkingDirectory = tmp, BypassPermissions = true }, prompt, cts.Token);
+    }
+
+    await Turn("Create a file named probe.txt containing exactly agy-live using a shell command, then stop.", null);
+    var fileOk = File.Exists(Path.Combine(tmp, "probe.txt"));
+    Console.WriteLine($"[agy-live] turn1 done={done} err={err} file={fileOk} sid={sid}");
+    var sid1 = sid;
+    await Turn("What file did you just create? Answer with only the file name.", sid1);
+    Console.WriteLine($"[agy-live] turn2 done={done} err={err}");
+    Console.WriteLine(fileOk && done && !err && sid1 is not null ? "agy live PASS" : "agy live FAIL");
+    try { Directory.Delete(tmp, true); } catch { }
 }
 
 // agy 자식 프로세스 인증 검사 — 사용자 터미널에서 실행할 것:

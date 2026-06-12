@@ -291,7 +291,8 @@
                             <ContextMenu>
                                 <MenuItem Header="New Claude Code session" Click="NewAgentEngine_Click" Tag="cc"/>
                                 <MenuItem Header="New Codex session" Click="NewAgentEngine_Click" Tag="gx"/>
-                                <MenuItem Header="New Antigravity / Gemini session" Click="NewAgentEngine_Click" Tag="ag"/>
+                                <MenuItem Header="New Gemini CLI session" Click="NewAgentEngine_Click" Tag="ag"/>
+                                <MenuItem Header="New Antigravity (agy) session" Click="NewAgentEngine_Click" Tag="agy"/>
                                 <Separator/>
                                 <MenuItem Header="Engine paths (Settings)" Command="{Binding ShowSettingsCommand}"/>
                             </ContextMenu>
@@ -921,6 +922,9 @@
                                             <DataTrigger Binding="{Binding AgentId}" Value="ag">
                                                 <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                                                <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
@@ -953,6 +957,10 @@
                                                                 <Setter Property="Background" Value="{StaticResource InfoDim}"/>
                                                                 <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                                                                <Setter Property="Background" Value="{StaticResource AgyDim}"/>
+                                                                <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
@@ -970,6 +978,9 @@
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="ag">
                                                                     <Setter Property="Foreground" Value="{StaticResource Info}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                                                                    <Setter Property="Foreground" Value="{StaticResource Agy}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -1004,6 +1015,9 @@
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="ag">
                                                                             <Setter Property="Foreground" Value="{StaticResource Info}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Agy}"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>

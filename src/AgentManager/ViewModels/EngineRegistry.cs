@@ -13,8 +13,10 @@ public static class EngineRegistry
         // 버전 명시 풀네임 (claude --model은 별칭/풀네임 모두 허용 — 실측; sonnet[1m] = 1M 컨텍스트 별칭)
         new("cc", "CC", "Claude Code",     "claude",      ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5", "sonnet[1m]"], "anthropic · cli", true),
         new("gx", "GX", "GPT / Codex",     "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true),
-        // 실측 모델 id (PHASE0_ANTIGRAVITY_GEMINI_KO). 전환(6/18) 전에는 gemini CLI로 동작
-        new("ag", "AG", "Antigravity / Gemini", "antigravity", ["gemini-3-flash-preview", "gemini-3-pro-preview", "gemini-2.5-flash"], "google · cli", true),
+        // 실측 모델 id (PHASE0_ANTIGRAVITY_GEMINI_KO). stream-json 풀 이벤트 경로
+        new("ag", "AG", "Gemini CLI", "gemini", ["gemini-3-flash-preview", "gemini-3-pro-preview", "gemini-2.5-flash"], "google · cli", true),
+        // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. --model 포맷 미실측이라 default만 (PHASE0 문서 참고)
+        new("agy", "AGY", "Antigravity (agy)", "agy", ["default"], "google · pty", true),
     ];
 
     public static EngineDef Get(string id) => Array.Find(All, e => e.Id == id) ?? All[0];
@@ -25,6 +27,7 @@ public static class EngineRegistry
         "cc" => new ClaudeAdapter(),
         "gx" => requireApproval ? new CodexAppServerAdapter() : new CodexAdapter(),
         "ag" => new AntigravityAdapter(),
+        "agy" => new AgyAdapter(),
         _ => null,
     };
 
@@ -35,23 +38,25 @@ public static class EngineRegistry
         "cc" => ResolveOverride(claudePath) ?? ResolveClaude(),
         "gx" => ResolveOverride(codexPath) ?? ResolveCodex(),
         "ag" => ResolveAntigravity(),
+        "agy" => ResolveAgy(),
         _ => null,
     };
 
-    /// <summary>전환(6/18) 후 antigravity 우선, 그 전엔 gemini(npm .cmd 셸) 폴백.</summary>
+    private static string? ResolveAgy()
+    {
+        var p = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "agy", "bin", "agy.exe");
+        return File.Exists(p) ? p : null;
+    }
+
+    /// <summary>ag = gemini CLI 고정 (신형 antigravity CLI는 agy 엔진이 별도로 담당 — TTY 전용이라 혼용 금지).</summary>
     private static string? ResolveAntigravity()
     {
-        var npm = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm");
-        foreach (var name in new[] { "antigravity.cmd", "antigravity.exe", "gemini.cmd" })
-        {
-            var p = Path.Combine(npm, name);
-            if (File.Exists(p)) return p;
-        }
+        var npm = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm", "gemini.cmd");
+        if (File.Exists(npm)) return npm;
         foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
-            foreach (var name in new[] { "antigravity.cmd", "antigravity.exe", "gemini.cmd" })
-            {
-                try { var p = Path.Combine(dir.Trim(), name); if (File.Exists(p)) return p; } catch { }
-            }
+        {
+            try { var p = Path.Combine(dir.Trim(), "gemini.cmd"); if (File.Exists(p)) return p; } catch { }
+        }
         return null;
     }
 

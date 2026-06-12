@@ -71,3 +71,11 @@ public interface IAgentAdapter
     /// has no interactive approval protocol (Codex exec). Claude: control_response JSON.</summary>
     string? BuildPermissionResponse(Events.PermissionRequest request, PermissionDecision decision) => null;
 }
+
+/// <summary>TTY 전용 엔진(agy)용: stdio 라인 파싱 대신 어댑터가 ConPTY로 턴 전체를 직접 구동한다.
+/// 이벤트는 emitAsync로 흘리며 AgentSession의 번역 파이프라인을 그대로 통과한다.</summary>
+public interface IPtyTurnRunner
+{
+    Task RunTurnAsync(string executablePath, SessionOptions options, string prompt,
+        Func<Events.NormalizedEvent, Task> emitAsync, CancellationToken ct);
+}

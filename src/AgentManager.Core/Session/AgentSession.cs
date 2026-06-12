@@ -37,6 +37,13 @@ public sealed class AgentSession(
                 Emit(new PromptTranslated(prompt)); // 검수용: 실제 전송된 영문
         }
 
+        // TTY 전용 엔진(agy): 어댑터가 ConPTY로 턴을 직접 구동 (stdio 파이프 경로 미사용)
+        if (adapter is IPtyTurnRunner pty)
+        {
+            await pty.RunTurnAsync(executablePath, options, prompt, ev => EmitTranslatedAsync(ev, ct), ct);
+            return;
+        }
+
         var psi = adapter.BuildStartInfo(executablePath, options, prompt);
         using var proc = new Process { StartInfo = psi };
         proc.Start();
