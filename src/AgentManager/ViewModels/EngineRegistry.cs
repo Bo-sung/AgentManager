@@ -15,8 +15,8 @@ public static class EngineRegistry
         new("gx", "GX", "GPT / Codex",     "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true),
         // 실측 모델 id (PHASE0_ANTIGRAVITY_GEMINI_KO). stream-json 풀 이벤트 경로
         new("ag", "AG", "Gemini CLI", "gemini", ["gemini-3-flash-preview", "gemini-3-pro-preview", "gemini-2.5-flash"], "google · cli", true),
-        // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략(항상 안전).
-        // 슬러그는 커뮤니티 문서 기반 후보 — 틀리면 agy 에러가 트랜스크립트에 표시됨
+        // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략.
+        // 슬러그 형식 실측 확인: `agy -p "Say OK" --model gemini-3.5-flash` → OK (2026-06-13)
         new("agy", "AGY", "Antigravity (agy)", "agy",
             ["default", "gemini-3.5-flash", "gemini-3.1-pro", "claude-sonnet-4-6", "claude-opus-4-6", "gpt-oss-120b"],
             "google · pty", true),

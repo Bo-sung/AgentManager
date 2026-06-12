@@ -5,6 +5,7 @@
 - 표면: `-p/--print`(비대화형, **순수 텍스트 출력 — JSON/이벤트 없음**), `--conversation <id>`/`--continue`(resume),
   `--dangerously-skip-permissions`, `--add-dir`(반복), `--sandbox`, `models`.
 - 모델 (실측): Gemini 3.5 Flash (Low/Medium/High) · Gemini 3.1 Pro (Low/High) · **Claude Sonnet/Opus 4.6 (Thinking)** · GPT-OSS 120B — 추론 강도가 모델 표시명에 내장.
+- `--model` 값 형식 = 슬러그 (실측: `--model gemini-3.5-flash` → OK). 추론 강도 선택 표면은 미확인 (표시명 내장 — 슬러그 접미사 여부 추후 실측).
 - **보류 사유**: ① 구조화 출력이 없어 도구 이벤트/usage/스트리밍/승인 가시성이 전부 사라짐(텍스트 전용 축소 어댑터가 됨).
   ② 대화형 터미널에서는 인증이 동작하지만 **다른 프로세스가 자식으로 띄우면 "not logged into Antigravity"** (토큰 전달 안 됨 — 관제 앱 치명적).
 - **확정 (Smoke --agy-check, 로그인된 사용자 터미널에서 실행)**: 자식 프로세스(stdio 리다이렉트)로 띄우면
