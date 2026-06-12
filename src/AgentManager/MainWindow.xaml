@@ -449,9 +449,7 @@
                                             <DockPanel>
                                                 <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Margin="0,0,9,0"
                                                         Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1">
-                                                    <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10"
-                                                               FontWeight="SemiBold" Foreground="{StaticResource Txt1}"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <Ellipse DockPanel.Dock="Right" Width="7" Height="7" VerticalAlignment="Top" Margin="6,4,0,0">
                                                     <Ellipse.Style>
@@ -597,9 +595,7 @@
                                             <DockPanel>
                                                 <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Margin="0,0,9,0"
                                                         Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1">
-                                                    <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10"
-                                                               FontWeight="SemiBold" Foreground="{StaticResource Txt1}"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <Ellipse DockPanel.Dock="Right" Width="7" Height="7" VerticalAlignment="Top" Margin="6,4,0,0">
                                                     <Ellipse.Style>
@@ -657,8 +653,7 @@
                                             <DockPanel>
                                                 <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Margin="0,0,9,0"
                                                         Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1">
-                                                    <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10"
-                                                               Foreground="{StaticResource Txt2}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontSize="12" Foreground="{StaticResource Txt1}" TextTrimming="CharacterEllipsis"/>
@@ -717,8 +712,7 @@
                                             <DockPanel>
                                                 <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Margin="0,0,9,0"
                                                         Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1">
-                                                    <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10"
-                                                               Foreground="{StaticResource Txt2}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontSize="12.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis"/>
@@ -965,28 +959,32 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" FontWeight="SemiBold"
-                                                           VerticalAlignment="Center" Text="{Binding Badge}">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                                    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                    <Setter Property="Foreground" Value="{StaticResource Gx}"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                                                                    <Setter Property="Foreground" Value="{StaticResource Info}"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                    <Setter Property="Foreground" Value="{StaticResource Agy}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <controls:IconView Style="{StaticResource EngineIcon}" Width="16" Height="16"
+                                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center" Text="{Binding Badge}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding AgentId}" Value="cc">
+                                                                        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                                        <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                                                                        <Setter Property="Foreground" Value="{StaticResource Info}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                                                                        <Setter Property="Foreground" Value="{StaticResource Agy}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
                                             </Border>
                                             <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
                                                     VerticalAlignment="Center" ToolTip="{Binding Branch}">
@@ -1455,7 +1453,7 @@
                                             CornerRadius="7" Padding="11,13" Cursor="Hand" MouseLeftButtonUp="EngineOpt_Click">
                                         <StackPanel>
                                             <Border Width="30" Height="30" CornerRadius="4" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" HorizontalAlignment="Left" Margin="0,0,0,8">
-                                                <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <controls:IconView Style="{StaticResource EngineIconByDef}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
                                             <TextBlock Text="{Binding Desc}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>

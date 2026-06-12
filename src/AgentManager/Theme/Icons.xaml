@@ -170,6 +170,91 @@
         <PathGeometry Figures="M3.5 9.5h17M8 3v4M16 3v4"/>
     </GeometryGroup>
 
+    <!-- ===== 엔진 CI 아이콘 (단순화한 브랜드 마크) ===== -->
+    <!-- Claude: 방사형 스파크 (12방향, 장단 교차) -->
+    <PathGeometry x:Key="IconEngineClaude" Figures="M15,12 L21,12 M13.5,9.4 L16.5,4.21 M10.5,9.4 L7.5,4.21 M9,12 L3,12 M10.5,14.6 L7.5,19.79 M13.5,14.6 L16.5,19.79 M14.6,10.5 L17.63,8.75 M12,9 L12,5.5 M9.4,10.5 L6.37,8.75 M9.4,13.5 L6.37,15.25 M12,15 L12,18.5 M14.6,13.5 L17.63,15.25"/>
+
+    <!-- OpenAI/Codex: 6개 회전 꽃잎 링 -->
+    <GeometryGroup x:Key="IconEngineOpenAi">
+        <RectangleGeometry Rect="10.45,3.2,3.1,8.3" RadiusX="1.55" RadiusY="1.55">
+            <RectangleGeometry.Transform><RotateTransform Angle="0" CenterX="12" CenterY="12"/></RectangleGeometry.Transform>
+        </RectangleGeometry>
+        <RectangleGeometry Rect="10.45,3.2,3.1,8.3" RadiusX="1.55" RadiusY="1.55">
+            <RectangleGeometry.Transform><RotateTransform Angle="60" CenterX="12" CenterY="12"/></RectangleGeometry.Transform>
+        </RectangleGeometry>
+        <RectangleGeometry Rect="10.45,3.2,3.1,8.3" RadiusX="1.55" RadiusY="1.55">
+            <RectangleGeometry.Transform><RotateTransform Angle="120" CenterX="12" CenterY="12"/></RectangleGeometry.Transform>
+        </RectangleGeometry>
+        <RectangleGeometry Rect="10.45,3.2,3.1,8.3" RadiusX="1.55" RadiusY="1.55">
+            <RectangleGeometry.Transform><RotateTransform Angle="180" CenterX="12" CenterY="12"/></RectangleGeometry.Transform>
+        </RectangleGeometry>
+        <RectangleGeometry Rect="10.45,3.2,3.1,8.3" RadiusX="1.55" RadiusY="1.55">
+            <RectangleGeometry.Transform><RotateTransform Angle="240" CenterX="12" CenterY="12"/></RectangleGeometry.Transform>
+        </RectangleGeometry>
+        <RectangleGeometry Rect="10.45,3.2,3.1,8.3" RadiusX="1.55" RadiusY="1.55">
+            <RectangleGeometry.Transform><RotateTransform Angle="300" CenterX="12" CenterY="12"/></RectangleGeometry.Transform>
+        </RectangleGeometry>
+    </GeometryGroup>
+
+    <!-- Gemini: 4점 곡선 스파클 (Filled 권장) -->
+    <PathGeometry x:Key="IconEngineGemini" Figures="M12,2.5 C12.9,7.8 16.2,11.1 21.5,12 C16.2,12.9 12.9,16.2 12,21.5 C11.1,16.2 7.8,12.9 2.5,12 C7.8,11.1 11.1,7.8 12,2.5 Z"/>
+
+    <!-- Antigravity: 부유하는 구 (반중력) -->
+    <GeometryGroup x:Key="IconEngineAgy">
+        <EllipseGeometry Center="12,8" RadiusX="3.2" RadiusY="3.2"/>
+        <PathGeometry Figures="M4.5,16.5 Q12,12.5 19.5,16.5 M8,20 L16,20"/>
+    </GeometryGroup>
+
+    <!-- 엔진별 아이콘+색 자동 선택 (DataContext에 AgentId 필요: SessionViewModel/CliHistoryItemViewModel) -->
+    <Style x:Key="EngineIcon" TargetType="{x:Type c:IconView}" BasedOn="{StaticResource {x:Type c:IconView}}">
+        <Setter Property="Width" Value="15"/>
+        <Setter Property="Height" Value="15"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding AgentId}" Value="cc">
+                <Setter Property="Icon" Value="{StaticResource IconEngineClaude}"/>
+                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                <Setter Property="Icon" Value="{StaticResource IconEngineOpenAi}"/>
+                <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                <Setter Property="Icon" Value="{StaticResource IconEngineGemini}"/>
+                <Setter Property="Foreground" Value="{StaticResource Info}"/>
+                <Setter Property="Filled" Value="True"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
+                <Setter Property="Foreground" Value="{StaticResource Agy}"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- EngineDef(DataContext.Id) 용 변형 — New Agent 엔진 목록 -->
+    <Style x:Key="EngineIconByDef" TargetType="{x:Type c:IconView}" BasedOn="{StaticResource {x:Type c:IconView}}">
+        <Setter Property="Width" Value="17"/>
+        <Setter Property="Height" Value="17"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Id}" Value="cc">
+                <Setter Property="Icon" Value="{StaticResource IconEngineClaude}"/>
+                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Id}" Value="gx">
+                <Setter Property="Icon" Value="{StaticResource IconEngineOpenAi}"/>
+                <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Id}" Value="ag">
+                <Setter Property="Icon" Value="{StaticResource IconEngineGemini}"/>
+                <Setter Property="Foreground" Value="{StaticResource Info}"/>
+                <Setter Property="Filled" Value="True"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Id}" Value="agy">
+                <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
+                <Setter Property="Foreground" Value="{StaticResource Agy}"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <GeometryGroup x:Key="IconLayers">
         <PathGeometry Figures="M12 3.5l8.5 4.5-8.5 4.5L3.5 8z"/>
         <PathGeometry Figures="M3.5 12l8.5 4.5 8.5-4.5M3.5 16l8.5 4.5 8.5-4.5"/>
