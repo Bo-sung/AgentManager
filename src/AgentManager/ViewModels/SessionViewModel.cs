@@ -222,7 +222,9 @@ public sealed class SessionViewModel : ObservableObject
 
     private double _costUsd;
     public double CostUsd { get => _costUsd; set { if (Set(ref _costUsd, value)) OnChanged(nameof(CostLabel)); } }
-    public string CostLabel => _costUsd > 0 ? "$" + _costUsd.ToString("0.0000") : "—";
+    /// <summary>Claude는 result.usage의 실비용(USD). Codex/Gemini는 구독(플랜) 정산이라 비용 미보고 — "plan"으로 명시.</summary>
+    public string CostLabel => _costUsd > 0 ? "$" + _costUsd.ToString("0.0000")
+        : AgentId != "cc" && TokensIn + TokensOut > 0 ? "plan" : "—";
 
     private string _draft = "";
     public string Draft { get => _draft; set { if (Set(ref _draft, value)) OnChanged(nameof(CanSend)); } }

@@ -15,6 +15,9 @@ public sealed record PromptTranslated(string SentText) : NormalizedEvent;
 /// <summary>Assistant natural-language text. This is the EN→KO translation target.</summary>
 public sealed record AssistantText(string Text, bool FromSubagent = false, string? OriginalText = null) : NormalizedEvent;
 
+/// <summary>스트리밍 조각 — 번역 없이 즉시 표시되고, 같은 메시지의 최종 AssistantText가 오면 교체된다.</summary>
+public sealed record AssistantDelta(string Delta) : NormalizedEvent;
+
 /// <summary>Model reasoning/thinking (Claude thinking block). Usually not translated.</summary>
 public sealed record Thinking(string Text) : NormalizedEvent;
 

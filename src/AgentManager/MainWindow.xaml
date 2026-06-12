@@ -206,6 +206,10 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
+                        <Button Style="{StaticResource ChipButton}" Content="Approve for session" Margin="0,0,8,0"
+                                ToolTip="이 세션 동안 같은 종류의 요청을 재승인 없이 허용 (codex)"
+                                Visibility="{Binding SupportsSessionApproval, Converter={StaticResource BoolVis}}"
+                                Command="{Binding DataContext.ApproveForSessionCommand, ElementName=Root}" CommandParameter="{Binding}"/>
                         <Button Style="{StaticResource ChipButton}" Content="Reject"
                                 Command="{Binding DataContext.DenyCommand, ElementName=Root}" CommandParameter="{Binding}"/>
                     </StackPanel>
@@ -223,10 +227,7 @@
         <!-- ===================== Titlebar ===================== -->
         <Border Grid.Row="0" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
             <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#FF10171F" Offset="0"/>
-                    <GradientStop Color="#FF0D131A" Offset="1"/>
-                </LinearGradientBrush>
+                <StaticResource ResourceKey="Bg2"/>
             </Border.Background>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -1638,6 +1639,10 @@
                                           IsChecked="{Binding SettingsWarnNoWorktree, Mode=TwoWay}"
                                           Content="NON-GIT NOTICE"
                                           ToolTip="비-git 폴더에서 세션 시작 시 '격리(worktree) 없이 실행' 안내를 표시"/>
+                            <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}" Margin="8,0,0,0"
+                                          IsChecked="{Binding SettingsLightTheme, Mode=TwoWay}"
+                                          Content="LIGHT THEME"
+                                          ToolTip="라이트 테마 — 재시작 후 적용"/>
                             <TextBlock Text="{Binding SettingsStatus}" FontFamily="{StaticResource Mono}" FontSize="10"
                                        Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                         </DockPanel>

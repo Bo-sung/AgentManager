@@ -6,7 +6,7 @@ namespace AgentManager.ViewModels;
 public sealed class CliHistoryItemViewModel(CliHistoryEntry entry)
 {
     public CliHistoryEntry Entry { get; } = entry;
-    public string Badge => Entry.EngineId == "cc" ? "CC" : "GX";
+    public string Badge => Entry.EngineId switch { "cc" => "CC", "ag" => "AG", _ => "GX" };
     public string Title => Entry.Title;
     public string TimeLabel => Entry.LastWriteUtc.ToLocalTime().ToString("MM-dd HH:mm");
 }

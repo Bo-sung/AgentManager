@@ -55,10 +55,10 @@ public sealed class DiffViewer : FlowDocumentScrollViewer
         var infoBrush = GetThemeBrush("Info", "#FF5B9BFF");
         var bg3Brush = GetThemeBrush("Bg3", "#FF161F29");
 
-        var addFg = Brush("#FF7FE0B6");
-        var addBg = Brush("#1A2FAE7A");
-        var delFg = Brush("#FFEA97A1");
-        var delBg = Brush("#17E05566");
+        var addFg = GetThemeBrush("Add", "#FF7FE0B6");
+        var addBg = GetThemeBrush("AddBg", "#1A2FAE7A");
+        var delFg = GetThemeBrush("Del", "#FFEA97A1");
+        var delBg = GetThemeBrush("DelBg", "#17E05566");
 
         var text = (diffText ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
         var lines = text.Split('\n');

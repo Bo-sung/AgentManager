@@ -71,8 +71,13 @@ public sealed class AntigravityAdapter : IAgentAdapter
                 break;
 
             case "message" when Str(root, "role") == "assistant":
-                // delta 조각 누적 — 경계 이벤트에서 flush (함정 #2)
-                _assistantBuffer.Append(Str(root, "content"));
+                // delta 조각: 즉시 스트리밍 표시 + 누적 (경계 이벤트에서 최종 AssistantText로 교체)
+                var chunk = Str(root, "content");
+                if (!string.IsNullOrEmpty(chunk))
+                {
+                    _assistantBuffer.Append(chunk);
+                    yield return new AssistantDelta(chunk!);
+                }
                 break;
 
             case "message": // user echo

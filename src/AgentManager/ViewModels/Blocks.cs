@@ -146,6 +146,9 @@ public sealed class ApprovalBlock(string requestId, string toolName, string inpu
     public string ToolName { get; } = toolName;
     public string InputSummary { get; } = inputSummary;
 
+    /// <summary>엔진이 세션 단위 승인(acceptForSession)을 지원하면 세 번째 버튼 노출 (codex app-server).</summary>
+    public bool SupportsSessionApproval { get; init; }
+
     private string _state = "pending"; // pending | allowed | denied | expired
     public string State
     {

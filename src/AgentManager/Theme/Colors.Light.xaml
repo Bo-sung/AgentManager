@@ -1,0 +1,39 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== 라이트 팔레트 — 다크 토큰의 명도 반전 매핑. Theme.xaml보다 먼저 머지되어야 함 ===== -->
+    <Color x:Key="Bg0Color">#FFF2F4F7</Color>
+    <SolidColorBrush x:Key="Bg0" Color="#FFF2F4F7"/>
+    <SolidColorBrush x:Key="Bg1" Color="#FFFAFBFC"/>
+    <SolidColorBrush x:Key="Bg2" Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="Bg3" Color="#FFEEF1F5"/>
+    <SolidColorBrush x:Key="Bg4" Color="#FFE2E7ED"/>
+    <SolidColorBrush x:Key="Bg5" Color="#FFD5DCE4"/>
+    <SolidColorBrush x:Key="Line" Color="#FFD4DBE3"/>
+    <SolidColorBrush x:Key="LineSoft" Color="#FFE5EAEF"/>
+    <SolidColorBrush x:Key="LineBright" Color="#FFB8C2CD"/>
+    <SolidColorBrush x:Key="Txt0" Color="#FF1B2733"/>
+    <SolidColorBrush x:Key="Txt1" Color="#FF475663"/>
+    <SolidColorBrush x:Key="Txt2" Color="#FF6B7A88"/>
+    <SolidColorBrush x:Key="Txt3" Color="#FF94A2AE"/>
+    <SolidColorBrush x:Key="Accent" Color="#FFE84A1E"/>
+    <SolidColorBrush x:Key="AccentBright" Color="#FFFF5A2C"/>
+    <SolidColorBrush x:Key="AccentDim" Color="#1AFF5A2C"/>
+    <SolidColorBrush x:Key="AccentLine" Color="#66FF5A2C"/>
+    <SolidColorBrush x:Key="Warn" Color="#FFB5810C"/>
+    <SolidColorBrush x:Key="Ok" Color="#FF14916C"/>
+    <SolidColorBrush x:Key="Err" Color="#FFD93A4C"/>
+    <SolidColorBrush x:Key="Info" Color="#FF2F6FD6"/>
+    <SolidColorBrush x:Key="Add" Color="#FF1E9E72"/>
+    <SolidColorBrush x:Key="AddBg" Color="#1A2FAE7A"/>
+    <SolidColorBrush x:Key="Del" Color="#FFC94A59"/>
+    <SolidColorBrush x:Key="DelBg" Color="#17E05566"/>
+    <SolidColorBrush x:Key="Run" Color="#FFE84A1E"/>
+    <SolidColorBrush x:Key="AccentText" Color="#FFFFF6F2"/>
+
+    <SolidColorBrush x:Key="Gx" Color="#FF6D3BD8"/>
+    <SolidColorBrush x:Key="GxLine" Color="#668B5CF6"/>
+    <SolidColorBrush x:Key="GxDim" Color="#1A8B5CF6"/>
+    <SolidColorBrush x:Key="InfoLine" Color="#665B9BFF"/>
+    <SolidColorBrush x:Key="InfoDim" Color="#1A5B9BFF"/>
+</ResourceDictionary>

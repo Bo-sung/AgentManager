@@ -80,6 +80,7 @@ public sealed class AppViewModel : ObservableObject
         SendDiffFeedbackCommand = new RelayCommand(p => { if (p is string f) _ = SendDiffFeedbackAsync(ActiveSession, f); },
             _ => ActiveSession is { IsRunning: false, SelectedChange: not null });
         ApproveCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, true); });
+        ApproveForSessionCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, true, forSession: true); });
         DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
         OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
     }
@@ -147,6 +148,7 @@ public sealed class AppViewModel : ObservableObject
     // ----- approval broker (Stage 1: Claude) -----
     private readonly Dictionary<string, (TaskCompletionSource<PermissionDecision> Tcs, ApprovalBlock Block, SessionViewModel Session)> _pendingApprovals = [];
     public RelayCommand ApproveCommand { get; }
+    public RelayCommand ApproveForSessionCommand { get; }
     public RelayCommand DenyCommand { get; }
 
     private Task<PermissionDecision> HandlePermissionAsync(SessionViewModel s, PermissionRequest pr)
@@ -155,7 +157,10 @@ public sealed class AppViewModel : ObservableObject
         Application.Current.Dispatcher.Invoke(() =>
         {
             var summary = pr.InputJson.Length > 400 ? pr.InputJson[..400] + "…" : pr.InputJson;
-            var block = new ApprovalBlock(pr.RequestId, pr.ToolName, summary);
+            var block = new ApprovalBlock(pr.RequestId, pr.ToolName, summary)
+            {
+                SupportsSessionApproval = s.IsCodex, // codex app-server만 acceptForSession 지원
+            };
             s.Transcript.Add(block);
             _pendingApprovals[pr.RequestId] = (tcs, block, s);
             s.Status = "waiting";
@@ -165,13 +170,13 @@ public sealed class AppViewModel : ObservableObject
         return tcs.Task;
     }
 
-    public void ResolveApproval(string requestId, bool allow)
+    public void ResolveApproval(string requestId, bool allow, bool forSession = false)
     {
         if (!_pendingApprovals.Remove(requestId, out var entry)) return;
-        entry.Block.State = allow ? "allowed" : "denied";
+        entry.Block.State = allow ? (forSession ? "allowed (session)" : "allowed") : "denied";
         entry.Session.Status = "running";
         entry.Session.Activity = allow ? $"{entry.Block.ToolName} 승인됨 — 계속" : $"{entry.Block.ToolName} 거부됨";
-        entry.Tcs.TrySetResult(new PermissionDecision(allow, allow ? null : "User denied permission"));
+        entry.Tcs.TrySetResult(new PermissionDecision(allow, allow ? null : "User denied permission", forSession));
         SaveState();
     }
 
@@ -470,6 +475,9 @@ public sealed class AppViewModel : ObservableObject
     public bool SettingsDefaultTranslationEnabled { get => _settingsDefaultTranslationEnabled; set => Set(ref _settingsDefaultTranslationEnabled, value); }
     private bool _settingsWarnNoWorktree;
     public bool SettingsWarnNoWorktree { get => _settingsWarnNoWorktree; set => Set(ref _settingsWarnNoWorktree, value); }
+    private bool _settingsLightTheme;
+    public bool SettingsLightTheme { get => _settingsLightTheme; set => Set(ref _settingsLightTheme, value); }
+    private string _theme = "dark";
 
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내를 띄울지 (기본 끔 — 비-git 사용이 일반 흐름인 사용자 배려).</summary>
     private bool _warnNoWorktree;
@@ -696,6 +704,7 @@ public sealed class AppViewModel : ObservableObject
         SettingsOllamaModel = _ollamaModel;
         SettingsDefaultTranslationEnabled = TranslationEnabled;
         SettingsWarnNoWorktree = _warnNoWorktree;
+        SettingsLightTheme = _theme == "light";
         SettingsStatus = "";
         ShowSettings = true;
     }
@@ -709,8 +718,11 @@ public sealed class AppViewModel : ObservableObject
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();
         TranslationEnabled = SettingsDefaultTranslationEnabled;
         _warnNoWorktree = SettingsWarnNoWorktree;
+        var newTheme = SettingsLightTheme ? "light" : "dark";
+        var themeChanged = newTheme != _theme;
+        _theme = newTheme;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
-        SettingsStatus = "Settings saved";
+        SettingsStatus = themeChanged ? "Settings saved — 테마는 재시작 후 적용" : "Settings saved";
         ShowSettings = false;
         SaveState();
     }
@@ -807,6 +819,7 @@ public sealed class AppViewModel : ObservableObject
         MaxConcurrentSessions = state.Settings.MaxConcurrentSessions;
         _isReviewOpen = state.Settings.ReviewPaneOpen;
         _warnNoWorktree = state.Settings.WarnNoWorktree;
+        _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
 
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
@@ -886,6 +899,7 @@ public sealed class AppViewModel : ObservableObject
                     MaxConcurrentSessions = MaxConcurrentSessions,
                     ReviewPaneOpen = IsReviewOpen,
                     WarnNoWorktree = _warnNoWorktree,
+                    Theme = _theme,
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
@@ -1189,8 +1203,25 @@ public sealed class AppViewModel : ObservableObject
                 if (s.Transcript.OfType<UserBlock>().LastOrDefault() is { } ub)
                     ub.SentText = pt.SentText;
                 break;
+            case AssistantDelta d:
+                // 스트리밍: 라이브 블록에 즉시 덧붙이고, 최종 AssistantText(번역본)가 오면 교체
+                if (!_liveText.TryGetValue(s.Id, out var live))
+                {
+                    live = new AgentTextBlock("") { ModelUsed = s.Model };
+                    _liveText[s.Id] = live;
+                    s.Transcript.Add(live);
+                }
+                live.Text += d.Delta;
+                s.Activity = "streaming response";
+                break;
             case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
-                s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText, ModelUsed = s.Model });
+                if (_liveText.Remove(s.Id, out var streamed))
+                {
+                    streamed.Text = at.Text;
+                    streamed.OriginalText = at.OriginalText;
+                }
+                else
+                    s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText, ModelUsed = s.Model });
                 s.Activity = "receiving response";
                 break;
             case Thinking th when !string.IsNullOrWhiteSpace(th.Text):
@@ -1239,6 +1270,7 @@ public sealed class AppViewModel : ObservableObject
                 s.Transcript.Add(new ErrorBlock("stderr", e.Message));
                 break;
             case TurnCompleted c:
+                _liveText.Remove(s.Id); // 스트리밍 잔여 해제 (최종 텍스트 미도착 시 라이브 내용 그대로 유지)
                 if (c.Usage is { } turnUsage)
                 {
                     // reconcile: per-message usage undercounts (esp. output); result.usage is the turn total
@@ -1323,6 +1355,9 @@ public sealed class AppViewModel : ObservableObject
     /// <summary>gemini가 셸 실행 시 stderr로 쏟는 멀티라인 덤프(xterm.js Parsing error — JS 객체 수십 줄)를
     /// 중괄호 깊이로 추적해 통째로 삼킨다. 라인 단위 패턴으로는 못 잡는 형태.</summary>
     private readonly Dictionary<string, (int Depth, int Ttl)> _stderrDump = [];
+
+    /// <summary>세션별 스트리밍 중인 라이브 응답 블록 (최종 AssistantText 도착 시 교체·해제).</summary>
+    private readonly Dictionary<string, AgentTextBlock> _liveText = [];
     private bool SuppressStderr(SessionViewModel s, string m)
     {
         if (IsBenignStderr(m)) return true;

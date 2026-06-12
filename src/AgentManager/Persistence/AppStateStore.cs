@@ -23,6 +23,8 @@ public sealed record AppSettingsDto
     public bool ReviewPaneOpen { get; init; } = true;
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내 표시 여부 (기본 끔).</summary>
     public bool WarnNoWorktree { get; init; }
+    /// <summary>UI 테마: dark | light (재시작 시 적용).</summary>
+    public string Theme { get; init; } = "dark";
 }
 
 public sealed record ProjectDto

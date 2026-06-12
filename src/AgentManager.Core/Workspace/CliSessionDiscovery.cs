@@ -23,7 +23,77 @@ public static class CliSessionDiscovery
         var result = new List<CliHistoryEntry>();
         try { result.AddRange(DiscoverClaude(projectPath, maxPerEngine)); } catch { }
         try { result.AddRange(DiscoverCodex(projectPath, maxPerEngine)); } catch { }
+        try { result.AddRange(DiscoverGemini(projectPath, maxPerEngine)); } catch { }
         return result.OrderByDescending(e => e.LastWriteUtc).ToList();
+    }
+
+    // ----- gemini / antigravity -----
+    // ~/.gemini/tmp/<id>/.project_root = 프로젝트 경로, chats/session-*.jsonl 첫 줄 = {sessionId,...}
+
+    public static List<CliHistoryEntry> DiscoverGemini(string projectPath, int max = 30)
+    {
+        var entries = new List<CliHistoryEntry>();
+        var root = Path.Combine(Home, ".gemini", "tmp");
+        if (!Directory.Exists(root)) return entries;
+        var wanted = Path.GetFullPath(projectPath).TrimEnd('\\', '/');
+
+        foreach (var dir in Directory.EnumerateDirectories(root))
+        {
+            var marker = Path.Combine(dir, ".project_root");
+            if (!File.Exists(marker)) continue;
+            string projRoot;
+            try { projRoot = File.ReadAllText(marker).Trim(); } catch { continue; }
+            if (string.IsNullOrWhiteSpace(projRoot)
+                || !string.Equals(Path.GetFullPath(projRoot).TrimEnd('\\', '/'), wanted, StringComparison.OrdinalIgnoreCase)) continue;
+
+            var chats = Path.Combine(dir, "chats");
+            if (!Directory.Exists(chats)) continue;
+            foreach (var file in new DirectoryInfo(chats).GetFiles("session-*.jsonl").OrderByDescending(f => f.LastWriteTimeUtc).Take(max))
+            {
+                try
+                {
+                    var first = ReadLinesSafe(file.FullName, 1).FirstOrDefault();
+                    if (first is null) continue;
+                    using var doc = JsonDocument.Parse(first);
+                    var sid = Str(doc.RootElement, "sessionId");
+                    if (string.IsNullOrWhiteSpace(sid)) continue;
+                    var title = FirstGeminiUserText(file.FullName) ?? "gemini session";
+                    entries.Add(new CliHistoryEntry("ag", sid!, Trim(title), file.LastWriteTimeUtc, file.FullName));
+                }
+                catch { }
+            }
+        }
+        return entries.OrderByDescending(e => e.LastWriteUtc).Take(max).ToList();
+    }
+
+    private static string? FirstGeminiUserText(string path)
+    {
+        foreach (var line in ReadLinesSafe(path, 60))
+        {
+            if (!line.Contains("\"type\":\"user\"", StringComparison.Ordinal)) continue;
+            try
+            {
+                using var doc = JsonDocument.Parse(line);
+                if (GeminiContentText(doc.RootElement) is { } t && !string.IsNullOrWhiteSpace(t)) return t;
+            }
+            catch { }
+        }
+        return null;
+    }
+
+    /// <summary>gemini 항목의 content: 문자열 또는 [{text}] 배열.</summary>
+    private static string? GeminiContentText(JsonElement item)
+    {
+        if (!item.TryGetProperty("content", out var c)) return null;
+        if (c.ValueKind == JsonValueKind.String) return c.GetString();
+        if (c.ValueKind == JsonValueKind.Array)
+        {
+            var parts = new List<string>();
+            foreach (var el in c.EnumerateArray())
+                if (Str(el, "text") is { } t && !string.IsNullOrWhiteSpace(t)) parts.Add(t);
+            return parts.Count == 0 ? null : string.Join("\n", parts);
+        }
+        return null;
     }
 
     // ----- claude -----
@@ -162,7 +232,49 @@ public static class CliSessionDiscovery
 
     /// <summary>CLI 기록 파일에서 대화를 복원한다 (표시용 — 도구 출력 등 부피 큰 내용은 요약/생략).</summary>
     public static List<CliTranscriptItem> LoadTranscript(string engineId, string filePath, int maxItems = 400)
-        => engineId == "cc" ? LoadClaudeTranscript(filePath, maxItems) : LoadCodexTranscript(filePath, maxItems);
+        => engineId switch
+        {
+            "cc" => LoadClaudeTranscript(filePath, maxItems),
+            "ag" => LoadGeminiTranscript(filePath, maxItems),
+            _ => LoadCodexTranscript(filePath, maxItems),
+        };
+
+    private static List<CliTranscriptItem> LoadGeminiTranscript(string path, int maxItems)
+    {
+        var items = new List<CliTranscriptItem>();
+        foreach (var line in ReadLinesSafe(path, int.MaxValue))
+        {
+            if (items.Count >= maxItems) break;
+            if (!line.Contains("\"type\":\"", StringComparison.Ordinal)) continue;
+            try
+            {
+                using var doc = JsonDocument.Parse(line);
+                var root = doc.RootElement;
+                switch (Str(root, "type"))
+                {
+                    case "user":
+                        if (GeminiContentText(root) is { } u && !string.IsNullOrWhiteSpace(u)) items.Add(new("user", "", u));
+                        break;
+                    case "gemini":
+                        if (root.TryGetProperty("thoughts", out var th) && th.ValueKind == JsonValueKind.Array)
+                        {
+                            var parts = new List<string>();
+                            foreach (var t in th.EnumerateArray())
+                            {
+                                var subj = Str(t, "subject");
+                                var desc = Str(t, "description");
+                                if (subj is not null || desc is not null) parts.Add($"{subj} — {desc}".Trim(' ', '—'));
+                            }
+                            if (parts.Count > 0) items.Add(new("thinking", "", string.Join("\n", parts)));
+                        }
+                        if (GeminiContentText(root) is { } a && !string.IsNullOrWhiteSpace(a)) items.Add(new("assistant", "", a));
+                        break;
+                }
+            }
+            catch { }
+        }
+        return items;
+    }
 
     private static List<CliTranscriptItem> LoadClaudeTranscript(string path, int maxItems)
     {
@@ -267,4 +379,7 @@ public static class CliSessionDiscovery
         var t = s.Replace('\n', ' ').Replace('\r', ' ').Trim();
         return t.Length > 80 ? t[..80] + "…" : t;
     }
+
+    private static string? Str(JsonElement e, string name)
+        => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 }

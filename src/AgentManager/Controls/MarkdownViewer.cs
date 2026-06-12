@@ -22,10 +22,13 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
                     viewer.Render(e.NewValue as string ?? "");
             }));
 
-    private static readonly Brush TextBrush = Brush("#DBE3EA");
-    private static readonly Brush MutedBrush = Brush("#90A0AC");
-    private static readonly Brush CodeBackground = Brush("#0D131A");
-    private static readonly Brush CodeBorder = Brush("#22303B");
+    // 테마(다크/라이트) 리소스에서 조회 — 시작 시 팔레트가 고정되므로 매 호출 조회 비용은 무시 가능
+    private static Brush R(string key, string fallback)
+        => Application.Current?.TryFindResource(key) as Brush ?? Brush(fallback);
+    private static Brush TextBrush => R("Txt0", "#DBE3EA");
+    private static Brush MutedBrush => R("Txt1", "#90A0AC");
+    private static Brush CodeBackground => R("Bg1", "#0D131A");
+    private static Brush CodeBorder => R("Line", "#22303B");
     private static readonly FontFamily Sans = new("Segoe UI, sans-serif");
     private static readonly FontFamily Mono = new("Consolas, Cascadia Mono, monospace");
 

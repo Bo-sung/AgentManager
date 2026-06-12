@@ -1,42 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ===== Design tokens (from AgentManager.html :root) ===== -->
-    <Color x:Key="Bg0Color">#FF0A0E12</Color>
-    <SolidColorBrush x:Key="Bg0" Color="#FF0A0E12"/>
-    <SolidColorBrush x:Key="Bg1" Color="#FF0D131A"/>
-    <SolidColorBrush x:Key="Bg2" Color="#FF10171F"/>
-    <SolidColorBrush x:Key="Bg3" Color="#FF161F29"/>
-    <SolidColorBrush x:Key="Bg4" Color="#FF1D2832"/>
-    <SolidColorBrush x:Key="Bg5" Color="#FF26333F"/>
-    <SolidColorBrush x:Key="Line" Color="#FF22303B"/>
-    <SolidColorBrush x:Key="LineSoft" Color="#FF1A242D"/>
-    <SolidColorBrush x:Key="LineBright" Color="#FF33444F"/>
-    <SolidColorBrush x:Key="Txt0" Color="#FFDBE3EA"/>
-    <SolidColorBrush x:Key="Txt1" Color="#FF90A0AC"/>
-    <SolidColorBrush x:Key="Txt2" Color="#FF5E6E7A"/>
-    <SolidColorBrush x:Key="Txt3" Color="#FF43525C"/>
-    <SolidColorBrush x:Key="Accent" Color="#FFFF5A2C"/>
-    <SolidColorBrush x:Key="AccentBright" Color="#FFFF7048"/>
-    <SolidColorBrush x:Key="AccentDim" Color="#24FF5A2C"/>
-    <SolidColorBrush x:Key="AccentLine" Color="#66FF5A2C"/>
-    <SolidColorBrush x:Key="Warn" Color="#FFF5B531"/>
-    <SolidColorBrush x:Key="Ok" Color="#FF34D3A6"/>
-    <SolidColorBrush x:Key="Err" Color="#FFFF4D5E"/>
-    <SolidColorBrush x:Key="Info" Color="#FF5B9BFF"/>
-    <SolidColorBrush x:Key="Add" Color="#FF2FAE7A"/>
-    <SolidColorBrush x:Key="AddBg" Color="#1A2FAE7A"/>
-    <SolidColorBrush x:Key="Del" Color="#FFE05566"/>
-    <SolidColorBrush x:Key="DelBg" Color="#17E05566"/>
-    <SolidColorBrush x:Key="Run" Color="#FFFF5A2C"/>
-    <SolidColorBrush x:Key="AccentText" Color="#FF1A0C06"/>
-
-    <!-- 엔진 식별 색: Claude = Accent(주황), Codex = 보라, Antigravity/Gemini = 파랑(Info) -->
-    <SolidColorBrush x:Key="Gx" Color="#FF8B5CF6"/>
-    <SolidColorBrush x:Key="GxLine" Color="#668B5CF6"/>
-    <SolidColorBrush x:Key="GxDim" Color="#248B5CF6"/>
-    <SolidColorBrush x:Key="InfoLine" Color="#665B9BFF"/>
-    <SolidColorBrush x:Key="InfoDim" Color="#245B9BFF"/>
+    <!-- 색 토큰은 Colors.Dark.xaml / Colors.Light.xaml로 분리 — App 시작 시 테마 설정에 따라
+         Theme.xaml보다 먼저 머지된다 (StaticResource가 그 팔레트를 캡처). -->
 
     <CornerRadius x:Key="RSm">4</CornerRadius>
     <CornerRadius x:Key="RMd">7</CornerRadius>

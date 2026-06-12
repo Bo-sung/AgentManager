@@ -173,9 +173,13 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
                 yield return new TurnCompleted(null, _turnFailed || status == "failed", null, null, _lastUsage);
                 break;
 
+            case "item/agentMessage/delta":
+                if (Str(ps, "delta") is { Length: > 0 } d) yield return new AssistantDelta(d);
+                break;
+
             // 내부 진행 알림 — UI 가치 없음
             case "thread/started" or "turn/started" or "thread/status/changed"
-                or "item/agentMessage/delta" or "item/reasoning/summaryTextDelta" or "item/reasoning/textDelta"
+                or "item/reasoning/summaryTextDelta" or "item/reasoning/textDelta"
                 or "item/reasoning/summaryPartAdded" or "item/commandExecution/outputDelta"
                 or "item/fileChange/outputDelta" or "serverRequest/resolved"
                 or "mcpServer/startupStatus/updated" or "remoteControl/status/changed"
@@ -192,7 +196,7 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
         => JsonSerializer.Serialize(new
         {
             id = int.TryParse(request.RequestId, out var n) ? (object)n : request.RequestId,
-            result = new { decision = decision.Allow ? "accept" : "decline" },
+            result = new { decision = decision.Allow ? (decision.ForSession ? "acceptForSession" : "accept") : "decline" },
         });
 
     // ---- 핸드셰이크 페이로드 ----

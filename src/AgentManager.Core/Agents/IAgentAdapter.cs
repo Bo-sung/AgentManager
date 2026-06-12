@@ -13,8 +13,9 @@ public sealed record AgentCapabilities(
     bool Quota);
 
 /// <summary>Options for starting one agent turn/session.</summary>
-/// <summary>User's verdict on a tool-permission request.</summary>
-public sealed record PermissionDecision(bool Allow, string? Reason = null);
+/// <summary>User's verdict on a tool-permission request.
+/// <paramref name="ForSession"/>: 이 세션 동안 같은 종류는 재승인 없이 허용 (codex acceptForSession).</summary>
+public sealed record PermissionDecision(bool Allow, string? Reason = null, bool ForSession = false);
 
 /// <summary>How much the engine may touch without asking. Mapping is engine-specific:
 /// Codex maps to --sandbox read-only/workspace-write/danger; Claude (no approval broker yet)
