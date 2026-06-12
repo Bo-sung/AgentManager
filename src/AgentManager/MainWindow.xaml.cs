@@ -17,6 +17,8 @@ public partial class MainWindow : Window
         DataContext = _vm;
         _vm.PropertyChanged += Vm_PropertyChanged;
         _vm.AttentionRequested += OnAttentionRequested;
+        CommandBindings.Add(new CommandBinding(ApplicationCommands.Find, (_, _) => SessionSearchBox.Focus()));
+        InputBindings.Add(new KeyBinding(ApplicationCommands.Find, Key.F, ModifierKeys.Control));
         RestoreWindowPlacement();
         Closing += (_, _) => SaveWindowPlacement();
     }
@@ -121,6 +123,34 @@ public partial class MainWindow : Window
                 : LogicalTreeHelper.GetParent(node);
         }
         return null;
+    }
+
+    /// <summary>Edit ▸ Search sessions: 사이드바 검색창으로 포커스 이동 (Ctrl+F).</summary>
+    private void FocusSearch_Click(object sender, RoutedEventArgs e) => SessionSearchBox.Focus();
+
+    /// <summary>Agents ▸ 엔진별 새 세션: 엔진을 미리 선택한 채 New Agent 폼을 연다.</summary>
+    private void NewAgentEngine_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string id)
+        {
+            var engine = _vm.Engines.FirstOrDefault(en => en.Id == id);
+            if (engine is not null) _vm.NewAgentSelectedEngine = engine;
+        }
+        _vm.ShowNewAgent = true;
+    }
+
+    /// <summary>마이크: 입력창에 포커스를 주고 Windows 받아쓰기(Win+H)를 연다 — OS STT를 그대로 활용.</summary>
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+    private void Dictate_Click(object sender, RoutedEventArgs e)
+    {
+        ComposerBox.Focus();
+        const byte VK_LWIN = 0x5B, VK_H = 0x48;
+        const uint KEYEVENTF_KEYUP = 0x2;
+        keybd_event(VK_LWIN, 0, 0, UIntPtr.Zero);
+        keybd_event(VK_H, 0, 0, UIntPtr.Zero);
+        keybd_event(VK_H, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+        keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
     }
 
     /// <summary>타이틀바 메뉴 버튼: 좌클릭으로 ContextMenu를 드롭다운처럼 연다.</summary>

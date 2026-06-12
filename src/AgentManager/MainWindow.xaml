@@ -267,8 +267,16 @@
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
-                    <Button Style="{StaticResource MenuButton}" Content="Edit" IsEnabled="False"
-                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 복사/검색은 화면 버튼으로 제공됩니다"/>
+                    <Button Style="{StaticResource MenuButton}" Content="Edit" Click="MenuButton_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Copy conversation (Markdown)" Click="CopyTranscript_Click"/>
+                                <MenuItem Header="Export transcript" Click="ExportTranscript_Click"/>
+                                <Separator/>
+                                <MenuItem Header="Search sessions" InputGestureText="Ctrl+F" Click="FocusSearch_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                     <Button Style="{StaticResource MenuButton}" Content="View" Click="MenuButton_Click">
                         <Button.ContextMenu>
                             <ContextMenu>
@@ -277,8 +285,17 @@
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
-                    <Button Style="{StaticResource MenuButton}" Content="Agents" IsEnabled="False"
-                            ToolTipService.ShowOnDisabled="True" ToolTip="보류 — 엔진 설정은 Settings에서"/>
+                    <Button Style="{StaticResource MenuButton}" Content="Agents" Click="MenuButton_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="New Claude Code session" Click="NewAgentEngine_Click" Tag="cc"/>
+                                <MenuItem Header="New Codex session" Click="NewAgentEngine_Click" Tag="gx"/>
+                                <MenuItem Header="New Antigravity / Gemini session" Click="NewAgentEngine_Click" Tag="ag"/>
+                                <Separator/>
+                                <MenuItem Header="Engine paths (Settings)" Command="{Binding ShowSettingsCommand}"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                     <Button Style="{StaticResource MenuButton}" Content="Settings" Command="{Binding ShowSettingsCommand}"/>
                     <Button Style="{StaticResource MenuButton}" Content="Help" Click="MenuButton_Click">
                         <Button.ContextMenu>
@@ -344,7 +361,7 @@
                             </Grid.ColumnDefinitions>
                             <controls:IconView Grid.Column="0" Icon="{StaticResource IconSearch}" Width="13" Height="13"
                                                Foreground="{StaticResource Txt2}" Margin="4,0,6,0" VerticalAlignment="Center"/>
-                            <TextBox Grid.Column="1" Style="{StaticResource ComposerInput}" Background="Transparent"
+                            <TextBox x:Name="SessionSearchBox" Grid.Column="1" Style="{StaticResource ComposerInput}" Background="Transparent"
                                      BorderThickness="0" Padding="0,7" VerticalAlignment="Center" AcceptsReturn="False"
                                      Text="{Binding SessionFilter, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -1118,9 +1135,8 @@
                                                 <controls:IconView Icon="{StaticResource IconSend}" Width="15" Height="15"/>
                                             </Button>
                                             <Button DockPanel.Dock="Right" Style="{StaticResource ComposerIconButton}"
-                                                    Margin="0,0,8,0"
-                                                    IsEnabled="False" ToolTipService.ShowOnDisabled="True"
-                                                    ToolTip="보류 — 음성 입력(계획 없음)">
+                                                    Margin="0,0,8,0" Click="Dictate_Click"
+                                                    ToolTip="음성 입력 — Windows 받아쓰기(Win+H)를 입력창에 연결">
                                                 <controls:IconView Icon="{StaticResource IconMic}" Width="15" Height="15"/>
                                             </Button>
                                             <TextBlock/>
