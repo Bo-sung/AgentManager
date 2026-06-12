@@ -485,6 +485,8 @@ public sealed class AppViewModel : ObservableObject
     // provider detection status (settings panel)
     public string ClaudeDetectLabel => DetectLabel("cc", _claudePath);
     public string CodexDetectLabel => DetectLabel("gx", _codexPath);
+    public string GeminiDetectLabel => DetectLabel("ag", null);
+    public string AgyDetectLabel => DetectLabel("agy", null);
     private static string DetectLabel(string id, string? overridePath)
     {
         var exe = EngineRegistry.ResolveExe(id, id == "cc" ? overridePath : null, id == "gx" ? overridePath : null);
@@ -492,7 +494,11 @@ public sealed class AppViewModel : ObservableObject
         if (File.Exists(exe)) return "✓ " + exe;
         return "△ PATH 의존: " + exe; // bare command name — resolved at spawn time
     }
-    private void RefreshDetectLabels() { OnChanged(nameof(ClaudeDetectLabel)); OnChanged(nameof(CodexDetectLabel)); }
+    private void RefreshDetectLabels()
+    {
+        OnChanged(nameof(ClaudeDetectLabel)); OnChanged(nameof(CodexDetectLabel));
+        OnChanged(nameof(GeminiDetectLabel)); OnChanged(nameof(AgyDetectLabel));
+    }
     private string _settingsStatus = "";
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
 
