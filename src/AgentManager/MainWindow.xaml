@@ -459,8 +459,22 @@
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontSize="12.5" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Accent}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"
-                                                               Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"/>
+                                                    <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Accent}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding IsRunning}" Value="True"/>
+                                                                            <Condition Binding="{Binding DataContext.StreamLogs, ElementName=Root}" Value="True"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </MultiDataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </DockPanel>
                                         </Border>
@@ -605,8 +619,22 @@
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontSize="12.5" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Accent}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"
-                                                               Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"/>
+                                                    <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Accent}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding IsRunning}" Value="True"/>
+                                                                            <Condition Binding="{Binding DataContext.StreamLogs, ElementName=Root}" Value="True"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </MultiDataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </DockPanel>
                                         </Border>
@@ -1943,12 +1971,15 @@
                                             </StackPanel>
                                         </Border>
                                         <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
-                                            <DockPanel>
-                                                <Border DockPanel.Dock="Left" Background="{StaticResource Bg4}" CornerRadius="4" Padding="6,2" VerticalAlignment="Top" Margin="0,0,10,0">
-                                                    <TextBlock Text="{StaticResource L.PlannedBadge}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{StaticResource Warn}"/>
-                                                </Border>
-                                                <TextBlock Text="{StaticResource L.OrchPlanned}" FontSize="11" Foreground="{StaticResource Txt2}" TextWrapping="Wrap"/>
-                                            </DockPanel>
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.WorktreeBase}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsWorktreeBase, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="{StaticResource L.WorktreeBaseHint}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                                    <ToggleButton Style="{StaticResource TogglePillButton}" IsChecked="{Binding SettingsAutoStart, Mode=TwoWay}" Content="{StaticResource L.AutoStartLast}"/>
+                                                    <ToggleButton Style="{StaticResource TogglePillButton}" Margin="8,0,0,0" IsChecked="{Binding SettingsStreamLogs, Mode=TwoWay}" Content="{StaticResource L.StreamLogsToggle}"/>
+                                                </StackPanel>
+                                            </StackPanel>
                                         </Border>
                                     </StackPanel>
 

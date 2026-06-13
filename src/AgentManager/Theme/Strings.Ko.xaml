@@ -92,6 +92,10 @@
     <sys:String x:Key="L.PolicyYolo">자동 · 전체</sys:String>
     <sys:String x:Key="L.PolicyYoloSub">전체 접근 · 확인 없음</sys:String>
     <sys:String x:Key="L.PermNetworkNote">네트워크 접근은 위 샌드박스 수준을 따르며, 파괴적 작업의 도구별 확인은 세션별로 유지됩니다.</sys:String>
+    <sys:String x:Key="L.WorktreeBase">Worktree 기준 경로</sys:String>
+    <sys:String x:Key="L.WorktreeBaseHint">격리 git worktree가 생성되는 위치. 비우면 기본 앱 데이터 폴더를 사용합니다.</sys:String>
+    <sys:String x:Key="L.AutoStartLast">시작 시 마지막 세션 열기</sys:String>
+    <sys:String x:Key="L.StreamLogsToggle">목록에 실시간 활동 표시</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
@@ -136,6 +140,12 @@
     <sys:String x:Key="L.Remove">제거</sys:String>
     <sys:String x:Key="L.MessagePrefix">Message </sys:String>
     <sys:String x:Key="L.MessageSuffix">...  @ to mention, / for actions</sys:String>
+    <sys:String x:Key="L.OrchMentionHeader">멘션 (파일 및 세션)</sys:String>
+    <sys:String x:Key="L.OrchActionHeader">액션 / 슬래시 명령</sys:String>
+    <sys:String x:Key="L.ActionClearDesc">작성 글 초기화</sys:String>
+    <sys:String x:Key="L.ActionReviewDesc">리뷰 패널 토글</sys:String>
+    <sys:String x:Key="L.ActionSettingsDesc">설정 창 열기</sys:String>
+    <sys:String x:Key="L.ActionHelpDesc">도움말 표시</sys:String>
     <sys:String x:Key="L.EnterHint">ENTER 전송 · SHIFT+ENTER 줄바꿈</sys:String>
     <sys:String x:Key="L.SentEn">전송본</sys:String>
     <sys:String x:Key="L.SentEnTip">실제 엔진에 전송된 영문 프롬프트 보기</sys:String>

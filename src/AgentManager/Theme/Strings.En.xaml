@@ -92,6 +92,10 @@
     <sys:String x:Key="L.PolicyYolo">Auto · all</sys:String>
     <sys:String x:Key="L.PolicyYoloSub">full access · no prompts</sys:String>
     <sys:String x:Key="L.PermNetworkNote">Network access follows the sandbox level above; per-tool destructive prompts remain per-session.</sys:String>
+    <sys:String x:Key="L.WorktreeBase">Worktree base directory</sys:String>
+    <sys:String x:Key="L.WorktreeBaseHint">Where isolated git worktrees are created. Leave empty for the default app-data folder.</sys:String>
+    <sys:String x:Key="L.AutoStartLast">Open last session on launch</sys:String>
+    <sys:String x:Key="L.StreamLogsToggle">Show live activity in lists</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
@@ -136,6 +140,12 @@
     <sys:String x:Key="L.Remove">Remove</sys:String>
     <sys:String x:Key="L.MessagePrefix">Message </sys:String>
     <sys:String x:Key="L.MessageSuffix">...  @ to mention, / for actions</sys:String>
+    <sys:String x:Key="L.OrchMentionHeader">Mentions (Files &amp; Sessions)</sys:String>
+    <sys:String x:Key="L.OrchActionHeader">Actions / Slash Commands</sys:String>
+    <sys:String x:Key="L.ActionClearDesc">Clear draft</sys:String>
+    <sys:String x:Key="L.ActionReviewDesc">Toggle Review Pane</sys:String>
+    <sys:String x:Key="L.ActionSettingsDesc">Open settings modal</sys:String>
+    <sys:String x:Key="L.ActionHelpDesc">Show help tips</sys:String>
     <sys:String x:Key="L.EnterHint">ENTER to send · SHIFT+ENTER for newline</sys:String>
     <sys:String x:Key="L.SentEn">SENT EN</sys:String>
     <sys:String x:Key="L.SentEnTip">Show the English prompt actually sent to the engine</sys:String>

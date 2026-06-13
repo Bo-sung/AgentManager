@@ -52,6 +52,11 @@ public sealed class AppViewModel : ObservableObject
         RestoreState();
         LoadScheduledJobs();
         CurrentView = MainViewKind.Orchestrator;
+        if (_autoStartLastSession && _allSessions.Count > 0)
+        {
+            ActiveSession = _allSessions[0];
+            CurrentView = MainViewKind.Session;
+        }
         NewProjectPath = WorkingDirectory;
         _runtimeTimer.Tick += (_, _) => RefreshRunningSessions();
         _runtimeTimer.Start();
@@ -584,6 +589,19 @@ public sealed class AppViewModel : ObservableObject
     private string _approvalPolicy = "yolo";
     private string _settingsApprovalPolicy = "yolo";
     public string SettingsApprovalPolicy { get => _settingsApprovalPolicy; set => Set(ref _settingsApprovalPolicy, value); }
+
+    // ----- orchestration -----
+    private string _worktreeBase = "";
+    public string SettingsWorktreeBase { get => _settingsWorktreeBase; set => Set(ref _settingsWorktreeBase, value); }
+    private string _settingsWorktreeBase = "";
+    private bool _autoStartLastSession;
+    public bool SettingsAutoStart { get => _settingsAutoStart; set => Set(ref _settingsAutoStart, value); }
+    private bool _settingsAutoStart;
+    private bool _streamLogs = true;
+    /// <summary>목록의 실시간 활동 표시 여부 (즉시 반영, 영속).</summary>
+    public bool StreamLogs { get => _streamLogs; set => Set(ref _streamLogs, value); }
+    public bool SettingsStreamLogs { get => _settingsStreamLogs; set => Set(ref _settingsStreamLogs, value); }
+    private bool _settingsStreamLogs = true;
     private static (bool requireApproval, SandboxMode sandbox) PolicyToSession(string policy) => policy switch
     {
         "ask" => (true, SandboxMode.ReadOnly),
@@ -1045,6 +1063,9 @@ public sealed class AppViewModel : ObservableObject
         SettingsLightTheme = _theme == "light";
         SettingsEnglishUi = _language == "en";
         SettingsApprovalPolicy = _approvalPolicy;
+        SettingsWorktreeBase = _worktreeBase;
+        SettingsAutoStart = _autoStartLastSession;
+        SettingsStreamLogs = _streamLogs;
         SettingsStatus = "";
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
@@ -1066,6 +1087,9 @@ public sealed class AppViewModel : ObservableObject
         TranslationEnabled = SettingsDefaultTranslationEnabled;
         _warnNoWorktree = SettingsWarnNoWorktree;
         _approvalPolicy = SettingsApprovalPolicy is "ask" or "safe" ? SettingsApprovalPolicy : "yolo";
+        _worktreeBase = (SettingsWorktreeBase ?? "").Trim();
+        _autoStartLastSession = SettingsAutoStart;
+        StreamLogs = SettingsStreamLogs;
         var newTheme = SettingsLightTheme ? "light" : "dark";
         var themeChanged = newTheme != _theme;
         _theme = newTheme;
@@ -1171,6 +1195,9 @@ public sealed class AppViewModel : ObservableObject
         _isReviewOpen = state.Settings.ReviewPaneOpen;
         _warnNoWorktree = state.Settings.WarnNoWorktree;
         _approvalPolicy = state.Settings.ApprovalPolicy is "ask" or "safe" ? state.Settings.ApprovalPolicy : "yolo";
+        _worktreeBase = (state.Settings.WorktreeBase ?? "").Trim();
+        _autoStartLastSession = state.Settings.AutoStartLastSession;
+        _streamLogs = state.Settings.StreamLogs;
         _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
         _language = state.Settings.Language == "en" ? "en" : "ko";
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
@@ -1255,6 +1282,9 @@ public sealed class AppViewModel : ObservableObject
                     Theme = _theme,
                     Language = _language,
                     ApprovalPolicy = _approvalPolicy,
+                    WorktreeBase = _worktreeBase,
+                    AutoStartLastSession = _autoStartLastSession,
+                    StreamLogs = _streamLogs,
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
@@ -1293,8 +1323,10 @@ public sealed class AppViewModel : ObservableObject
         }
     }
 
-    private static readonly string WorktreesRoot =
+    private static readonly string DefaultWorktreesRoot =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "worktrees");
+    /// <summary>설정된 worktree 기준 경로 (빈 값이면 기본 앱 데이터 폴더).</summary>
+    private string WorktreesRoot => string.IsNullOrWhiteSpace(_worktreeBase) ? DefaultWorktreesRoot : _worktreeBase.Trim();
 
     /// <summary>Create the session's worktree once (branched from project HEAD). No-op if not a git repo.</summary>
     private async Task EnsureWorktreeAsync(SessionViewModel s)

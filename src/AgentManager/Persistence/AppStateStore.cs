@@ -29,6 +29,12 @@ public sealed record AppSettingsDto
     public string Language { get; init; } = "ko";
     /// <summary>새 세션 기본 승인 정책: ask | safe | yolo (RequireApproval + Sandbox 시드).</summary>
     public string ApprovalPolicy { get; init; } = "yolo";
+    /// <summary>worktree 격리 기준 경로 (빈 값 = 기본 앱 데이터 폴더).</summary>
+    public string WorktreeBase { get; init; } = "";
+    /// <summary>시작 시 마지막 활성 세션을 자동으로 연다.</summary>
+    public bool AutoStartLastSession { get; init; }
+    /// <summary>목록(사이드바/대시보드)에 실시간 활동을 표시한다.</summary>
+    public bool StreamLogs { get; init; } = true;
 }
 
 public sealed record ProjectDto

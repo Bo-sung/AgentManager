@@ -290,10 +290,103 @@ public partial class MainWindow : Window
 
     private void Composer_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (_vm.IsComposerSuggestionOpen)
+        {
+            if (e.Key == Key.Up)
+            {
+                MoveSuggestionSelection(-1);
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Down)
+            {
+                MoveSuggestionSelection(1);
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Enter || e.Key == Key.Tab)
+            {
+                _vm.ApplySuggestion(ComposerBox);
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Escape)
+            {
+                _vm.CloseComposerSuggestion();
+                e.Handled = true;
+                return;
+            }
+        }
+
         if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) != 0 && Clipboard.ContainsImage())
         {
             e.Handled = true;
             PasteClipboardImage();
+        }
+    }
+
+    private void ComposerBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not TextBox tb) return;
+        var text = tb.Text ?? "";
+        var caret = tb.CaretIndex;
+        if (caret < 0 || caret > text.Length) return;
+
+        int tokenStart = -1;
+        char mode = '\0';
+        for (int i = caret - 1; i >= 0; i--)
+        {
+            char c = text[i];
+            if (c == ' ' || c == '\n' || c == '\r')
+            {
+                break;
+            }
+            if (c == '@' || c == '/')
+            {
+                tokenStart = i;
+                mode = c;
+                break;
+            }
+        }
+
+        if (tokenStart != -1)
+        {
+            var query = text.Substring(tokenStart + 1, caret - (tokenStart + 1));
+            _vm.TriggerComposerSuggestion(mode, query, tokenStart);
+        }
+        else
+        {
+            _vm.CloseComposerSuggestion();
+        }
+    }
+
+    private void MoveSuggestionSelection(int direction)
+    {
+        if (_vm.ComposerSuggestions.Count == 0) return;
+        var current = _vm.SelectedComposerSuggestion;
+        int idx = current == null ? -1 : _vm.ComposerSuggestions.IndexOf(current);
+        idx += direction;
+        if (idx < 0) idx = _vm.ComposerSuggestions.Count - 1;
+        if (idx >= _vm.ComposerSuggestions.Count) idx = 0;
+        _vm.SelectedComposerSuggestion = _vm.ComposerSuggestions[idx];
+    }
+
+    private void SuggestionList_DoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        _vm.ApplySuggestion(ComposerBox);
+    }
+
+    private void SuggestionList_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter || e.Key == Key.Tab)
+        {
+            _vm.ApplySuggestion(ComposerBox);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            _vm.CloseComposerSuggestion();
+            e.Handled = true;
         }
     }
 
