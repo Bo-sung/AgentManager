@@ -667,6 +667,43 @@ public sealed partial class AppViewModel : ObservableObject
     public bool SettingsEngineAgy { get => _settingsEngineAgy; set => Set(ref _settingsEngineAgy, value); }
     private bool _settingsEngineAgy = true;
 
+    // ----- per-engine auth (subscription / api key) -----
+    private readonly Dictionary<string, string> _engineAuthMode = new();   // id → "subscription" | "api"
+    private readonly Dictionary<string, string> _engineApiKey = new();     // id → DPAPI base64
+    /// <summary>엔진의 API 키 env 변수명 (cc/gx/ag). 없으면 null.</summary>
+    private static string? ApiEnvVar(string id) => id switch
+    {
+        "cc" => "ANTHROPIC_API_KEY",
+        "gx" => "OPENAI_API_KEY",
+        "ag" => "GEMINI_API_KEY",
+        _ => null,
+    };
+    /// <summary>실행 시 주입할 env: api 모드 + 키 있음 → { 변수명: 복호화키 }.</summary>
+    private IReadOnlyDictionary<string, string> ApiEnvFor(string id)
+    {
+        if (_engineAuthMode.GetValueOrDefault(id, "subscription") != "api") return EmptyEnv;
+        if (ApiEnvVar(id) is not { } var) return EmptyEnv;
+        var key = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault(id, ""));
+        return string.IsNullOrWhiteSpace(key) ? EmptyEnv : new Dictionary<string, string> { [var] = key };
+    }
+    private static readonly Dictionary<string, string> EmptyEnv = new();
+    private void SaveEngineAuth(string id, string mode, string plainKey)
+    {
+        _engineAuthMode[id] = mode == "api" ? "api" : "subscription";
+        if (!string.IsNullOrWhiteSpace(plainKey))
+            _engineApiKey[id] = Persistence.Dpapi.Encrypt(plainKey.Trim());
+        else
+            _engineApiKey.Remove(id);
+    }
+    public string SettingsAuthCc { get => _settingsAuthCc; set => Set(ref _settingsAuthCc, value); }
+    private string _settingsAuthCc = "subscription";
+    public string SettingsApiKeyCc { get => _settingsApiKeyCc; set => Set(ref _settingsApiKeyCc, value); }
+    private string _settingsApiKeyCc = "";
+    public string SettingsAuthGx { get => _settingsAuthGx; set => Set(ref _settingsAuthGx, value); }
+    private string _settingsAuthGx = "subscription";
+    public string SettingsApiKeyGx { get => _settingsApiKeyGx; set => Set(ref _settingsApiKeyGx, value); }
+    private string _settingsApiKeyGx = "";
+
     // ----- appearance: accent / density / telemetry -----
     private string _accent = "ember";
     /// <summary>선택된 강조색 (즉시 라이브 적용). Cancel 시 저장값으로 되돌림.</summary>
@@ -1192,6 +1229,10 @@ public sealed partial class AppViewModel : ObservableObject
         SettingsEngineGx = !_disabledEngines.Contains("gx");
         SettingsEngineAg = !_disabledEngines.Contains("ag");
         SettingsEngineAgy = !_disabledEngines.Contains("agy");
+        SettingsAuthCc = _engineAuthMode.GetValueOrDefault("cc", "subscription");
+        SettingsAuthGx = _engineAuthMode.GetValueOrDefault("gx", "subscription");
+        SettingsApiKeyCc = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("cc", ""));
+        SettingsApiKeyGx = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("gx", ""));
         SettingsStatus = "";
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
@@ -1238,6 +1279,8 @@ public sealed partial class AppViewModel : ObservableObject
             foreach (var d in disabled) _disabledEngines.Add(d);
             OnChanged(nameof(Engines));
         }
+        SaveEngineAuth("cc", SettingsAuthCc, SettingsApiKeyCc);
+        SaveEngineAuth("gx", SettingsAuthGx, SettingsApiKeyGx);
         var newTheme = SettingsLightTheme ? "light" : "dark";
         var themeChanged = newTheme != _theme;
         _theme = newTheme;
@@ -1371,6 +1414,10 @@ public sealed partial class AppViewModel : ObservableObject
         _telemetry = state.Settings.Telemetry;
         _disabledEngines.Clear();
         foreach (var d in state.Settings.DisabledEngines ?? []) _disabledEngines.Add(d);
+        _engineAuthMode.Clear();
+        foreach (var kv in state.Settings.EngineAuthMode ?? new()) _engineAuthMode[kv.Key] = kv.Value;
+        _engineApiKey.Clear();
+        foreach (var kv in state.Settings.EngineApiKey ?? new()) _engineApiKey[kv.Key] = kv.Value;
         _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
         _language = state.Settings.Language == "en" ? "en" : "ko";
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
@@ -1463,6 +1510,8 @@ public sealed partial class AppViewModel : ObservableObject
                     Density = _density,
                     Telemetry = _telemetry,
                     DisabledEngines = _disabledEngines.ToList(),
+                    EngineAuthMode = new Dictionary<string, string>(_engineAuthMode),
+                    EngineApiKey = new Dictionary<string, string>(_engineApiKey),
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
@@ -1591,6 +1640,7 @@ public sealed partial class AppViewModel : ObservableObject
             Images = images ?? [],
             AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
             ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
+            ExtraEnvironment = ApiEnvFor(s.AgentId),
         };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;

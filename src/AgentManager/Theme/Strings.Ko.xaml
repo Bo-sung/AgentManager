@@ -101,6 +101,10 @@
     <sys:String x:Key="L.ModelPick">모델</sys:String>
     <sys:String x:Key="L.WorktreeLabel">워크트리</sys:String>
     <sys:String x:Key="L.Isolated">격리</sys:String>
+    <sys:String x:Key="L.Authentication">인증</sys:String>
+    <sys:String x:Key="L.AuthSubscription">구독</sys:String>
+    <sys:String x:Key="L.AuthApiKey">API 키</sys:String>
+    <sys:String x:Key="L.ApiKeyHint">이 기기에 암호화 저장(DPAPI)되고 실행 시 환경변수로 주입됩니다.</sys:String>
     <sys:String x:Key="L.SignIn">로그인</sys:String>
     <sys:String x:Key="L.SignInLaunched">터미널을 열었습니다 — 거기서 로그인을 완료하세요.</sys:String>
     <sys:String x:Key="L.SignInNotFound">CLI를 찾을 수 없습니다 — 먼저 경로를 설정하세요.</sys:String>

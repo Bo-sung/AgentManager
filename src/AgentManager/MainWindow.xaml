@@ -2186,10 +2186,41 @@
                                                 <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsClaudePath, UpdateSourceTrigger=PropertyChanged}"/>
                                                 <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <ComboBox ItemsSource="{Binding CcModels}" SelectedItem="{Binding SettingsModelCc, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="240"/>
-                                                <DockPanel Margin="0,8,0,0">
+                                                <TextBlock Text="{StaticResource L.Authentication}" Style="{StaticResource Lbl}" Margin="0,12,0,6"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                    <Border Tag="cc:subscription" MouseLeftButtonUp="AuthMode_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6" Margin="0,0,8,0">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/><Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                                <Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="subscription"><Setter Property="Background" Value="{StaticResource AccentDim}"/><Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/></DataTrigger></Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{StaticResource L.AuthSubscription}" FontSize="11" Foreground="{StaticResource Txt0}"/>
+                                                    </Border>
+                                                    <Border Tag="cc:api" MouseLeftButtonUp="AuthMode_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/><Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                                <Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="api"><Setter Property="Background" Value="{StaticResource AccentDim}"/><Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/></DataTrigger></Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{StaticResource L.AuthApiKey}" FontSize="11" Foreground="{StaticResource Txt0}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <DockPanel>
+                                                    <DockPanel.Style>
+                                                        <Style TargetType="DockPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="subscription"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
+                                                    </DockPanel.Style>
                                                     <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Tag="cc" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" VerticalAlignment="Center"/>
                                                     <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                                 </DockPanel>
+                                                <StackPanel>
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="api"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
+                                                    </StackPanel.Style>
+                                                    <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsApiKeyCc, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <TextBlock Text="{StaticResource L.ApiKeyHint}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                                </StackPanel>
                                             </StackPanel>
                                         </Border>
                                         <!-- Codex (gx) -->
@@ -2210,10 +2241,41 @@
                                                 <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsCodexPath, UpdateSourceTrigger=PropertyChanged}"/>
                                                 <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <ComboBox ItemsSource="{Binding GxModels}" SelectedItem="{Binding SettingsModelGx, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="240"/>
-                                                <DockPanel Margin="0,8,0,0">
+                                                <TextBlock Text="{StaticResource L.Authentication}" Style="{StaticResource Lbl}" Margin="0,12,0,6"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                    <Border Tag="gx:subscription" MouseLeftButtonUp="AuthMode_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6" Margin="0,0,8,0">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/><Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                                <Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="subscription"><Setter Property="Background" Value="{StaticResource AccentDim}"/><Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/></DataTrigger></Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{StaticResource L.AuthSubscription}" FontSize="11" Foreground="{StaticResource Txt0}"/>
+                                                    </Border>
+                                                    <Border Tag="gx:api" MouseLeftButtonUp="AuthMode_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/><Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                                <Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="api"><Setter Property="Background" Value="{StaticResource AccentDim}"/><Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/></DataTrigger></Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{StaticResource L.AuthApiKey}" FontSize="11" Foreground="{StaticResource Txt0}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <DockPanel>
+                                                    <DockPanel.Style>
+                                                        <Style TargetType="DockPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="subscription"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
+                                                    </DockPanel.Style>
                                                     <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Tag="gx" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" VerticalAlignment="Center"/>
                                                     <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                                 </DockPanel>
+                                                <StackPanel>
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="api"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
+                                                    </StackPanel.Style>
+                                                    <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsApiKeyGx, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <TextBlock Text="{StaticResource L.ApiKeyHint}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                                </StackPanel>
                                             </StackPanel>
                                         </Border>
                                         <!-- Gemini (ag) + Antigravity (agy) auto-detect -->

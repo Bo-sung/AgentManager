@@ -45,6 +45,10 @@ public sealed record AppSettingsDto
     public bool Telemetry { get; init; }
     /// <summary>사용자가 비활성한 엔진 id 목록 (New Agent 피커에서 숨김).</summary>
     public List<string> DisabledEngines { get; init; } = [];
+    /// <summary>엔진별 인증 모드: subscription(CLI 로그인) | api (engineId → mode).</summary>
+    public Dictionary<string, string> EngineAuthMode { get; init; } = new();
+    /// <summary>엔진별 API 키 (DPAPI 암호화 base64, engineId → blob). 평문 저장 금지.</summary>
+    public Dictionary<string, string> EngineApiKey { get; init; } = new();
 }
 
 public sealed record ProjectDto

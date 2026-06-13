@@ -101,6 +101,10 @@
     <sys:String x:Key="L.ModelPick">Model</sys:String>
     <sys:String x:Key="L.WorktreeLabel">Worktree</sys:String>
     <sys:String x:Key="L.Isolated">isolated</sys:String>
+    <sys:String x:Key="L.Authentication">Authentication</sys:String>
+    <sys:String x:Key="L.AuthSubscription">Subscription</sys:String>
+    <sys:String x:Key="L.AuthApiKey">API key</sys:String>
+    <sys:String x:Key="L.ApiKeyHint">Stored encrypted on this machine (DPAPI) and injected as an env var at run time.</sys:String>
     <sys:String x:Key="L.SignIn">Sign in</sys:String>
     <sys:String x:Key="L.SignInLaunched">Opened a terminal — complete sign-in there.</sys:String>
     <sys:String x:Key="L.SignInNotFound">CLI not found — set the path first.</sys:String>

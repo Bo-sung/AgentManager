@@ -39,6 +39,9 @@ public sealed record SessionOptions
     public IReadOnlyList<string> AdditionalDirectories { get; init; } = [];
     /// <summary>코덱스 추론 강도(low/medium/high/xhigh). null/빈값 = 엔진 기본. Claude는 무시.</summary>
     public string? ReasoningEffort { get; init; }
+    /// <summary>자식 프로세스에 주입할 추가 환경변수 (예: API key 인증 시 ANTHROPIC_API_KEY 등).
+    /// AgentSession이 BuildStartInfo 후 psi.Environment에 일괄 적용.</summary>
+    public IReadOnlyDictionary<string, string> ExtraEnvironment { get; init; } = new Dictionary<string, string>();
 }
 
 /// <summary>

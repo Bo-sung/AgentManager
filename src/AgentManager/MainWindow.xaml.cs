@@ -266,6 +266,17 @@ public partial class MainWindow : Window
             _vm.SignIn(id);
     }
 
+    /// <summary>Settings ▸ Runtimes: 인증 모드 세그 (Tag="cc:api" 형식 → 엔진별 모드 설정).</summary>
+    private void AuthMode_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is not string tag) return;
+        var parts = tag.Split(':');
+        if (parts.Length != 2) return;
+        var (engine, mode) = (parts[0], parts[1]);
+        if (engine == "cc") _vm.SettingsAuthCc = mode;
+        else if (engine == "gx") _vm.SettingsAuthGx = mode;
+    }
+
     private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is HistoryRowViewModel row)

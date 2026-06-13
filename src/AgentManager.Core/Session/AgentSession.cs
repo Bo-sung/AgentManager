@@ -45,6 +45,8 @@ public sealed class AgentSession(
         }
 
         var psi = adapter.BuildStartInfo(executablePath, options, prompt);
+        foreach (var kv in options.ExtraEnvironment)
+            psi.Environment[kv.Key] = kv.Value;
         using var proc = new Process { StartInfo = psi };
         proc.Start();
 
