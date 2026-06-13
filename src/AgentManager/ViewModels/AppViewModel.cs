@@ -42,13 +42,17 @@ public sealed partial class AppViewModel : ObservableObject
     public ObservableCollection<CliHistoryItemViewModel> CliHistory { get; } = [];
     public ObservableCollection<ScheduledJobViewModel> ScheduledJobs { get; } = [];
     public ObservableCollection<HistoryRowViewModel> HistoryRows { get; } = [];
-    public EngineDef[] Engines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
+    /// <summary>레지스트리에서 활성화된 전체 엔진 (설정 카드·모델 조회용 — 사용자 비활성과 무관).</summary>
+    public EngineDef[] AllEngines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
+    private readonly HashSet<string> _disabledEngines = [];
+    /// <summary>New Agent 피커에 노출할 엔진 (사용자가 비활성한 것 제외).</summary>
+    public IEnumerable<EngineDef> Engines => Array.FindAll(AllEngines, e => !_disabledEngines.Contains(e.Id));
     public string Project => ActiveProject?.Name ?? "workspace";
     public string WorkingDirectory => ActiveProject?.Path ?? FindRepoRoot();
 
     public AppViewModel()
     {
-        NewAgentSelectedEngine = Engines[0];
+        NewAgentSelectedEngine = AllEngines[0];
         RestoreState();
         Theme.AccentPalette.Apply(_accent);
         LoadScheduledJobs();
@@ -610,7 +614,7 @@ public sealed partial class AppViewModel : ObservableObject
     public string[] GxModels => EngineModels("gx");
     public string[] AgModels => EngineModels("ag");
     public string[] AgyModels => EngineModels("agy");
-    private string[] EngineModels(string id) => Array.Find(Engines, e => e.Id == id)?.Models ?? [];
+    private string[] EngineModels(string id) => Array.Find(AllEngines, e => e.Id == id)?.Models ?? [];
     /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
     private string DefaultModelFor(string id) =>
         _defaultModels.TryGetValue(id, out var m) && !string.IsNullOrWhiteSpace(m) ? m : (EngineModels(id).FirstOrDefault() ?? "");
@@ -630,6 +634,16 @@ public sealed partial class AppViewModel : ObservableObject
     private string _settingsModelAg = "";
     public string SettingsModelAgy { get => _settingsModelAgy; set => Set(ref _settingsModelAgy, value); }
     private string _settingsModelAgy = "";
+
+    // ----- per-engine enable/disable -----
+    public bool SettingsEngineCc { get => _settingsEngineCc; set => Set(ref _settingsEngineCc, value); }
+    private bool _settingsEngineCc = true;
+    public bool SettingsEngineGx { get => _settingsEngineGx; set => Set(ref _settingsEngineGx, value); }
+    private bool _settingsEngineGx = true;
+    public bool SettingsEngineAg { get => _settingsEngineAg; set => Set(ref _settingsEngineAg, value); }
+    private bool _settingsEngineAg = true;
+    public bool SettingsEngineAgy { get => _settingsEngineAgy; set => Set(ref _settingsEngineAgy, value); }
+    private bool _settingsEngineAgy = true;
 
     // ----- appearance: accent / density / telemetry -----
     private string _accent = "ember";
@@ -947,7 +961,7 @@ public sealed partial class AppViewModel : ObservableObject
     {
         var project = ActiveProject ?? Projects.FirstOrDefault();
         if (project is null) return;
-        var engine = NewAgentSelectedEngine ?? Engines[0];
+        var engine = NewAgentSelectedEngine ?? Engines.FirstOrDefault() ?? AllEngines[0];
         var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
         var branch = "agent/" + Slug(title);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
@@ -1121,6 +1135,10 @@ public sealed partial class AppViewModel : ObservableObject
         SettingsAccent = _accent;
         SettingsDensity = _density;
         SettingsTelemetry = _telemetry;
+        SettingsEngineCc = !_disabledEngines.Contains("cc");
+        SettingsEngineGx = !_disabledEngines.Contains("gx");
+        SettingsEngineAg = !_disabledEngines.Contains("ag");
+        SettingsEngineAgy = !_disabledEngines.Contains("agy");
         SettingsStatus = "";
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
@@ -1155,6 +1173,18 @@ public sealed partial class AppViewModel : ObservableObject
         _density = SettingsDensity == "compact" ? "compact" : "comfortable";
         OnChanged(nameof(DensityScale));
         _telemetry = SettingsTelemetry;
+        // 엔진 비활성 집합 재구성 — 단, 최소 1개는 활성으로 유지
+        var disabled = new HashSet<string>();
+        if (!SettingsEngineCc) disabled.Add("cc");
+        if (!SettingsEngineGx) disabled.Add("gx");
+        if (!SettingsEngineAg) disabled.Add("ag");
+        if (!SettingsEngineAgy) disabled.Add("agy");
+        if (disabled.Count < AllEngines.Length)
+        {
+            _disabledEngines.Clear();
+            foreach (var d in disabled) _disabledEngines.Add(d);
+            OnChanged(nameof(Engines));
+        }
         var newTheme = SettingsLightTheme ? "light" : "dark";
         var themeChanged = newTheme != _theme;
         _theme = newTheme;
@@ -1267,6 +1297,8 @@ public sealed partial class AppViewModel : ObservableObject
         _accent = Theme.AccentPalette.Normalize(state.Settings.Accent);
         _density = state.Settings.Density == "compact" ? "compact" : "comfortable";
         _telemetry = state.Settings.Telemetry;
+        _disabledEngines.Clear();
+        foreach (var d in state.Settings.DisabledEngines ?? []) _disabledEngines.Add(d);
         _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
         _language = state.Settings.Language == "en" ? "en" : "ko";
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
@@ -1358,6 +1390,7 @@ public sealed partial class AppViewModel : ObservableObject
                     Accent = _accent,
                     Density = _density,
                     Telemetry = _telemetry,
+                    DisabledEngines = _disabledEngines.ToList(),
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto

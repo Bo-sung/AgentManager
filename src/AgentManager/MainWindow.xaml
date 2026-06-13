@@ -2120,6 +2120,7 @@
                                                     <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
                                                         <TextBlock Text="CC" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
+                                                    <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineCc, Mode=TwoWay}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                                     <TextBlock DockPanel.Dock="Right" Text="{Binding ClaudeDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ClaudeDetectLabel}"/>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="Claude Code" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
@@ -2140,6 +2141,7 @@
                                                     <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
                                                         <TextBlock Text="GX" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Gx}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
+                                                    <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineGx, Mode=TwoWay}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                                     <TextBlock DockPanel.Dock="Right" Text="{Binding CodexDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding CodexDetectLabel}"/>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="GPT / Codex" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
@@ -2166,6 +2168,7 @@
                                                         <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
                                                             <TextBlock Text="AG" FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Info}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
+                                                        <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineAg, Mode=TwoWay}" VerticalAlignment="Center"/>
                                                         <TextBlock Text="Gemini CLI" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
                                                     </DockPanel>
                                                     <TextBlock Text="{Binding GeminiDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GeminiDetectLabel}"/>
@@ -2176,6 +2179,7 @@
                                                         <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
                                                             <TextBlock Text="AGY" FontFamily="{StaticResource Mono}" FontSize="9" FontWeight="SemiBold" Foreground="{StaticResource Agy}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
+                                                        <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineAgy, Mode=TwoWay}" VerticalAlignment="Center"/>
                                                         <TextBlock Text="Antigravity" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
                                                     </DockPanel>
                                                     <TextBlock Text="{Binding AgyDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding AgyDetectLabel}"/>

@@ -43,6 +43,8 @@ public sealed record AppSettingsDto
     public string Density { get; init; } = "comfortable";
     /// <summary>익명 텔레메트리 opt-in (로컬 전용, 외부 전송 없음).</summary>
     public bool Telemetry { get; init; }
+    /// <summary>사용자가 비활성한 엔진 id 목록 (New Agent 피커에서 숨김).</summary>
+    public List<string> DisabledEngines { get; init; } = [];
 }
 
 public sealed record ProjectDto

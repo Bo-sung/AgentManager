@@ -97,6 +97,7 @@
     <sys:String x:Key="L.AutoStartLast">시작 시 마지막 세션 열기</sys:String>
     <sys:String x:Key="L.StreamLogsToggle">목록에 실시간 활동 표시</sys:String>
     <sys:String x:Key="L.DefaultModel">기본 모델</sys:String>
+    <sys:String x:Key="L.EngineEnabled">활성</sys:String>
     <sys:String x:Key="L.AccentColor">강조색</sys:String>
     <sys:String x:Key="L.AccentColorDesc">클라이언트 전체에 즉시 적용됩니다.</sys:String>
     <sys:String x:Key="L.Density">밀도</sys:String>
