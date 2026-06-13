@@ -6,6 +6,13 @@ using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
 using AgentManager.Core.Workspace;
 using AgentManager.Core.Hosting;
+using AgentManager.Core.Scheduling;
+
+if (args.Contains("--sched-check"))
+{
+    RunSchedCheck();
+    return;
+}
 
 // Live approval round-trip (costs a few engine tokens): dotnet run -- --live-approval
 if (args.Contains("--live-approval"))
@@ -939,6 +946,55 @@ static void AssertResumeArgs()
         "next turn").ArgumentList.ToArray();
     Assert(codexResumeWw.Contains("-c") && codexResumeWw.Any(a => a.StartsWith("sandbox_mode=")) && !codexResumeWw.Contains("--sandbox"),
         "Codex resume sandbox via -c override");
+}
+
+static void RunSchedCheck()
+{
+    Console.WriteLine("[sched-check] Running tests...");
+
+    // 1. Cadence to Cron parsing test
+    Assert(ScheduleTrigger.TryParseCadenceToCron("Every day · 02:00") == "0 2 * * *", "Every day parsing failed");
+    Assert(ScheduleTrigger.TryParseCadenceToCron("Mondays · 09:00") == "0 9 * * 1", "Mondays parsing failed");
+    Assert(ScheduleTrigger.TryParseCadenceToCron("매일 02:00") == "0 2 * * *", "매일 parsing failed");
+    Assert(ScheduleTrigger.TryParseCadenceToCron("매주 월 09:00") == "0 9 * * 1", "매주 월 parsing failed");
+    Assert(ScheduleTrigger.TryParseCadenceToCron("매주 토 10:00") == "0 10 * * 6", "매주 토 parsing failed");
+
+    // 2. NextRunUtc Calculation Test
+    // 2026-06-13 is a Saturday (DayOfWeek.Saturday = 6)
+    var baseTime = new DateTime(2026, 6, 13, 12, 0, 0, DateTimeKind.Utc);
+
+    // Case 2a: Every day · 02:00 (Today 2am already passed, should be tomorrow 2am)
+    var t1 = new ScheduleTrigger { Kind = "Cron", CadenceText = "Every day · 02:00" };
+    var n1 = t1.GetNextRunUtc(baseTime);
+    Assert(n1 == new DateTime(2026, 6, 14, 2, 0, 0, DateTimeKind.Utc), $"T1 next run was {n1}");
+
+    // Case 2b: Every day · 15:00 (Today 3pm is in the future, should be today 3pm)
+    var t2 = new ScheduleTrigger { Kind = "Cron", CadenceText = "Every day · 15:00" };
+    var n2 = t2.GetNextRunUtc(baseTime);
+    Assert(n2 == new DateTime(2026, 6, 13, 15, 0, 0, DateTimeKind.Utc), $"T2 next run was {n2}");
+
+    // Case 2c: Mondays · 09:00 (Next Monday should be 2026-06-15 09:00)
+    var t3 = new ScheduleTrigger { Kind = "Cron", CadenceText = "Mondays · 09:00" };
+    var n3 = t3.GetNextRunUtc(baseTime);
+    Assert(n3 == new DateTime(2026, 6, 15, 9, 0, 0, DateTimeKind.Utc), $"T3 next run was {n3}");
+
+    // Case 2d: 매주 토 10:00 (Today is Saturday 12:00, so 10:00 is passed. Next Saturday should be 2026-06-20 10:00)
+    var t4 = new ScheduleTrigger { Kind = "Cron", CadenceText = "매주 토 10:00" };
+    var n4 = t4.GetNextRunUtc(baseTime);
+    Assert(n4 == new DateTime(2026, 6, 20, 10, 0, 0, DateTimeKind.Utc), $"T4 next run was {n4}");
+
+    // Case 2e: 매주 토 14:00 (Today is Saturday 12:00, so 14:00 is in the future. Next run should be 2026-06-13 14:00)
+    var t5 = new ScheduleTrigger { Kind = "Cron", CadenceText = "매주 토 14:00" };
+    var n5 = t5.GetNextRunUtc(baseTime);
+    Assert(n5 == new DateTime(2026, 6, 13, 14, 0, 0, DateTimeKind.Utc), $"T5 next run was {n5}");
+
+    // Case 2f: Event type trigger (Implemented with NotImplemented comment internally, should return null)
+    var t6 = new ScheduleTrigger { Kind = "Event", CadenceText = "On push to spec/", TargetPath = "spec/" };
+    var n6 = t6.GetNextRunUtc(baseTime);
+    Assert(n6 == null, "Event trigger next run should be null");
+
+    Console.WriteLine("[sched-check] All next run calculations verified.");
+    Console.WriteLine("PASS");
 }
 
 static void Assert(bool condition, string message)
