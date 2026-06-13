@@ -2354,6 +2354,43 @@
                                                             <Setter Property="Cursor" Value="Hand"/>
                                                             <Setter Property="BorderThickness" Value="2"/>
                                                             <Setter Property="BorderBrush" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding SettingsAccent}" Value="ember"/>
+                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="ember"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
+                                                                </MultiDataTrigger>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding SettingsAccent}" Value="amber"/>
+                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="amber"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
+                                                                </MultiDataTrigger>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding SettingsAccent}" Value="teal"/>
+                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="teal"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
+                                                                </MultiDataTrigger>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding SettingsAccent}" Value="azure"/>
+                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="azure"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
+                                                                </MultiDataTrigger>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding SettingsAccent}" Value="violet"/>
+                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="violet"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
+                                                                </MultiDataTrigger>
+                                                            </Style.Triggers>
                                                         </Style>
                                                     </StackPanel.Resources>
                                                     <Border Style="{StaticResource Swatch}" Background="#FFFF5A2C" Tag="ember" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Ember"/>
