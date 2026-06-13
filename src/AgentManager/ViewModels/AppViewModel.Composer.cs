@@ -163,7 +163,7 @@ public partial class AppViewModel
         {
             if (insertVal == "/clear")
             {
-                Draft = "";
+                if (ActiveSession != null) ActiveSession.Draft = "";
                 CloseComposerSuggestion();
                 tb.Focus();
                 return;
@@ -171,7 +171,7 @@ public partial class AppViewModel
             if (insertVal == "/review")
             {
                 ToggleReviewCommand.Execute(null);
-                Draft = "";
+                if (ActiveSession != null) ActiveSession.Draft = "";
                 CloseComposerSuggestion();
                 tb.Focus();
                 return;
@@ -179,16 +179,23 @@ public partial class AppViewModel
             if (insertVal == "/settings")
             {
                 ShowSettingsCommand.Execute(null);
-                Draft = "";
+                if (ActiveSession != null) ActiveSession.Draft = "";
                 CloseComposerSuggestion();
                 tb.Focus();
                 return;
             }
             if (insertVal == "/help")
             {
-                Draft = "Help: Use @ to mention files or sessions, and / to trigger slash actions.";
-                CloseComposerSuggestion();
-                tb.CaretIndex = Draft.Length;
+                if (ActiveSession != null)
+                {
+                    ActiveSession.Draft = "Help: Use @ to mention files or sessions, and / to trigger slash actions.";
+                    CloseComposerSuggestion();
+                    tb.CaretIndex = ActiveSession.Draft.Length;
+                }
+                else
+                {
+                    CloseComposerSuggestion();
+                }
                 tb.Focus();
                 return;
             }

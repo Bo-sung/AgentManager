@@ -403,6 +403,55 @@
                             <ItemsControl ItemsSource="{Binding ActiveSessions}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
+                                        <DataTemplate.Resources>
+                                            <Storyboard x:Key="SidebarSparkStoryboard">
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="SidebarBar1" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1">
+                                                    <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                                    <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                                        <EasingDoubleKeyFrame.EasingFunction>
+                                                            <QuadraticEase EasingMode="EaseInOut"/>
+                                                        </EasingDoubleKeyFrame.EasingFunction>
+                                                    </EasingDoubleKeyFrame>
+                                                    <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="SidebarBar2" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1" BeginTime="0:0:0.13">
+                                                    <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                                    <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                                        <EasingDoubleKeyFrame.EasingFunction>
+                                                            <QuadraticEase EasingMode="EaseInOut"/>
+                                                        </EasingDoubleKeyFrame.EasingFunction>
+                                                    </EasingDoubleKeyFrame>
+                                                    <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="SidebarBar3" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1" BeginTime="0:0:0.26">
+                                                    <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                                    <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                                        <EasingDoubleKeyFrame.EasingFunction>
+                                                            <QuadraticEase EasingMode="EaseInOut"/>
+                                                        </EasingDoubleKeyFrame.EasingFunction>
+                                                    </EasingDoubleKeyFrame>
+                                                    <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="SidebarBar4" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1" BeginTime="0:0:0.39">
+                                                    <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                                    <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                                        <EasingDoubleKeyFrame.EasingFunction>
+                                                            <QuadraticEase EasingMode="EaseInOut"/>
+                                                        </EasingDoubleKeyFrame.EasingFunction>
+                                                    </EasingDoubleKeyFrame>
+                                                    <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="SidebarBar5" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1" BeginTime="0:0:0.52">
+                                                    <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                                    <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                                        <EasingDoubleKeyFrame.EasingFunction>
+                                                            <QuadraticEase EasingMode="EaseInOut"/>
+                                                        </EasingDoubleKeyFrame.EasingFunction>
+                                                    </EasingDoubleKeyFrame>
+                                                    <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </DataTemplate.Resources>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,8" Cursor="Hand"
                                                 MouseLeftButtonUp="SessionRow_Click">
                                             <Border.ContextMenu>
@@ -435,6 +484,14 @@
                                                             <Setter Property="Background" Value="{StaticResource Bg3}"/>
                                                             <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
                                                         </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard Name="SidebarSparkAnim" Storyboard="{StaticResource SidebarSparkStoryboard}"/>
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <StopStoryboard BeginStoryboardName="SidebarSparkAnim"/>
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
@@ -443,19 +500,59 @@
                                                         Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1">
                                                     <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
-                                                <Ellipse DockPanel.Dock="Right" Width="7" Height="7" VerticalAlignment="Top" Margin="6,4,0,0">
-                                                    <Ellipse.Style>
-                                                        <Style TargetType="Ellipse">
-                                                            <Setter Property="Fill" Value="{StaticResource Txt3}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Ellipse.Style>
-                                                </Ellipse>
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="6,4,0,0">
+                                                    <!-- Spark Equalizer when running -->
+                                                    <StackPanel x:Name="SidebarSpark" Orientation="Horizontal" VerticalAlignment="Center" Height="9" Margin="0,0,6,0">
+                                                        <StackPanel.Style>
+                                                            <Style TargetType="StackPanel">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Style>
+                                                        <Border x:Name="SidebarBar1" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1" Margin="0,0,1,0">
+                                                            <Border.RenderTransform>
+                                                                <ScaleTransform ScaleY="0.22"/>
+                                                            </Border.RenderTransform>
+                                                        </Border>
+                                                        <Border x:Name="SidebarBar2" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1" Margin="0,0,1,0">
+                                                            <Border.RenderTransform>
+                                                                <ScaleTransform ScaleY="0.22"/>
+                                                            </Border.RenderTransform>
+                                                        </Border>
+                                                        <Border x:Name="SidebarBar3" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1" Margin="0,0,1,0">
+                                                            <Border.RenderTransform>
+                                                                <ScaleTransform ScaleY="0.22"/>
+                                                            </Border.RenderTransform>
+                                                        </Border>
+                                                        <Border x:Name="SidebarBar4" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1" Margin="0,0,1,0">
+                                                            <Border.RenderTransform>
+                                                                <ScaleTransform ScaleY="0.22"/>
+                                                            </Border.RenderTransform>
+                                                        </Border>
+                                                        <Border x:Name="SidebarBar5" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1">
+                                                            <Border.RenderTransform>
+                                                                <ScaleTransform ScaleY="0.22"/>
+                                                            </Border.RenderTransform>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <Ellipse Width="7" Height="7" VerticalAlignment="Center">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                </StackPanel>
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontSize="12.5" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
@@ -1208,7 +1305,8 @@
                                                      VerticalContentAlignment="Top"
                                                      Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}"
                                                      KeyDown="Composer_KeyDown"
-                                                     PreviewKeyDown="Composer_PreviewKeyDown"/>
+                                                     PreviewKeyDown="Composer_PreviewKeyDown"
+                                                     TextChanged="ComposerBox_TextChanged"/>
                                             <TextBlock Margin="15,12,15,0" Foreground="{StaticResource Txt2}" IsHitTestVisible="False"
                                                        FontSize="13.5" LineHeight="20" VerticalAlignment="Top">
                                                 <TextBlock.Style>
@@ -1223,6 +1321,105 @@
                                                 </TextBlock.Style>
                                                 <Run Text="{StaticResource L.MessagePrefix}"/><Run Text="{Binding Cli, Mode=OneWay}"/><Run Text="{StaticResource L.MessageSuffix}"/>
                                             </TextBlock>
+                                            <Popup x:Name="ComposerSuggestionPopup"
+                                                   IsOpen="{Binding DataContext.IsComposerSuggestionOpen, ElementName=Root}"
+                                                   PlacementTarget="{Binding ElementName=ComposerBox}"
+                                                   Placement="Top"
+                                                   AllowsTransparency="True"
+                                                   PopupAnimation="Fade"
+                                                   StaysOpen="False"
+                                                   HorizontalOffset="10"
+                                                   VerticalOffset="-5">
+                                                <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Width="380" MaxHeight="250">
+                                                    <Border.Effect>
+                                                        <DropShadowEffect BlurRadius="15" Color="Black" Opacity="0.5" ShadowDepth="3"/>
+                                                    </Border.Effect>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="*"/>
+                                                        </Grid.RowDefinitions>
+                                                        <!-- Header -->
+                                                        <Border Grid.Row="0" Background="{StaticResource Bg3}" Padding="10,6" CornerRadius="8,8,0,0" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+                                                            <TextBlock Text="{Binding DataContext.ComposerSuggestionHeader, ElementName=Root}" Foreground="{StaticResource Txt1}" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource Mono}"/>
+                                                        </Border>
+                                                        <!-- Suggestions List -->
+                                                        <ListBox Grid.Row="1" x:Name="SuggestionList"
+                                                                 ItemsSource="{Binding DataContext.ComposerSuggestions, ElementName=Root}"
+                                                                 SelectedItem="{Binding DataContext.SelectedComposerSuggestion, ElementName=Root}"
+                                                                 Background="Transparent" BorderThickness="0"
+                                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                                 MouseDoubleClick="SuggestionList_DoubleClick"
+                                                                 KeyDown="SuggestionList_KeyDown"
+                                                                 MaxHeight="200" Padding="0,4">
+                                                            <ListBox.ItemContainerStyle>
+                                                                <Style TargetType="ListBoxItem">
+                                                                    <Setter Property="Background" Value="Transparent"/>
+                                                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                                    <Setter Property="Padding" Value="10,6"/>
+                                                                    <Setter Property="Cursor" Value="Hand"/>
+                                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                                    <Setter Property="Template">
+                                                                        <Setter.Value>
+                                                                            <ControlTemplate TargetType="ListBoxItem">
+                                                                                <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
+                                                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                                                                </Border>
+                                                                                <ControlTemplate.Triggers>
+                                                                                    <Trigger Property="IsMouseOver" Value="true">
+                                                                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource Bg3}"/>
+                                                                                    </Trigger>
+                                                                                    <Trigger Property="IsSelected" Value="true">
+                                                                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentDim}"/>
+                                                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                                                        <Setter TargetName="Bd" Property="BorderThickness" Value="0,0,3,0"/>
+                                                                                    </Trigger>
+                                                                                </ControlTemplate.Triggers>
+                                                                            </ControlTemplate>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Style>
+                                                            </ListBox.ItemContainerStyle>
+                                                            <ListBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <!-- Icon/Indicator based on type -->
+                                                                        <TextBlock Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Center" FontSize="11">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Text" Value="📄"/>
+                                                                                    <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding Type}" Value="Session">
+                                                                                            <Setter Property="Text" Value="⚡"/>
+                                                                                            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding Type}" Value="Command">
+                                                                                            <Setter Property="Text" Value="⚙️"/>
+                                                                                            <Setter Property="Foreground" Value="{StaticResource Info}"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                        <!-- Label -->
+                                                                        <TextBlock Grid.Column="1" Text="{Binding Label}" Foreground="{StaticResource Txt0}" FontSize="12.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="{StaticResource Mono}"/>
+                                                                        <!-- Type Text -->
+                                                                        <TextBlock Grid.Column="2" Text="{Binding Type}" Foreground="{StaticResource Txt2}" FontSize="10" VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="{StaticResource Mono}"/>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ListBox.ItemTemplate>
+                                                        </ListBox>
+                                                    </Grid>
+                                                </Border>
+                                            </Popup>
                                         </Grid>
                                     </DockPanel>
                                 </Border>

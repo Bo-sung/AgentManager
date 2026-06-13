@@ -22,7 +22,7 @@ public enum MainViewKind
     Session,
 }
 
-public sealed class AppViewModel : ObservableObject
+public sealed partial class AppViewModel : ObservableObject
 {
     private OllamaTranslator _translator = CreateTranslator("http://localhost:11434", "exaone3.5:7.8b");
     private static string L(string key, params object?[] args) => AgentManager.App.L(key, args);
