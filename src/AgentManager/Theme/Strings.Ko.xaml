@@ -39,7 +39,26 @@
     <sys:String x:Key="L.ActivityHistory">Activity History</sys:String>
     <sys:String x:Key="L.ActivityHistoryTip">세션 횡단 활동 이력</sys:String>
     <sys:String x:Key="L.ScheduledTasks">Scheduled Tasks</sys:String>
-    <sys:String x:Key="L.ScheduledTasksTip">예정 (P2) - 예약 에이전트 실행</sys:String>
+    <sys:String x:Key="L.ScheduledTasksTip">예약 에이전트 실행</sys:String>
+    <!-- Orchestrator dashboard -->
+    <sys:String x:Key="L.OrchSubtitle">활성 플릿 개요</sys:String>
+    <sys:String x:Key="L.KpiActive">실행 중</sys:String>
+    <sys:String x:Key="L.KpiActiveSub">에이전트 실행 중</sys:String>
+    <sys:String x:Key="L.KpiAwaiting">대기 중</sys:String>
+    <sys:String x:Key="L.KpiAwaitingSub">입력 필요</sys:String>
+    <sys:String x:Key="L.KpiCompleted">완료</sys:String>
+    <sys:String x:Key="L.KpiCompletedSub">이번 세션</sys:String>
+    <sys:String x:Key="L.KpiFailed">실패</sys:String>
+    <sys:String x:Key="L.KpiFailedSub">확인 필요</sys:String>
+    <sys:String x:Key="L.KpiFleet">플릿 처리량</sys:String>
+    <sys:String x:Key="L.KpiFleetSub">전체 세션</sys:String>
+    <sys:String x:Key="L.LiveWorkers">실행 중인 작업자</sys:String>
+    <sys:String x:Key="L.RecentCompleted">최근 · 완료</sys:String>
+    <sys:String x:Key="L.OrchEmptyLive">실행 중인 작업자 없음</sys:String>
+    <sys:String x:Key="L.OrchEmptyRecent">완료된 작업 없음</sys:String>
+    <sys:String x:Key="L.OpenSessionBtn">열기</sys:String>
+    <sys:String x:Key="L.SchedNextRun">다음 실행</sys:String>
+    <sys:String x:Key="L.SchedJobsSuffix">건 예약됨</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>

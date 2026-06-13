@@ -1236,13 +1236,99 @@
                 <Grid DataContext="{Binding DataContext, ElementName=Root}"
                       Visibility="{Binding IsOrchestratorView, Converter={StaticResource BoolVis}}"
                       Background="{StaticResource Bg0}">
+                    <Grid.Resources>
+                        <!-- shared orchestrator session card (live + recent) -->
+                        <DataTemplate x:Key="OrchCardTemplate">
+                            <Border Width="236" Margin="0,0,12,12" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsLive}" Value="False">
+                                                <Setter Property="Opacity" Value="0.72"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <DockPanel LastChildFill="True">
+                                    <!-- Head -->
+                                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="4" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
+                                            <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding StatusLabel}" FontFamily="{StaticResource Mono}" FontSize="9" Margin="0,0,5,0" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="{StaticResource Txt3}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Foreground" Value="{StaticResource Accent}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Foreground" Value="{StaticResource Warn}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Foreground" Value="{StaticResource Ok}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Foreground" Value="{StaticResource Err}"/></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <Ellipse Width="7" Height="7" VerticalAlignment="Center">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                        </StackPanel>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding AgentName}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                            <TextBlock Text="{Binding Model}" FontSize="9" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DockPanel>
+
+                                    <!-- Foot -->
+                                    <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <controls:IconView Icon="{StaticResource IconBolt}" Width="10" Height="10" Foreground="{StaticResource Txt2}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding TokensLabel}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Padding="9,4"
+                                                Command="{Binding DataContext.SelectSessionCommand, ElementName=Root}" CommandParameter="{Binding}" HorizontalAlignment="Right">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{StaticResource L.OpenSessionBtn}" FontSize="10" VerticalAlignment="Center"/>
+                                                <controls:IconView Icon="{StaticResource IconChevRight}" Width="11" Height="11" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DockPanel>
+
+                                    <!-- Body -->
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis" Margin="0,0,0,5"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                            <controls:IconView Icon="{StaticResource IconBranch}" Width="10" Height="10" Foreground="{StaticResource Txt2}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding BranchTail}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding RunningElapsedLabel}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Accent}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Accent}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"
+                                                   Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"/>
+                                        <ProgressBar IsIndeterminate="True" Height="3" Background="Transparent" BorderThickness="0" Foreground="{StaticResource Accent}"
+                                                     Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </Grid.Resources>
                     <DockPanel LastChildFill="True">
                         <!-- Head -->
                         <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
                             <DockPanel>
                                 <controls:IconView Icon="{StaticResource IconGrid}" Width="16" Height="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="Orchestrator" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                <TextBlock Text=" · active fleet overview" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                <TextBlock Text="{StaticResource L.Orchestrator}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                <TextBlock FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0">
+                                    <Run Text="· "/><Run Text="{StaticResource L.OrchSubtitle}"/></TextBlock>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource AccentButton}" Command="{Binding NewAgentCommand}" VerticalAlignment="Center" Padding="10,6">
                                     <StackPanel Orientation="Horizontal">
                                         <controls:IconView Icon="{StaticResource IconPlus}" Width="11" Height="11" Foreground="{StaticResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
@@ -1256,86 +1342,86 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="16" MaxWidth="1000" HorizontalAlignment="Left">
                                 <!-- KPIs -->
-                                <UniformGrid Columns="4" Rows="1" Height="70" Margin="0,0,0,20">
-                                    <!-- Running -->
-                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,10">
+                                <UniformGrid Columns="5" Rows="1" Height="78" Margin="0,0,0,22">
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,9">
                                         <StackPanel>
-                                            <TextBlock Text="ACTIVE" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{StaticResource L.KpiActive}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,3"/>
                                             <TextBlock Text="{Binding RunningCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                            <TextBlock Text="{StaticResource L.KpiActiveSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <!-- Awaiting -->
-                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,10">
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,9">
                                         <StackPanel>
-                                            <TextBlock Text="AWAITING INPUT" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Warn}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{StaticResource L.KpiAwaiting}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Warn}" Margin="0,0,0,3"/>
                                             <TextBlock Text="{Binding WaitingCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                            <TextBlock Text="{StaticResource L.KpiAwaitingSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <!-- Completed -->
-                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,10">
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,9">
                                         <StackPanel>
-                                            <TextBlock Text="COMPLETED" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Ok}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{StaticResource L.KpiCompleted}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Ok}" Margin="0,0,0,3"/>
                                             <TextBlock Text="{Binding DoneCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                            <TextBlock Text="{StaticResource L.KpiCompletedSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <!-- Failed -->
-                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,9">
                                         <StackPanel>
-                                            <TextBlock Text="FAILED" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Err}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{StaticResource L.KpiFailed}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Err}" Margin="0,0,0,3"/>
                                             <TextBlock Text="{Binding FailedCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                            <TextBlock Text="{StaticResource L.KpiFailedSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource AccentLine}" BorderThickness="1" CornerRadius="6" Padding="12,9">
+                                        <StackPanel>
+                                            <TextBlock Text="{StaticResource L.KpiFleet}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Txt1}" Margin="0,0,0,3" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding FleetThroughputLabel}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
+                                            <TextBlock Text="{StaticResource L.KpiFleetSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </UniformGrid>
 
-                                <!-- Grid of active sessions -->
-                                <TextBlock Text="ACTIVE WORKERS" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Txt2}" Margin="0,0,0,8"/>
-                                <ItemsControl ItemsSource="{Binding ActiveSessions}">
+                                <!-- Live workers -->
+                                <DockPanel Margin="0,0,0,8">
+                                    <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.LiveWorkers}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Txt2}"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ActiveSessions.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Accent}" VerticalAlignment="Center"/>
+                                    <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="10,0"/>
+                                </DockPanel>
+                                <TextBlock Text="{StaticResource L.OrchEmptyLive}" FontSize="11" Foreground="{StaticResource Txt3}" Margin="2,0,0,12">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ActiveSessions.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ItemsControl ItemsSource="{Binding ActiveSessions}" ItemTemplate="{StaticResource OrchCardTemplate}" Margin="0,0,0,8">
                                     <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal"/>
-                                        </ItemsPanelTemplate>
+                                        <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Width="230" Margin="0,0,12,12" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="12">
-                                                <DockPanel LastChildFill="True">
-                                                    <!-- Head -->
-                                                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                                                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="4" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
-                                                            <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <StackPanel DockPanel.Dock="Left">
-                                                            <TextBlock Text="{Binding AgentName}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
-                                                            <TextBlock Text="{Binding Model}" FontSize="9" Foreground="{StaticResource Txt2}"/>
-                                                        </StackPanel>
-                                                        <Ellipse DockPanel.Dock="Right" Width="7" Height="7" VerticalAlignment="Center">
-                                                            <Ellipse.Style>
-                                                                <Style TargetType="Ellipse">
-                                                                    <Setter Property="Fill" Value="{StaticResource Txt3}"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Ellipse.Style>
-                                                        </Ellipse>
-                                                    </DockPanel>
-                                                    
-                                                    <!-- Foot -->
-                                                    <Button DockPanel.Dock="Bottom" Style="{StaticResource ChipButton}" Content="Open Session" Command="{Binding DataContext.SelectSessionCommand, ElementName=Root}" CommandParameter="{Binding}" HorizontalAlignment="Right" Margin="0,8,0,0"/>
-                                                    
-                                                    <!-- Body -->
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
-                                                        <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
-                                                        <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Accent}" TextTrimming="CharacterEllipsis"/>
-                                                    </StackPanel>
-                                                </DockPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Recent &amp; completed -->
+                                <DockPanel Margin="0,8,0,8">
+                                    <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.RecentCompleted}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Txt2}"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ProjectSessions.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+                                    <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="10,0"/>
+                                </DockPanel>
+                                <TextBlock Text="{StaticResource L.OrchEmptyRecent}" FontSize="11" Foreground="{StaticResource Txt3}" Margin="2,0,0,8">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ProjectSessions.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ItemsControl ItemsSource="{Binding ProjectSessions}" ItemTemplate="{StaticResource OrchCardTemplate}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
                                 </ItemsControl>
                             </StackPanel>
                         </ScrollViewer>
@@ -1543,8 +1629,9 @@
                         <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
                             <DockPanel>
                                 <controls:IconView Icon="{StaticResource IconCalendar}" Width="15" Height="15" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="Scheduled Tasks" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding ScheduledJobs.Count, StringFormat='{} · {0} recurring jobs'}" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                <TextBlock Text="{StaticResource L.ScheduledTasks}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                <TextBlock FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0">
+                                    <Run Text="· "/><Run Text="{Binding ScheduledJobs.Count, Mode=OneWay}"/><Run Text=" "/><Run Text="{StaticResource L.SchedJobsSuffix}"/></TextBlock>
                             </DockPanel>
                         </Border>
 
@@ -1584,7 +1671,7 @@
 
                                                     <!-- Next run -->
                                                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                        <TextBlock Text="Next run" FontSize="9.5" Foreground="{StaticResource Txt2}" HorizontalAlignment="Right"/>
+                                                        <TextBlock Text="{StaticResource L.SchedNextRun}" FontSize="9.5" Foreground="{StaticResource Txt2}" HorizontalAlignment="Right"/>
                                                         <TextBlock Text="{Binding NextRunLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Accent}" HorizontalAlignment="Right"/>
                                                     </StackPanel>
                                                 </Grid>

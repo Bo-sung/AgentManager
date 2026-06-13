@@ -39,7 +39,26 @@
     <sys:String x:Key="L.ActivityHistory">Activity History</sys:String>
     <sys:String x:Key="L.ActivityHistoryTip">Cross-session activity history</sys:String>
     <sys:String x:Key="L.ScheduledTasks">Scheduled Tasks</sys:String>
-    <sys:String x:Key="L.ScheduledTasksTip">Planned (P2) - scheduled agent runs</sys:String>
+    <sys:String x:Key="L.ScheduledTasksTip">Scheduled agent runs</sys:String>
+    <!-- Orchestrator dashboard -->
+    <sys:String x:Key="L.OrchSubtitle">active fleet overview</sys:String>
+    <sys:String x:Key="L.KpiActive">Active</sys:String>
+    <sys:String x:Key="L.KpiActiveSub">agents executing</sys:String>
+    <sys:String x:Key="L.KpiAwaiting">Awaiting</sys:String>
+    <sys:String x:Key="L.KpiAwaitingSub">need your input</sys:String>
+    <sys:String x:Key="L.KpiCompleted">Completed</sys:String>
+    <sys:String x:Key="L.KpiCompletedSub">this session</sys:String>
+    <sys:String x:Key="L.KpiFailed">Failed</sys:String>
+    <sys:String x:Key="L.KpiFailedSub">need attention</sys:String>
+    <sys:String x:Key="L.KpiFleet">Fleet throughput</sys:String>
+    <sys:String x:Key="L.KpiFleetSub">all sessions</sys:String>
+    <sys:String x:Key="L.LiveWorkers">Live workers</sys:String>
+    <sys:String x:Key="L.RecentCompleted">Recent &amp; completed</sys:String>
+    <sys:String x:Key="L.OrchEmptyLive">No active workers</sys:String>
+    <sys:String x:Key="L.OrchEmptyRecent">Nothing completed yet</sys:String>
+    <sys:String x:Key="L.OpenSessionBtn">Open</sys:String>
+    <sys:String x:Key="L.SchedNextRun">Next run</sys:String>
+    <sys:String x:Key="L.SchedJobsSuffix">recurring jobs</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
