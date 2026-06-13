@@ -178,10 +178,19 @@ public partial class MainWindow : Window
 
     private void HelpAbout_Click(object sender, RoutedEventArgs e)
     {
-        var ver = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "dev";
-        MessageBox.Show(this,
-            App.L("L.AboutBody", ver),
-            App.L("L.AboutAgentManager"), MessageBoxButton.OK, MessageBoxImage.Information);
+        AboutOverlay.Visibility = Visibility.Visible;
+    }
+
+    private void CloseAbout_Click(object sender, RoutedEventArgs e) => AboutOverlay.Visibility = Visibility.Collapsed;
+
+    private void AboutOverlay_BackdropClick(object sender, MouseButtonEventArgs e)
+    {
+        AboutOverlay.Visibility = Visibility.Collapsed;
+    }
+
+    private void AboutOverlay_CardClick(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
     }
 
     private void HelpDocs_Click(object sender, RoutedEventArgs e)
@@ -345,7 +354,8 @@ public partial class MainWindow : Window
         base.OnPreviewKeyDown(e);
         if (e.Key == System.Windows.Input.Key.Escape)
         {
-            if (_vm.ShowNewAgent) { _vm.ShowNewAgent = false; e.Handled = true; }
+            if (AboutOverlay.Visibility == Visibility.Visible) { AboutOverlay.Visibility = Visibility.Collapsed; e.Handled = true; }
+            else if (_vm.ShowNewAgent) { _vm.ShowNewAgent = false; e.Handled = true; }
             else if (_vm.ShowNewProject) { _vm.ShowNewProject = false; e.Handled = true; }
         }
     }
@@ -445,6 +455,16 @@ public partial class MainWindow : Window
         var s = _vm.ActiveSession;
         if (s is null) return;
         try { Clipboard.SetText(BuildTranscriptMarkdown(s)); } catch { }
+    }
+
+    private void OrchCardDiff_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is SessionViewModel session)
+        {
+            _vm.ActiveSession = session;
+            _vm.IsReviewOpen = true;
+            _vm.CurrentView = MainViewKind.Session;
+        }
     }
 
     private void SaveWindowPlacement()

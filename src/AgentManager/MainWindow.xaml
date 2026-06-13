@@ -23,6 +23,17 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
+        <Style x:Key="KbdChip" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Bg1}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="9,3"/>
+            <Setter Property="Margin" Value="0,8,0,8"/>
+            <Setter Property="TextElement.FontFamily" Value="{StaticResource Mono}"/>
+            <Setter Property="TextElement.FontSize" Value="11"/>
+            <Setter Property="TextElement.Foreground" Value="{StaticResource Accent}"/>
+        </Style>
         <ObjectDataProvider x:Key="SandboxModes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="agents:SandboxMode"/>
@@ -1227,14 +1238,72 @@
                       Visibility="{Binding IsOrchestratorView, Converter={StaticResource BoolVis}}"
                       Background="{StaticResource Bg0}">
                     <Grid.Resources>
+                        <!-- Spark Animation (5 staggered bars equalizer style scale) -->
+                        <Storyboard x:Key="SparkStoryboard">
+                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Bar1" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1">
+                                <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                    <EasingDoubleKeyFrame.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseInOut"/>
+                                    </EasingDoubleKeyFrame.EasingFunction>
+                                </EasingDoubleKeyFrame>
+                                <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                            </DoubleAnimationUsingKeyFrames>
+                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Bar2" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1" BeginTime="0:0:0.13">
+                                <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                    <EasingDoubleKeyFrame.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseInOut"/>
+                                    </EasingDoubleKeyFrame.EasingFunction>
+                                </EasingDoubleKeyFrame>
+                                <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                            </DoubleAnimationUsingKeyFrames>
+                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Bar3" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1" BeginTime="0:0:0.26">
+                                <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                    <EasingDoubleKeyFrame.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseInOut"/>
+                                    </EasingDoubleKeyFrame.EasingFunction>
+                                </EasingDoubleKeyFrame>
+                                <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                            </DoubleAnimationUsingKeyFrames>
+                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Bar4" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1" BeginTime="0:0:0.39">
+                                <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                    <EasingDoubleKeyFrame.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseInOut"/>
+                                    </EasingDoubleKeyFrame.EasingFunction>
+                                </EasingDoubleKeyFrame>
+                                <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                            </DoubleAnimationUsingKeyFrames>
+                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Bar5" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" RepeatBehavior="Forever" Duration="0:0:1.1" BeginTime="0:0:0.52">
+                                <EasingDoubleKeyFrame KeyTime="0%" Value="0.22"/>
+                                <EasingDoubleKeyFrame KeyTime="50%" Value="1.0">
+                                    <EasingDoubleKeyFrame.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseInOut"/>
+                                    </EasingDoubleKeyFrame.EasingFunction>
+                                </EasingDoubleKeyFrame>
+                                <EasingDoubleKeyFrame KeyTime="100%" Value="0.22"/>
+                            </DoubleAnimationUsingKeyFrames>
+                        </Storyboard>
+
                         <!-- shared orchestrator session card (live + recent) -->
                         <DataTemplate x:Key="OrchCardTemplate">
                             <Border Width="236" Margin="0,0,12,12" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="12">
                                 <Border.Style>
                                     <Style TargetType="Border">
+                                        <Setter Property="Opacity" Value="1.0"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsLive}" Value="False">
                                                 <Setter Property="Opacity" Value="0.72"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard Name="SparkAnimation" Storyboard="{StaticResource SparkStoryboard}"/>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <StopStoryboard BeginStoryboardName="SparkAnimation"/>
+                                                </DataTrigger.ExitActions>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -1292,6 +1361,12 @@
                                                 <controls:IconView Icon="{StaticResource IconChevRight}" Width="11" Height="11" Margin="4,0,0,0" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Padding="9,4" Margin="0,0,6,0" Click="OrchCardDiff_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <controls:IconView Icon="{StaticResource IconLayers}" Width="10" Height="10" Foreground="{StaticResource Txt1}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{StaticResource L.OrchDiff}" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
                                     </DockPanel>
 
                                     <!-- Body -->
@@ -1302,10 +1377,37 @@
                                             <TextBlock Text="{Binding BranchTail}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding RunningElapsedLabel}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Accent}" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Accent}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"
-                                                   Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"/>
-                                        <ProgressBar IsIndeterminate="True" Height="3" Background="Transparent" BorderThickness="0" Foreground="{StaticResource Accent}"
-                                                     Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6"
+                                                    Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="9" Margin="0,0,8,0">
+                                                <Border x:Name="Bar1" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1" Margin="0,0,1,0">
+                                                    <Border.RenderTransform>
+                                                        <ScaleTransform ScaleY="0.22"/>
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                                <Border x:Name="Bar2" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1" Margin="0,0,1,0">
+                                                    <Border.RenderTransform>
+                                                        <ScaleTransform ScaleY="0.22"/>
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                                <Border x:Name="Bar3" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1" Margin="0,0,1,0">
+                                                    <Border.RenderTransform>
+                                                        <ScaleTransform ScaleY="0.22"/>
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                                <Border x:Name="Bar4" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1" Margin="0,0,1,0">
+                                                    <Border.RenderTransform>
+                                                        <ScaleTransform ScaleY="0.22"/>
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                                <Border x:Name="Bar5" Width="2" Height="9" Background="{StaticResource Accent}" CornerRadius="1" Opacity="0.55" RenderTransformOrigin="0.5,1">
+                                                    <Border.RenderTransform>
+                                                        <ScaleTransform ScaleY="0.22"/>
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Accent}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
@@ -2114,6 +2216,91 @@
                         </ScrollViewer>
                     </DockPanel>
                 </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===================== About / keyboard shortcuts overlay ===================== -->
+        <Grid x:Name="AboutOverlay" Grid.RowSpan="2" Background="#9E05080B" Visibility="Collapsed"
+              MouseLeftButtonUp="AboutOverlay_BackdropClick">
+            <Border Width="460" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
+                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10"
+                    MouseLeftButtonUp="AboutOverlay_CardClick">
+                <StackPanel>
+                    <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.AboutTitle}" Style="{StaticResource Lbl}"
+                                       Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Click="CloseAbout_Click"
+                                    ToolTip="{StaticResource L.CloseTip}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
+                            <TextBlock Text="AgentManager" FontWeight="SemiBold" FontSize="13"
+                                       Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+
+                    <StackPanel Margin="18">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <Border Width="40" Height="40" CornerRadius="7" Background="{StaticResource Bg1}"
+                                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,13,0">
+                                <controls:IconView Icon="{StaticResource IconLayers}" Width="22" Height="22"
+                                                   Foreground="{StaticResource Accent}" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="13" Foreground="{StaticResource Txt0}">
+                                    <Run Text="Agent"/><Run Text="Manager" Foreground="{StaticResource Accent}"/><Run Text=" 1.4.0"/>
+                                </TextBlock>
+                                <TextBlock Text="{StaticResource L.AboutBuild}" Style="{StaticResource Lbl}" FontSize="9"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Text="{StaticResource L.AboutDescription}" FontSize="12.5"
+                                   Foreground="{StaticResource Txt1}" TextWrapping="Wrap" LineHeight="20"
+                                   Margin="0,0,0,16"/>
+
+                        <TextBlock Text="{StaticResource L.KeyboardShortcuts}" Style="{StaticResource Lbl}" Margin="0,0,0,10"/>
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{StaticResource L.ShortcutSpawn}" Foreground="{StaticResource Txt1}" FontSize="12.5" Padding="0,8"/>
+                            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Ctrl+N"/></Border>
+
+                            <Border Grid.Row="1" Grid.ColumnSpan="2" Height="1" Background="{StaticResource LineSoft}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{StaticResource L.ShortcutViews}" Foreground="{StaticResource Txt1}" FontSize="12.5" Padding="0,8" Margin="0,1,0,0"/>
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Ctrl+1 / Ctrl+2 / Ctrl+3"/></Border>
+
+                            <Border Grid.Row="2" Grid.ColumnSpan="2" Height="1" Background="{StaticResource LineSoft}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="{StaticResource L.ShortcutDiff}" Foreground="{StaticResource Txt1}" FontSize="12.5" Padding="0,8" Margin="0,1,0,0"/>
+                            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Ctrl+R"/></Border>
+
+                            <Border Grid.Row="3" Grid.ColumnSpan="2" Height="1" Background="{StaticResource LineSoft}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="{StaticResource L.ShortcutSettings}" Foreground="{StaticResource Txt1}" FontSize="12.5" Padding="0,8" Margin="0,1,0,0"/>
+                            <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Ctrl+,"/></Border>
+
+                            <Border Grid.Row="4" Grid.ColumnSpan="2" Height="1" Background="{StaticResource LineSoft}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="{StaticResource L.ShortcutSend}" Foreground="{StaticResource Txt1}" FontSize="12.5" Padding="0,8" Margin="0,1,0,0"/>
+                            <Border Grid.Row="4" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Enter"/></Border>
+                        </Grid>
+                    </StackPanel>
+
+                    <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource AccentButton}" Content="{StaticResource L.Close}" Click="CloseAbout_Click"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Border>
         </Grid>
 
