@@ -364,22 +364,74 @@
                         </Grid>
                     </Border>
  
-                    <StackPanel DockPanel.Dock="Top" Margin="8,0,8,4" TextElement.Foreground="{StaticResource Txt0}">
-                        <StackPanel Orientation="Horizontal" Margin="9,7" ToolTip="{StaticResource L.CurrentViewTip}">
-                            <controls:IconView Icon="{StaticResource IconGrid}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{StaticResource L.Orchestrator}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="9,7" TextElement.Foreground="{StaticResource Txt0}"
-                                    ToolTip="{StaticResource L.ActivityHistoryTip}" Cursor="Hand"
-                                    MouseLeftButtonUp="ActivityHistory_Click">
+                    <StackPanel DockPanel.Dock="Top" Margin="8,0,8,4">
+                        <StackPanel.Resources>
+                            <Style x:Key="NavItemBase" TargetType="Border">
+                                <Setter Property="Padding" Value="9,7"/>
+                                <Setter Property="CornerRadius" Value="5"/>
+                                <Setter Property="Margin" Value="0,0,0,1"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="TextElement.Foreground" Value="{StaticResource Txt1}"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                        <Setter Property="TextElement.Foreground" Value="{StaticResource Txt0}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Resources>
+                        <!-- Orchestrator -->
+                        <Border MouseLeftButtonUp="Orchestrator_Click" ToolTip="{StaticResource L.CurrentViewTip}">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource NavItemBase}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOrchestratorView}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                            <Setter Property="TextElement.Foreground" Value="{StaticResource Accent}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <controls:IconView Icon="{StaticResource IconGrid}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{StaticResource L.Orchestrator}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- Activity History -->
+                        <Border MouseLeftButtonUp="ActivityHistory_Click" ToolTip="{StaticResource L.ActivityHistoryTip}">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource NavItemBase}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsHistoryView}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                            <Setter Property="TextElement.Foreground" Value="{StaticResource Accent}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal">
                                 <controls:IconView Icon="{StaticResource IconHistory}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{StaticResource L.ActivityHistory}" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="9,7" TextElement.Foreground="{StaticResource Txt3}"
-                                    ToolTip="{StaticResource L.ScheduledTasksTip}">
-                            <controls:IconView Icon="{StaticResource IconCalendar}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{StaticResource L.ScheduledTasks}" Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
-                        </StackPanel>
+                                <TextBlock Text="{StaticResource L.ActivityHistory}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- Scheduled Tasks -->
+                        <Border MouseLeftButtonUp="ScheduledTasks_Click" ToolTip="{StaticResource L.ScheduledTasksTip}">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource NavItemBase}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsScheduledView}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                            <Setter Property="TextElement.Foreground" Value="{StaticResource Accent}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <controls:IconView Icon="{StaticResource IconCalendar}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{StaticResource L.ScheduledTasks}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <!-- footer -->
