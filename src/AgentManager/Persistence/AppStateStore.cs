@@ -37,6 +37,12 @@ public sealed record AppSettingsDto
     public bool StreamLogs { get; init; } = true;
     /// <summary>엔진별 새 세션 기본 모델 (engineId → model). 없으면 엔진의 첫 모델 사용.</summary>
     public Dictionary<string, string> DefaultModels { get; init; } = new();
+    /// <summary>강조색 프리셋: ember | amber | teal | azure | violet (라이브 적용).</summary>
+    public string Accent { get; init; } = "ember";
+    /// <summary>밀도: comfortable | compact (UI 스케일).</summary>
+    public string Density { get; init; } = "comfortable";
+    /// <summary>익명 텔레메트리 opt-in (로컬 전용, 외부 전송 없음).</summary>
+    public bool Telemetry { get; init; }
 }
 
 public sealed record ProjectDto

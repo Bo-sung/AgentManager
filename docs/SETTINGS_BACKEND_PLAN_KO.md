@@ -1,5 +1,14 @@
 # Settings 백엔드 작업 계획 (원본에만 있는 설정)
 
+> **진행 상태 (업데이트):** 아래 항목 대부분이 구현 완료됨.
+> - ✅ Permissions 전역 승인 정책(ask/safe/yolo) — 새 세션 시드 + 영속
+> - ✅ Orchestration: worktree 기준 경로 / 시작 시 마지막 세션 / 목록 실시간 활동 표시
+> - ✅ Per-engine 기본 모델 (Runtimes 카드 모델 피커)
+> - ✅ Appearance: 강조색 라이브 적용(5 프리셋) / 밀도(UI 스케일) / 텔레메트리(로컬 opt-in)
+> - ⏳ 남음: **CLI 로그인 트리거**(엔진별 자체 로그인 플로우 기동) — 현재는 "CLI 관리" 안내로 정직 표시.
+> - ⏳ 남음: auto-start의 "running 에이전트 재개"는 안전상 "마지막 세션 열기"로 구현(재실행 X).
+
+
 > Phase 4에서 Settings를 풀 중앙 페인(TOC + 카드)으로 재배치하면서, 원본
 > (`design/am-settings.jsx`)에는 있지만 현재 백엔드가 없는 항목들은 UI 셸 +
 > `PLANNED` 배지로 정직하게 표시해 두었다(가짜 위젯 금지). 각 항목의 실제 구현 계획.

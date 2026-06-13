@@ -245,6 +245,20 @@ public partial class MainWindow : Window
             _vm.SettingsApprovalPolicy = policy;
     }
 
+    /// <summary>Settings ▸ Appearance: 강조색 스와치 선택 (라이브 적용).</summary>
+    private void AccentSwatch_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string accent)
+            _vm.SettingsAccent = accent;
+    }
+
+    /// <summary>Settings ▸ Appearance: 밀도 세그(comfortable/compact) 선택.</summary>
+    private void DensitySeg_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string density)
+            _vm.SettingsDensity = density;
+    }
+
     private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is HistoryRowViewModel row)

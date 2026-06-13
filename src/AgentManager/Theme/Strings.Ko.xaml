@@ -97,6 +97,13 @@
     <sys:String x:Key="L.AutoStartLast">시작 시 마지막 세션 열기</sys:String>
     <sys:String x:Key="L.StreamLogsToggle">목록에 실시간 활동 표시</sys:String>
     <sys:String x:Key="L.DefaultModel">기본 모델</sys:String>
+    <sys:String x:Key="L.AccentColor">강조색</sys:String>
+    <sys:String x:Key="L.AccentColorDesc">클라이언트 전체에 즉시 적용됩니다.</sys:String>
+    <sys:String x:Key="L.Density">밀도</sys:String>
+    <sys:String x:Key="L.DensityComfortable">여유</sys:String>
+    <sys:String x:Key="L.DensityCompact">조밀</sys:String>
+    <sys:String x:Key="L.Telemetry">익명 텔레메트리</sys:String>
+    <sys:String x:Key="L.TelemetryDesc">로컬 전용 opt-in. AgentManager는 어떤 것도 기기 밖으로 보내지 않습니다.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>

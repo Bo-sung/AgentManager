@@ -50,6 +50,7 @@ public sealed partial class AppViewModel : ObservableObject
     {
         NewAgentSelectedEngine = Engines[0];
         RestoreState();
+        Theme.AccentPalette.Apply(_accent);
         LoadScheduledJobs();
         CurrentView = MainViewKind.Orchestrator;
         if (_autoStartLastSession && _allSessions.Count > 0)
@@ -630,6 +631,24 @@ public sealed partial class AppViewModel : ObservableObject
     public string SettingsModelAgy { get => _settingsModelAgy; set => Set(ref _settingsModelAgy, value); }
     private string _settingsModelAgy = "";
 
+    // ----- appearance: accent / density / telemetry -----
+    private string _accent = "ember";
+    /// <summary>선택된 강조색 (즉시 라이브 적용). Cancel 시 저장값으로 되돌림.</summary>
+    public string SettingsAccent
+    {
+        get => _settingsAccent;
+        set { if (Set(ref _settingsAccent, value)) Theme.AccentPalette.Apply(value); }
+    }
+    private string _settingsAccent = "ember";
+    private string _density = "comfortable";
+    public string SettingsDensity { get => _settingsDensity; set => Set(ref _settingsDensity, value); }
+    private string _settingsDensity = "comfortable";
+    /// <summary>밀도 → 루트 콘텐츠 스케일 (라이브).</summary>
+    public double DensityScale => _density == "compact" ? 0.92 : 1.0;
+    private bool _telemetry;
+    public bool SettingsTelemetry { get => _settingsTelemetry; set => Set(ref _settingsTelemetry, value); }
+    private bool _settingsTelemetry;
+
     private static (bool requireApproval, SandboxMode sandbox) PolicyToSession(string policy) => policy switch
     {
         "ask" => (true, SandboxMode.ReadOnly),
@@ -1099,6 +1118,9 @@ public sealed partial class AppViewModel : ObservableObject
         SettingsModelGx = DefaultModelFor("gx");
         SettingsModelAg = DefaultModelFor("ag");
         SettingsModelAgy = DefaultModelFor("agy");
+        SettingsAccent = _accent;
+        SettingsDensity = _density;
+        SettingsTelemetry = _telemetry;
         SettingsStatus = "";
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
@@ -1106,6 +1128,8 @@ public sealed partial class AppViewModel : ObservableObject
     private MainViewKind _viewBeforeSettings = MainViewKind.Orchestrator;
     private void CloseSettings()
     {
+        // 라이브 미리보기한 강조색을 저장값으로 되돌린다
+        Theme.AccentPalette.Apply(_accent);
         ShowSettings = false;
         CurrentView = _viewBeforeSettings;
     }
@@ -1127,6 +1151,10 @@ public sealed partial class AppViewModel : ObservableObject
         SetDefaultModel("gx", SettingsModelGx);
         SetDefaultModel("ag", SettingsModelAg);
         SetDefaultModel("agy", SettingsModelAgy);
+        _accent = Theme.AccentPalette.Normalize(SettingsAccent);
+        _density = SettingsDensity == "compact" ? "compact" : "comfortable";
+        OnChanged(nameof(DensityScale));
+        _telemetry = SettingsTelemetry;
         var newTheme = SettingsLightTheme ? "light" : "dark";
         var themeChanged = newTheme != _theme;
         _theme = newTheme;
@@ -1236,6 +1264,9 @@ public sealed partial class AppViewModel : ObservableObject
         _autoStartLastSession = state.Settings.AutoStartLastSession;
         _streamLogs = state.Settings.StreamLogs;
         _defaultModels = state.Settings.DefaultModels ?? new();
+        _accent = Theme.AccentPalette.Normalize(state.Settings.Accent);
+        _density = state.Settings.Density == "compact" ? "compact" : "comfortable";
+        _telemetry = state.Settings.Telemetry;
         _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
         _language = state.Settings.Language == "en" ? "en" : "ko";
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
@@ -1324,6 +1355,9 @@ public sealed partial class AppViewModel : ObservableObject
                     AutoStartLastSession = _autoStartLastSession,
                     StreamLogs = _streamLogs,
                     DefaultModels = new Dictionary<string, string>(_defaultModels),
+                    Accent = _accent,
+                    Density = _density,
+                    Telemetry = _telemetry,
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto

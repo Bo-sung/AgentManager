@@ -97,6 +97,13 @@
     <sys:String x:Key="L.AutoStartLast">Open last session on launch</sys:String>
     <sys:String x:Key="L.StreamLogsToggle">Show live activity in lists</sys:String>
     <sys:String x:Key="L.DefaultModel">Default model</sys:String>
+    <sys:String x:Key="L.AccentColor">Accent color</sys:String>
+    <sys:String x:Key="L.AccentColorDesc">Applies live across the whole client.</sys:String>
+    <sys:String x:Key="L.Density">Density</sys:String>
+    <sys:String x:Key="L.DensityComfortable">Comfortable</sys:String>
+    <sys:String x:Key="L.DensityCompact">Compact</sys:String>
+    <sys:String x:Key="L.Telemetry">Anonymous telemetry</sys:String>
+    <sys:String x:Key="L.TelemetryDesc">Local-only opt-in. AgentManager never sends anything off your machine.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
