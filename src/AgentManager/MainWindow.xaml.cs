@@ -223,6 +223,12 @@ public partial class MainWindow : Window
         _vm.CurrentView = MainViewKind.Scheduled;
     }
 
+    private void SettingsToc_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string name && FindName(name) is FrameworkElement target)
+            target.BringIntoView();
+    }
+
     private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is HistoryRowViewModel row)

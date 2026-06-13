@@ -61,6 +61,19 @@
     <sys:String x:Key="L.SchedJobsSuffix">건 예약됨</sys:String>
     <sys:String x:Key="L.KeyboardShortcuts">단축키</sys:String>
     <sys:String x:Key="L.OrchestratorDashboard">Orchestrator 대시보드</sys:String>
+    <!-- Settings (full pane) -->
+    <sys:String x:Key="L.SettingsWorkspace">워크스페이스 · 로컬</sys:String>
+    <sys:String x:Key="L.SecRuntimes">런타임</sys:String>
+    <sys:String x:Key="L.SecTranslation">번역</sys:String>
+    <sys:String x:Key="L.SecOrchestration">오케스트레이션</sys:String>
+    <sys:String x:Key="L.SecPermissions">권한</sys:String>
+    <sys:String x:Key="L.SecAppearance">외관</sys:String>
+    <sys:String x:Key="L.SecProject">프로젝트</sys:String>
+    <sys:String x:Key="L.AuthCliManaged">인증 · 각 런타임의 자체 CLI 로그인으로 관리됩니다</sys:String>
+    <sys:String x:Key="L.PlannedBadge">예정</sys:String>
+    <sys:String x:Key="L.OrchPlanned">시작 시 자동 실행 · 활동 로그 스트리밍 · worktree 기준 경로 — 백엔드 준비 중.</sys:String>
+    <sys:String x:Key="L.PermPlanned">승인 정책(항상 확인 / 안전 자동 / 전체 자동) · 파괴적 작업 허용 · 네트워크 접근 · 샌드박스 파일시스템 — 전역 기본값은 백엔드 준비 중이며, 세션별 제어는 컴포저에서 이미 동작합니다.</sys:String>
+    <sys:String x:Key="L.AppearancePlanned">강조색 · 밀도 · 익명 텔레메트리 — 백엔드 준비 중.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>

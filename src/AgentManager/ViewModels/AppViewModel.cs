@@ -73,7 +73,7 @@ public sealed class AppViewModel : ObservableObject
         SelectProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel vm) ActiveProject = vm; });
         ImportCliSessionCommand = new RelayCommand(p => { if (p is CliHistoryItemViewModel h) ImportCliSession(h); });
         ShowSettingsCommand = new RelayCommand(_ => OpenSettings());
-        CancelSettingsCommand = new RelayCommand(_ => ShowSettings = false);
+        CancelSettingsCommand = new RelayCommand(_ => CloseSettings());
         SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
         SendCommand = new RelayCommand(_ => _ = SendAsync(), _ => ActiveSession?.CanSend == true);
         StopCommand = new RelayCommand(_ => StopActive(), _ => ActiveSession?.IsRunning == true);
@@ -943,7 +943,14 @@ public sealed class AppViewModel : ObservableObject
         SettingsLightTheme = _theme == "light";
         SettingsEnglishUi = _language == "en";
         SettingsStatus = "";
-        ShowSettings = true;
+        if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
+        CurrentView = MainViewKind.Settings;
+    }
+    private MainViewKind _viewBeforeSettings = MainViewKind.Orchestrator;
+    private void CloseSettings()
+    {
+        ShowSettings = false;
+        CurrentView = _viewBeforeSettings;
     }
 
     private void SaveSettings()
@@ -963,7 +970,6 @@ public sealed class AppViewModel : ObservableObject
         _language = newLanguage;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
         SettingsStatus = themeChanged || languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
-        ShowSettings = false;
         SaveState();
     }
 

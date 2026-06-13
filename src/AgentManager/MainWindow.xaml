@@ -1674,7 +1674,257 @@
                     </DockPanel>
                 </Grid>
 
-                <!-- Scheduled tasks shell -->
+                <!-- ===================== Settings (full center pane) ===================== -->
+                <Grid DataContext="{Binding DataContext, ElementName=Root}"
+                      Visibility="{Binding IsSettingsView, Converter={StaticResource BoolVis}}"
+                      Background="{StaticResource Bg0}">
+                    <DockPanel LastChildFill="True">
+                        <!-- header -->
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
+                            <DockPanel>
+                                <controls:IconView Icon="{StaticResource IconSettings}" Width="16" Height="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="{StaticResource L.SettingsSubtitle}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{StaticResource L.SettingsWorkspace}" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="30" Command="{Binding CancelSettingsCommand}" ToolTip="{StaticResource L.CloseTip}">
+                                    <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                                </Button>
+                            </DockPanel>
+                        </Border>
+                        <!-- footer -->
+                        <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="16,12">
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Cancel}" Margin="0,0,9,0" Command="{Binding CancelSettingsCommand}"/>
+                                    <Button Style="{StaticResource AccentButton}" Content="{StaticResource L.SaveSettings}" Command="{Binding SaveSettingsCommand}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding SettingsStatus}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Ok}" VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+                        <!-- body: TOC + sections -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="168"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="16,18,4,0" TextElement.FontSize="11.5">
+                                <TextBlock Text="{StaticResource L.SecRuntimes}" Tag="SecRuntimes" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
+                                <TextBlock Text="{StaticResource L.SecTranslation}" Tag="SecTranslation" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
+                                <TextBlock Text="{StaticResource L.SecOrchestration}" Tag="SecOrchestration" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
+                                <TextBlock Text="{StaticResource L.SecPermissions}" Tag="SecPermissions" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
+                                <TextBlock Text="{StaticResource L.SecAppearance}" Tag="SecAppearance" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
+                                <TextBlock Text="{StaticResource L.SecProject}" Tag="SecProject" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
+                            </StackPanel>
+
+                            <ScrollViewer Grid.Column="1" x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" Padding="6,0,0,0">
+                                <StackPanel Margin="14,18,18,18" MaxWidth="720" HorizontalAlignment="Left">
+                                    <!-- 01 Runtimes -->
+                                    <StackPanel x:Name="SecRuntimes">
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock DockPanel.Dock="Left" Text="01" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecRuntimes}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </DockPanel>
+                                        <!-- Claude (cc) -->
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <DockPanel Margin="0,0,0,10">
+                                                    <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
+                                                        <TextBlock Text="CC" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ClaudeDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ClaudeDetectLabel}"/>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Claude Code" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                                        <TextBlock Text="claude · anthropic · cli" FontSize="10" Foreground="{StaticResource Txt2}"/>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                                <TextBlock Text="{StaticResource L.ClaudeCliPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsClaudePath, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,8,0,0"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Codex (gx) -->
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <DockPanel Margin="0,0,0,10">
+                                                    <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
+                                                        <TextBlock Text="GX" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Gx}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding CodexDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding CodexDetectLabel}"/>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="GPT / Codex" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                                        <TextBlock Text="codex · openai · cli" FontSize="10" Foreground="{StaticResource Txt2}"/>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                                <TextBlock Text="{StaticResource L.CodexCliPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsCodexPath, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,8,0,0"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Gemini (ag) + Antigravity (agy) auto-detect -->
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="16"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <DockPanel Margin="0,0,0,6">
+                                                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
+                                                            <TextBlock Text="AG" FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Info}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <TextBlock Text="Gemini CLI" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                                    </DockPanel>
+                                                    <TextBlock Text="{Binding GeminiDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GeminiDetectLabel}"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2">
+                                                    <DockPanel Margin="0,0,0,6">
+                                                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
+                                                            <TextBlock Text="AGY" FontFamily="{StaticResource Mono}" FontSize="9" FontWeight="SemiBold" Foreground="{StaticResource Agy}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <TextBlock Text="Antigravity" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                                    </DockPanel>
+                                                    <TextBlock Text="{Binding AgyDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding AgyDetectLabel}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 02 Translation (ours) -->
+                                    <StackPanel x:Name="SecTranslation" Margin="0,14,0,0">
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock DockPanel.Dock="Left" Text="02" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecTranslation}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </DockPanel>
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                            <StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="14"/>
+                                                        <ColumnDefinition Width="220"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="{StaticResource L.Endpoint}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsOllamaEndpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2">
+                                                        <TextBlock Text="{StaticResource L.StatusModel}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsOllamaModel, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,10,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}" Content="{StaticResource L.DefaultTranslation}" ToolTip="{StaticResource L.DefaultTranslationTip}"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 03 Orchestration -->
+                                    <StackPanel x:Name="SecOrchestration" Margin="0,14,0,0">
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock DockPanel.Dock="Left" Text="03" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecOrchestration}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </DockPanel>
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.ConcurrentLimit}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Width="120" HorizontalAlignment="Left" Text="{Binding MaxConcurrentSessions, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,12,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsWarnNoWorktree, Mode=TwoWay}" Content="{StaticResource L.NonGitNotice}" ToolTip="{StaticResource L.NonGitNoticeTip}"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                            <DockPanel>
+                                                <Border DockPanel.Dock="Left" Background="{StaticResource Bg4}" CornerRadius="4" Padding="6,2" VerticalAlignment="Top" Margin="0,0,10,0">
+                                                    <TextBlock Text="{StaticResource L.PlannedBadge}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{StaticResource Warn}"/>
+                                                </Border>
+                                                <TextBlock Text="{StaticResource L.OrchPlanned}" FontSize="11" Foreground="{StaticResource Txt2}" TextWrapping="Wrap"/>
+                                            </DockPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 04 Permissions (planned) -->
+                                    <StackPanel x:Name="SecPermissions" Margin="0,14,0,0">
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock DockPanel.Dock="Left" Text="04" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecPermissions}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </DockPanel>
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                            <DockPanel>
+                                                <Border DockPanel.Dock="Left" Background="{StaticResource Bg4}" CornerRadius="4" Padding="6,2" VerticalAlignment="Top" Margin="0,0,10,0">
+                                                    <TextBlock Text="{StaticResource L.PlannedBadge}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{StaticResource Warn}"/>
+                                                </Border>
+                                                <TextBlock Text="{StaticResource L.PermPlanned}" FontSize="11" Foreground="{StaticResource Txt2}" TextWrapping="Wrap"/>
+                                            </DockPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 05 Appearance -->
+                                    <StackPanel x:Name="SecAppearance" Margin="0,14,0,0">
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock DockPanel.Dock="Left" Text="05" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecAppearance}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </DockPanel>
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ToggleButton Style="{StaticResource TogglePillButton}" IsChecked="{Binding SettingsLightTheme, Mode=TwoWay}" Content="{StaticResource L.LightTheme}" ToolTip="{StaticResource L.LightThemeTip}"/>
+                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="8,0,0,0" IsChecked="{Binding SettingsEnglishUi, Mode=TwoWay}" Content="{StaticResource L.EnglishUi}" ToolTip="{StaticResource L.EnglishUiTip}"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                            <DockPanel>
+                                                <Border DockPanel.Dock="Left" Background="{StaticResource Bg4}" CornerRadius="4" Padding="6,2" VerticalAlignment="Top" Margin="0,0,10,0">
+                                                    <TextBlock Text="{StaticResource L.PlannedBadge}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{StaticResource Warn}"/>
+                                                </Border>
+                                                <TextBlock Text="{StaticResource L.AppearancePlanned}" FontSize="11" Foreground="{StaticResource Txt2}" TextWrapping="Wrap"/>
+                                            </DockPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 06 Project (ours) -->
+                                    <StackPanel x:Name="SecProject" Margin="0,14,0,0">
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock DockPanel.Dock="Left" Text="06" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecProject}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </DockPanel>
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.McpConfigPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding ActiveProject.McpConfigPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <DockPanel Margin="0,14,0,0">
+                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" ToolTip="{StaticResource L.AddExtraPathTip}" Click="AddExtraPath_Click">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <controls:IconView Icon="{StaticResource IconPlus}" Width="11" Height="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{StaticResource L.AddFolder}" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <TextBlock Text="{StaticResource L.ExtraFolders}" Style="{StaticResource Lbl}" VerticalAlignment="Center"/>
+                                                </DockPanel>
+                                                <ItemsControl ItemsSource="{Binding ActiveProject.ExtraPaths}" Margin="0,8,0,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <DockPanel Margin="0,0,0,4">
+                                                                <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="26" ToolTip="{StaticResource L.Remove}" Command="{Binding DataContext.RemoveExtraPathCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                    <controls:IconView Icon="{StaticResource IconX}" Width="10" Height="10"/>
+                                                                </Button>
+                                                                <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="9,6" Margin="0,0,6,0">
+                                                                    <TextBlock Text="{Binding}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}" TextTrimming="CharacterEllipsis"/>
+                                                                </Border>
+                                                            </DockPanel>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+                    </DockPanel>
+                </Grid>
             </Grid>
 
             <!-- Review pane -->

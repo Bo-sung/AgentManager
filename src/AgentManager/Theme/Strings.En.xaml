@@ -61,6 +61,19 @@
     <sys:String x:Key="L.SchedJobsSuffix">recurring jobs</sys:String>
     <sys:String x:Key="L.KeyboardShortcuts">Keyboard shortcuts</sys:String>
     <sys:String x:Key="L.OrchestratorDashboard">Orchestrator dashboard</sys:String>
+    <!-- Settings (full pane) -->
+    <sys:String x:Key="L.SettingsWorkspace">workspace · local</sys:String>
+    <sys:String x:Key="L.SecRuntimes">Runtimes</sys:String>
+    <sys:String x:Key="L.SecTranslation">Translation</sys:String>
+    <sys:String x:Key="L.SecOrchestration">Orchestration</sys:String>
+    <sys:String x:Key="L.SecPermissions">Permissions</sys:String>
+    <sys:String x:Key="L.SecAppearance">Appearance</sys:String>
+    <sys:String x:Key="L.SecProject">Project</sys:String>
+    <sys:String x:Key="L.AuthCliManaged">Authentication · managed by the runtime's own CLI login</sys:String>
+    <sys:String x:Key="L.PlannedBadge">PLANNED</sys:String>
+    <sys:String x:Key="L.OrchPlanned">Auto-start on launch · stream activity logs · worktree base directory — backend pending.</sys:String>
+    <sys:String x:Key="L.PermPlanned">Approval policy (ask / auto-safe / auto-all) · allow destructive ops · network access · sandboxed filesystem — global defaults backend pending; per-session controls already work in the composer.</sys:String>
+    <sys:String x:Key="L.AppearancePlanned">Accent color · density · anonymous telemetry — backend pending.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
