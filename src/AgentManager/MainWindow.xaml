@@ -437,15 +437,19 @@
 
                     <!-- footer -->
                     <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="10,8">
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Bg4}" Margin="0,0,8,0">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="30" Height="30"
+                                    Command="{Binding ShowSettingsCommand}" ToolTip="{StaticResource L.Settings}" VerticalAlignment="Center">
+                                <controls:IconView Icon="{StaticResource IconSettings}" Width="16" Height="16"/>
+                            </Button>
+                            <Border DockPanel.Dock="Left" Width="22" Height="22" CornerRadius="11" Background="{StaticResource Bg4}" Margin="0,0,8,0">
                                 <TextBlock Text="JK" FontFamily="{StaticResource Mono}" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="{StaticResource L.Local}" FontSize="12" Foreground="{StaticResource Txt0}"/>
                                 <TextBlock Text="{Binding QuotaText}" Style="{StaticResource Lbl}" FontSize="9"/>
                             </StackPanel>
-                        </StackPanel>
+                        </DockPanel>
                     </Border>
 
                     <!-- session list -->
@@ -1879,7 +1883,7 @@
                                     <ComboBoxItem Content="{StaticResource L.FilterActive}" Tag="active"/>
                                     <ComboBoxItem Content="{StaticResource L.Waiting}" Tag="waiting"/>
                                     <ComboBoxItem Content="{StaticResource L.Done}" Tag="done"/>
-                                    <ComboBoxItem Content="Failed" Tag="error"/>
+                                    <ComboBoxItem Content="{StaticResource L.KpiFailed}" Tag="error"/>
                                 </ComboBox>
 
                                 <!-- Agent Filter -->
