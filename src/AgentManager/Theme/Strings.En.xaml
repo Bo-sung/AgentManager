@@ -308,7 +308,7 @@
     <sys:String x:Key="L.UnrestorableTranscriptBlock">unrestorable transcript block</sys:String>
     <sys:String x:Key="L.AboutBody">AgentManager {0}\n\nMulti-Agent Development Control Plane\nClaude Code · Codex / local LLM Korean-English translation layer\n\nMIT License</sys:String>
     <sys:String x:Key="L.AboutTitle">About</sys:String>
-    <sys:String x:Key="L.AboutBuild">build 20260613 · 4 runtimes registered</sys:String>
+    <sys:String x:Key="L.AboutBuildPattern">build {0} · {1} runtimes registered</sys:String>
     <sys:String x:Key="L.AboutDescription">Run Claude Code, GPT / Codex, Gemini CLI, and Antigravity side by side, each in its own isolated git worktree, orchestrated from a single client.</sys:String>
     <sys:String x:Key="L.ShortcutSpawn">Spawn a new agent</sys:String>
     <sys:String x:Key="L.ShortcutViews">Orchestrator · History · Scheduled</sys:String>

@@ -2850,9 +2850,9 @@
                             </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock FontFamily="{StaticResource Mono}" FontSize="13" Foreground="{StaticResource Txt0}">
-                                    <Run Text="Agent"/><Run Text="Manager" Foreground="{StaticResource Accent}"/><Run Text=" 1.4.0"/>
+                                    <Run Text="Agent"/><Run Text="Manager" Foreground="{StaticResource Accent}"/><Run Text=" "/><Run Text="{Binding AppVersion, Mode=OneWay}"/>
                                 </TextBlock>
-                                <TextBlock Text="{StaticResource L.AboutBuild}" Style="{StaticResource Lbl}" FontSize="9"/>
+                                <TextBlock Text="{Binding AboutBuildLabel, Mode=OneWay}" Style="{StaticResource Lbl}" FontSize="9"/>
                             </StackPanel>
                         </StackPanel>
 

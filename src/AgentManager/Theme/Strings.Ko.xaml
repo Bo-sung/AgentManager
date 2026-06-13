@@ -308,7 +308,7 @@
     <sys:String x:Key="L.UnrestorableTranscriptBlock">복원할 수 없는 transcript block</sys:String>
     <sys:String x:Key="L.AboutBody">AgentManager {0}\n\nMulti-Agent Development Control Plane\nClaude Code · Codex / 로컬 LLM 한↔영 번역 레이어\n\nMIT License</sys:String>
     <sys:String x:Key="L.AboutTitle">정보</sys:String>
-    <sys:String x:Key="L.AboutBuild">build 20260613 · 런타임 4개 등록됨</sys:String>
+    <sys:String x:Key="L.AboutBuildPattern">build {0} · 런타임 {1}개 등록됨</sys:String>
     <sys:String x:Key="L.AboutDescription">Claude Code, GPT / Codex, Gemini CLI, Antigravity를 각자의 격리된 git worktree에서 나란히 실행하고 하나의 클라이언트에서 조율합니다.</sys:String>
     <sys:String x:Key="L.ShortcutSpawn">새 에이전트 시작</sys:String>
     <sys:String x:Key="L.ShortcutViews">Orchestrator · History · Scheduled</sys:String>
