@@ -235,6 +235,7 @@ public sealed class SessionViewModel : ObservableObject
     public bool CanSend => !string.IsNullOrWhiteSpace(_draft) && !IsRunning;
 
     private static string Fmt(long n) => n >= 1000 ? (n / 1000.0).ToString("0.0") + "k" : n.ToString();
+    public string StartedAtLabel => StartedAt.ToString("yyyy-MM-dd HH:mm");
 
     private static string FormatDuration(TimeSpan span)
     {

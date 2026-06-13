@@ -242,6 +242,10 @@
     <sys:String x:Key="L.ActivityHistoryTitle">Activity History</sys:String>
     <sys:String x:Key="L.ActivityHistoryHeader">ACTIVITY HISTORY</sys:String>
     <sys:String x:Key="L.Refresh">Refresh</sys:String>
+    <sys:String x:Key="L.FilterAll">전체</sys:String>
+    <sys:String x:Key="L.FilterActive">진행 중</sys:String>
+    <sys:String x:Key="L.FilterAwaiting">대기</sys:String>
+    <sys:String x:Key="L.FilterAllAgents">모든 에이전트</sys:String>
     <sys:String x:Key="L.Close">Close</sys:String>
     <sys:String x:Key="L.ArchivedBadge">archived</sys:String>
     <sys:String x:Key="L.Untitled">(untitled)</sys:String>
@@ -251,4 +255,7 @@
     <sys:String x:Key="L.Shown">{0} shown</sys:String>
     <sys:String x:Key="L.ShownAfterFilter">{0} shown after filter</sys:String>
     <sys:String x:Key="L.BlocksCount">{0} blocks</sys:String>
+    <sys:String x:Key="L.ScheduledDefaultTitle">예약 에이전트 실행</sys:String>
+    <sys:String x:Key="L.ScheduledQueued">예약 실행 대기열 등록</sys:String>
+    <sys:String x:Key="L.ScheduledRunMarker">예약 트리거 실행 · {0}</sys:String>
 </ResourceDictionary>

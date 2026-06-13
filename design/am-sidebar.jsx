@@ -87,7 +87,7 @@ function Sidebar({ sessions, activeId, onSelect, nav, onNav, onNew }){
             <div className="lbl" style={{ fontSize:9, letterSpacing:'.1em' }}>3 workers online</div>
           </div>
         </div>
-        <div className="nav-item" style={{ flex:'none', width:34, justifyContent:'center' }} onClick={()=>onNav('settings')} title="Settings">
+        <div className={`nav-item ${nav==='settings'?'active':''}`} style={{ flex:'none', width:34, justifyContent:'center' }} onClick={()=>onNav('settings')} title="Settings">
           <SIcon name="settings" size={17} />
         </div>
       </div>

@@ -20,7 +20,11 @@ public partial class MainWindow : Window
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Find, (_, _) => SessionSearchBox.Focus()));
         InputBindings.Add(new KeyBinding(ApplicationCommands.Find, Key.F, ModifierKeys.Control));
         RestoreWindowPlacement();
-        Closing += (_, _) => SaveWindowPlacement();
+        Closing += (_, _) =>
+        {
+            SaveWindowPlacement();
+            _vm.Dispose();
+        };
     }
 
     // ----- attention notifications (flash taskbar when unfocused; sound for approvals) -----
@@ -197,9 +201,25 @@ public partial class MainWindow : Window
             _vm.ActiveSession = s;
     }
 
+    private void Orchestrator_Click(object sender, MouseButtonEventArgs e)
+    {
+        _vm.CurrentView = MainViewKind.Orchestrator;
+    }
+
     private void ActivityHistory_Click(object sender, MouseButtonEventArgs e)
     {
-        new Views.ActivityHistoryWindow { Owner = this }.ShowDialog();
+        _vm.CurrentView = MainViewKind.History;
+    }
+
+    private void ScheduledTasks_Click(object sender, MouseButtonEventArgs e)
+    {
+        _vm.CurrentView = MainViewKind.Scheduled;
+    }
+
+    private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is HistoryRowViewModel row)
+            _vm.OpenHistoryRow(row);
     }
 
     private void ProjectRow_Click(object sender, MouseButtonEventArgs e)

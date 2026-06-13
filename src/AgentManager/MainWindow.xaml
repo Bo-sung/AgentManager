@@ -544,7 +544,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Style="{StaticResource Lbl}" VerticalAlignment="Center">
-                                    <Run Text="PROJECT · "/><Run Text="{Binding Project, Mode=OneWay}"/>
+                                    <Run Text="{StaticResource L.Project}"/><Run Text=" · "/><Run Text="{Binding Project, Mode=OneWay}"/>
                                 </TextBlock>
                                 <TextBlock Grid.Column="1" Text="{Binding ProjectSessions.Count}" FontFamily="{StaticResource Mono}"
                                            FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="8,0,0,0"/>

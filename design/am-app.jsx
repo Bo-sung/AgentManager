@@ -7,6 +7,92 @@ const { useState, useEffect, useRef } = React;
 function fmtTokens(n){ return n>=1000 ? (n/1000).toFixed(1)+'k' : String(n); }
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 
+/* ---------- Titlebar menu bar (functional dropdowns) ---------- */
+function MenuBar({ menus }){
+  const [open, setOpen] = useState(null);
+  useEffect(()=>{
+    if (open===null) return;
+    const h = ()=>setOpen(null);
+    setTimeout(()=>window.addEventListener('click', h), 0);
+    return ()=>window.removeEventListener('click', h);
+  },[open]);
+  return (
+    <div className="tb-menu">
+      {menus.map(m=>(
+        <div className="tb-menu-wrap" key={m.label}>
+          <button className={open===m.label?'open':''}
+            onClick={e=>{ e.stopPropagation(); setOpen(o=>o===m.label?null:m.label); }}
+            onMouseEnter={()=>{ if(open!==null) setOpen(m.label); }}>
+            {m.label}
+          </button>
+          {open===m.label && (
+            <div className="menu tb-dropdown" onClick={e=>e.stopPropagation()}>
+              {m.items.map((it,i)=> it.sep
+                ? <div className="menu-sep" key={i} />
+                : (
+                  <div className={`menu-item ${it.active?'sel':''}`} key={i}
+                    onClick={()=>{ it.onClick && it.onClick(); setOpen(null); }}>
+                    <AIcon name={it.active?'check':(it.icon||'dots')} size={14} />
+                    <span>{it.label}</span>
+                    {it.kbd && <span className="kbd">{it.kbd}</span>}
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- About / shortcuts modal ---------- */
+function AboutModal({ onClose }){
+  const SHORTCUTS = [
+    ['⌘N','Spawn a new agent'],
+    ['⌘1 / ⌘2 / ⌘3','Orchestrator · History · Scheduled'],
+    ['⌘D','Toggle diff review panel'],
+    ['⌘,','Open settings'],
+    ['Enter','Send message to active agent'],
+  ];
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" style={{ width:460 }} onClick={e=>e.stopPropagation()}>
+        <div className="modal-h">
+          <span className="lbl">About</span>
+          <span style={{ color:'var(--txt-0)', fontWeight:600, fontSize:13 }}>AgentManager</span>
+          <button className="x" onClick={onClose}><AIcon name="x" size={16} /></button>
+        </div>
+        <div className="modal-b">
+          <div style={{ display:'flex', alignItems:'center', gap:13, marginBottom:14 }}>
+            <div className="tb-logo" style={{ width:40, height:40, border:'1px solid var(--line-bright)', borderRadius:'var(--r-md)', display:'grid', placeItems:'center', background:'var(--bg-1)' }}>
+              <AIcon name="layers" size={22} style={{ color:'var(--accent)' }} />
+            </div>
+            <div>
+              <div style={{ fontFamily:'var(--mono)', fontSize:13, color:'var(--txt-0)' }}>Agent<b style={{ color:'var(--accent)' }}>Manager</b> 1.4.0</div>
+              <div className="lbl" style={{ fontSize:9 }}>build 20260613 · 3 runtimes registered</div>
+            </div>
+          </div>
+          <p style={{ fontSize:12.5, color:'var(--txt-1)', lineHeight:1.6, marginBottom:16 }}>
+            Run Claude Code, GPT&nbsp;/&nbsp;Codex, and the Antigravity CLI side by side — each in its own isolated git worktree, orchestrated from a single client.
+          </p>
+          <div className="lbl" style={{ marginBottom:10 }}>Keyboard shortcuts</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+            {SHORTCUTS.map(([k,d],i)=>(
+              <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 0', borderTop: i?'1px solid var(--line-soft)':'none' }}>
+                <span style={{ fontSize:12.5, color:'var(--txt-1)' }}>{d}</span>
+                <span className="kbd" style={{ fontFamily:'var(--mono)', fontSize:11, color:'var(--accent)', background:'var(--bg-1)', border:'1px solid var(--line)', padding:'3px 9px', borderRadius:'var(--r-sm)' }}>{k}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="modal-f">
+          <button className="btn-primary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Review drawer ---------- */
 function ReviewDrawer({ open, session, onClose }){
   const [fileIdx, setFileIdx] = useState(0);
@@ -150,6 +236,7 @@ function App(){
   });
   const [reviewOpen, setReviewOpen] = useState(false);
   const [modal, setModal] = useState(false);
+  const [about, setAbout] = useState(false);
 
   const sessionsRef = useRef(sessions); sessionsRef.current = sessions;
 
@@ -222,6 +309,7 @@ function App(){
     setShown(p=>({ ...p, [id]:0 }));
     setTokens(p=>({ ...p, [id]:Math.floor(400+Math.random()*900) }));
     setActiveId(id);
+    setNav('session');
     setModal(false);
   };
 
@@ -245,7 +333,52 @@ function App(){
     }));
   };
 
-  const openReview = (s)=>{ setActiveId(s.id); setReviewOpen(true); };
+  const openReview = (s)=>{ const sid = typeof s==='string'?s:s.id; setActiveId(sid); setNav('session'); setReviewOpen(true); };
+  const openSession = (id)=>{ setActiveId(id); setNav('session'); };
+  const quickSpawn = (agentId)=> spawnAgent({ agentId, title: TASK_HINTS[agentId], model: AAGENTS[agentId].model });
+
+  /* keyboard shortcuts (mirror the menu bar) */
+  useEffect(()=>{
+    const h = (e)=>{
+      if (e.metaKey || e.ctrlKey){
+        const k = e.key.toLowerCase();
+        if (k==='n'){ e.preventDefault(); setModal(true); }
+        else if (k==='1'){ e.preventDefault(); setNav('orchestrator'); }
+        else if (k==='2'){ e.preventDefault(); setNav('history'); }
+        else if (k==='3'){ e.preventDefault(); setNav('scheduled'); }
+        else if (k===','){ e.preventDefault(); setNav('settings'); }
+        else if (k==='d'){ e.preventDefault(); setReviewOpen(o=>!o); }
+      } else if (e.key==='Escape'){ setModal(false); setAbout(false); }
+    };
+    window.addEventListener('keydown', h);
+    return ()=>window.removeEventListener('keydown', h);
+  },[]);
+
+  const menus = [
+    { label:'Agents', items:[
+      { label:'New agent…', icon:'plus', kbd:'⌘N', onClick:()=>setModal(true) },
+      { sep:true },
+      { label:'Run Claude Code', icon:'bolt', onClick:()=>quickSpawn('cc') },
+      { label:'Run GPT / Codex', icon:'bolt', onClick:()=>quickSpawn('gx') },
+      { label:'Run Antigravity CLI', icon:'bolt', onClick:()=>quickSpawn('ag') },
+      { sep:true },
+      { label:'Orchestrator dashboard', icon:'grid', active:nav==='orchestrator', onClick:()=>setNav('orchestrator') },
+    ]},
+    { label:'View', items:[
+      { label:'Orchestrator', icon:'grid', kbd:'⌘1', active:nav==='orchestrator', onClick:()=>setNav('orchestrator') },
+      { label:'Activity History', icon:'history', kbd:'⌘2', active:nav==='history', onClick:()=>setNav('history') },
+      { label:'Scheduled Tasks', icon:'calendar', kbd:'⌘3', active:nav==='scheduled', onClick:()=>setNav('scheduled') },
+      { sep:true },
+      { label:'Diff review panel', icon:'panel', kbd:'⌘D', active:reviewOpen, onClick:()=>setReviewOpen(o=>!o) },
+      { label:'Settings', icon:'settings', kbd:'⌘,', active:nav==='settings', onClick:()=>setNav('settings') },
+    ]},
+    { label:'Help', items:[
+      { label:'Keyboard shortcuts', icon:'ide', onClick:()=>setAbout(true) },
+      { label:'Documentation', icon:'file', onClick:()=>setAbout(true) },
+      { sep:true },
+      { label:'About AgentManager', icon:'spark', onClick:()=>setAbout(true) },
+    ]},
+  ];
 
   return (
     <div className="app">
@@ -255,11 +388,7 @@ function App(){
           <div className="tb-logo"><AIcon name="layers" size={15} style={{ color:'var(--accent)' }} /></div>
           <div className="tb-name">Agent<b>Manager</b></div>
         </div>
-        <div className="tb-menu">
-          {['File','Edit','View','Agents','Window','Help'].map(m=>(
-            <button key={m}>{m}</button>
-          ))}
-        </div>
+        <MenuBar menus={menus} />
         <div className="tb-spacer" />
         <div className="tb-stat">
           <div className="s"><div className="dot running" style={{ position:'static' }} /> {sessions.filter(s=>s.status==='running').length} RUNNING</div>
@@ -277,12 +406,20 @@ function App(){
         <Sidebar
           sessions={sessions}
           activeId={activeId}
-          onSelect={id=>{ setActiveId(id); }}
+          onSelect={id=>{ setActiveId(id); setNav('session'); }}
           nav={nav} onNav={setNav}
           onNew={()=>setModal(true)}
         />
 
-        {active ? (
+        {nav==='settings' ? (
+          <SettingsView onClose={()=>setNav('orchestrator')} />
+        ) : nav==='orchestrator' ? (
+          <OrchestratorView sessions={sessions} tokens={tokens} onOpen={openSession} onReview={openReview} onNew={()=>setModal(true)} />
+        ) : nav==='history' ? (
+          <HistoryView sessions={sessions} onOpen={openSession} />
+        ) : nav==='scheduled' ? (
+          <ScheduledView onNew={()=>setModal(true)} />
+        ) : active ? (
           <ChatPane
             key={active.id}
             session={active}
@@ -304,6 +441,7 @@ function App(){
       </div>
 
       {modal && <NewAgentModal onClose={()=>setModal(false)} onCreate={spawnAgent} />}
+      {about && <AboutModal onClose={()=>setAbout(false)} />}
     </div>
   );
 }

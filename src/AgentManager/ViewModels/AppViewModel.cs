@@ -6,11 +6,21 @@ using System.Windows.Threading;
 using AgentManager.Persistence;
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
+using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
+
+public enum MainViewKind
+{
+    Orchestrator,
+    History,
+    Scheduled,
+    Settings,
+    Session,
+}
 
 public sealed class AppViewModel : ObservableObject
 {
@@ -18,6 +28,7 @@ public sealed class AppViewModel : ObservableObject
     private static string L(string key, params object?[] args) => AgentManager.App.L(key, args);
     private readonly List<SessionViewModel> _allSessions = [];
     private readonly DispatcherTimer _runtimeTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly TimerScheduler _scheduler = new();
     private string _claudePath = "";
     private string _codexPath = "";
     private string _ollamaEndpoint = "http://localhost:11434";
@@ -29,6 +40,8 @@ public sealed class AppViewModel : ObservableObject
     public ObservableCollection<SessionViewModel> ProjectSessions { get; } = [];
     public ObservableCollection<SessionViewModel> ArchivedSessions { get; } = [];
     public ObservableCollection<CliHistoryItemViewModel> CliHistory { get; } = [];
+    public ObservableCollection<ScheduledJobViewModel> ScheduledJobs { get; } = [];
+    public ObservableCollection<HistoryRowViewModel> HistoryRows { get; } = [];
     public EngineDef[] Engines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
     public string Project => ActiveProject?.Name ?? "workspace";
     public string WorkingDirectory => ActiveProject?.Path ?? FindRepoRoot();
@@ -37,6 +50,8 @@ public sealed class AppViewModel : ObservableObject
     {
         NewAgentSelectedEngine = Engines[0];
         RestoreState();
+        LoadScheduledJobs();
+        CurrentView = MainViewKind.Orchestrator;
         NewProjectPath = WorkingDirectory;
         _runtimeTimer.Tick += (_, _) => RefreshRunningSessions();
         _runtimeTimer.Start();
@@ -84,9 +99,26 @@ public sealed class AppViewModel : ObservableObject
         ApproveForSessionCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, true, forSession: true); });
         DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
         OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
+        RefreshScheduledJobsCommand = new RelayCommand(_ => LoadScheduledJobs());
+        RefreshHistoryCommand = new RelayCommand(_ => RebuildHistoryRows());
+        SetHistoryAgentFilterCommand = new RelayCommand(p => { HistoryAgentFilter = p?.ToString() ?? "all"; });
+        SetHistoryStatusFilterCommand = new RelayCommand(p => { HistoryStatusFilter = p?.ToString() ?? "all"; });
+        _scheduler.JobDue += Scheduler_JobDue;
+        _scheduler.Start();
     }
 
     public RelayCommand OpenIdeCommand { get; }
+    public RelayCommand RefreshScheduledJobsCommand { get; }
+    public RelayCommand RefreshHistoryCommand { get; }
+    public RelayCommand SetHistoryAgentFilterCommand { get; }
+    public RelayCommand SetHistoryStatusFilterCommand { get; }
+
+    public void Dispose()
+    {
+        _scheduler.JobDue -= Scheduler_JobDue;
+        _scheduler.Dispose();
+        _runtimeTimer.Stop();
+    }
 
     /// <summary>IDE 핸드오프: 활성 세션의 worktree(없으면 프로젝트 폴더)를 VS Code로 연다.
     /// ShellExecute는 .cmd(code)를 못 찾으므로 설치 경로를 직접 탐색해 cmd /c로 실행. 없으면 탐색기.</summary>
@@ -404,7 +436,35 @@ public sealed class AppViewModel : ObservableObject
         get => _isReviewOpen;
         set { if (Set(ref _isReviewOpen, value)) { OnChanged(nameof(ReviewPaneWidth)); SaveState(); } }
     }
-    public GridLength ReviewPaneWidth => IsReviewOpen ? new GridLength(420) : new GridLength(0);
+    public GridLength ReviewPaneWidth => IsSessionView && IsReviewOpen ? new GridLength(420) : new GridLength(0);
+
+    private MainViewKind _currentView = MainViewKind.Orchestrator;
+    public MainViewKind CurrentView
+    {
+        get => _currentView;
+        set
+        {
+            if (!Set(ref _currentView, value)) return;
+            OnChanged(nameof(IsOrchestratorView));
+            OnChanged(nameof(IsHistoryView));
+            OnChanged(nameof(IsScheduledView));
+            OnChanged(nameof(IsSettingsView));
+            OnChanged(nameof(IsSessionView));
+            OnChanged(nameof(ShowSessionPane));
+            OnChanged(nameof(ShowSessionEmpty));
+            OnChanged(nameof(ReviewPaneWidth));
+            if (value == MainViewKind.History)
+                RebuildHistoryRows();
+        }
+    }
+
+    public bool IsOrchestratorView => CurrentView == MainViewKind.Orchestrator;
+    public bool IsHistoryView => CurrentView == MainViewKind.History;
+    public bool IsScheduledView => CurrentView == MainViewKind.Scheduled;
+    public bool IsSettingsView => CurrentView == MainViewKind.Settings;
+    public bool IsSessionView => CurrentView == MainViewKind.Session;
+    public bool ShowSessionPane => IsSessionView && HasActive;
+    public bool ShowSessionEmpty => IsSessionView && !HasActive;
 
     // ----- active session -----
     private SessionViewModel? _active;
@@ -418,6 +478,10 @@ public sealed class AppViewModel : ObservableObject
                 foreach (var session in _allSessions)
                     session.IsActive = ReferenceEquals(session, value);
                 OnChanged(nameof(HasActive));
+                OnChanged(nameof(ShowSessionPane));
+                OnChanged(nameof(ShowSessionEmpty));
+                if (value is not null)
+                    CurrentView = MainViewKind.Session;
                 _ = RefreshReviewAsync(value);
             }
         }
@@ -506,6 +570,46 @@ public sealed class AppViewModel : ObservableObject
     private string _settingsStatus = "";
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
 
+    private readonly List<HistoryRowViewModel> _historySource = [];
+    private string _historyFilterText = "";
+    public string HistoryFilterText
+    {
+        get => _historyFilterText;
+        set
+        {
+            if (Set(ref _historyFilterText, value ?? ""))
+                ApplyHistoryFilters();
+        }
+    }
+
+    private string _historyAgentFilter = "all";
+    public string HistoryAgentFilter
+    {
+        get => _historyAgentFilter;
+        set
+        {
+            if (Set(ref _historyAgentFilter, string.IsNullOrWhiteSpace(value) ? "all" : value))
+                ApplyHistoryFilters();
+        }
+    }
+
+    private string _historyStatusFilter = "all";
+    public string HistoryStatusFilter
+    {
+        get => _historyStatusFilter;
+        set
+        {
+            if (Set(ref _historyStatusFilter, string.IsNullOrWhiteSpace(value) ? "all" : value))
+                ApplyHistoryFilters();
+        }
+    }
+
+    private string _historySummaryText = "";
+    public string HistorySummaryText { get => _historySummaryText; private set => Set(ref _historySummaryText, value); }
+
+    private string _historyFilterSummaryText = "";
+    public string HistoryFilterSummaryText { get => _historyFilterSummaryText; private set => Set(ref _historyFilterSummaryText, value); }
+
     // ----- translation + quota -----
     private bool _translationEnabled = true;
     public bool TranslationEnabled { get => _translationEnabled; set => Set(ref _translationEnabled, value); }
@@ -516,8 +620,16 @@ public sealed class AppViewModel : ObservableObject
     public int RunningCount => CountBy("running");
     public int WaitingCount => CountBy("waiting");
     public int DoneCount => CountBy("done");
+    public int FailedCount => CountBy("error");
     private int CountBy(string s) { int n = 0; foreach (var x in Sessions) if (x.Status == s) n++; return n; }
-    private void RefreshCounts() { OnChanged(nameof(RunningCount)); OnChanged(nameof(WaitingCount)); OnChanged(nameof(DoneCount)); }
+    private void RefreshCounts()
+    {
+        OnChanged(nameof(RunningCount));
+        OnChanged(nameof(WaitingCount));
+        OnChanged(nameof(DoneCount));
+        OnChanged(nameof(FailedCount));
+        OnChanged(nameof(FleetThroughputLabel));
+    }
 
     // ----- aggregate dashboard (all sessions) -----
     public string TotalTokensLabel
@@ -538,7 +650,22 @@ public sealed class AppViewModel : ObservableObject
             return c > 0 ? "$" + c.ToString("0.00") : "$0";
         }
     }
-    private void RefreshTotals() { OnChanged(nameof(TotalTokensLabel)); OnChanged(nameof(TotalCostLabel)); }
+    private void RefreshTotals()
+    {
+        OnChanged(nameof(TotalTokensLabel));
+        OnChanged(nameof(TotalCostLabel));
+        OnChanged(nameof(FleetThroughputLabel));
+    }
+    public string FleetThroughputLabel
+    {
+        get
+        {
+            long total = 0;
+            foreach (var x in _allSessions)
+                total += x.TokensIn + x.TokensOut;
+            return FmtK(total) + " tok";
+        }
+    }
     private static string FmtK(long n) => n >= 1_000_000 ? (n / 1_000_000.0).ToString("0.0") + "M"
         : n >= 1000 ? (n / 1000.0).ToString("0.0") + "k" : n.ToString();
 
@@ -548,9 +675,100 @@ public sealed class AppViewModel : ObservableObject
             if (session.IsRunning)
                 session.RefreshRuntimeLabels();
 
+        OnChanged(nameof(FleetThroughputLabel));
+
         // live review: pick up files a still-running tool is writing (debounced inside)
         if (ActiveSession is { IsRunning: true } run)
             _ = QueueLiveReviewRefreshAsync(run);
+    }
+
+    private void LoadScheduledJobs()
+    {
+        ScheduledJobs.Clear();
+        foreach (var job in ScheduleStore.Load())
+            ScheduledJobs.Add(new ScheduledJobViewModel(job));
+        _scheduler.Reload();
+    }
+
+    private void Scheduler_JobDue(object? sender, ScheduleDueEventArgs e)
+    {
+        Application.Current.Dispatcher.InvokeAsync(() => RunScheduledJob(e.Job));
+    }
+
+    private void RunScheduledJob(ScheduledJob job)
+    {
+        var project = ActiveProject ?? Projects.FirstOrDefault();
+        if (project is null) return;
+
+        var engine = EngineRegistry.Get(job.AgentId);
+        var title = string.IsNullOrWhiteSpace(job.Title) ? L("L.ScheduledDefaultTitle") : job.Title.Trim();
+        var branch = string.IsNullOrWhiteSpace(job.TargetBranch) ? "agent/" + Slug(title) : job.TargetBranch.Trim();
+        var prompt = string.IsNullOrWhiteSpace(job.Prompt) ? title : job.Prompt.Trim();
+
+        var session = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch,
+            project.Id, project.Name, project.Path, engine.Models[0])
+        {
+            TranslationEnabled = TranslationEnabled,
+            Activity = L("L.ScheduledQueued"),
+        };
+        session.Transcript.Add(new WorkingBlock(L("L.ScheduledRunMarker", job.Trigger.CadenceText)));
+        session.PropertyChanged += SessionStatusWatch;
+        _allSessions.Insert(0, session);
+        ActiveSession = session;
+        RefreshProjectSessions(selectFirstIfMissing: false);
+        RefreshCounts();
+        RefreshProjectCounts();
+        LoadScheduledJobs();
+        SaveState();
+
+        _ = RunTurnAsync(session, prompt);
+    }
+
+    private void RebuildHistoryRows()
+    {
+        _historySource.Clear();
+        foreach (var row in _allSessions
+                     .OrderByDescending(s => s.StartedAt)
+                     .Select(HistoryRowViewModel.FromSession))
+        {
+            _historySource.Add(row);
+        }
+
+        HistorySummaryText = L("L.SessionsProjectsSummary", _historySource.Count, Projects.Count);
+        ApplyHistoryFilters();
+    }
+
+    private void ApplyHistoryFilters()
+    {
+        HistoryRows.Clear();
+        foreach (var row in _historySource.Where(MatchesHistoryFilters))
+            HistoryRows.Add(row);
+
+        HistoryFilterSummaryText = string.IsNullOrWhiteSpace(HistoryFilterText)
+            ? L("L.Shown", HistoryRows.Count)
+            : L("L.ShownAfterFilter", HistoryRows.Count);
+    }
+
+    private bool MatchesHistoryFilters(HistoryRowViewModel row)
+    {
+        if (!row.Matches(HistoryFilterText)) return false;
+        if (HistoryAgentFilter != "all" && row.AgentId != HistoryAgentFilter) return false;
+        return HistoryStatusFilter switch
+        {
+            "all" => true,
+            "active" => row.Status is "running" or "waiting",
+            "done" => row.Status == "done",
+            "waiting" => row.Status == "waiting",
+            "error" => row.Status == "error",
+            _ => true,
+        };
+    }
+
+    public void OpenHistoryRow(HistoryRowViewModel row)
+    {
+        var session = _allSessions.FirstOrDefault(s => s.Id == row.SessionId);
+        if (session is not null)
+            ActiveSession = session;
     }
 
     private void CreateSession()
@@ -749,6 +967,7 @@ public sealed class AppViewModel : ObservableObject
         {
             RefreshProjectSessions();
             RefreshCounts();
+            if (IsHistoryView) RebuildHistoryRows();
         }
         else if (e.PropertyName == nameof(SessionViewModel.TranslationEnabled))
         {

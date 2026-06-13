@@ -242,6 +242,10 @@
     <sys:String x:Key="L.ActivityHistoryTitle">Activity History</sys:String>
     <sys:String x:Key="L.ActivityHistoryHeader">ACTIVITY HISTORY</sys:String>
     <sys:String x:Key="L.Refresh">Refresh</sys:String>
+    <sys:String x:Key="L.FilterAll">All</sys:String>
+    <sys:String x:Key="L.FilterActive">Active</sys:String>
+    <sys:String x:Key="L.FilterAwaiting">Awaiting</sys:String>
+    <sys:String x:Key="L.FilterAllAgents">All agents</sys:String>
     <sys:String x:Key="L.Close">Close</sys:String>
     <sys:String x:Key="L.ArchivedBadge">archived</sys:String>
     <sys:String x:Key="L.Untitled">(untitled)</sys:String>
@@ -251,4 +255,7 @@
     <sys:String x:Key="L.Shown">{0} shown</sys:String>
     <sys:String x:Key="L.ShownAfterFilter">{0} shown after filter</sys:String>
     <sys:String x:Key="L.BlocksCount">{0} blocks</sys:String>
+    <sys:String x:Key="L.ScheduledDefaultTitle">Scheduled agent run</sys:String>
+    <sys:String x:Key="L.ScheduledQueued">scheduled run queued</sys:String>
+    <sys:String x:Key="L.ScheduledRunMarker">scheduled trigger fired · {0}</sys:String>
 </ResourceDictionary>
