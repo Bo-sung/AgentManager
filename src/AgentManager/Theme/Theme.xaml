@@ -468,4 +468,31 @@
         </Setter>
     </Style>
 
+    <!-- ===== HUD primitives (design .ticks / .code-chip) ===== -->
+    <!-- Decorative corner ticks: drop as an overlay child inside a Grid; non-interactive. -->
+    <Style x:Key="HudTicks" TargetType="Control">
+        <Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Control">
+                    <Grid Margin="3">
+                        <Border Width="6" Height="6" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                BorderBrush="{StaticResource LineBright}" BorderThickness="1,1,0,0"/>
+                        <Border Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                BorderBrush="{StaticResource LineBright}" BorderThickness="0,0,1,1"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Mono accent code chip (design .code-chip) -->
+    <Style x:Key="CodeChip" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Mono}"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
 </ResourceDictionary>

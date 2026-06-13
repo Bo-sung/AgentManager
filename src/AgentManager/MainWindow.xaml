@@ -1751,46 +1751,61 @@
                                 <!-- KPIs -->
                                 <UniformGrid Columns="5" Rows="1" Height="78" Margin="0,0,0,22">
                                     <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,9">
-                                        <StackPanel>
-                                            <TextBlock Text="{StaticResource L.KpiActive}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,3"/>
-                                            <TextBlock Text="{Binding RunningCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
-                                            <TextBlock Text="{StaticResource L.KpiActiveSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
-                                        </StackPanel>
+                                        <Grid>
+                                            <Control Style="{StaticResource HudTicks}"/>
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.KpiActive}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,3"/>
+                                                <TextBlock Text="{Binding RunningCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                                <TextBlock Text="{StaticResource L.KpiActiveSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                     <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,9">
-                                        <StackPanel>
-                                            <TextBlock Text="{StaticResource L.KpiAwaiting}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Warn}" Margin="0,0,0,3"/>
-                                            <TextBlock Text="{Binding WaitingCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
-                                            <TextBlock Text="{StaticResource L.KpiAwaitingSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
-                                        </StackPanel>
+                                        <Grid>
+                                            <Control Style="{StaticResource HudTicks}"/>
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.KpiAwaiting}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Warn}" Margin="0,0,0,3"/>
+                                                <TextBlock Text="{Binding WaitingCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                                <TextBlock Text="{StaticResource L.KpiAwaitingSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                     <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,9">
-                                        <StackPanel>
-                                            <TextBlock Text="{StaticResource L.KpiCompleted}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Ok}" Margin="0,0,0,3"/>
-                                            <TextBlock Text="{Binding DoneCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
-                                            <TextBlock Text="{StaticResource L.KpiCompletedSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
-                                        </StackPanel>
+                                        <Grid>
+                                            <Control Style="{StaticResource HudTicks}"/>
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.KpiCompleted}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Ok}" Margin="0,0,0,3"/>
+                                                <TextBlock Text="{Binding DoneCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                                <TextBlock Text="{StaticResource L.KpiCompletedSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                     <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,9">
-                                        <StackPanel>
-                                            <TextBlock Text="{StaticResource L.KpiFailed}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Err}" Margin="0,0,0,3"/>
-                                            <TextBlock Text="{Binding FailedCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
-                                            <TextBlock Text="{StaticResource L.KpiFailedSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
-                                        </StackPanel>
+                                        <Grid>
+                                            <Control Style="{StaticResource HudTicks}"/>
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.KpiFailed}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Err}" Margin="0,0,0,3"/>
+                                                <TextBlock Text="{Binding FailedCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                                <TextBlock Text="{StaticResource L.KpiFailedSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                     <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource AccentLine}" BorderThickness="1" CornerRadius="6" Padding="12,9">
-                                        <StackPanel>
-                                            <TextBlock Text="{StaticResource L.KpiFleet}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Txt1}" Margin="0,0,0,3" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding FleetThroughputLabel}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
-                                            <TextBlock Text="{StaticResource L.KpiFleetSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
-                                        </StackPanel>
+                                        <Grid>
+                                            <Control Style="{StaticResource HudTicks}"/>
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.KpiFleet}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Txt1}" Margin="0,0,0,3" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding FleetThroughputLabel}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
+                                                <TextBlock Text="{StaticResource L.KpiFleetSub}" FontSize="9" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                 </UniformGrid>
 
                                 <!-- Live workers -->
                                 <DockPanel Margin="0,0,0,8">
                                     <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.LiveWorkers}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Txt2}"/>
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ActiveSessions.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Accent}" VerticalAlignment="Center"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ActiveSessions.Count}" Style="{StaticResource CodeChip}"/>
                                     <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="10,0"/>
                                 </DockPanel>
                                 <TextBlock Text="{StaticResource L.OrchEmptyLive}" FontSize="11" Foreground="{StaticResource Txt3}" Margin="2,0,0,12">
@@ -2051,7 +2066,7 @@
 
                         <!-- Scrollable view -->
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel Margin="16" MaxWidth="1000" HorizontalAlignment="Stretch">
+                            <StackPanel Margin="16" HorizontalAlignment="Stretch">
                                 <ItemsControl ItemsSource="{Binding ScheduledJobs}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
