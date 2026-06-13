@@ -37,9 +37,9 @@
                     <StackPanel>
                         <DockPanel Margin="0,0,0,5">
                             <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.SentEn}"
-                                          IsChecked="{Binding ShowSent, Mode=TwoWay}"
-                                          Visibility="{Binding HasSent, Converter={StaticResource BoolVis}}"
-                                          Margin="9,0,0,0" ToolTip="{StaticResource L.SentEnTip}"/>
+                                           IsChecked="{Binding ShowSent, Mode=TwoWay}"
+                                           Visibility="{Binding HasSent, Converter={StaticResource BoolVis}}"
+                                           Margin="9,0,0,0" ToolTip="{StaticResource L.SentEnTip}"/>
                             <TextBlock Style="{StaticResource Lbl}" Text="{StaticResource L.You}" VerticalAlignment="Center"/>
                         </DockPanel>
                         <TextBox Style="{StaticResource SelectableText}" Text="{Binding DisplayText, Mode=OneWay}"
@@ -143,7 +143,7 @@
         <DataTemplate DataType="{x:Type vm:ThinkingBlock}">
             <StackPanel Margin="40,4,0,4">
                 <ToggleButton IsChecked="{Binding IsOpen}" Cursor="Hand" Background="Transparent" BorderThickness="0"
-                              HorizontalAlignment="Left">
+                               HorizontalAlignment="Left">
                     <ToggleButton.Template>
                         <ControlTemplate TargetType="ToggleButton">
                             <Border Background="Transparent" Padding="2,2">
@@ -153,11 +153,6 @@
                                     <TextBlock x:Name="chev" Text=" ▸" FontSize="9" Foreground="{StaticResource Txt3}"/>
                                 </StackPanel>
                             </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="chev" Property="Text" Value=" ▾"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </ToggleButton.Template>
                 </ToggleButton>
@@ -373,8 +368,8 @@
                         <StackPanel Orientation="Horizontal" Margin="9,7" TextElement.Foreground="{StaticResource Txt0}"
                                     ToolTip="{StaticResource L.ActivityHistoryTip}" Cursor="Hand"
                                     MouseLeftButtonUp="ActivityHistory_Click">
-                            <controls:IconView Icon="{StaticResource IconHistory}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{StaticResource L.ActivityHistory}" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                <controls:IconView Icon="{StaticResource IconHistory}" Width="15" Height="15" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{StaticResource L.ActivityHistory}" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="9,7" TextElement.Foreground="{StaticResource Txt3}"
                                     ToolTip="{StaticResource L.ScheduledTasksTip}">
@@ -726,285 +721,251 @@
 
             <!-- Main pane -->
             <Grid Grid.Column="1" DataContext="{Binding ActiveSession}">
-                <!-- empty state -->
-                <TextBlock Text="{StaticResource L.NoSessionStart}" FontFamily="{StaticResource Mono}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding DataContext.HasActive, ElementName=Root}" Value="False">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                <!-- In-app activity history shell -->
 
-                <DockPanel>
-                    <DockPanel.Style>
-                        <Style TargetType="DockPanel">
-                            <Setter Property="Visibility" Value="Visible"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding DataContext.HasActive, ElementName=Root}" Value="False">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DockPanel.Style>
+                <!-- Session View Wrapper -->
+                <Grid Visibility="{Binding DataContext.IsSessionView, ElementName=Root, Converter={StaticResource BoolVis}}">
+                    <!-- empty state -->
+                    <TextBlock Text="{StaticResource L.NoSessionStart}" FontFamily="{StaticResource Mono}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.HasActive, ElementName=Root}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
 
-                    <!-- tabbar -->
-                    <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
-                        <DockPanel Margin="14,0">
-                            <TextBlock DockPanel.Dock="Left" Text="{Binding Project}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
-                            <TextBlock DockPanel.Dock="Left" Text="  ›  " Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
-                            <!-- 리뷰 토글은 최우측: 패널이 우측에서 열리므로 위치=동작 (사용자 요청) -->
-                            <Button DockPanel.Dock="Right" Width="30" Height="30"
-                                    ToolTip="{StaticResource L.DiffReviewToggleTip}"
-                                    Command="{Binding DataContext.ToggleReviewCommand, ElementName=Root}">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="{StaticResource Bg3}"/>
-                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                        <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                                            BorderThickness="1" CornerRadius="6">
-                                                        <controls:IconView Icon="{StaticResource IconPanel}"
-                                                                           Foreground="{TemplateBinding Foreground}"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
-                                                <Setter Property="BorderBrush" Value="{StaticResource LineBright}"/>
-                                            </Trigger>
-                                            <DataTrigger Binding="{Binding DataContext.IsReviewOpen, ElementName=Root}" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
-                                                <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                            <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center" Margin="0,0,8,0">
-                                <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"/>
-                            </Border>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
-                                    ToolTip="{StaticResource L.OpenIdeTip}"
-                                    Command="{Binding DataContext.OpenIdeCommand, ElementName=Root}">
-                                <StackPanel Orientation="Horizontal">
-                                    <controls:IconView Icon="{StaticResource IconIde}" Width="13" Height="13"
-                                                       Foreground="{StaticResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{StaticResource L.OpenIde}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
-                                    ToolTip="{StaticResource L.ExportTip}" Click="ExportTranscript_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <controls:IconView Icon="{StaticResource IconFile}" Width="12" Height="12"
-                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{StaticResource L.Export}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
-                                    ToolTip="{StaticResource L.CopyAllTip}" Click="CopyTranscript_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <controls:IconView Icon="{StaticResource IconCopy}" Width="12" Height="12"
-                                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{StaticResource L.CopyAll}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        </DockPanel>
-                    </Border>
+                    <DockPanel>
+                        <DockPanel.Style>
+                            <Style TargetType="DockPanel">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.HasActive, ElementName=Root}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DockPanel.Style>
 
-                    <!-- status strip -->
-                    <Border DockPanel.Dock="Top" Height="38" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
-                        <DockPanel Margin="16,0" LastChildFill="False" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10.5">
-                            <TextBlock DockPanel.Dock="Left" Text="{Binding StatusLabel}" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                            <Border DockPanel.Dock="Left" Background="{StaticResource AccentDim}"
-                                    BorderThickness="1" CornerRadius="13" Padding="9,3" VerticalAlignment="Center" Margin="0,0,16,0"
-                                    Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsQuiet}" Value="True">
-                                                <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{StaticResource L.Running}" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                                    <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,8,0"/>
-                                    <TextBlock Text="{Binding LastSignalLabel}" Foreground="{StaticResource Txt2}"/>
-                                </StackPanel>
-                            </Border>
-                            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource Txt2}">
-                                <Run Text="{StaticResource L.StatusAgent}"/><Run Text="{Binding AgentName, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
-                            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
-                                <Run Text="{StaticResource L.StatusModel}"/><Run Text="{Binding Model, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
-                            <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
-                                          IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
-                                          Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"
-                                          Margin="16,0,0,0"/>
-                            <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
-                                          IsChecked="{Binding RequireApproval, Mode=TwoWay}"
-                                          Content="{StaticResource L.Approval}" ToolTip="{StaticResource L.ApprovalToggleTip}"
-                                          Margin="8,0,0,0"/>
-                            <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding Source={StaticResource SandboxModes}}"
-                                      SelectedItem="{Binding Sandbox, Mode=TwoWay}"
-                                      FontFamily="{StaticResource Mono}" FontSize="10" Width="132" Height="24"
-                                      Background="{StaticResource Bg1}" Foreground="{StaticResource Txt1}"
-                                      BorderBrush="{StaticResource Line}" Margin="8,0,0,0"/>
-                            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
-                                <Run Text="{StaticResource L.Tkn}"/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
-                            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}" Margin="0,0,16,0">
-                                <Run Text="{StaticResource L.Cost}"/><Run Text="{Binding CostLabel, Mode=OneWay}" Foreground="{StaticResource Ok}"/></TextBlock>
-                        </DockPanel>
-                    </Border>
+                        <!-- tabbar -->
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
+                            <DockPanel Margin="14,0">
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding Project}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Left" Text="  ›  " Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
+                                <!-- 리뷰 토글은 최우측: 패널이 우측에서 열리므로 위치=동작 (사용자 요청) -->
+                                <Button DockPanel.Dock="Right" Width="30" Height="30"
+                                        ToolTip="{StaticResource L.DiffReviewToggleTip}"
+                                        Command="{Binding DataContext.ToggleReviewCommand, ElementName=Root}">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="1" CornerRadius="6">
+                                                            <controls:IconView Icon="{StaticResource IconPanel}"
+                                                                               Foreground="{TemplateBinding Foreground}"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource LineBright}"/>
+                                                </Trigger>
+                                                <DataTrigger Binding="{Binding DataContext.IsReviewOpen, ElementName=Root}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center" Margin="0,0,8,0">
+                                    <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"/>
+                                </Border>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                        ToolTip="{StaticResource L.OpenIdeTip}"
+                                        Command="{Binding DataContext.OpenIdeCommand, ElementName=Root}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:IconView Icon="{StaticResource IconIde}" Width="13" Height="13"
+                                                           Foreground="{StaticResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.OpenIde}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                        ToolTip="{StaticResource L.ExportTip}" Click="ExportTranscript_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:IconView Icon="{StaticResource IconFile}" Width="12" Height="12"
+                                                           Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.Export}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                        ToolTip="{StaticResource L.CopyAllTip}" Click="CopyTranscript_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:IconView Icon="{StaticResource IconCopy}" Width="12" Height="12"
+                                                           Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.CopyAll}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                        </Border>
 
-                    <!-- composer (bottom) -->
-                    <Border DockPanel.Dock="Bottom" Margin="14,0,14,14" MinWidth="520" HorizontalAlignment="Stretch">
-                        <StackPanel>
-                            <Border Margin="4,0,4,8" Background="{StaticResource AccentDim}" BorderThickness="1" CornerRadius="8"
-                                    Padding="11,8" Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsQuiet}" Value="True">
-                                                <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <DockPanel TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10.5">
-                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0">
-                                        <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,10,0"/>
+                        <!-- status strip -->
+                        <Border DockPanel.Dock="Top" Height="38" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
+                            <DockPanel Margin="16,0" LastChildFill="False" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10.5">
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding StatusLabel}" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                <Border DockPanel.Dock="Left" Background="{StaticResource AccentDim}"
+                                        BorderThickness="1" CornerRadius="13" Padding="9,3" VerticalAlignment="Center" Margin="0,0,16,0"
+                                        Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsQuiet}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource L.Running}" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,8,0"/>
                                         <TextBlock Text="{Binding LastSignalLabel}" Foreground="{StaticResource Txt2}"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{StaticResource L.Running}" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,10,0"/>
-                                        <TextBlock Text="{Binding BusyLine}" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </DockPanel>
-                            </Border>
-                            <Border Background="{StaticResource Bg3}" BorderThickness="1.5" CornerRadius="10">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                                                <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <DockPanel LastChildFill="True">
-                                    <Border DockPanel.Dock="Bottom" Padding="9,0,9,9" Height="50">
-                                        <DockPanel VerticalAlignment="Bottom" LastChildFill="True">
-                                            <Button DockPanel.Dock="Left" Style="{StaticResource ComposerIconButton}"
-                                                    Margin="0,0,8,0"
-                                                    ToolTip="{StaticResource L.AttachImageTip}"
-                                                    Click="AttachImage_Click">
-                                                <controls:IconView Icon="{StaticResource IconAttach}" Width="15" Height="15"/>
-                                            </Button>
-                                            <Border DockPanel.Dock="Left" Height="30" CornerRadius="15" Padding="12,0" BorderThickness="1"
-                                                    Margin="0,0,8,0" VerticalAlignment="Center"
-                                                    ToolTip="{StaticResource L.AgentEngineTip}">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="{StaticResource Bg1}"/>
-                                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                                <Setter Property="Background" Value="{StaticResource AccentDim}"/>
-                                                                <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                <Setter Property="Background" Value="{StaticResource GxDim}"/>
-                                                                <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                                                                <Setter Property="Background" Value="{StaticResource InfoDim}"/>
-                                                                <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                <Setter Property="Background" Value="{StaticResource AgyDim}"/>
-                                                                <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <controls:IconView Style="{StaticResource EngineIcon}" Width="16" Height="16"
-                                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" FontWeight="SemiBold"
-                                                               VerticalAlignment="Center" Text="{Binding Badge}">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                                        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                        <Setter Property="Foreground" Value="{StaticResource Gx}"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                                                                        <Setter Property="Foreground" Value="{StaticResource Info}"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                        <Setter Property="Foreground" Value="{StaticResource Agy}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </Border>
-                                            <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
-                                                    VerticalAlignment="Center" ToolTip="{Binding Branch}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <controls:IconView Icon="{StaticResource IconBranch}" Width="13" Height="13"
-                                                                       Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" Foreground="{StaticResource Txt1}"
-                                                               VerticalAlignment="Center">
-                                                        <Run Text="{StaticResource L.WorktreePrefix}" Foreground="{StaticResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </Border>
-                                            <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
-                                                <ToggleButton x:Name="ModelMenuBtn" Style="{StaticResource TogglePillButton}"
-                                                              Height="30" Padding="12,0" Cursor="Hand" ToolTip="{StaticResource L.ModelSelectTip}">
+                                </Border>
+                                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource Txt2}">
+                                    <Run Text="{StaticResource L.StatusAgent}"/><Run Text="{Binding AgentName, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
+                                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
+                                    <Run Text="{StaticResource L.StatusModel}"/><Run Text="{Binding Model, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
+                                <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
+                                              IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
+                                              Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"
+                                              Margin="16,0,0,0"/>
+                                <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
+                                              IsChecked="{Binding RequireApproval, Mode=TwoWay}"
+                                              Content="{StaticResource L.Approval}" ToolTip="{StaticResource L.ApprovalToggleTip}"
+                                              Margin="8,0,0,0"/>
+                                <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding Source={StaticResource SandboxModes}}"
+                                          SelectedItem="{Binding Sandbox, Mode=TwoWay}"
+                                          FontFamily="{StaticResource Mono}" FontSize="10" Width="132" Height="24"
+                                          Background="{StaticResource Bg1}" Foreground="{StaticResource Txt1}"
+                                          BorderBrush="{StaticResource Line}" Margin="8,0,0,0"/>
+                                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
+                                    <Run Text="{StaticResource L.Tkn}"/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
+                                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}" Margin="0,0,16,0">
+                                    <Run Text="{StaticResource L.Cost}"/><Run Text="{Binding CostLabel, Mode=OneWay}" Foreground="{StaticResource Ok}"/></TextBlock>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- composer (bottom) -->
+                        <Border DockPanel.Dock="Bottom" Margin="14,0,14,14" MinWidth="520" HorizontalAlignment="Stretch">
+                            <StackPanel>
+                                <Border Margin="4,0,4,8" Background="{StaticResource AccentDim}" BorderThickness="1" CornerRadius="8"
+                                        Padding="11,8" Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsQuiet}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <DockPanel TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10.5">
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0">
+                                            <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,10,0"/>
+                                            <TextBlock Text="{Binding LastSignalLabel}" Foreground="{StaticResource Txt2}"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{StaticResource L.Running}" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                                            <TextBlock Text="{Binding BusyLine}" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                                <Border Background="{StaticResource Bg3}" BorderThickness="1.5" CornerRadius="10">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding AgentId}" Value="cc">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <DockPanel LastChildFill="True">
+                                        <Border DockPanel.Dock="Bottom" Padding="9,0,9,9" Height="50">
+                                            <DockPanel VerticalAlignment="Bottom" LastChildFill="True">
+                                                <Button DockPanel.Dock="Left" Style="{StaticResource ComposerIconButton}"
+                                                        Margin="0,0,8,0"
+                                                        ToolTip="{StaticResource L.AttachImageTip}"
+                                                        Click="AttachImage_Click">
+                                                    <controls:IconView Icon="{StaticResource IconAttach}" Width="15" Height="15"/>
+                                                </Button>
+                                                <Border DockPanel.Dock="Left" Height="30" CornerRadius="15" Padding="12,0" BorderThickness="1"
+                                                        Margin="0,0,8,0" VerticalAlignment="Center"
+                                                        ToolTip="{StaticResource L.AgentEngineTip}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{StaticResource Bg1}"/>
+                                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding AgentId}" Value="cc">
+                                                                    <Setter Property="Background" Value="{StaticResource AccentDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                                    <Setter Property="Background" Value="{StaticResource GxDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                                                                    <Setter Property="Background" Value="{StaticResource InfoDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                                                                    <Setter Property="Background" Value="{StaticResource AgyDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
                                                     <StackPanel Orientation="Horizontal">
-                                                        <controls:IconView Icon="{StaticResource IconSpark}" Width="13" Height="13"
-                                                                           Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
-                                                                   Text="{Binding Model}" FontWeight="SemiBold">
+                                                        <controls:IconView Style="{StaticResource EngineIcon}" Width="16" Height="16"
+                                                                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" FontWeight="SemiBold"
+                                                                   VerticalAlignment="Center" Text="{Binding Badge}">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                    <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
                                                                     <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AgentId}" Value="cc">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                        </DataTrigger>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="gx">
                                                                             <Setter Property="Foreground" Value="{StaticResource Gx}"/>
                                                                         </DataTrigger>
@@ -1018,219 +979,625 @@
                                                                 </Style>
                                                             </TextBlock.Style>
                                                         </TextBlock>
-                                                        <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
-                                                                           Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                </ToggleButton>
-                                                <Popup IsOpen="{Binding IsChecked, ElementName=ModelMenuBtn, Mode=TwoWay}"
-                                                       StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
-                                                    <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource LineBright}" BorderThickness="1"
-                                                            CornerRadius="7" Padding="5" Margin="8" MinWidth="200">
-                                                        <Border.Effect>
-                                                            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
-                                                        </Border.Effect>
-                                                        <StackPanel>
-                                                            <TextBlock Style="{StaticResource Lbl}" Margin="9,5,9,7">
-                                                                <Run Text="{Binding AgentName, Mode=OneWay}"/><Run Text="{StaticResource L.DotModel}"/>
-                                                            </TextBlock>
-                                                            <ItemsControl ItemsSource="{Binding AvailableModels}">
-                                                                <ItemsControl.ItemTemplate>
-                                                                    <DataTemplate>
-                                                                        <Button Click="ModelOption_Click" Cursor="Hand"
-                                                                                Background="Transparent" BorderThickness="0"
-                                                                                HorizontalContentAlignment="Stretch" Padding="0">
-                                                                            <Button.Template>
-                                                                                <ControlTemplate TargetType="Button">
-                                                                                    <Border x:Name="mi" Background="Transparent" CornerRadius="4" Padding="9,7">
-                                                                                        <ContentPresenter/>
-                                                                                    </Border>
-                                                                                    <ControlTemplate.Triggers>
-                                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                                            <Setter TargetName="mi" Property="Background" Value="{StaticResource Bg4}"/>
-                                                                                        </Trigger>
-                                                                                    </ControlTemplate.Triggers>
-                                                                                </ControlTemplate>
-                                                                            </Button.Template>
-                                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt0}" Text="{Binding}"/>
-                                                                        </Button>
-                                                                    </DataTemplate>
-                                                                </ItemsControl.ItemTemplate>
-                                                            </ItemsControl>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </Popup>
-                                            </Grid>
-                                            <Grid DockPanel.Dock="Left" Margin="0,0,8,0"
-                                                  Visibility="{Binding HasEffort, Converter={StaticResource BoolVis}}">
-                                                <ToggleButton x:Name="EffortMenuBtn" Style="{StaticResource TogglePillButton}"
-                                                              Height="30" Padding="12,0" Cursor="Hand"
-                                                              ToolTip="{StaticResource L.EffortTip}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <controls:IconView Icon="{StaticResource IconBolt}" Width="13" Height="13"
-                                                                           Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
-                                                                   Text="{Binding ReasoningEffort}" FontWeight="SemiBold">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                            <Setter Property="Foreground" Value="{StaticResource Gx}"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                        <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
-                                                                           Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                </ToggleButton>
-                                                <Popup IsOpen="{Binding IsChecked, ElementName=EffortMenuBtn, Mode=TwoWay}"
-                                                       StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
-                                                    <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource LineBright}" BorderThickness="1"
-                                                            CornerRadius="7" Padding="5" Margin="8" MinWidth="160">
-                                                        <Border.Effect>
-                                                            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
-                                                        </Border.Effect>
-                                                        <StackPanel>
-                                                            <TextBlock Style="{StaticResource Lbl}" Margin="9,5,9,7" Text="{StaticResource L.ReasoningEffort}"/>
-                                                            <ItemsControl ItemsSource="{Binding EffortOptions}">
-                                                                <ItemsControl.ItemTemplate>
-                                                                    <DataTemplate>
-                                                                        <Button Click="EffortOption_Click" Cursor="Hand"
-                                                                                Background="Transparent" BorderThickness="0"
-                                                                                HorizontalContentAlignment="Stretch" Padding="0">
-                                                                            <Button.Template>
-                                                                                <ControlTemplate TargetType="Button">
-                                                                                    <Border x:Name="ei" Background="Transparent" CornerRadius="4" Padding="9,7">
-                                                                                        <ContentPresenter/>
-                                                                                    </Border>
-                                                                                    <ControlTemplate.Triggers>
-                                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                                            <Setter TargetName="ei" Property="Background" Value="{StaticResource Bg4}"/>
-                                                                                        </Trigger>
-                                                                                    </ControlTemplate.Triggers>
-                                                                                </ControlTemplate>
-                                                                            </Button.Template>
-                                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt0}" Text="{Binding}"/>
-                                                                        </Button>
-                                                                    </DataTemplate>
-                                                                </ItemsControl.ItemTemplate>
-                                                            </ItemsControl>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </Popup>
-                                            </Grid>
-                                            <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Foreground="White"
-                                                    Margin="6,0,0,0" ToolTip="{StaticResource L.StopTip}"
-                                                    Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"
-                                                    Command="{Binding DataContext.StopCommand, ElementName=Root}">
-                                                <controls:IconView Icon="{StaticResource IconStop}" Filled="True" Width="14" Height="14"/>
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border x:Name="sb" Background="{StaticResource Err}" CornerRadius="7">
-                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <ControlTemplate.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="sb" Property="Opacity" Value="0.85"/>
-                                                            </Trigger>
-                                                        </ControlTemplate.Triggers>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-                                            <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}"
-                                                    Foreground="{StaticResource AccentText}" ToolTip="{StaticResource L.SendTip}"
-                                                    Command="{Binding DataContext.SendCommand, ElementName=Root}">
-                                                <controls:IconView Icon="{StaticResource IconSend}" Width="15" Height="15"/>
-                                            </Button>
-                                            <Button DockPanel.Dock="Right" Style="{StaticResource ComposerIconButton}"
-                                                    Margin="0,0,8,0" Click="Dictate_Click"
-                                                    ToolTip="{StaticResource L.DictateTip}">
-                                                <controls:IconView Icon="{StaticResource IconMic}" Width="15" Height="15"/>
-                                            </Button>
-                                            <TextBlock/>
-                                        </DockPanel>
-                                    </Border>
-                                    <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding PendingImages}" Margin="13,0,13,4">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource AccentLine}" BorderThickness="1"
-                                                        CornerRadius="10" Padding="8,3" Margin="0,2,6,2" ToolTip="{Binding}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🖼" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding}" FontFamily="{StaticResource Mono}" FontSize="9.5"
-                                                                   Foreground="{StaticResource Txt1}" MaxWidth="180"
-                                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                                        <Button Content="✕" FontSize="9" Margin="6,0,0,0" Padding="2,0"
-                                                                Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                                                Foreground="{StaticResource Txt2}" ToolTip="{StaticResource L.Remove}"
-                                                                Click="RemovePendingImage_Click"/>
                                                     </StackPanel>
                                                 </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    <Grid MinHeight="58">
-                                        <TextBox x:Name="ComposerBox" Style="{StaticResource ComposerInput}" MinHeight="58" MaxHeight="160"
-                                                 Padding="15,12,15,2"
-                                                 VerticalContentAlignment="Top"
-                                                 Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}"
-                                                 KeyDown="Composer_KeyDown"
-                                                 PreviewKeyDown="Composer_PreviewKeyDown"/>
-                                        <TextBlock Margin="15,12,15,0" Foreground="{StaticResource Txt2}" IsHitTestVisible="False"
-                                                   FontSize="13.5" LineHeight="20" VerticalAlignment="Top">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Draft}" Value="">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                            <Run Text="{StaticResource L.MessagePrefix}"/><Run Text="{Binding Cli, Mode=OneWay}"/><Run Text="{StaticResource L.MessageSuffix}"/>
-                                        </TextBlock>
-                                    </Grid>
+                                                <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
+                                                        VerticalAlignment="Center" ToolTip="{Binding Branch}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <controls:IconView Icon="{StaticResource IconBranch}" Width="13" Height="13"
+                                                                           Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" Foreground="{StaticResource Txt1}"
+                                                                   VerticalAlignment="Center">
+                                                            <Run Text="{StaticResource L.WorktreePrefix}" Foreground="{StaticResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Border>
+                                                <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
+                                                    <ToggleButton x:Name="ModelMenuBtn" Style="{StaticResource TogglePillButton}"
+                                                                  Height="30" Padding="12,0" Cursor="Hand" ToolTip="{StaticResource L.ModelSelectTip}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <controls:IconView Icon="{StaticResource IconSpark}" Width="13" Height="13"
+                                                                               Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
+                                                                       Text="{Binding Model}" FontWeight="SemiBold">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                                                <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding AgentId}" Value="ag">
+                                                                                <Setter Property="Foreground" Value="{StaticResource Info}"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding AgentId}" Value="agy">
+                                                                                <Setter Property="Foreground" Value="{StaticResource Agy}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
+                                                                               Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </ToggleButton>
+                                                    <Popup IsOpen="{Binding IsChecked, ElementName=ModelMenuBtn, Mode=TwoWay}"
+                                                           StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
+                                                        <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource LineBright}" BorderThickness="1"
+                                                                CornerRadius="7" Padding="5" Margin="8" MinWidth="200">
+                                                            <Border.Effect>
+                                                                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
+                                                            </Border.Effect>
+                                                            <StackPanel>
+                                                                <TextBlock Style="{StaticResource Lbl}" Margin="9,5,9,7">
+                                                                    <Run Text="{Binding AgentName, Mode=OneWay}"/><Run Text="{StaticResource L.DotModel}"/>
+                                                                </TextBlock>
+                                                                <ItemsControl ItemsSource="{Binding AvailableModels}">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <Button Click="ModelOption_Click" Cursor="Hand"
+                                                                                    Background="Transparent" BorderThickness="0"
+                                                                                    HorizontalContentAlignment="Stretch" Padding="0">
+                                                                                <Button.Template>
+                                                                                    <ControlTemplate TargetType="Button">
+                                                                                        <Border x:Name="mi" Background="Transparent" CornerRadius="4" Padding="9,7">
+                                                                                            <ContentPresenter/>
+                                                                                        </Border>
+                                                                                        <ControlTemplate.Triggers>
+                                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                                <Setter TargetName="mi" Property="Background" Value="{StaticResource Bg4}"/>
+                                                                                            </Trigger>
+                                                                                        </ControlTemplate.Triggers>
+                                                                                    </ControlTemplate>
+                                                                                </Button.Template>
+                                                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt0}" Text="{Binding}"/>
+                                                                            </Button>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Popup>
+                                                </Grid>
+                                                <Grid DockPanel.Dock="Left" Margin="0,0,8,0"
+                                                      Visibility="{Binding HasEffort, Converter={StaticResource BoolVis}}">
+                                                    <ToggleButton x:Name="EffortMenuBtn" Style="{StaticResource TogglePillButton}"
+                                                                  Height="30" Padding="12,0" Cursor="Hand"
+                                                                  ToolTip="{StaticResource L.EffortTip}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <controls:IconView Icon="{StaticResource IconBolt}" Width="13" Height="13"
+                                                                               Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
+                                                                       Text="{Binding ReasoningEffort}" FontWeight="SemiBold">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding AgentId}" Value="gx">
+                                                                                <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
+                                                                               Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </ToggleButton>
+                                                    <Popup IsOpen="{Binding IsChecked, ElementName=EffortMenuBtn, Mode=TwoWay}"
+                                                           StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
+                                                        <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource LineBright}" BorderThickness="1"
+                                                                CornerRadius="7" Padding="5" Margin="8" MinWidth="160">
+                                                            <Border.Effect>
+                                                                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
+                                                            </Border.Effect>
+                                                            <StackPanel>
+                                                                <TextBlock Style="{StaticResource Lbl}" Margin="9,5,9,7" Text="{StaticResource L.ReasoningEffort}"/>
+                                                                <ItemsControl ItemsSource="{Binding EffortOptions}">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <Button Click="EffortOption_Click" Cursor="Hand"
+                                                                                    Background="Transparent" BorderThickness="0"
+                                                                                    HorizontalContentAlignment="Stretch" Padding="0">
+                                                                                <Button.Template>
+                                                                                    <ControlTemplate TargetType="Button">
+                                                                                        <Border x:Name="ei" Background="Transparent" CornerRadius="4" Padding="9,7">
+                                                                                            <ContentPresenter/>
+                                                                                        </Border>
+                                                                                        <ControlTemplate.Triggers>
+                                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                                <Setter TargetName="ei" Property="Background" Value="{StaticResource Bg4}"/>
+                                                                                            </Trigger>
+                                                                                        </ControlTemplate.Triggers>
+                                                                                    </ControlTemplate>
+                                                                                </Button.Template>
+                                                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt0}" Text="{Binding}"/>
+                                                                            </Button>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Popup>
+                                                </Grid>
+                                                <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Foreground="White"
+                                                        Margin="6,0,0,0" ToolTip="{StaticResource L.StopTip}"
+                                                        Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"
+                                                        Command="{Binding DataContext.StopCommand, ElementName=Root}">
+                                                    <controls:IconView Icon="{StaticResource IconStop}" Filled="True" Width="14" Height="14"/>
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border x:Name="sb" Background="{StaticResource Err}" CornerRadius="7">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="sb" Property="Opacity" Value="0.85"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                                <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}"
+                                                        Foreground="{StaticResource AccentText}" ToolTip="{StaticResource L.SendTip}"
+                                                        Command="{Binding DataContext.SendCommand, ElementName=Root}">
+                                                    <controls:IconView Icon="{StaticResource IconSend}" Width="15" Height="15"/>
+                                                </Button>
+                                                <Button DockPanel.Dock="Right" Style="{StaticResource ComposerIconButton}"
+                                                        Margin="0,0,8,0" Click="Dictate_Click"
+                                                        ToolTip="{StaticResource L.DictateTip}">
+                                                    <controls:IconView Icon="{StaticResource IconMic}" Width="15" Height="15"/>
+                                                </Button>
+                                                <TextBlock/>
+                                            </DockPanel>
+                                        </Border>
+                                        <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding PendingImages}" Margin="13,0,13,4">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource AccentLine}" BorderThickness="1"
+                                                            CornerRadius="10" Padding="8,3" Margin="0,2,6,2" ToolTip="{Binding}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="🖼" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding}" FontFamily="{StaticResource Mono}" FontSize="9.5"
+                                                                       Foreground="{StaticResource Txt1}" MaxWidth="180"
+                                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                            <Button Content="✕" FontSize="9" Margin="6,0,0,0" Padding="2,0"
+                                                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                                                    Foreground="{StaticResource Txt2}" ToolTip="{StaticResource L.Remove}"
+                                                                    Click="RemovePendingImage_Click"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <Grid MinHeight="58">
+                                            <TextBox x:Name="ComposerBox" Style="{StaticResource ComposerInput}" MinHeight="58" MaxHeight="160"
+                                                     Padding="15,12,15,2"
+                                                     VerticalContentAlignment="Top"
+                                                     Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}"
+                                                     KeyDown="Composer_KeyDown"
+                                                     PreviewKeyDown="Composer_PreviewKeyDown"/>
+                                            <TextBlock Margin="15,12,15,0" Foreground="{StaticResource Txt2}" IsHitTestVisible="False"
+                                                       FontSize="13.5" LineHeight="20" VerticalAlignment="Top">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Draft}" Value="">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                                <Run Text="{StaticResource L.MessagePrefix}"/><Run Text="{Binding Cli, Mode=OneWay}"/><Run Text="{StaticResource L.MessageSuffix}"/>
+                                            </TextBlock>
+                                        </Grid>
+                                    </DockPanel>
+                                </Border>
+                                <DockPanel Margin="4,6,4,0" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="9.5">
+                                    <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.EnterHint}" Foreground="{StaticResource Txt3}"/>
+                                    <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource Txt3}">
+                                        <Run Text="{Binding Cli, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Branch, Mode=OneWay}"/>
+                                    </TextBlock>
                                 </DockPanel>
-                            </Border>
-                            <DockPanel Margin="4,6,4,0" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="9.5">
-                                <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.EnterHint}" Foreground="{StaticResource Txt3}"/>
-                                <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource Txt3}">
-                                    <Run Text="{Binding Cli, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Branch, Mode=OneWay}"/>
-                                </TextBlock>
-                            </DockPanel>
-                        </StackPanel>
-                    </Border>
+                            </StackPanel>
+                        </Border>
 
-                    <!-- transcript -->
-                    <!-- 가상화 필수: 긴 트랜스크립트(CLI 가져오기 수백 블록)에서 보이는 항목만 생성한다.
-                         가상화가 동작하려면 ScrollViewer가 ItemsControl 템플릿 안에 있어야 함 -->
-                    <ItemsControl x:Name="TranscriptList" ItemsSource="{Binding Transcript}"
-                                  ScrollViewer.CanContentScroll="True"
-                                  VirtualizingPanel.IsVirtualizing="True"
-                                  VirtualizingPanel.VirtualizationMode="Recycling"
-                                  VirtualizingPanel.ScrollUnit="Pixel"
-                                  PreviewMouseWheel="TranscriptScroll_PreviewMouseWheel">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.Template>
-                            <ControlTemplate TargetType="ItemsControl">
-                                <ScrollViewer x:Name="PART_TranscriptScroll" VerticalScrollBarVisibility="Auto" Focusable="False">
-                                    <!-- 전폭 사용: 중앙 880px 캡 대신 좌우 최소 여백 (사용자 요청) -->
-                                    <ItemsPresenter Margin="14,16,14,12"/>
-                                </ScrollViewer>
-                            </ControlTemplate>
-                        </ItemsControl.Template>
-                    </ItemsControl>
-                </DockPanel>
+                        <!-- transcript -->
+                        <!-- 가상화 필수: 긴 트랜스크립트(CLI 가져오기 수백 블록)에서 보이는 항목만 생성한다.
+                             가상화가 동작하려면 ScrollViewer가 ItemsControl 템플릿 안에 있어야 함 -->
+                        <ItemsControl x:Name="TranscriptList" ItemsSource="{Binding Transcript}"
+                                      ScrollViewer.CanContentScroll="True"
+                                      VirtualizingPanel.IsVirtualizing="True"
+                                      VirtualizingPanel.VirtualizationMode="Recycling"
+                                      VirtualizingPanel.ScrollUnit="Pixel"
+                                      PreviewMouseWheel="TranscriptScroll_PreviewMouseWheel">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.Template>
+                                <ControlTemplate TargetType="ItemsControl">
+                                    <ScrollViewer x:Name="PART_TranscriptScroll" VerticalScrollBarVisibility="Auto" Focusable="False">
+                                        <!-- 전폭 사용: 중앙 880px 캡 대신 좌우 최소 여백 (사용자 요청) -->
+                                        <ItemsPresenter Margin="14,16,14,12"/>
+                                    </ScrollViewer>
+                                </ControlTemplate>
+                            </ItemsControl.Template>
+                        </ItemsControl>
+                    </DockPanel>
+                </Grid>
+
+                <!-- Orchestrator View -->
+                <Grid DataContext="{Binding DataContext, ElementName=Root}"
+                      Visibility="{Binding IsOrchestratorView, Converter={StaticResource BoolVis}}"
+                      Background="{StaticResource Bg0}">
+                    <DockPanel LastChildFill="True">
+                        <!-- Head -->
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
+                            <DockPanel>
+                                <controls:IconView Icon="{StaticResource IconGrid}" Width="16" Height="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Orchestrator" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                <TextBlock Text=" · active fleet overview" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource AccentButton}" Command="{Binding NewAgentCommand}" VerticalAlignment="Center" Padding="10,6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:IconView Icon="{StaticResource IconPlus}" Width="11" Height="11" Foreground="{StaticResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.NewAgent}" Foreground="{StaticResource AccentText}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Scrollable view -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="16" MaxWidth="1000" HorizontalAlignment="Left">
+                                <!-- KPIs -->
+                                <UniformGrid Columns="4" Rows="1" Height="70" Margin="0,0,0,20">
+                                    <!-- Running -->
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock Text="ACTIVE" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding RunningCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Awaiting -->
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock Text="AWAITING INPUT" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Warn}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding WaitingCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Completed -->
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0" Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock Text="COMPLETED" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Ok}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding DoneCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Failed -->
+                                    <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock Text="FAILED" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Err}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding FailedCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Txt0}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+
+                                <!-- Grid of active sessions -->
+                                <TextBlock Text="ACTIVE WORKERS" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Txt2}" Margin="0,0,0,8"/>
+                                <ItemsControl ItemsSource="{Binding ActiveSessions}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="230" Margin="0,0,12,12" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="12">
+                                                <DockPanel LastChildFill="True">
+                                                    <!-- Head -->
+                                                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                                                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="4" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
+                                                            <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel DockPanel.Dock="Left">
+                                                            <TextBlock Text="{Binding AgentName}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                                            <TextBlock Text="{Binding Model}" FontSize="9" Foreground="{StaticResource Txt2}"/>
+                                                        </StackPanel>
+                                                        <Ellipse DockPanel.Dock="Right" Width="7" Height="7" VerticalAlignment="Center">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                    </DockPanel>
+                                                    
+                                                    <!-- Foot -->
+                                                    <Button DockPanel.Dock="Bottom" Style="{StaticResource ChipButton}" Content="Open Session" Command="{Binding DataContext.SelectSessionCommand, ElementName=Root}" CommandParameter="{Binding}" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                                                    
+                                                    <!-- Body -->
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
+                                                        <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
+                                                        <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Accent}" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Grid>
+
+                <!-- Activity History View -->
+                <Grid DataContext="{Binding DataContext, ElementName=Root}"
+                      Visibility="{Binding IsHistoryView, Converter={StaticResource BoolVis}}"
+                      Background="{StaticResource Bg0}">
+                    <DockPanel LastChildFill="True">
+                        <!-- Head -->
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="220"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="{StaticResource L.ActivityHistoryHeader}" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <TextBlock Grid.Column="1" Text="{Binding HistorySummaryText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+
+                                <!-- Status Filter -->
+                                <ComboBox Grid.Column="3" SelectedValue="{Binding HistoryStatusFilter, Mode=TwoWay}" SelectedValuePath="Tag" Height="28" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="{StaticResource L.FilterAll}" Tag="all"/>
+                                    <ComboBoxItem Content="{StaticResource L.FilterActive}" Tag="active"/>
+                                    <ComboBoxItem Content="{StaticResource L.Waiting}" Tag="waiting"/>
+                                    <ComboBoxItem Content="{StaticResource L.Done}" Tag="done"/>
+                                    <ComboBoxItem Content="Failed" Tag="error"/>
+                                </ComboBox>
+
+                                <!-- Agent Filter -->
+                                <ComboBox Grid.Column="5" SelectedValue="{Binding HistoryAgentFilter, Mode=TwoWay}" SelectedValuePath="Tag" Height="28" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="{StaticResource L.FilterAllAgents}" Tag="all"/>
+                                    <ComboBoxItem Content="Claude Code" Tag="cc"/>
+                                    <ComboBoxItem Content="Codex" Tag="gx"/>
+                                    <ComboBoxItem Content="Gemini" Tag="ag"/>
+                                    <ComboBoxItem Content="Antigravity" Tag="agy"/>
+                                </ComboBox>
+
+                                <!-- Search -->
+                                <Border Grid.Column="7" Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Height="28" VerticalAlignment="Center" Padding="6,0,8,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <controls:IconView Grid.Column="0" Icon="{StaticResource IconSearch}" Width="12" Height="12" Foreground="{StaticResource Txt2}" Margin="4,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource ComposerInput}" Background="Transparent" BorderThickness="0" Padding="0" VerticalAlignment="Center" AcceptsReturn="False" TextWrapping="NoWrap" Text="{Binding HistoryFilterText, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Bottom status / filter summary bar -->
+                        <Border DockPanel.Dock="Bottom" Height="36" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="14,0">
+                            <DockPanel VerticalAlignment="Center">
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding HistoryFilterSummaryText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.Refresh}" Command="{Binding RefreshHistoryCommand}"/>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Content List -->
+                        <ListView ItemsSource="{Binding HistoryRows}" Background="Transparent" BorderThickness="0" SelectionMode="Single" ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" Padding="8" Grid.IsSharedSizeScope="True">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0"/>
+                                    <Setter Property="Focusable" Value="False"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <ContentPresenter/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel/>
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="4,2" CornerRadius="6" Padding="12,10" BorderThickness="1" Cursor="Hand" MouseLeftButtonUp="HistoryRow_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{StaticResource Bg1}"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource LineSoft}"/>
+                                                <Setter Property="Opacity" Value="1"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding IsArchived}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="20"/>
+                                                <ColumnDefinition Width="34"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="TimeCol"/>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="TokensCol"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Status Dot LED-like with Glow -->
+                                            <Grid Grid.Column="0" Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTip="{Binding StatusLabel}">
+                                                <!-- Outer Glow Ring -->
+                                                <Ellipse Width="12" Height="12" Opacity="0.15">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <!-- Inner Solid Dot -->
+                                                <Ellipse Width="6" Height="6" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                            </Grid>
+
+                                            <!-- Engine Badge with Brand Icon -->
+                                            <Border Grid.Column="1" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg0}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTip="{Binding AgentName}">
+                                                <controls:IconView Style="{StaticResource EngineIcon}" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Border>
+
+                                            <!-- Main Text Block -->
+                                            <StackPanel Grid.Column="2" Margin="8,0,16,0" VerticalAlignment="Center">
+                                                <DockPanel LastChildFill="True">
+                                                    <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="8,0,0,0" Visibility="{Binding IsArchived, Converter={StaticResource BoolVis}}">
+                                                        <TextBlock Text="{StaticResource L.ArchivedBadge}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{StaticResource Txt2}"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                                </DockPanel>
+                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt3}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0">
+                                                    <Run Text="{Binding Project, Mode=OneWay}" Foreground="{StaticResource Txt2}"/><Run Text=" / "/><Run Text="{Binding Branch, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <!-- Stacked Time & Blocks metadata column -->
+                                            <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,16,0" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding StartedText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt1}"/>
+                                                <TextBlock Text="{Binding BlocksText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- Stacked Tokens & Cost metadata column -->
+                                            <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="0,0,8,0" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding TokensText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt1}"/>
+                                                <TextBlock Text="{Binding CostText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Margin="0,2,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource Ok}"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="Text" Value="-">
+                                                                    <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </DockPanel>
+                </Grid>
+
+                <!-- Scheduled Tasks View -->
+                <Grid DataContext="{Binding DataContext, ElementName=Root}"
+                      Visibility="{Binding IsScheduledView, Converter={StaticResource BoolVis}}"
+                      Background="{StaticResource Bg0}">
+                    <DockPanel LastChildFill="True">
+                        <!-- Head -->
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
+                            <DockPanel>
+                                <controls:IconView Icon="{StaticResource IconCalendar}" Width="15" Height="15" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Scheduled Tasks" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ScheduledJobs.Count, StringFormat='{} · {0} recurring jobs'}" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Scrollable view -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="16" MaxWidth="1000" HorizontalAlignment="Stretch">
+                                <ItemsControl ItemsSource="{Binding ScheduledJobs}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,8" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="40"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="150"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <!-- Icon -->
+                                                    <controls:IconView Grid.Column="0" Icon="{StaticResource IconCalendar}" Width="16" Height="16" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+
+                                                    <!-- Main Info -->
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" Margin="0,0,0,4"/>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Border Width="24" Height="20" CornerRadius="4" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
+                                                                <TextBlock Text="{Binding EngineBadge}" FontFamily="{StaticResource Mono}" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource Txt1}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <TextBlock Text="{Binding EngineName}" FontSize="11" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                            
+                                                            <controls:IconView Icon="{StaticResource IconRefresh}" Width="10" Height="10" Foreground="{StaticResource Txt2}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding CadenceText}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                                                            <controls:IconView Icon="{StaticResource IconBranch}" Width="10" Height="10" Foreground="{StaticResource Txt2}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding TargetBranch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <!-- Next run -->
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <TextBlock Text="Next run" FontSize="9.5" Foreground="{StaticResource Txt2}" HorizontalAlignment="Right"/>
+                                                        <TextBlock Text="{Binding NextRunLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Accent}" HorizontalAlignment="Right"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Grid>
+
+                <!-- Scheduled tasks shell -->
             </Grid>
 
             <!-- Review pane -->
@@ -1700,4 +2067,3 @@
         </Grid>
     </Grid>
 </Window>
-
