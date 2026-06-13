@@ -340,4 +340,6 @@
     <sys:String x:Key="L.ScheduledDefaultTitle">Scheduled agent run</sys:String>
     <sys:String x:Key="L.ScheduledQueued">scheduled run queued</sys:String>
     <sys:String x:Key="L.ScheduledRunMarker">scheduled trigger fired · {0}</sys:String>
+    <sys:String x:Key="L.OrchDiffFileSuffixOne">file</sys:String>
+    <sys:String x:Key="L.OrchDiffFileSuffixMany">files</sys:String>
 </ResourceDictionary>

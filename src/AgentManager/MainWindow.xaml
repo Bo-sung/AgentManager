@@ -1688,6 +1688,41 @@
                                             </StackPanel>
                                             <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Accent}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                         </StackPanel>
+                                        <StackPanel Margin="0,0,0,6">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasDiff}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <Border Height="5" CornerRadius="2.5" Background="{StaticResource Bg4}" Margin="0,6,0,4" ClipToBounds="True">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="{Binding DiffAddedStar}"/>
+                                                        <ColumnDefinition Width="{Binding DiffRemovedStar}"/>
+                                                        <ColumnDefinition Width="{Binding DiffRemainderStar}"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0" Background="{StaticResource Add}"/>
+                                                    <Border Grid.Column="1" Background="{StaticResource Del}"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="10">
+                                                <Run Text="+" Foreground="{StaticResource Add}"/><Run Text="{Binding DiffAdded, Mode=OneWay}" Foreground="{StaticResource Add}"/>
+                                                <Run Text=" "/>
+                                                <Run Text="−" Foreground="{StaticResource Del}"/><Run Text="{Binding DiffRemoved, Mode=OneWay}" Foreground="{StaticResource Del}"/>
+                                                <Run Text=" · " Foreground="{StaticResource Txt2}"/>
+                                                <Run Text="{Binding DiffFiles, Mode=OneWay}" Foreground="{StaticResource Txt2}"/>
+                                                <Run Text=" " Foreground="{StaticResource Txt2}"/>
+                                                <Run Text="{Binding FilesSuffix, Mode=OneWay}" Foreground="{StaticResource Txt2}"/>
+                                            </TextBlock>
+                                        </StackPanel>
                                     </StackPanel>
                                 </DockPanel>
                             </Border>

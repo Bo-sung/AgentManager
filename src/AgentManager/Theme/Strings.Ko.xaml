@@ -340,4 +340,6 @@
     <sys:String x:Key="L.ScheduledDefaultTitle">예약 에이전트 실행</sys:String>
     <sys:String x:Key="L.ScheduledQueued">예약 실행 대기열 등록</sys:String>
     <sys:String x:Key="L.ScheduledRunMarker">예약 트리거 실행 · {0}</sys:String>
+    <sys:String x:Key="L.OrchDiffFileSuffixOne">개 파일</sys:String>
+    <sys:String x:Key="L.OrchDiffFileSuffixMany">개 파일</sys:String>
 </ResourceDictionary>

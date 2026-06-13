@@ -1228,8 +1228,25 @@ public sealed partial class AppViewModel : ObservableObject
 
     private void SessionStatusWatch(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SessionViewModel.Status))
+        if (e.PropertyName == nameof(SessionViewModel.Status) && sender is SessionViewModel s)
         {
+            if (s.Status == "running")
+            {
+                lock (_scannedSessionDiffIds)
+                {
+                    _scannedSessionDiffIds.Remove(s.Id);
+                }
+                s.DiffAdded = 0;
+                s.DiffRemoved = 0;
+                s.DiffFiles = 0;
+            }
+            else if (s.Status is "done" or "error")
+            {
+                lock (_scannedSessionDiffIds)
+                {
+                    _scannedSessionDiffIds.Remove(s.Id);
+                }
+            }
             RefreshProjectSessions();
             RefreshCounts();
             if (IsHistoryView) RebuildHistoryRows();
@@ -1289,6 +1306,8 @@ public sealed partial class AppViewModel : ObservableObject
         else if (selectFirstIfMissing)
             ActiveSession = Sessions.FirstOrDefault();
         RefreshCounts();
+
+        _ = Task.Run(async () => await ScanSessionDiffsBackgroundAsync(ProjectSessions.Concat(ActiveSessions).Concat(ArchivedSessions).ToList()));
     }
 
     private void RefreshProjectCounts()
@@ -1609,6 +1628,48 @@ public sealed partial class AppViewModel : ObservableObject
         }
     }
 
+    private readonly HashSet<string> _scannedSessionDiffIds = [];
+
+    private async Task ScanSessionDiffsBackgroundAsync(List<SessionViewModel> sessions)
+    {
+        foreach (var s in sessions)
+        {
+            if (s.WorktreePath == null || s.IsRunning) continue;
+
+            lock (_scannedSessionDiffIds)
+            {
+                if (_scannedSessionDiffIds.Contains(s.Id)) continue;
+                _scannedSessionDiffIds.Add(s.Id);
+            }
+
+            try
+            {
+                var changes = await GitWorktree.GetChangedFilesAsync(s.WorktreePath);
+                int added = 0;
+                int deleted = 0;
+                foreach (var c in changes)
+                {
+                    added += c.Added;
+                    deleted += c.Deleted;
+                }
+
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    s.DiffAdded = added;
+                    s.DiffRemoved = deleted;
+                    s.DiffFiles = changes.Count;
+                });
+            }
+            catch
+            {
+                lock (_scannedSessionDiffIds)
+                {
+                    _scannedSessionDiffIds.Remove(s.Id);
+                }
+            }
+        }
+    }
+
     /// <summary>실행 중 라이브 갱신: 툴이 끝날 때마다 호출되며, 버스트를 디바운스(0.8s)해
     /// 활성 세션의 Review pane을 갱신한다 (git status는 가볍지만 연타 방지).</summary>
     private bool _liveReviewQueued;
@@ -1642,6 +1703,21 @@ public sealed partial class AppViewModel : ObservableObject
         {
             var selectedPath = s.SelectedChange?.Path; // keep the user's selection across live refreshes
             var changes = await GitWorktree.GetChangedFilesAsync(s.WorktreePath);
+
+            int added = 0;
+            int deleted = 0;
+            foreach (var c in changes)
+            {
+                added += c.Added;
+                deleted += c.Deleted;
+            }
+            s.DiffAdded = added;
+            s.DiffRemoved = deleted;
+            s.DiffFiles = changes.Count;
+            lock (_scannedSessionDiffIds)
+            {
+                _scannedSessionDiffIds.Add(s.Id);
+            }
 
             // rebuild the list only when it actually changed, so live refreshes don't flicker
             var same = s.Changes.Count == changes.Count;

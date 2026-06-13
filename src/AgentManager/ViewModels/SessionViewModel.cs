@@ -234,6 +234,67 @@ public sealed class SessionViewModel : ObservableObject
     public string Draft { get => _draft; set { if (Set(ref _draft, value)) OnChanged(nameof(CanSend)); } }
     public bool CanSend => !string.IsNullOrWhiteSpace(_draft) && !IsRunning;
 
+    private int _diffAdded;
+    public int DiffAdded
+    {
+        get => _diffAdded;
+        internal set
+        {
+            if (Set(ref _diffAdded, value))
+            {
+                OnChanged(nameof(HasDiff));
+                OnChanged(nameof(DiffAddedStar));
+                OnChanged(nameof(DiffRemainderStar));
+            }
+        }
+    }
+
+    private int _diffRemoved;
+    public int DiffRemoved
+    {
+        get => _diffRemoved;
+        internal set
+        {
+            if (Set(ref _diffRemoved, value))
+            {
+                OnChanged(nameof(HasDiff));
+                OnChanged(nameof(DiffRemovedStar));
+                OnChanged(nameof(DiffRemainderStar));
+            }
+        }
+    }
+
+    private int _diffFiles;
+    public int DiffFiles
+    {
+        get => _diffFiles;
+        internal set
+        {
+            if (Set(ref _diffFiles, value))
+            {
+                OnChanged(nameof(HasDiff));
+                OnChanged(nameof(FilesSuffix));
+            }
+        }
+    }
+
+    public bool HasDiff => _diffFiles > 0;
+
+    public int DiffRemainder => (DiffAdded + DiffRemoved) == 0 ? 1 : 0;
+
+    public System.Windows.GridLength DiffAddedStar => new System.Windows.GridLength(DiffAdded, System.Windows.GridUnitType.Star);
+    public System.Windows.GridLength DiffRemovedStar => new System.Windows.GridLength(DiffRemoved, System.Windows.GridUnitType.Star);
+    public System.Windows.GridLength DiffRemainderStar => new System.Windows.GridLength(DiffRemainder, System.Windows.GridUnitType.Star);
+
+    public string FilesSuffix
+    {
+        get
+        {
+            var key = DiffFiles == 1 ? "L.OrchDiffFileSuffixOne" : "L.OrchDiffFileSuffixMany";
+            return AgentManager.App.L(key);
+        }
+    }
+
     private static string Fmt(long n) => n >= 1000 ? (n / 1000.0).ToString("0.0") + "k" : n.ToString();
     public string StartedAtLabel => StartedAt.ToString("yyyy-MM-dd HH:mm");
 
