@@ -83,6 +83,15 @@
     <sys:String x:Key="L.OrchPlanned">Auto-start on launch · stream activity logs · worktree base directory — backend pending.</sys:String>
     <sys:String x:Key="L.PermPlanned">Approval policy (ask / auto-safe / auto-all) · allow destructive ops · network access · sandboxed filesystem — global defaults backend pending; per-session controls already work in the composer.</sys:String>
     <sys:String x:Key="L.AppearancePlanned">Accent color · density · anonymous telemetry — backend pending.</sys:String>
+    <sys:String x:Key="L.ApprovalPolicyTitle">Approval policy</sys:String>
+    <sys:String x:Key="L.ApprovalPolicyDesc">Default for new sessions. Each session can override it in the composer.</sys:String>
+    <sys:String x:Key="L.PolicyAsk">Always ask</sys:String>
+    <sys:String x:Key="L.PolicyAskSub">read-only · approve every tool</sys:String>
+    <sys:String x:Key="L.PolicySafe">Auto · safe</sys:String>
+    <sys:String x:Key="L.PolicySafeSub">workspace-write sandbox · no prompts</sys:String>
+    <sys:String x:Key="L.PolicyYolo">Auto · all</sys:String>
+    <sys:String x:Key="L.PolicyYoloSub">full access · no prompts</sys:String>
+    <sys:String x:Key="L.PermNetworkNote">Network access follows the sandbox level above; per-tool destructive prompts remain per-session.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>

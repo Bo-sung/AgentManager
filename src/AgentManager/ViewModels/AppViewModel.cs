@@ -580,6 +580,17 @@ public sealed class AppViewModel : ObservableObject
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내를 띄울지 (기본 끔 — 비-git 사용이 일반 흐름인 사용자 배려).</summary>
     private bool _warnNoWorktree;
 
+    /// <summary>새 세션 기본 승인 정책: ask | safe | yolo. RequireApproval + Sandbox 둘 다 시드.</summary>
+    private string _approvalPolicy = "yolo";
+    private string _settingsApprovalPolicy = "yolo";
+    public string SettingsApprovalPolicy { get => _settingsApprovalPolicy; set => Set(ref _settingsApprovalPolicy, value); }
+    private static (bool requireApproval, SandboxMode sandbox) PolicyToSession(string policy) => policy switch
+    {
+        "ask" => (true, SandboxMode.ReadOnly),
+        "safe" => (false, SandboxMode.WorkspaceWrite),
+        _ => (false, SandboxMode.DangerFullAccess), // yolo
+    };
+
     // provider detection status (settings panel)
     public string ClaudeDetectLabel => DetectLabel("cc", _claudePath);
     public string CodexDetectLabel => DetectLabel("gx", _codexPath);
@@ -874,9 +885,12 @@ public sealed class AppViewModel : ObservableObject
         var engine = NewAgentSelectedEngine ?? Engines[0];
         var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
         var branch = "agent/" + Slug(title);
+        var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
         var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, engine.Models[0])
         {
             TranslationEnabled = TranslationEnabled,
+            RequireApproval = reqAppr,
+            Sandbox = sandbox,
         };
         s.PropertyChanged += SessionStatusWatch;
         _allSessions.Insert(0, s);
@@ -1030,6 +1044,7 @@ public sealed class AppViewModel : ObservableObject
         SettingsWarnNoWorktree = _warnNoWorktree;
         SettingsLightTheme = _theme == "light";
         SettingsEnglishUi = _language == "en";
+        SettingsApprovalPolicy = _approvalPolicy;
         SettingsStatus = "";
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
@@ -1050,6 +1065,7 @@ public sealed class AppViewModel : ObservableObject
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();
         TranslationEnabled = SettingsDefaultTranslationEnabled;
         _warnNoWorktree = SettingsWarnNoWorktree;
+        _approvalPolicy = SettingsApprovalPolicy is "ask" or "safe" ? SettingsApprovalPolicy : "yolo";
         var newTheme = SettingsLightTheme ? "light" : "dark";
         var themeChanged = newTheme != _theme;
         _theme = newTheme;
@@ -1154,6 +1170,7 @@ public sealed class AppViewModel : ObservableObject
         MaxConcurrentSessions = state.Settings.MaxConcurrentSessions;
         _isReviewOpen = state.Settings.ReviewPaneOpen;
         _warnNoWorktree = state.Settings.WarnNoWorktree;
+        _approvalPolicy = state.Settings.ApprovalPolicy is "ask" or "safe" ? state.Settings.ApprovalPolicy : "yolo";
         _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
         _language = state.Settings.Language == "en" ? "en" : "ko";
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
@@ -1237,6 +1254,7 @@ public sealed class AppViewModel : ObservableObject
                     WarnNoWorktree = _warnNoWorktree,
                     Theme = _theme,
                     Language = _language,
+                    ApprovalPolicy = _approvalPolicy,
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto

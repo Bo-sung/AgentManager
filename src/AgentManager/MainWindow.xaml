@@ -1952,7 +1952,7 @@
                                         </Border>
                                     </StackPanel>
 
-                                    <!-- 04 Permissions (planned) -->
+                                    <!-- 04 Permissions -->
                                     <StackPanel x:Name="SecPermissions" Margin="0,14,0,0">
                                         <DockPanel Margin="0,0,0,10">
                                             <TextBlock DockPanel.Dock="Left" Text="04" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
@@ -1960,12 +1960,68 @@
                                             <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                                         </DockPanel>
                                         <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
-                                            <DockPanel>
-                                                <Border DockPanel.Dock="Left" Background="{StaticResource Bg4}" CornerRadius="4" Padding="6,2" VerticalAlignment="Top" Margin="0,0,10,0">
-                                                    <TextBlock Text="{StaticResource L.PlannedBadge}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{StaticResource Warn}"/>
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.ApprovalPolicyTitle}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                                <TextBlock Text="{StaticResource L.ApprovalPolicyDesc}" FontSize="10.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,10" TextWrapping="Wrap"/>
+                                                <!-- ask -->
+                                                <Border Tag="ask" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9" Margin="0,0,0,6">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{StaticResource Bg1}"/>
+                                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SettingsApprovalPolicy}" Value="ask">
+                                                                    <Setter Property="Background" Value="{StaticResource AccentDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{StaticResource L.PolicyAsk}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                                        <TextBlock Text="{StaticResource L.PolicyAskSub}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
+                                                    </StackPanel>
                                                 </Border>
-                                                <TextBlock Text="{StaticResource L.PermPlanned}" FontSize="11" Foreground="{StaticResource Txt2}" TextWrapping="Wrap"/>
-                                            </DockPanel>
+                                                <!-- safe -->
+                                                <Border Tag="safe" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9" Margin="0,0,0,6">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{StaticResource Bg1}"/>
+                                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SettingsApprovalPolicy}" Value="safe">
+                                                                    <Setter Property="Background" Value="{StaticResource AccentDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{StaticResource L.PolicySafe}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                                        <TextBlock Text="{StaticResource L.PolicySafeSub}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <!-- yolo -->
+                                                <Border Tag="yolo" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{StaticResource Bg1}"/>
+                                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SettingsApprovalPolicy}" Value="yolo">
+                                                                    <Setter Property="Background" Value="{StaticResource AccentDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{StaticResource L.PolicyYolo}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                                        <TextBlock Text="{StaticResource L.PolicyYoloSub}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <TextBlock Text="{StaticResource L.PermNetworkNote}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,10,0,0" TextWrapping="Wrap"/>
+                                            </StackPanel>
                                         </Border>
                                     </StackPanel>
 

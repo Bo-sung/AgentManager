@@ -238,6 +238,13 @@ public partial class MainWindow : Window
             target.BringIntoView();
     }
 
+    /// <summary>Settings ▸ Permissions: 승인 정책 세그(ask/safe/yolo) 선택.</summary>
+    private void ApprovalPolicy_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string policy)
+            _vm.SettingsApprovalPolicy = policy;
+    }
+
     private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is HistoryRowViewModel row)

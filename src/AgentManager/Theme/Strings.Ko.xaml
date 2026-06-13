@@ -83,6 +83,15 @@
     <sys:String x:Key="L.OrchPlanned">시작 시 자동 실행 · 활동 로그 스트리밍 · worktree 기준 경로 — 백엔드 준비 중.</sys:String>
     <sys:String x:Key="L.PermPlanned">승인 정책(항상 확인 / 안전 자동 / 전체 자동) · 파괴적 작업 허용 · 네트워크 접근 · 샌드박스 파일시스템 — 전역 기본값은 백엔드 준비 중이며, 세션별 제어는 컴포저에서 이미 동작합니다.</sys:String>
     <sys:String x:Key="L.AppearancePlanned">강조색 · 밀도 · 익명 텔레메트리 — 백엔드 준비 중.</sys:String>
+    <sys:String x:Key="L.ApprovalPolicyTitle">승인 정책</sys:String>
+    <sys:String x:Key="L.ApprovalPolicyDesc">새 세션 기본값입니다. 세션마다 컴포저에서 변경할 수 있습니다.</sys:String>
+    <sys:String x:Key="L.PolicyAsk">항상 확인</sys:String>
+    <sys:String x:Key="L.PolicyAskSub">읽기 전용 · 모든 도구 승인</sys:String>
+    <sys:String x:Key="L.PolicySafe">자동 · 안전</sys:String>
+    <sys:String x:Key="L.PolicySafeSub">작업영역 쓰기 샌드박스 · 확인 없음</sys:String>
+    <sys:String x:Key="L.PolicyYolo">자동 · 전체</sys:String>
+    <sys:String x:Key="L.PolicyYoloSub">전체 접근 · 확인 없음</sys:String>
+    <sys:String x:Key="L.PermNetworkNote">네트워크 접근은 위 샌드박스 수준을 따르며, 파괴적 작업의 도구별 확인은 세션별로 유지됩니다.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>

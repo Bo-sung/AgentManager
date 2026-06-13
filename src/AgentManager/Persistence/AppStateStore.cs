@@ -27,6 +27,8 @@ public sealed record AppSettingsDto
     public string Theme { get; init; } = "dark";
     /// <summary>UI language: ko | en (applies after restart).</summary>
     public string Language { get; init; } = "ko";
+    /// <summary>새 세션 기본 승인 정책: ask | safe | yolo (RequireApproval + Sandbox 시드).</summary>
+    public string ApprovalPolicy { get; init; } = "yolo";
 }
 
 public sealed record ProjectDto
