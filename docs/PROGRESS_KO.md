@@ -83,10 +83,11 @@
 | **컴포저 @mention/슬래시 + 마이크** — '@' 파일/세션 멘션·'/' 액션 자동완성 팝업, Win+H 받아쓰기 | 4af21bd, (composer) |
 | **NewAgent 모달 정렬** — 런타임 선택 하이라이트(SelectedBrushConverter) + 모델 피커 + worktree 미리보기 필 | f1a0198 |
 | **Accent 선택 링 + 클린업 + 점검** — 스와치 선택 링, subagent 브랜치/낡은 감사문서 정리, 하드코딩 'Failed' i18n·사이드바 설정 기어 | c766db1, 2eed05d, d81fd2a |
+| **API key 인증** — Runtimes 카드(cc/gx) Subscription/API key 세그 + 키 필드, DPAPI(CurrentUser) 암호화 저장(crypt32 P/Invoke, 평문 금지), 실행 시 env 주입(SessionOptions.ExtraEnvironment → AgentSession; cc=ANTHROPIC_API_KEY/gx=OPENAI_API_KEY/ag 백엔드). DPAPI 라운드트립 OS 확인 | c6ee1d6 |
 
 ## 🔜 다음
 1. **agy v2 후보**: --model 포맷 실측 → 모델 선택 활성화 · agy 구조화 출력 추가 시 풀 이벤트 전환
-2. **Settings 백엔드 잔여**: API key 인증(어댑터 env 주입)·accent frozen 폴백 실측
+2. **마이크로 폴리시(선택)**: HudTicks(둥근 카드 코너틱) 시각 확정 · "JK" 아바타(목업 잔재) 제네릭화 · accent 라이브 frozen 폴백 실측 · API key UI를 ag/agy까지 확장 · API key 필드 마스킹(PasswordBox)
 3. **뒤로 미룸(결정)**: 풀 MCP
 
 ## ⏸ 보류 / 후순위
