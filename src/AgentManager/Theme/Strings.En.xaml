@@ -96,6 +96,7 @@
     <sys:String x:Key="L.WorktreeBaseHint">Where isolated git worktrees are created. Leave empty for the default app-data folder.</sys:String>
     <sys:String x:Key="L.AutoStartLast">Open last session on launch</sys:String>
     <sys:String x:Key="L.StreamLogsToggle">Show live activity in lists</sys:String>
+    <sys:String x:Key="L.DefaultModel">Default model</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>

@@ -35,6 +35,8 @@ public sealed record AppSettingsDto
     public bool AutoStartLastSession { get; init; }
     /// <summary>목록(사이드바/대시보드)에 실시간 활동을 표시한다.</summary>
     public bool StreamLogs { get; init; } = true;
+    /// <summary>엔진별 새 세션 기본 모델 (engineId → model). 없으면 엔진의 첫 모델 사용.</summary>
+    public Dictionary<string, string> DefaultModels { get; init; } = new();
 }
 
 public sealed record ProjectDto

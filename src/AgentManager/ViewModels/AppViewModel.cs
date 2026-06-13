@@ -602,6 +602,34 @@ public sealed partial class AppViewModel : ObservableObject
     public bool StreamLogs { get => _streamLogs; set => Set(ref _streamLogs, value); }
     public bool SettingsStreamLogs { get => _settingsStreamLogs; set => Set(ref _settingsStreamLogs, value); }
     private bool _settingsStreamLogs = true;
+
+    // ----- per-engine default model -----
+    private Dictionary<string, string> _defaultModels = new();
+    public string[] CcModels => EngineModels("cc");
+    public string[] GxModels => EngineModels("gx");
+    public string[] AgModels => EngineModels("ag");
+    public string[] AgyModels => EngineModels("agy");
+    private string[] EngineModels(string id) => Array.Find(Engines, e => e.Id == id)?.Models ?? [];
+    /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
+    private string DefaultModelFor(string id) =>
+        _defaultModels.TryGetValue(id, out var m) && !string.IsNullOrWhiteSpace(m) ? m : (EngineModels(id).FirstOrDefault() ?? "");
+    /// <summary>유효한 모델만 저장 (엔진 모델 목록에 있을 때).</summary>
+    private void SetDefaultModel(string id, string model)
+    {
+        if (!string.IsNullOrWhiteSpace(model) && Array.IndexOf(EngineModels(id), model) >= 0)
+            _defaultModels[id] = model;
+        else
+            _defaultModels.Remove(id);
+    }
+    public string SettingsModelCc { get => _settingsModelCc; set => Set(ref _settingsModelCc, value); }
+    private string _settingsModelCc = "";
+    public string SettingsModelGx { get => _settingsModelGx; set => Set(ref _settingsModelGx, value); }
+    private string _settingsModelGx = "";
+    public string SettingsModelAg { get => _settingsModelAg; set => Set(ref _settingsModelAg, value); }
+    private string _settingsModelAg = "";
+    public string SettingsModelAgy { get => _settingsModelAgy; set => Set(ref _settingsModelAgy, value); }
+    private string _settingsModelAgy = "";
+
     private static (bool requireApproval, SandboxMode sandbox) PolicyToSession(string policy) => policy switch
     {
         "ask" => (true, SandboxMode.ReadOnly),
@@ -904,7 +932,8 @@ public sealed partial class AppViewModel : ObservableObject
         var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
         var branch = "agent/" + Slug(title);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
-        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, engine.Models[0])
+        var model = DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0];
+        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, model)
         {
             TranslationEnabled = TranslationEnabled,
             RequireApproval = reqAppr,
@@ -1066,6 +1095,10 @@ public sealed partial class AppViewModel : ObservableObject
         SettingsWorktreeBase = _worktreeBase;
         SettingsAutoStart = _autoStartLastSession;
         SettingsStreamLogs = _streamLogs;
+        SettingsModelCc = DefaultModelFor("cc");
+        SettingsModelGx = DefaultModelFor("gx");
+        SettingsModelAg = DefaultModelFor("ag");
+        SettingsModelAgy = DefaultModelFor("agy");
         SettingsStatus = "";
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
@@ -1090,6 +1123,10 @@ public sealed partial class AppViewModel : ObservableObject
         _worktreeBase = (SettingsWorktreeBase ?? "").Trim();
         _autoStartLastSession = SettingsAutoStart;
         StreamLogs = SettingsStreamLogs;
+        SetDefaultModel("cc", SettingsModelCc);
+        SetDefaultModel("gx", SettingsModelGx);
+        SetDefaultModel("ag", SettingsModelAg);
+        SetDefaultModel("agy", SettingsModelAgy);
         var newTheme = SettingsLightTheme ? "light" : "dark";
         var themeChanged = newTheme != _theme;
         _theme = newTheme;
@@ -1198,6 +1235,7 @@ public sealed partial class AppViewModel : ObservableObject
         _worktreeBase = (state.Settings.WorktreeBase ?? "").Trim();
         _autoStartLastSession = state.Settings.AutoStartLastSession;
         _streamLogs = state.Settings.StreamLogs;
+        _defaultModels = state.Settings.DefaultModels ?? new();
         _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
         _language = state.Settings.Language == "en" ? "en" : "ko";
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
@@ -1285,6 +1323,7 @@ public sealed partial class AppViewModel : ObservableObject
                     WorktreeBase = _worktreeBase,
                     AutoStartLastSession = _autoStartLastSession,
                     StreamLogs = _streamLogs,
+                    DefaultModels = new Dictionary<string, string>(_defaultModels),
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
