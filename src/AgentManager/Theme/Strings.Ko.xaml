@@ -60,6 +60,14 @@
     <sys:String x:Key="L.OpenSessionBtn">열기</sys:String>
     <sys:String x:Key="L.SchedNextRun">다음 실행</sys:String>
     <sys:String x:Key="L.SchedJobsSuffix">건 예약됨</sys:String>
+    <sys:String x:Key="L.NewSchedule">예약 추가</sys:String>
+    <sys:String x:Key="L.SchedCreateTitle">반복 에이전트 실행 만들기</sys:String>
+    <sys:String x:Key="L.SchedPrompt">프롬프트</sys:String>
+    <sys:String x:Key="L.SchedCadence">주기</sys:String>
+    <sys:String x:Key="L.SchedCadenceHint">예: Every day · 02:00 / Mondays · 09:00 / On push to spec/</sys:String>
+    <sys:String x:Key="L.SchedTargetBranch">대상 브랜치</sys:String>
+    <sys:String x:Key="L.SaveSchedule">예약 저장</sys:String>
+    <sys:String x:Key="L.SchedInvalidCadence">Every day · 02:00 또는 Mondays · 09:00 같은 지원되는 주기를 입력하세요.</sys:String>
     <sys:String x:Key="L.KeyboardShortcuts">단축키</sys:String>
     <sys:String x:Key="L.OrchestratorDashboard">Orchestrator 대시보드</sys:String>
     <!-- Settings (full pane) -->

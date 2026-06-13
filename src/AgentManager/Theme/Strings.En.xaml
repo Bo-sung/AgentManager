@@ -60,6 +60,14 @@
     <sys:String x:Key="L.OpenSessionBtn">Open</sys:String>
     <sys:String x:Key="L.SchedNextRun">Next run</sys:String>
     <sys:String x:Key="L.SchedJobsSuffix">recurring jobs</sys:String>
+    <sys:String x:Key="L.NewSchedule">New schedule</sys:String>
+    <sys:String x:Key="L.SchedCreateTitle">Create recurring agent run</sys:String>
+    <sys:String x:Key="L.SchedPrompt">Prompt</sys:String>
+    <sys:String x:Key="L.SchedCadence">Cadence</sys:String>
+    <sys:String x:Key="L.SchedCadenceHint">Examples: Every day · 02:00 / Mondays · 09:00 / On push to spec/</sys:String>
+    <sys:String x:Key="L.SchedTargetBranch">Target branch</sys:String>
+    <sys:String x:Key="L.SaveSchedule">Save schedule</sys:String>
+    <sys:String x:Key="L.SchedInvalidCadence">Use a supported cadence such as Every day · 02:00 or Mondays · 09:00.</sys:String>
     <sys:String x:Key="L.KeyboardShortcuts">Keyboard shortcuts</sys:String>
     <sys:String x:Key="L.OrchestratorDashboard">Orchestrator dashboard</sys:String>
     <!-- Settings (full pane) -->

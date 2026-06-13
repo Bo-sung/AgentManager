@@ -107,6 +107,9 @@ public sealed class AppViewModel : ObservableObject
         DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
         OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
         RefreshScheduledJobsCommand = new RelayCommand(_ => LoadScheduledJobs());
+        NewScheduleCommand = new RelayCommand(_ => OpenNewSchedule(), _ => ActiveProject is not null);
+        CancelNewScheduleCommand = new RelayCommand(_ => ShowNewSchedule = false);
+        CreateScheduleCommand = new RelayCommand(_ => CreateSchedule(), _ => ActiveProject is not null && !string.IsNullOrWhiteSpace(NewScheduleTitle));
         RefreshHistoryCommand = new RelayCommand(_ => RebuildHistoryRows());
         SetHistoryAgentFilterCommand = new RelayCommand(p => { HistoryAgentFilter = p?.ToString() ?? "all"; });
         SetHistoryStatusFilterCommand = new RelayCommand(p => { HistoryStatusFilter = p?.ToString() ?? "all"; });
@@ -116,6 +119,9 @@ public sealed class AppViewModel : ObservableObject
 
     public RelayCommand OpenIdeCommand { get; }
     public RelayCommand RefreshScheduledJobsCommand { get; }
+    public RelayCommand NewScheduleCommand { get; }
+    public RelayCommand CancelNewScheduleCommand { get; }
+    public RelayCommand CreateScheduleCommand { get; }
     public RelayCommand RefreshHistoryCommand { get; }
     public RelayCommand SetHistoryAgentFilterCommand { get; }
     public RelayCommand SetHistoryStatusFilterCommand { get; }
@@ -533,6 +539,22 @@ public sealed class AppViewModel : ObservableObject
     private string _newProjectError = "";
     public string NewProjectError { get => _newProjectError; set => Set(ref _newProjectError, value); }
 
+    // ----- new-schedule overlay state -----
+    private bool _showNewSchedule;
+    public bool ShowNewSchedule { get => _showNewSchedule; set => Set(ref _showNewSchedule, value); }
+    private EngineDef? _newScheduleEngine;
+    public EngineDef? NewScheduleSelectedEngine { get => _newScheduleEngine; set => Set(ref _newScheduleEngine, value); }
+    private string _newScheduleTitle = "";
+    public string NewScheduleTitle { get => _newScheduleTitle; set => Set(ref _newScheduleTitle, value); }
+    private string _newSchedulePrompt = "";
+    public string NewSchedulePrompt { get => _newSchedulePrompt; set => Set(ref _newSchedulePrompt, value); }
+    private string _newScheduleCadence = "";
+    public string NewScheduleCadence { get => _newScheduleCadence; set => Set(ref _newScheduleCadence, value); }
+    private string _newScheduleTargetBranch = "";
+    public string NewScheduleTargetBranch { get => _newScheduleTargetBranch; set => Set(ref _newScheduleTargetBranch, value); }
+    private string _newScheduleError = "";
+    public string NewScheduleError { get => _newScheduleError; set => Set(ref _newScheduleError, value); }
+
     // ----- settings overlay state -----
     private bool _showSettings;
     public bool ShowSettings { get => _showSettings; set => Set(ref _showSettings, value); }
@@ -698,6 +720,60 @@ public sealed class AppViewModel : ObservableObject
         _scheduler.Reload();
     }
 
+    private void OpenNewSchedule()
+    {
+        NewScheduleSelectedEngine = Engines.FirstOrDefault() ?? EngineRegistry.All[0];
+        NewScheduleTitle = "";
+        NewSchedulePrompt = "";
+        NewScheduleCadence = "Every day · 02:00";
+        NewScheduleTargetBranch = "agent/scheduled-task";
+        NewScheduleError = "";
+        ShowNewSchedule = true;
+    }
+
+    private void CreateSchedule()
+    {
+        var project = ActiveProject;
+        if (project is null) return;
+
+        var engine = NewScheduleSelectedEngine ?? Engines.FirstOrDefault() ?? EngineRegistry.All[0];
+        var title = NewScheduleTitle.Trim();
+        var prompt = string.IsNullOrWhiteSpace(NewSchedulePrompt) ? title : NewSchedulePrompt.Trim();
+        var cadence = string.IsNullOrWhiteSpace(NewScheduleCadence) ? "Every day · 02:00" : NewScheduleCadence.Trim();
+        var branch = string.IsNullOrWhiteSpace(NewScheduleTargetBranch) ? "agent/" + Slug(title) : NewScheduleTargetBranch.Trim();
+        var isEvent = cadence.StartsWith("on push", StringComparison.OrdinalIgnoreCase) || cadence.StartsWith("On push", StringComparison.OrdinalIgnoreCase);
+        var cron = ScheduleTrigger.TryParseCadenceToCron(cadence);
+        if (!isEvent && string.IsNullOrWhiteSpace(cron))
+        {
+            NewScheduleError = L("L.SchedInvalidCadence");
+            return;
+        }
+
+        var job = new ScheduledJob
+        {
+            Id = "job" + DateTime.Now.Ticks,
+            AgentId = engine.Id,
+            ProjectId = project.Id,
+            ProjectPath = project.Path,
+            Title = title,
+            Prompt = prompt,
+            TargetBranch = branch,
+            Trigger = new ScheduleTrigger
+            {
+                Kind = isEvent ? "Event" : "Cron",
+                CadenceText = cadence,
+                CronExpression = isEvent ? null : cron,
+                TargetPath = isEvent ? cadence.Replace("On push to", "", StringComparison.OrdinalIgnoreCase).Trim() : null,
+            },
+        };
+
+        var jobs = ScheduleStore.Load();
+        jobs.Insert(0, job);
+        ScheduleStore.Save(jobs);
+        ShowNewSchedule = false;
+        LoadScheduledJobs();
+    }
+
     private void Scheduler_JobDue(object? sender, ScheduleDueEventArgs e)
     {
         Application.Current.Dispatcher.InvokeAsync(() => RunScheduledJob(e.Job));
@@ -705,7 +781,19 @@ public sealed class AppViewModel : ObservableObject
 
     private void RunScheduledJob(ScheduledJob job)
     {
-        var project = ActiveProject ?? Projects.FirstOrDefault();
+        var project = !string.IsNullOrWhiteSpace(job.ProjectId)
+            ? Projects.FirstOrDefault(p => p.Id == job.ProjectId)
+            : null;
+        if (project is null && !string.IsNullOrWhiteSpace(job.ProjectPath) && Directory.Exists(job.ProjectPath))
+        {
+            project = Projects.FirstOrDefault(p => string.Equals(p.Path, job.ProjectPath, StringComparison.OrdinalIgnoreCase));
+            if (project is null)
+            {
+                project = new ProjectViewModel("scheduled-" + DateTime.Now.Ticks, new DirectoryInfo(job.ProjectPath).Name, job.ProjectPath);
+                Projects.Add(project);
+            }
+        }
+        project ??= ActiveProject ?? Projects.FirstOrDefault();
         if (project is null) return;
 
         var engine = EngineRegistry.Get(job.AgentId);

@@ -1724,6 +1724,13 @@
                                 <TextBlock Text="{StaticResource L.ScheduledTasks}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
                                 <TextBlock FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0">
                                     <Run Text="· "/><Run Text="{Binding ScheduledJobs.Count, Mode=OneWay}"/><Run Text=" "/><Run Text="{StaticResource L.SchedJobsSuffix}"/></TextBlock>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource AccentButton}" Command="{Binding NewScheduleCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:IconView Icon="{StaticResource IconPlus}" Width="13" Height="13"
+                                                           Foreground="{StaticResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.NewSchedule}" Foreground="{StaticResource AccentText}" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Button>
                             </DockPanel>
                         </Border>
 
@@ -2216,6 +2223,117 @@
                         </ScrollViewer>
                     </DockPanel>
                 </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===================== New-schedule overlay ===================== -->
+        <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNewSchedule, Converter={StaticResource BoolVis}}">
+            <Border Width="620" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
+                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10">
+                <StackPanel>
+                    <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.NewSchedule}" Style="{StaticResource Lbl}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Command="{Binding CancelNewScheduleCommand}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
+                            <TextBlock Text="{StaticResource L.SchedCreateTitle}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+
+                    <StackPanel Margin="18">
+                        <TextBlock Text="{StaticResource L.Task}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                 Text="{Binding NewScheduleTitle, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="{StaticResource L.SchedPrompt}" Style="{StaticResource Lbl}" Margin="0,14,0,8"/>
+                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" MinHeight="78"
+                                 AcceptsReturn="True" TextWrapping="Wrap"
+                                 Text="{Binding NewSchedulePrompt, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="{StaticResource L.Runtime}" Style="{StaticResource Lbl}" Margin="0,14,0,8"/>
+                        <ListBox ItemsSource="{Binding Engines}" SelectedItem="{Binding NewScheduleSelectedEngine, Mode=TwoWay}"
+                                 Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate><UniformGrid Columns="4"/></ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0,0,8,0"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="rt" Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                                        CornerRadius="7" Padding="10" Cursor="Hand">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="rt" Property="BorderBrush" Value="{StaticResource LineBright}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="rt" Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                        <Setter TargetName="rt" Property="Background" Value="{StaticResource AccentDim}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding Name}" FontSize="12" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Cli}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{StaticResource L.SchedCadence}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                         BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                         Text="{Binding NewScheduleCadence, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="{StaticResource L.SchedCadenceHint}" FontFamily="{StaticResource Mono}" FontSize="9.5"
+                                           Foreground="{StaticResource Txt3}" Margin="2,5,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{StaticResource L.SchedTargetBranch}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                         BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                         Text="{Binding NewScheduleTargetBranch, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding NewScheduleError}" FontFamily="{StaticResource Mono}" FontSize="10"
+                                   Foreground="{StaticResource Err}" Margin="0,8,0,0"/>
+                    </StackPanel>
+
+                    <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Cancel}" Margin="0,0,9,0" Command="{Binding CancelNewScheduleCommand}"/>
+                            <Button Style="{StaticResource AccentButton}" Command="{Binding CreateScheduleCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconCalendar}" Width="13" Height="13"
+                                                       Foreground="{StaticResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{StaticResource L.SaveSchedule}" Foreground="{StaticResource AccentText}" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Border>
         </Grid>
 

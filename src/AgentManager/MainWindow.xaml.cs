@@ -357,6 +357,7 @@ public partial class MainWindow : Window
             if (AboutOverlay.Visibility == Visibility.Visible) { AboutOverlay.Visibility = Visibility.Collapsed; e.Handled = true; }
             else if (_vm.ShowNewAgent) { _vm.ShowNewAgent = false; e.Handled = true; }
             else if (_vm.ShowNewProject) { _vm.ShowNewProject = false; e.Handled = true; }
+            else if (_vm.ShowNewSchedule) { _vm.ShowNewSchedule = false; e.Handled = true; }
         }
     }
 
