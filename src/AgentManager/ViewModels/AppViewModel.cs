@@ -60,6 +60,13 @@ public sealed class AppViewModel : ObservableObject
         CancelNewAgentCommand = new RelayCommand(_ => ShowNewAgent = false);
         CreateSessionCommand = new RelayCommand(_ => CreateSession(), _ => NewAgentSelectedEngine is not null);
         SelectSessionCommand = new RelayCommand(s => { if (s is SessionViewModel vm) ActiveSession = vm; });
+        ShowViewCommand = new RelayCommand(p => CurrentView = (p as string) switch
+        {
+            "history" => MainViewKind.History,
+            "scheduled" => MainViewKind.Scheduled,
+            "session" => MainViewKind.Session,
+            _ => MainViewKind.Orchestrator,
+        });
         NewProjectCommand = new RelayCommand(_ => ShowNewProject = true);
         CancelNewProjectCommand = new RelayCommand(_ => ShowNewProject = false);
         CreateProjectCommand = new RelayCommand(_ => CreateProject(), _ => !string.IsNullOrWhiteSpace(NewProjectPath));
@@ -240,6 +247,7 @@ public sealed class AppViewModel : ObservableObject
     public RelayCommand SelectProjectCommand { get; }
     public RelayCommand ImportCliSessionCommand { get; }
     public RelayCommand ShowSettingsCommand { get; }
+    public RelayCommand ShowViewCommand { get; }
     public RelayCommand CancelSettingsCommand { get; }
     public RelayCommand SaveSettingsCommand { get; }
     public RelayCommand SendCommand { get; }

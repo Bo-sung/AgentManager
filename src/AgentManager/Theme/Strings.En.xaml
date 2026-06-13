@@ -59,6 +59,8 @@
     <sys:String x:Key="L.OpenSessionBtn">Open</sys:String>
     <sys:String x:Key="L.SchedNextRun">Next run</sys:String>
     <sys:String x:Key="L.SchedJobsSuffix">recurring jobs</sys:String>
+    <sys:String x:Key="L.KeyboardShortcuts">Keyboard shortcuts</sys:String>
+    <sys:String x:Key="L.OrchestratorDashboard">Orchestrator dashboard</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>

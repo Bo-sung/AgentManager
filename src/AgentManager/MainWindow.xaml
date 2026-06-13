@@ -251,50 +251,40 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Style="{StaticResource MenuButton}" Content="{StaticResource L.File}" Click="MenuButton_Click">
+                    <Button Style="{StaticResource MenuButton}" Content="{StaticResource L.Agents}" Click="MenuButton_Click">
                         <Button.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="{StaticResource L.NewAgent}" InputGestureText="Ctrl+N" Command="{Binding NewAgentCommand}"/>
                                 <MenuItem Header="{StaticResource L.NewProject}" Command="{Binding NewProjectCommand}"/>
                                 <Separator/>
-                                <MenuItem Header="{StaticResource L.Exit}" Click="CloseBtn_Click"/>
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
-                    <Button Style="{StaticResource MenuButton}" Content="{StaticResource L.Edit}" Click="MenuButton_Click">
-                        <Button.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="{StaticResource L.CopyConversationMarkdown}" Click="CopyTranscript_Click"/>
-                                <MenuItem Header="{StaticResource L.ExportTranscript}" Click="ExportTranscript_Click"/>
+                                <MenuItem Header="{StaticResource L.NewClaudeSession}" Click="NewAgentEngine_Click" Tag="cc"/>
+                                <MenuItem Header="{StaticResource L.NewCodexSession}" Click="NewAgentEngine_Click" Tag="gx"/>
+                                <MenuItem Header="{StaticResource L.NewGeminiSession}" Click="NewAgentEngine_Click" Tag="ag"/>
+                                <MenuItem Header="{StaticResource L.NewAntigravitySession}" Click="NewAgentEngine_Click" Tag="agy"/>
                                 <Separator/>
-                                <MenuItem Header="{StaticResource L.SearchSessions}" InputGestureText="Ctrl+F" Click="FocusSearch_Click"/>
+                                <MenuItem Header="{StaticResource L.OrchestratorDashboard}" InputGestureText="Ctrl+1" Command="{Binding ShowViewCommand}" CommandParameter="orchestrator"/>
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
                     <Button Style="{StaticResource MenuButton}" Content="{StaticResource L.View}" Click="MenuButton_Click">
                         <Button.ContextMenu>
                             <ContextMenu>
+                                <MenuItem Header="{StaticResource L.Orchestrator}" InputGestureText="Ctrl+1" Command="{Binding ShowViewCommand}" CommandParameter="orchestrator"/>
+                                <MenuItem Header="{StaticResource L.ActivityHistory}" InputGestureText="Ctrl+2" Command="{Binding ShowViewCommand}" CommandParameter="history"/>
+                                <MenuItem Header="{StaticResource L.ScheduledTasks}" InputGestureText="Ctrl+3" Command="{Binding ShowViewCommand}" CommandParameter="scheduled"/>
+                                <Separator/>
                                 <MenuItem Header="{StaticResource L.ToggleReviewPane}" InputGestureText="Ctrl+R" Command="{Binding ToggleReviewCommand}"/>
-                                <MenuItem Header="{StaticResource L.MaximizeRestore}" Click="MaxBtn_Click"/>
+                                <MenuItem Header="{StaticResource L.Settings}" InputGestureText="Ctrl+," Command="{Binding ShowSettingsCommand}"/>
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
-                    <Button Style="{StaticResource MenuButton}" Content="{StaticResource L.Agents}" Click="MenuButton_Click">
-                        <Button.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="{StaticResource L.NewClaudeSession}" Click="NewAgentEngine_Click" Tag="cc"/>
-                                <MenuItem Header="{StaticResource L.NewCodexSession}" Click="NewAgentEngine_Click" Tag="gx"/>
-                                <MenuItem Header="{StaticResource L.NewGeminiSession}" Click="NewAgentEngine_Click" Tag="ag"/>
-                                <MenuItem Header="{StaticResource L.NewAntigravitySession}" Click="NewAgentEngine_Click" Tag="agy"/>
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
-                    <Button Style="{StaticResource MenuButton}" Content="{StaticResource L.Settings}" Command="{Binding ShowSettingsCommand}"/>
                     <Button Style="{StaticResource MenuButton}" Content="{StaticResource L.Help}" Click="MenuButton_Click">
                         <Button.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="{StaticResource L.AboutAgentManager}" Click="HelpAbout_Click"/>
+                                <MenuItem Header="{StaticResource L.KeyboardShortcuts}" Click="HelpAbout_Click"/>
                                 <MenuItem Header="{StaticResource L.OpenDocsFolder}" Click="HelpDocs_Click"/>
+                                <Separator/>
+                                <MenuItem Header="{StaticResource L.AboutAgentManager}" Click="HelpAbout_Click"/>
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>

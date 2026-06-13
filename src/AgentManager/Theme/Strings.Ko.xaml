@@ -59,6 +59,8 @@
     <sys:String x:Key="L.OpenSessionBtn">열기</sys:String>
     <sys:String x:Key="L.SchedNextRun">다음 실행</sys:String>
     <sys:String x:Key="L.SchedJobsSuffix">건 예약됨</sys:String>
+    <sys:String x:Key="L.KeyboardShortcuts">단축키</sys:String>
+    <sys:String x:Key="L.OrchestratorDashboard">Orchestrator 대시보드</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>

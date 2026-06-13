@@ -19,6 +19,13 @@ public partial class MainWindow : Window
         _vm.AttentionRequested += OnAttentionRequested;
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Find, (_, _) => SessionSearchBox.Focus()));
         InputBindings.Add(new KeyBinding(ApplicationCommands.Find, Key.F, ModifierKeys.Control));
+        // menu-mirrored shortcuts (Agents/View)
+        InputBindings.Add(new KeyBinding(_vm.NewAgentCommand, Key.N, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(_vm.ShowViewCommand, Key.D1, ModifierKeys.Control) { CommandParameter = "orchestrator" });
+        InputBindings.Add(new KeyBinding(_vm.ShowViewCommand, Key.D2, ModifierKeys.Control) { CommandParameter = "history" });
+        InputBindings.Add(new KeyBinding(_vm.ShowViewCommand, Key.D3, ModifierKeys.Control) { CommandParameter = "scheduled" });
+        InputBindings.Add(new KeyBinding(_vm.ToggleReviewCommand, Key.R, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(_vm.ShowSettingsCommand, Key.OemComma, ModifierKeys.Control));
         RestoreWindowPlacement();
         Closing += (_, _) =>
         {
