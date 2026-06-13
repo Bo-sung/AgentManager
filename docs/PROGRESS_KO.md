@@ -69,13 +69,29 @@
 
 | **agy 엔진 (4번째)** — TTY 전용 agy CLI를 ConPTY로 구동 (IPtyTurnRunner + Core/Hosting/ConPtyHost), 캐시에서 conversation id 추출 → resume. 사용자 세션 라이브 2턴 PASS. 텍스트 전용 v1 (구조화 출력 추가 시 확장) | 53571a8 |
 
+### 🎨 디자인 v2 전면 매칭 (design/ 원본 갱신 반영)
+> 갱신된 원본(am-app/views/chat/sidebar/settings/components/data.jsx + AgentManager.html)을 기준으로 전 표면 매칭. 회귀 금지 자산(번역·멀티프로젝트·CLI HISTORY·i18n·4엔진) 매 단계 보존. 매 단계 빌드 0/0 + KO/EN 키 동일성 검증.
+
+| **Phase 1 nav 골격** — CurrentView(Orchestrator/History/Scheduled/Settings/Session) 중앙 페인 전환 구조, 사이드바 nav 실동작화 | 5c679f6, 1a22756 |
+| **Orchestrator 대시보드** — KPI 5종(Active/Awaiting/Completed/Failed/Fleet) + Live/Recent 카드 그리드 + 공유 OrchCard(상태닷·경과·토큰·indeterminate바·Open) + Spark 이퀄라이저 + diff 바(add/del, 백그라운드 스캔) + Diff 버튼 + HUD 코너틱 + full-width | 3bc0cba, 8507026, c24440d, b08ec02 |
+| **메뉴바 재구성** — File/Edit/… 6개 → 원본 Agents/View/Help 3개 + 실제 단축키(Ctrl+N/1/2/3/R/,) | da82602 |
+| **Settings 풀-페인** — 620px 모달 → 중앙 페인 TOC(Runtimes/Translation/Orchestration/Permissions/Appearance/Project) + 카드형, 옛 오버레이 폐기 | 5527419, 8a72a90 |
+| **Settings 백엔드 전체 실동작** — 승인정책(ask/safe/yolo)·Orchestration(worktree base/auto-start/stream-logs)·per-engine 기본모델·엔진 enable/disable·CLI Sign in(터미널 로그인 위임)·Appearance(accent 라이브 5프리셋/density 스케일/telemetry) | e8eb16a, 4af21bd, ab9c1b6, 3d27750, 68ade27, 25680f3 |
+| **History 인앱 뷰** — 별도 ActivityHistoryWindow 폐기 → ⌘2 중앙 페인(타임라인·일별 그룹·검색·에이전트/상태 필터) | 5c679f6, 1a1b9bf |
+| **Scheduled Tasks** — Core/Scheduling(Trigger 파싱·Store·TimerScheduler) + New schedule 생성 모달 + JobDue→세션 spawn + 하드닝(LastRunUtc 선영속·lock밖 호출) + 스모크(--sched-check/--sched-create-check) | 42401e3, 6540f8f, 1d06c43 |
+| **About/단축키 모달** — 신규 오버레이 + 버전/빌드/런타임 수 어셈블리 실값 바인딩 | c1b86c3, 8bc0dea |
+| **컴포저 @mention/슬래시 + 마이크** — '@' 파일/세션 멘션·'/' 액션 자동완성 팝업, Win+H 받아쓰기 | 4af21bd, (composer) |
+| **NewAgent 모달 정렬** — 런타임 선택 하이라이트(SelectedBrushConverter) + 모델 피커 + worktree 미리보기 필 | f1a0198 |
+| **Accent 선택 링 + 클린업 + 점검** — 스와치 선택 링, subagent 브랜치/낡은 감사문서 정리, 하드코딩 'Failed' i18n·사이드바 설정 기어 | c766db1, 2eed05d, d81fd2a |
+
 ## 🔜 다음
 1. **agy v2 후보**: --model 포맷 실측 → 모델 선택 활성화 · agy 구조화 출력 추가 시 풀 이벤트 전환
-2. **뒤로 미룸(결정)**: 풀 MCP
+2. **Settings 백엔드 잔여**: API key 인증(어댑터 env 주입)·accent frozen 폴백 실측
+3. **뒤로 미룸(결정)**: 풀 MCP
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
-- Browser QA · SSH/원격 · 컨테이너 · Scheduled · 팀공유 · Extension SDK → P2 이후
+- Browser QA · SSH/원격 · 컨테이너 · 팀공유 · Extension SDK → P2 이후
 - Antigravity 어댑터 → 전환(6/18)·표면 확정 후
 
 ## 결정 로그 (요약)
