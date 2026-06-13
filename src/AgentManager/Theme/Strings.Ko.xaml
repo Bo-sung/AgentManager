@@ -98,6 +98,9 @@
     <sys:String x:Key="L.StreamLogsToggle">목록에 실시간 활동 표시</sys:String>
     <sys:String x:Key="L.DefaultModel">기본 모델</sys:String>
     <sys:String x:Key="L.EngineEnabled">활성</sys:String>
+    <sys:String x:Key="L.ModelPick">모델</sys:String>
+    <sys:String x:Key="L.WorktreeLabel">워크트리</sys:String>
+    <sys:String x:Key="L.Isolated">격리</sys:String>
     <sys:String x:Key="L.SignIn">로그인</sys:String>
     <sys:String x:Key="L.SignInLaunched">터미널을 열었습니다 — 거기서 로그인을 완료하세요.</sys:String>
     <sys:String x:Key="L.SignInNotFound">CLI를 찾을 수 없습니다 — 먼저 경로를 설정하세요.</sys:String>

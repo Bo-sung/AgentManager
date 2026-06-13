@@ -535,9 +535,31 @@ public sealed partial class AppViewModel : ObservableObject
     private bool _showNew;
     public bool ShowNewAgent { get => _showNew; set => Set(ref _showNew, value); }
     private EngineDef? _newEngine;
-    public EngineDef? NewAgentSelectedEngine { get => _newEngine; set => Set(ref _newEngine, value); }
+    public EngineDef? NewAgentSelectedEngine
+    {
+        get => _newEngine;
+        set
+        {
+            if (Set(ref _newEngine, value))
+            {
+                OnChanged(nameof(NewAgentModels));
+                OnChanged(nameof(NewAgentBranchPreview));
+                NewAgentModel = value is { } e ? DefaultModelFor(e.Id) : "";
+            }
+        }
+    }
+    public string[] NewAgentModels => _newEngine?.Models ?? [];
+    private string _newAgentModel = "";
+    public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
+    /// <summary>현재 task 기준 생성될 worktree 브랜치 미리보기.</summary>
+    public string NewAgentBranchPreview =>
+        "agent/" + Slug(string.IsNullOrWhiteSpace(_newTitle) ? "task" : _newTitle);
     private string _newTitle = "";
-    public string NewAgentTitle { get => _newTitle; set => Set(ref _newTitle, value); }
+    public string NewAgentTitle
+    {
+        get => _newTitle;
+        set { if (Set(ref _newTitle, value)) OnChanged(nameof(NewAgentBranchPreview)); }
+    }
 
     // ----- new-project overlay state -----
     private bool _showNewProject;
@@ -993,7 +1015,10 @@ public sealed partial class AppViewModel : ObservableObject
         var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
         var branch = "agent/" + Slug(title);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
-        var model = DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0];
+        // 모달에서 고른 모델 우선 (유효할 때), 없으면 엔진 기본
+        var model = !string.IsNullOrWhiteSpace(NewAgentModel) && Array.IndexOf(engine.Models, NewAgentModel) >= 0
+            ? NewAgentModel
+            : (DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0]);
         var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, model)
         {
             TranslationEnabled = TranslationEnabled,

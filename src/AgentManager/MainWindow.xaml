@@ -23,6 +23,7 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
+        <controls:SelectedBrushConverter x:Key="SelBrush"/>
         <Style x:Key="KbdChip" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource Bg1}"/>
             <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
@@ -2942,8 +2943,14 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Margin="0,0,9,0" Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                    <Border Margin="0,0,9,0" Background="{StaticResource Bg1}" BorderThickness="1"
                                             CornerRadius="7" Padding="11,13" Cursor="Hand" MouseLeftButtonUp="EngineOpt_Click">
+                                        <Border.BorderBrush>
+                                            <MultiBinding Converter="{StaticResource SelBrush}">
+                                                <Binding Path="Id"/>
+                                                <Binding Path="DataContext.NewAgentSelectedEngine.Id" ElementName="Root"/>
+                                            </MultiBinding>
+                                        </Border.BorderBrush>
                                         <StackPanel>
                                             <Border Width="30" Height="30" CornerRadius="4" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" HorizontalAlignment="Left" Margin="0,0,0,8">
                                                 <controls:IconView Style="{StaticResource EngineIconByDef}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -2956,12 +2963,32 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Text="{StaticResource L.Task}" Style="{StaticResource Lbl}" Margin="0,16,0,8"/>
-                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
-                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
-                                 Text="{Binding NewAgentTitle, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Margin="0,8,0,0" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}">
-                            <Run Text="{StaticResource L.Selected}"/><Run Text="{Binding NewAgentSelectedEngine.Name, Mode=OneWay}" Foreground="{StaticResource Accent}"/></TextBlock>
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="200"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{StaticResource L.Task}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
+                                         BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                         Text="{Binding NewAgentTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{StaticResource L.ModelPick}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                                <ComboBox ItemsSource="{Binding NewAgentModels}" SelectedItem="{Binding NewAgentModel, Mode=TwoWay}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="{StaticResource L.WorktreeLabel}" Style="{StaticResource Lbl}" Margin="0,16,0,8"/>
+                        <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Padding="11,9">
+                            <DockPanel>
+                                <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconBranch}" Width="13" Height="13" Foreground="{StaticResource Txt2}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{StaticResource L.Isolated}" Style="{StaticResource Lbl}" FontSize="9" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding NewAgentBranchPreview, Mode=OneWay}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                        </Border>
                     </StackPanel>
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
