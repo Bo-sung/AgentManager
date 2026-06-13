@@ -671,6 +671,34 @@ public sealed partial class AppViewModel : ObservableObject
     };
 
     // provider detection status (settings panel)
+    /// <summary>엔진의 CLI를 프로젝트 경로의 새 터미널로 열어 사용자가 직접 로그인하게 한다
+    /// (명령 추측 없이 각 CLI 자체 인증 플로우 사용).</summary>
+    public void SignIn(string engineId)
+    {
+        var exe = EngineRegistry.ResolveExe(engineId, _claudePath, _codexPath);
+        if (string.IsNullOrWhiteSpace(exe))
+        {
+            SettingsStatus = L("L.SignInNotFound");
+            return;
+        }
+        var cwd = WorkingDirectory;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/k \"\"{exe}\"\"",       // 콘솔을 열고 CLI 실행 후 창 유지
+                WorkingDirectory = Directory.Exists(cwd) ? cwd : Environment.CurrentDirectory,
+                UseShellExecute = true,
+            });
+            SettingsStatus = L("L.SignInLaunched");
+        }
+        catch (Exception ex)
+        {
+            SettingsStatus = ex.Message;
+        }
+    }
+
     public string ClaudeDetectLabel => DetectLabel("cc", _claudePath);
     public string CodexDetectLabel => DetectLabel("gx", _codexPath);
     public string GeminiDetectLabel => DetectLabel("ag", null);

@@ -259,6 +259,13 @@ public partial class MainWindow : Window
             _vm.SettingsDensity = density;
     }
 
+    /// <summary>Settings ▸ Runtimes: 엔진 CLI를 새 터미널로 열어 로그인.</summary>
+    private void EngineSignIn_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string id)
+            _vm.SignIn(id);
+    }
+
     private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is HistoryRowViewModel row)

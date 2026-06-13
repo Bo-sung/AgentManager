@@ -98,6 +98,9 @@
     <sys:String x:Key="L.StreamLogsToggle">Show live activity in lists</sys:String>
     <sys:String x:Key="L.DefaultModel">Default model</sys:String>
     <sys:String x:Key="L.EngineEnabled">Enabled</sys:String>
+    <sys:String x:Key="L.SignIn">Sign in</sys:String>
+    <sys:String x:Key="L.SignInLaunched">Opened a terminal — complete sign-in there.</sys:String>
+    <sys:String x:Key="L.SignInNotFound">CLI not found — set the path first.</sys:String>
     <sys:String x:Key="L.AccentColor">Accent color</sys:String>
     <sys:String x:Key="L.AccentColorDesc">Applies live across the whole client.</sys:String>
     <sys:String x:Key="L.Density">Density</sys:String>
