@@ -12,8 +12,12 @@ public static class ScheduleStore
         WriteIndented = true,
     };
 
-    public static string StorePath =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "schedules.json");
+    private static string? _customStorePath;
+    public static string StorePath
+    {
+        get => _customStorePath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "schedules.json");
+        set => _customStorePath = value;
+    }
 
     public static List<ScheduledJob> Load()
     {

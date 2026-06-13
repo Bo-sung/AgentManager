@@ -14,6 +14,12 @@ if (args.Contains("--sched-check"))
     return;
 }
 
+if (args.Contains("--sched-create-check"))
+{
+    RunSchedCreateCheck();
+    return;
+}
+
 // Live approval round-trip (costs a few engine tokens): dotnet run -- --live-approval
 if (args.Contains("--live-approval"))
 {
@@ -995,6 +1001,145 @@ static void RunSchedCheck()
 
     Console.WriteLine("[sched-check] All next run calculations verified.");
     Console.WriteLine("PASS");
+}
+
+static void RunSchedCreateCheck()
+{
+    Console.WriteLine("[sched-create-check] Running tests...");
+
+    // 1. Override ScheduleStore.StorePath to a temporary file
+    var tempFile = Path.Combine(Path.GetTempPath(), "am_smoke_sched_" + Guid.NewGuid().ToString("N")[..8] + ".json");
+    ScheduleStore.StorePath = tempFile;
+    Console.WriteLine($"[sched-create-check] Override StorePath to: {tempFile}");
+
+    try
+    {
+        // 2. Create ScheduledJob 1
+        var trigger = new ScheduleTrigger
+        {
+            Kind = "Cron",
+            CadenceText = "Every day · 02:00",
+            CronExpression = "0 2 * * *",
+            TargetPath = null
+        };
+        var job = new ScheduledJob
+        {
+            Id = "job-smoke-test-1",
+            AgentId = "cc",
+            ProjectId = "p-smoke-test",
+            ProjectPath = "C:/temp/dummy_path",
+            Title = "Smoke Test Job",
+            Prompt = "Say smoke test",
+            TargetBranch = "agent/smoke-test",
+            Trigger = trigger,
+            Enabled = true,
+            LastRunUtc = null
+        };
+
+        // 3. Save via ScheduleStore.Save
+        ScheduleStore.Save(new List<ScheduledJob> { job });
+        Console.WriteLine("[sched-create-check] Job saved successfully.");
+
+        // 4. Load from ScheduleStore.Load and verify round-trip
+        var loadedJobs = ScheduleStore.Load();
+        Assert(loadedJobs.Count == 1, $"Expected 1 loaded job, got {loadedJobs.Count}");
+        var loaded = loadedJobs[0];
+        
+        Assert(loaded.Id == job.Id, "Id mismatch");
+        Assert(loaded.AgentId == job.AgentId, "AgentId mismatch");
+        Assert(loaded.ProjectId == job.ProjectId, "ProjectId mismatch");
+        Assert(loaded.ProjectPath == job.ProjectPath, "ProjectPath mismatch");
+        Assert(loaded.Title == job.Title, "Title mismatch");
+        Assert(loaded.Prompt == job.Prompt, "Prompt mismatch");
+        Assert(loaded.TargetBranch == job.TargetBranch, "TargetBranch mismatch");
+        Assert(loaded.Enabled == job.Enabled, "Enabled mismatch");
+        Assert(loaded.LastRunUtc == job.LastRunUtc, "LastRunUtc mismatch");
+        Assert(loaded.Trigger.Kind == trigger.Kind, "Trigger.Kind mismatch");
+        Assert(loaded.Trigger.CadenceText == trigger.CadenceText, "Trigger.CadenceText mismatch");
+        Assert(loaded.Trigger.CronExpression == trigger.CronExpression, "Trigger.CronExpression mismatch");
+        Assert(loaded.Trigger.TargetPath == trigger.TargetPath, "Trigger.TargetPath mismatch");
+        Console.WriteLine("[sched-create-check] Round-trip verification successful.");
+
+        // 5. Verify NextRunUtc calculation yields a future time
+        Assert(loaded.NextRunUtc.HasValue, "NextRunUtc has no value");
+        Assert(loaded.NextRunUtc!.Value > DateTime.UtcNow, $"NextRunUtc ({loaded.NextRunUtc.Value}) is not in the future relative to UtcNow ({DateTime.UtcNow})");
+        Console.WriteLine($"[sched-create-check] NextRunUtc verified in future: {loaded.NextRunUtc.Value}");
+
+        // 6. Verify due evaluation works when Enabled = true
+        // Let's create a due job
+        var cronEveryMin = new ScheduleTrigger
+        {
+            Kind = "Cron",
+            CadenceText = "* * * * *",
+            CronExpression = "* * * * *"
+        };
+        var dueJob = new ScheduledJob
+        {
+            Id = "job-smoke-due-1",
+            AgentId = "cc",
+            ProjectId = "p-smoke-test",
+            ProjectPath = "C:/temp/dummy_path",
+            Title = "Due Job",
+            Prompt = "Due prompt",
+            TargetBranch = "agent/smoke-due",
+            Trigger = cronEveryMin,
+            Enabled = true,
+            LastRunUtc = DateTime.UtcNow.AddMinutes(-5) // 5 minutes ago
+        };
+
+        ScheduleStore.Save(new List<ScheduledJob> { dueJob });
+        
+        // Let's initialize scheduler
+        using (var scheduler = new TimerScheduler())
+        {
+            scheduler.Reload();
+
+            int triggerCount = 0;
+            ScheduledJob? triggeredJob = null;
+            scheduler.JobDue += (s, e) =>
+            {
+                triggerCount++;
+                triggeredJob = e.Job;
+            };
+
+            // Run EvaluateJobs synchronously
+            scheduler.EvaluateJobs();
+
+            // Verify trigger occurred
+            Assert(triggerCount == 1, $"Expected JobDue to fire 1 time, fired {triggerCount} times");
+            Assert(triggeredJob != null, "Triggered job was null");
+            Assert(triggeredJob!.Id == dueJob.Id, "Triggered job ID mismatch");
+            Assert(triggeredJob.LastRunUtc.HasValue, "Triggered job LastRunUtc is null");
+            // Verify it was updated to roughly now (within 10 seconds)
+            var diff = DateTime.UtcNow - triggeredJob.LastRunUtc!.Value;
+            Assert(Math.Abs(diff.TotalSeconds) < 10, $"LastRunUtc ({triggeredJob.LastRunUtc.Value}) is not close to UtcNow ({DateTime.UtcNow})");
+
+            // Verify that the disk state is also updated
+            var diskJobs = ScheduleStore.Load();
+            Assert(diskJobs.Count == 1, $"Expected 1 job on disk, got {diskJobs.Count}");
+            Assert(diskJobs[0].LastRunUtc.HasValue, "LastRunUtc on disk is null");
+            Assert(diskJobs[0].LastRunUtc!.Value == triggeredJob.LastRunUtc.Value, "LastRunUtc on disk does not match memory");
+
+            // 7. Verify that double triggering does NOT occur on next run (since LastRunUtc has been updated)
+            // Set the scheduler's internal list to the saved state to simulate reload or persistent state
+            scheduler.Reload();
+            
+            scheduler.EvaluateJobs();
+            Assert(triggerCount == 1, $"JobDue triggered again! Duplicate prevention failed. Fire count: {triggerCount}");
+        }
+        
+        Console.WriteLine("[sched-create-check] TimerScheduler due evaluation and duplicate prevention verified successfully.");
+        Console.WriteLine("PASS");
+    }
+    finally
+    {
+        // Cleanup temp file
+        try
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+        catch {}
+    }
 }
 
 static void Assert(bool condition, string message)

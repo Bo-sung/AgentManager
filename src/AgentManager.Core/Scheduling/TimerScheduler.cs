@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+
+[assembly: InternalsVisibleTo("AgentManager.Smoke")]
 
 namespace AgentManager.Core.Scheduling;
 
@@ -80,7 +83,7 @@ public sealed class TimerScheduler : IScheduler, IDisposable
         }
     }
 
-    private void EvaluateJobs()
+    internal void EvaluateJobs()
     {
         List<ScheduledJob> jobsToEvaluate;
         lock (_lock)
@@ -101,6 +104,8 @@ public sealed class TimerScheduler : IScheduler, IDisposable
 
         if (dueJobs.Count == 0) return;
 
+        var jobsToTrigger = new List<ScheduledJob>();
+
         lock (_lock)
         {
             var updatedJobs = new List<ScheduledJob>();
@@ -111,15 +116,7 @@ public sealed class TimerScheduler : IScheduler, IDisposable
                 {
                     var updated = job with { LastRunUtc = DateTime.UtcNow };
                     updatedJobs.Add(updated);
-
-                    try
-                    {
-                        JobDue?.Invoke(this, new ScheduleDueEventArgs(updated));
-                    }
-                    catch
-                    {
-                        // Prevent event handler exception from breaking the scheduler loop
-                    }
+                    jobsToTrigger.Add(updated);
                 }
                 else
                 {
@@ -129,6 +126,18 @@ public sealed class TimerScheduler : IScheduler, IDisposable
 
             _jobs = updatedJobs;
             ScheduleStore.Save(_jobs);
+        }
+
+        foreach (var jobToTrigger in jobsToTrigger)
+        {
+            try
+            {
+                JobDue?.Invoke(this, new ScheduleDueEventArgs(jobToTrigger));
+            }
+            catch
+            {
+                // Prevent event handler exception from breaking the scheduler loop
+            }
         }
     }
 
