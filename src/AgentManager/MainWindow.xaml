@@ -446,6 +446,10 @@
                                     Command="{Binding ShowSettingsCommand}" ToolTip="{StaticResource L.Settings}" VerticalAlignment="Center">
                                 <controls:IconView Icon="{StaticResource IconSettings}" Width="16" Height="16"/>
                             </Button>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="30" Height="30"
+                                    Command="{Binding CheckUsageCommand}" ToolTip="{StaticResource L.CheckUsage}" VerticalAlignment="Center">
+                                <controls:IconView Icon="{StaticResource IconRefresh}" Width="15" Height="15"/>
+                            </Button>
                             <Border DockPanel.Dock="Left" Width="22" Height="22" CornerRadius="11" Background="{StaticResource Bg4}" Margin="0,0,8,0">
                                 <controls:IconView Icon="{StaticResource IconUser}" Width="13" Height="13" Foreground="{StaticResource Txt2}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
