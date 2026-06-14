@@ -281,50 +281,8 @@ public partial class MainWindow : Window
         _vm.CurrentView = MainViewKind.Scheduled;
     }
 
-    private void SettingsToc_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is string name && FindName(name) is FrameworkElement target)
-            target.BringIntoView();
-    }
-
-    /// <summary>Settings ▸ Permissions: 승인 정책 세그(ask/safe/yolo) 선택.</summary>
-    private void ApprovalPolicy_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is string policy)
-            _vm.SettingsApprovalPolicy = policy;
-    }
-
-    /// <summary>Settings ▸ Appearance: 강조색 스와치 선택 (라이브 적용).</summary>
-    private void AccentSwatch_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is string accent)
-            _vm.SettingsAccent = accent;
-    }
-
-    /// <summary>Settings ▸ Appearance: 밀도 세그(comfortable/compact) 선택.</summary>
-    private void DensitySeg_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is string density)
-            _vm.SettingsDensity = density;
-    }
-
-    /// <summary>Settings ▸ Runtimes: 엔진 CLI를 새 터미널로 열어 로그인.</summary>
-    private void EngineSignIn_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is string id)
-            _vm.SignIn(id);
-    }
-
-    /// <summary>Settings ▸ Runtimes: 인증 모드 세그 (Tag="cc:api" 형식 → 엔진별 모드 설정).</summary>
-    private void AuthMode_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is not string tag) return;
-        var parts = tag.Split(':');
-        if (parts.Length != 2) return;
-        var (engine, mode) = (parts[0], parts[1]);
-        if (engine == "cc") _vm.SettingsAuthCc = mode;
-        else if (engine == "gx") _vm.SettingsAuthGx = mode;
-    }
+    // Settings 관련 핸들러(SettingsToc/ApprovalPolicy/AccentSwatch/DensitySeg/EngineSignIn/
+    // AuthMode/AddExtraPath)는 Views/SettingsView.xaml.cs로 이동했다.
 
     private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
     {
@@ -567,17 +525,6 @@ public partial class MainWindow : Window
             _vm.ImportCliSessionCommand.Execute(h);
     }
 
-    private void AddExtraPath_Click(object sender, RoutedEventArgs e)
-    {
-        if (_vm.ActiveProject is null) return;
-        var dlg = new Microsoft.Win32.OpenFolderDialog
-        {
-            Title = App.L("L.AddExtraFolderDialogTitle"),
-            InitialDirectory = _vm.ActiveProject.Path,
-        };
-        if (dlg.ShowDialog(this) == true)
-            _vm.AddExtraPath(dlg.FolderName);
-    }
 
     private void BrowseProjectFolder_Click(object sender, RoutedEventArgs e)
     {

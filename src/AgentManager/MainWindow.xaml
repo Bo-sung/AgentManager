@@ -6,6 +6,7 @@
         xmlns:controls="clr-namespace:AgentManager.Controls"
         xmlns:agents="clr-namespace:AgentManager.Core.Agents;assembly=AgentManager.Core"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+        xmlns:views="clr-namespace:AgentManager.Views"
         x:Name="Root"
         Title="AgentManager" Height="760" Width="1380" WindowStyle="None"
         Background="{StaticResource Bg1}" Foreground="{StaticResource Txt0}"
@@ -23,8 +24,7 @@
 
 
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolVis"/>
-        <controls:SelectedBrushConverter x:Key="SelBrush"/>
+        <!-- BoolVis / SelBrush 컨버터는 App.xaml(공유 스코프)로 이동 — 뷰 UserControl들도 사용 -->
         <Style x:Key="KbdChip" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource Bg1}"/>
             <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
@@ -1063,6 +1063,77 @@
                                     <Run Text="{StaticResource L.Tkn}"/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
                                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}" Margin="0,0,16,0">
                                     <Run Text="{StaticResource L.Cost}"/><Run Text="{Binding CostLabel, Mode=OneWay}" Foreground="{StaticResource Ok}"/></TextBlock>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- native workers / subagents -->
+                        <Border DockPanel.Dock="Top" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="16,8"
+                                Visibility="{Binding HasNativeWorkItems, Converter={StaticResource BoolVis}}">
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Left" Width="128" VerticalAlignment="Center">
+                                    <TextBlock Text="{StaticResource L.NativeWorkers}" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt2}"/>
+                                    <TextBlock Text="{Binding NativeWorkItems.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding NativeWorkItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border MinWidth="160" MaxWidth="260" Margin="0,0,8,0" Padding="9,7" CornerRadius="6"
+                                                    Background="{StaticResource Bg2}" BorderThickness="1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                                <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                <Setter Property="BorderBrush" Value="{StaticResource Ok}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                                                                <Setter Property="BorderBrush" Value="{StaticResource Err}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <DockPanel>
+                                                    <Ellipse DockPanel.Dock="Left" Width="7" Height="7" Margin="0,4,8,0">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                                        <Setter Property="Fill" Value="{StaticResource Accent}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                        <Setter Property="Fill" Value="{StaticResource Ok}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                                                                        <Setter Property="Fill" Value="{StaticResource Err}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                    <StackPanel>
+                                                        <DockPanel>
+                                                            <TextBlock Text="{Binding Title}" Foreground="{StaticResource Txt0}" FontSize="11.5" FontWeight="SemiBold"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Status}" FontFamily="{StaticResource Mono}" FontSize="9.5"
+                                                                       Foreground="{StaticResource Txt2}" Margin="8,0,0,0"/>
+                                                        </DockPanel>
+                                                        <TextBlock Text="{Binding Source}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt3}"
+                                                                   Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,3,0,0"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </DockPanel>
                         </Border>
 
@@ -2126,515 +2197,9 @@
                     </DockPanel>
                 </Grid>
 
-                <!-- ===================== Settings (full center pane) ===================== -->
-                <Grid DataContext="{Binding DataContext, ElementName=Root}"
-                      Visibility="{Binding IsSettingsView, Converter={StaticResource BoolVis}}"
-                      Background="{StaticResource Bg0}">
-                    <DockPanel LastChildFill="True">
-                        <!-- header -->
-                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
-                            <DockPanel>
-                                <controls:IconView Icon="{StaticResource IconSettings}" Width="16" Height="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="{StaticResource L.SettingsSubtitle}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                <TextBlock Text="{StaticResource L.SettingsWorkspace}" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="30" Command="{Binding CancelSettingsCommand}" ToolTip="{StaticResource L.CloseTip}">
-                                    <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
-                                </Button>
-                            </DockPanel>
-                        </Border>
-                        <!-- footer -->
-                        <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="16,12">
-                            <DockPanel>
-                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                    <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Cancel}" Margin="0,0,9,0" Command="{Binding CancelSettingsCommand}"/>
-                                    <Button Style="{StaticResource AccentButton}" Content="{StaticResource L.SaveSettings}" Command="{Binding SaveSettingsCommand}"/>
-                                </StackPanel>
-                                <TextBlock Text="{Binding SettingsStatus}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Ok}" VerticalAlignment="Center"/>
-                            </DockPanel>
-                        </Border>
-                        <!-- body: TOC + sections -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="168"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="16,18,4,0" TextElement.FontSize="11.5">
-                                <TextBlock Text="{StaticResource L.SecRuntimes}" Tag="SecRuntimes" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
-                                <TextBlock Text="{StaticResource L.SecTranslation}" Tag="SecTranslation" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
-                                <TextBlock Text="{StaticResource L.SecOrchestration}" Tag="SecOrchestration" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
-                                <TextBlock Text="{StaticResource L.SecPermissions}" Tag="SecPermissions" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
-                                <TextBlock Text="{StaticResource L.SecAppearance}" Tag="SecAppearance" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
-                                <TextBlock Text="{StaticResource L.SecProject}" Tag="SecProject" MouseLeftButtonUp="SettingsToc_Click" Foreground="{StaticResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
-                            </StackPanel>
-
-                            <ScrollViewer Grid.Column="1" x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" Padding="6,0,0,0">
-                                <StackPanel Margin="14,18,18,18" MaxWidth="720" HorizontalAlignment="Left">
-                                    <!-- 01 Runtimes -->
-                                    <StackPanel x:Name="SecRuntimes">
-                                        <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="01" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecRuntimes}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </DockPanel>
-                                        <!-- Claude (cc) -->
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                                            <StackPanel>
-                                                <DockPanel Margin="0,0,0,10">
-                                                    <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
-                                                        <TextBlock Text="CC" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineCc, Mode=TwoWay}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ClaudeDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ClaudeDetectLabel}"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Claude Code" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
-                                                        <TextBlock Text="claude · anthropic · cli" FontSize="10" Foreground="{StaticResource Txt2}"/>
-                                                    </StackPanel>
-                                                </DockPanel>
-                                                <TextBlock Text="{StaticResource L.ClaudeCliPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsClaudePath, UpdateSourceTrigger=PropertyChanged}"/>
-                                                <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
-                                                <ComboBox ItemsSource="{Binding CcModels}" SelectedItem="{Binding SettingsModelCc, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="240"/>
-                                                <TextBlock Text="{StaticResource L.Authentication}" Style="{StaticResource Lbl}" Margin="0,12,0,6"/>
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                    <Border Tag="cc:subscription" MouseLeftButtonUp="AuthMode_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6" Margin="0,0,8,0">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/><Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                                <Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="subscription"><Setter Property="Background" Value="{StaticResource AccentDim}"/><Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/></DataTrigger></Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{StaticResource L.AuthSubscription}" FontSize="11" Foreground="{StaticResource Txt0}"/>
-                                                    </Border>
-                                                    <Border Tag="cc:api" MouseLeftButtonUp="AuthMode_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/><Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                                <Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="api"><Setter Property="Background" Value="{StaticResource AccentDim}"/><Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/></DataTrigger></Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{StaticResource L.AuthApiKey}" FontSize="11" Foreground="{StaticResource Txt0}"/>
-                                                    </Border>
-                                                </StackPanel>
-                                                <DockPanel>
-                                                    <DockPanel.Style>
-                                                        <Style TargetType="DockPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="subscription"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
-                                                    </DockPanel.Style>
-                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Tag="cc" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" VerticalAlignment="Center"/>
-                                                    <Grid VerticalAlignment="Center">
-                                                        <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" TextWrapping="Wrap">
-                                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding CcAccount}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-                                                        </TextBlock>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding CcAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-                                                            <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                            <TextBlock Text="{Binding CcAccount}" FontSize="10.5" Foreground="{StaticResource Ok}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </DockPanel>
-                                                <StackPanel>
-                                                    <StackPanel.Style>
-                                                        <Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="api"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
-                                                    </StackPanel.Style>
-                                                    <PasswordBox Style="{StaticResource ApiKeyBox}" controls:PasswordBoxAssistant.BoundPassword="{Binding SettingsApiKeyCc, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                                    <TextBlock Text="{StaticResource L.ApiKeyHint}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                        <!-- Codex (gx) -->
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                                            <StackPanel>
-                                                <DockPanel Margin="0,0,0,10">
-                                                    <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
-                                                        <TextBlock Text="GX" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Gx}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineGx, Mode=TwoWay}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding CodexDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding CodexDetectLabel}"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="GPT / Codex" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
-                                                        <TextBlock Text="codex · openai · cli" FontSize="10" Foreground="{StaticResource Txt2}"/>
-                                                    </StackPanel>
-                                                </DockPanel>
-                                                <TextBlock Text="{StaticResource L.CodexCliPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsCodexPath, UpdateSourceTrigger=PropertyChanged}"/>
-                                                <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
-                                                <ComboBox ItemsSource="{Binding GxModels}" SelectedItem="{Binding SettingsModelGx, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="240"/>
-                                                <TextBlock Text="{StaticResource L.Authentication}" Style="{StaticResource Lbl}" Margin="0,12,0,6"/>
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                    <Border Tag="gx:subscription" MouseLeftButtonUp="AuthMode_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6" Margin="0,0,8,0">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/><Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                                <Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="subscription"><Setter Property="Background" Value="{StaticResource AccentDim}"/><Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/></DataTrigger></Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{StaticResource L.AuthSubscription}" FontSize="11" Foreground="{StaticResource Txt0}"/>
-                                                    </Border>
-                                                    <Border Tag="gx:api" MouseLeftButtonUp="AuthMode_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/><Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                                <Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="api"><Setter Property="Background" Value="{StaticResource AccentDim}"/><Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/></DataTrigger></Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{StaticResource L.AuthApiKey}" FontSize="11" Foreground="{StaticResource Txt0}"/>
-                                                    </Border>
-                                                </StackPanel>
-                                                <DockPanel>
-                                                    <DockPanel.Style>
-                                                        <Style TargetType="DockPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="subscription"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
-                                                    </DockPanel.Style>
-                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Tag="gx" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" VerticalAlignment="Center"/>
-                                                    <Grid VerticalAlignment="Center">
-                                                        <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" TextWrapping="Wrap">
-                                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding GxAccount}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-                                                        </TextBlock>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding GxAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-                                                            <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                            <TextBlock Text="{Binding GxAccount}" FontSize="10.5" Foreground="{StaticResource Ok}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </DockPanel>
-                                                <StackPanel>
-                                                    <StackPanel.Style>
-                                                        <Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="api"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
-                                                    </StackPanel.Style>
-                                                    <PasswordBox Style="{StaticResource ApiKeyBox}" controls:PasswordBoxAssistant.BoundPassword="{Binding SettingsApiKeyGx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                                    <TextBlock Text="{StaticResource L.ApiKeyHint}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                        <!-- Gemini (ag) + Antigravity (agy) auto-detect -->
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="16"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Grid.Column="0">
-                                                    <DockPanel Margin="0,0,0,6">
-                                                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
-                                                            <TextBlock Text="AG" FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Info}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineAg, Mode=TwoWay}" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Gemini CLI" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                                    </DockPanel>
-                                                    <TextBlock Text="{Binding GeminiDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GeminiDetectLabel}"/>
-                                                    <ComboBox ItemsSource="{Binding AgModels}" SelectedItem="{Binding SettingsModelAg, Mode=TwoWay}" Margin="0,8,0,0" HorizontalAlignment="Stretch"/>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding AgAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-                                                        <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                        <TextBlock Text="{Binding AgAccount}" FontSize="10.5" Foreground="{StaticResource Ok}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                                    </StackPanel>
-                                                    <Button Style="{StaticResource ChipButton}" Tag="ag" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" HorizontalAlignment="Left" Margin="0,8,0,0"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="2">
-                                                    <DockPanel Margin="0,0,0,6">
-                                                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
-                                                            <TextBlock Text="AGY" FontFamily="{StaticResource Mono}" FontSize="9" FontWeight="SemiBold" Foreground="{StaticResource Agy}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineAgy, Mode=TwoWay}" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Antigravity" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                                    </DockPanel>
-                                                    <TextBlock Text="{Binding AgyDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding AgyDetectLabel}"/>
-                                                    <ComboBox ItemsSource="{Binding AgyModels}" SelectedItem="{Binding SettingsModelAgy, Mode=TwoWay}" Margin="0,8,0,0" HorizontalAlignment="Stretch"/>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding AgyAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-                                                        <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                        <TextBlock Text="{Binding AgyAccount}" FontSize="10.5" Foreground="{StaticResource Ok}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                                    </StackPanel>
-                                                    <Button Style="{StaticResource ChipButton}" Tag="agy" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" HorizontalAlignment="Left" Margin="0,8,0,0"/>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- 02 Translation (ours) -->
-                                    <StackPanel x:Name="SecTranslation" Margin="0,14,0,0">
-                                        <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="02" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecTranslation}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </DockPanel>
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
-                                            <StackPanel>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="14"/>
-                                                        <ColumnDefinition Width="220"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel Grid.Column="0">
-                                                        <TextBlock Text="{StaticResource L.Endpoint}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsOllamaEndpoint, UpdateSourceTrigger=PropertyChanged}"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="2">
-                                                        <TextBlock Text="{StaticResource L.StatusModel}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsOllamaModel, UpdateSourceTrigger=PropertyChanged}"/>
-                                                    </StackPanel>
-                                                </Grid>
-                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,10,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}" Content="{StaticResource L.DefaultTranslation}" ToolTip="{StaticResource L.DefaultTranslationTip}"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- 03 Orchestration -->
-                                    <StackPanel x:Name="SecOrchestration" Margin="0,14,0,0">
-                                        <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="03" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecOrchestration}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </DockPanel>
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                                            <StackPanel>
-                                                <TextBlock Text="{StaticResource L.ConcurrentLimit}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Width="120" HorizontalAlignment="Left" Text="{Binding MaxConcurrentSessions, UpdateSourceTrigger=PropertyChanged}"/>
-                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,12,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsWarnNoWorktree, Mode=TwoWay}" Content="{StaticResource L.NonGitNotice}" ToolTip="{StaticResource L.NonGitNoticeTip}"/>
-                                            </StackPanel>
-                                        </Border>
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
-                                            <StackPanel>
-                                                <TextBlock Text="{StaticResource L.WorktreeBase}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsWorktreeBase, UpdateSourceTrigger=PropertyChanged}"/>
-                                                <TextBlock Text="{StaticResource L.WorktreeBaseHint}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
-                                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                                    <ToggleButton Style="{StaticResource TogglePillButton}" IsChecked="{Binding SettingsAutoStart, Mode=TwoWay}" Content="{StaticResource L.AutoStartLast}"/>
-                                                    <ToggleButton Style="{StaticResource TogglePillButton}" Margin="8,0,0,0" IsChecked="{Binding SettingsStreamLogs, Mode=TwoWay}" Content="{StaticResource L.StreamLogsToggle}"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- 04 Permissions -->
-                                    <StackPanel x:Name="SecPermissions" Margin="0,14,0,0">
-                                        <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="04" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecPermissions}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </DockPanel>
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
-                                            <StackPanel>
-                                                <TextBlock Text="{StaticResource L.ApprovalPolicyTitle}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
-                                                <TextBlock Text="{StaticResource L.ApprovalPolicyDesc}" FontSize="10.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,10" TextWrapping="Wrap"/>
-                                                <!-- ask -->
-                                                <Border Tag="ask" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9" Margin="0,0,0,6">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="{StaticResource Bg1}"/>
-                                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding SettingsApprovalPolicy}" Value="ask">
-                                                                    <Setter Property="Background" Value="{StaticResource AccentDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{StaticResource L.PolicyAsk}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
-                                                        <TextBlock Text="{StaticResource L.PolicyAskSub}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
-                                                    </StackPanel>
-                                                </Border>
-                                                <!-- safe -->
-                                                <Border Tag="safe" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9" Margin="0,0,0,6">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="{StaticResource Bg1}"/>
-                                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding SettingsApprovalPolicy}" Value="safe">
-                                                                    <Setter Property="Background" Value="{StaticResource AccentDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{StaticResource L.PolicySafe}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
-                                                        <TextBlock Text="{StaticResource L.PolicySafeSub}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
-                                                    </StackPanel>
-                                                </Border>
-                                                <!-- yolo -->
-                                                <Border Tag="yolo" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="{StaticResource Bg1}"/>
-                                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding SettingsApprovalPolicy}" Value="yolo">
-                                                                    <Setter Property="Background" Value="{StaticResource AccentDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{StaticResource L.PolicyYolo}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
-                                                        <TextBlock Text="{StaticResource L.PolicyYoloSub}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
-                                                    </StackPanel>
-                                                </Border>
-                                                <TextBlock Text="{StaticResource L.PermNetworkNote}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,10,0,0" TextWrapping="Wrap"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- 05 Appearance -->
-                                    <StackPanel x:Name="SecAppearance" Margin="0,14,0,0">
-                                        <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="05" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecAppearance}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </DockPanel>
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                                            <StackPanel Orientation="Horizontal">
-                                                <ToggleButton Style="{StaticResource TogglePillButton}" IsChecked="{Binding SettingsLightTheme, Mode=TwoWay}" Content="{StaticResource L.LightTheme}" ToolTip="{StaticResource L.LightThemeTip}"/>
-                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="8,0,0,0" IsChecked="{Binding SettingsEnglishUi, Mode=TwoWay}" Content="{StaticResource L.EnglishUi}" ToolTip="{StaticResource L.EnglishUiTip}"/>
-                                            </StackPanel>
-                                        </Border>
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
-                                            <StackPanel>
-                                                <!-- Accent color -->
-                                                <TextBlock Text="{StaticResource L.AccentColor}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
-                                                <TextBlock Text="{StaticResource L.AccentColorDesc}" FontSize="10.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,10"/>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <StackPanel.Resources>
-                                                        <Style TargetType="Border" x:Key="Swatch">
-                                                            <Setter Property="Width" Value="26"/>
-                                                            <Setter Property="Height" Value="26"/>
-                                                            <Setter Property="CornerRadius" Value="13"/>
-                                                            <Setter Property="Margin" Value="0,0,10,0"/>
-                                                            <Setter Property="Cursor" Value="Hand"/>
-                                                            <Setter Property="BorderThickness" Value="2"/>
-                                                            <Setter Property="BorderBrush" Value="Transparent"/>
-                                                            <Style.Triggers>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="ember"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="ember"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="amber"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="amber"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="teal"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="teal"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="azure"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="azure"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="violet"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="violet"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </StackPanel.Resources>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFFF5A2C" Tag="ember" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Ember"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFF5B531" Tag="amber" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Amber"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FF2BD4C4" Tag="teal" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Teal"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FF5B8CFF" Tag="azure" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Azure"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFA87BFF" Tag="violet" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Violet"/>
-                                                </StackPanel>
-                                                <!-- Density -->
-                                                <TextBlock Text="{StaticResource L.Density}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" Margin="0,16,0,8"/>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Border Tag="comfortable" MouseLeftButtonUp="DensitySeg_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="14,7" Margin="0,0,8,0">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/>
-                                                                <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SettingsDensity}" Value="comfortable">
-                                                                        <Setter Property="Background" Value="{StaticResource AccentDim}"/>
-                                                                        <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{StaticResource L.DensityComfortable}" FontSize="11.5" Foreground="{StaticResource Txt0}"/>
-                                                    </Border>
-                                                    <Border Tag="compact" MouseLeftButtonUp="DensitySeg_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="14,7">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{StaticResource Bg1}"/>
-                                                                <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SettingsDensity}" Value="compact">
-                                                                        <Setter Property="Background" Value="{StaticResource AccentDim}"/>
-                                                                        <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{StaticResource L.DensityCompact}" FontSize="11.5" Foreground="{StaticResource Txt0}"/>
-                                                    </Border>
-                                                </StackPanel>
-                                                <!-- Telemetry -->
-                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,16,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsTelemetry, Mode=TwoWay}" Content="{StaticResource L.Telemetry}"/>
-                                                <TextBlock Text="{StaticResource L.TelemetryDesc}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,6,0,0" TextWrapping="Wrap"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- 06 Project (ours) -->
-                                    <StackPanel x:Name="SecProject" Margin="0,14,0,0">
-                                        <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="06" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecProject}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                            <Border Height="1" Background="{StaticResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </DockPanel>
-                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
-                                            <StackPanel>
-                                                <TextBlock Text="{StaticResource L.McpConfigPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding ActiveProject.McpConfigPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                                <DockPanel Margin="0,14,0,0">
-                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" ToolTip="{StaticResource L.AddExtraPathTip}" Click="AddExtraPath_Click">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <controls:IconView Icon="{StaticResource IconPlus}" Width="11" Height="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{StaticResource L.AddFolder}" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                    <TextBlock Text="{StaticResource L.ExtraFolders}" Style="{StaticResource Lbl}" VerticalAlignment="Center"/>
-                                                </DockPanel>
-                                                <ItemsControl ItemsSource="{Binding ActiveProject.ExtraPaths}" Margin="0,8,0,0">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <DockPanel Margin="0,0,0,4">
-                                                                <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Width="26" ToolTip="{StaticResource L.Remove}" Command="{Binding DataContext.RemoveExtraPathCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                    <controls:IconView Icon="{StaticResource IconX}" Width="10" Height="10"/>
-                                                                </Button>
-                                                                <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="9,6" Margin="0,0,6,0">
-                                                                    <TextBlock Text="{Binding}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}" TextTrimming="CharacterEllipsis"/>
-                                                                </Border>
-                                                            </DockPanel>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Grid>
-                    </DockPanel>
-                </Grid>
+                <!-- ===================== Settings (full center pane) -> views/SettingsView ===================== -->
+                <views:SettingsView DataContext="{Binding DataContext, ElementName=Root}"
+                                    Visibility="{Binding IsSettingsView, Converter={StaticResource BoolVis}}"/>
             </Grid>
 
             <!-- Review pane -->
