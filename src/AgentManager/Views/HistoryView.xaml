@@ -1,0 +1,195 @@
+<UserControl x:Class="AgentManager.Views.HistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:AgentManager.Controls"
+             xmlns:vm="clr-namespace:AgentManager.ViewModels"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             x:Name="ViewRoot"
+             Background="{StaticResource Bg0}">
+                    <DockPanel LastChildFill="True">
+                        <!-- Head -->
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="220"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="{StaticResource L.ActivityHistoryHeader}" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <TextBlock Grid.Column="1" Text="{Binding HistorySummaryText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+
+                                <!-- Status Filter -->
+                                <ComboBox Grid.Column="3" SelectedValue="{Binding HistoryStatusFilter, Mode=TwoWay}" SelectedValuePath="Tag" Height="28" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="{StaticResource L.FilterAll}" Tag="all"/>
+                                    <ComboBoxItem Content="{StaticResource L.FilterActive}" Tag="active"/>
+                                    <ComboBoxItem Content="{StaticResource L.Waiting}" Tag="waiting"/>
+                                    <ComboBoxItem Content="{StaticResource L.Done}" Tag="done"/>
+                                    <ComboBoxItem Content="{StaticResource L.KpiFailed}" Tag="error"/>
+                                </ComboBox>
+
+                                <!-- Agent Filter -->
+                                <ComboBox Grid.Column="5" SelectedValue="{Binding HistoryAgentFilter, Mode=TwoWay}" SelectedValuePath="Tag" Height="28" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="{StaticResource L.FilterAllAgents}" Tag="all"/>
+                                    <ComboBoxItem Content="Claude Code" Tag="cc"/>
+                                    <ComboBoxItem Content="Codex" Tag="gx"/>
+                                    <ComboBoxItem Content="Gemini" Tag="ag"/>
+                                    <ComboBoxItem Content="Antigravity" Tag="agy"/>
+                                </ComboBox>
+
+                                <!-- Search -->
+                                <Border Grid.Column="7" Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Height="28" VerticalAlignment="Center" Padding="6,0,8,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <controls:IconView Grid.Column="0" Icon="{StaticResource IconSearch}" Width="12" Height="12" Foreground="{StaticResource Txt2}" Margin="4,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource ComposerInput}" Background="Transparent" BorderThickness="0" Padding="0" VerticalAlignment="Center" AcceptsReturn="False" TextWrapping="NoWrap" Text="{Binding HistoryFilterText, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Bottom status / filter summary bar -->
+                        <Border DockPanel.Dock="Bottom" Height="36" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="14,0">
+                            <DockPanel VerticalAlignment="Center">
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding HistoryFilterSummaryText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.Refresh}" Command="{Binding RefreshHistoryCommand}"/>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Content List -->
+                        <ListView ItemsSource="{Binding HistoryRows}" Background="Transparent" BorderThickness="0" SelectionMode="Single" ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" Padding="8" Grid.IsSharedSizeScope="True">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0"/>
+                                    <Setter Property="Focusable" Value="False"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <ContentPresenter/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel/>
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="4,2" CornerRadius="6" Padding="12,10" BorderThickness="1" Cursor="Hand" MouseLeftButtonUp="HistoryRow_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{StaticResource Bg1}"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource LineSoft}"/>
+                                                <Setter Property="Opacity" Value="1"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource Bg3}"/>
+                                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding IsArchived}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="20"/>
+                                                <ColumnDefinition Width="34"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="TimeCol"/>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="TokensCol"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Status Dot LED-like with Glow -->
+                                            <Grid Grid.Column="0" Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTip="{Binding StatusLabel}">
+                                                <!-- Outer Glow Ring -->
+                                                <Ellipse Width="12" Height="12" Opacity="0.15">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <!-- Inner Solid Dot -->
+                                                <Ellipse Width="6" Height="6" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                            </Grid>
+
+                                            <!-- Engine Badge with Brand Icon -->
+                                            <Border Grid.Column="1" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg0}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTip="{Binding AgentName}">
+                                                <controls:IconView Style="{StaticResource EngineIcon}" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Border>
+
+                                            <!-- Main Text Block -->
+                                            <StackPanel Grid.Column="2" Margin="8,0,16,0" VerticalAlignment="Center">
+                                                <DockPanel LastChildFill="True">
+                                                    <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="8,0,0,0" Visibility="{Binding IsArchived, Converter={StaticResource BoolVis}}">
+                                                        <TextBlock Text="{StaticResource L.ArchivedBadge}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{StaticResource Txt2}"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                                </DockPanel>
+                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt3}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0">
+                                                    <Run Text="{Binding Project, Mode=OneWay}" Foreground="{StaticResource Txt2}"/><Run Text=" / "/><Run Text="{Binding Branch, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <!-- Stacked Time & Blocks metadata column -->
+                                            <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,16,0" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding StartedText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt1}"/>
+                                                <TextBlock Text="{Binding BlocksText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- Stacked Tokens & Cost metadata column -->
+                                            <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="0,0,8,0" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding TokensText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt1}"/>
+                                                <TextBlock Text="{Binding CostText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Margin="0,2,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource Ok}"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="Text" Value="-">
+                                                                    <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </DockPanel>
+</UserControl>

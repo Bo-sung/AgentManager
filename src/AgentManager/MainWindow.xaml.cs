@@ -284,11 +284,6 @@ public partial class MainWindow : Window
     // Settings 관련 핸들러(SettingsToc/ApprovalPolicy/AccentSwatch/DensitySeg/EngineSignIn/
     // AuthMode/AddExtraPath)는 Views/SettingsView.xaml.cs로 이동했다.
 
-    private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is HistoryRowViewModel row)
-            _vm.OpenHistoryRow(row);
-    }
 
     private void ProjectRow_Click(object sender, MouseButtonEventArgs e)
     {
@@ -586,15 +581,6 @@ public partial class MainWindow : Window
         try { Clipboard.SetText(BuildTranscriptMarkdown(s)); } catch { }
     }
 
-    private void OrchCardDiff_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is SessionViewModel session)
-        {
-            _vm.ActiveSession = session;
-            _vm.IsReviewOpen = true;
-            _vm.CurrentView = MainViewKind.Session;
-        }
-    }
 
     private void SaveWindowPlacement()
     {
