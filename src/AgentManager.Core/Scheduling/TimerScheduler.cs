@@ -27,7 +27,10 @@ public sealed class TimerScheduler : IScheduler, IDisposable
             _cts = new CancellationTokenSource();
             _jobs = ScheduleStore.Load();
 
-            _timerTask = RunTimerAsync(_cts.Token);
+            // 반드시 백그라운드 스레드에서 구동: UI 스레드에서 시작하면 PeriodicTimer continuation이
+            // UI SynchronizationContext에 묶여, Dispose→Stop의 GetResult()(UI 블록)와 상호 대기
+            // 데드락이 발생해 창이 닫히지 않는다.
+            _timerTask = Task.Run(() => RunTimerAsync(_cts.Token));
         }
     }
 
