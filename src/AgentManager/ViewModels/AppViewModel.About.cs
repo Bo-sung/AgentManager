@@ -23,7 +23,7 @@ public sealed partial class AppViewModel
             string buildDateStr = "20260614";
             try
             {
-                var loc = Assembly.GetExecutingAssembly().Location;
+                var loc = Environment.ProcessPath;
                 if (!string.IsNullOrEmpty(loc) && File.Exists(loc))
                 {
                     buildDateStr = File.GetLastWriteTime(loc).ToString("yyyyMMdd");

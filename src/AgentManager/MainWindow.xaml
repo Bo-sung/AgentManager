@@ -70,10 +70,12 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                     <Border Width="28" Height="28" CornerRadius="4" Background="{StaticResource Bg2}"
-                            BorderBrush="{StaticResource LineBright}" BorderThickness="1">
-                        <TextBlock Text="{Binding DataContext.Badge, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                   FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold"
-                                   Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            BorderBrush="{StaticResource LineBright}" BorderThickness="1"
+                            ToolTip="{Binding DataContext.AgentName, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                        <!-- 엔진별 브랜드 아이콘+색 (DataContext=세션). 이전엔 Badge 텍스트+하드코딩 Accent였다. -->
+                        <controls:IconView Style="{StaticResource EngineIcon}" Width="15" Height="15"
+                                           DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <Border Width="1" Height="46" Background="{StaticResource LineSoft}" Margin="0,6,0,0"/>
                 </StackPanel>
@@ -445,7 +447,7 @@
                                 <controls:IconView Icon="{StaticResource IconSettings}" Width="16" Height="16"/>
                             </Button>
                             <Border DockPanel.Dock="Left" Width="22" Height="22" CornerRadius="11" Background="{StaticResource Bg4}" Margin="0,0,8,0">
-                                <TextBlock Text="JK" FontFamily="{StaticResource Mono}" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <controls:IconView Icon="{StaticResource IconUser}" Width="13" Height="13" Foreground="{StaticResource Txt2}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="{StaticResource L.Local}" FontSize="12" Foreground="{StaticResource Txt0}"/>
@@ -2214,13 +2216,22 @@
                                                         <Style TargetType="DockPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="subscription"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
                                                     </DockPanel.Style>
                                                     <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Tag="cc" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                                    <Grid VerticalAlignment="Center">
+                                                        <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" TextWrapping="Wrap">
+                                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding CcAccount}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                                        </TextBlock>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding CcAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                                                            <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                            <TextBlock Text="{Binding CcAccount}" FontSize="10.5" Foreground="{StaticResource Ok}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
+                                                    </Grid>
                                                 </DockPanel>
                                                 <StackPanel>
                                                     <StackPanel.Style>
                                                         <Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthCc}" Value="api"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
                                                     </StackPanel.Style>
-                                                    <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsApiKeyCc, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <PasswordBox Style="{StaticResource ApiKeyBox}" controls:PasswordBoxAssistant.BoundPassword="{Binding SettingsApiKeyCc, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                                     <TextBlock Text="{StaticResource L.ApiKeyHint}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                                                 </StackPanel>
                                             </StackPanel>
@@ -2269,13 +2280,22 @@
                                                         <Style TargetType="DockPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="subscription"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
                                                     </DockPanel.Style>
                                                     <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Tag="gx" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                                    <Grid VerticalAlignment="Center">
+                                                        <TextBlock Text="{StaticResource L.AuthCliManaged}" FontSize="9.5" Foreground="{StaticResource Txt3}" TextWrapping="Wrap">
+                                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding GxAccount}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                                        </TextBlock>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding GxAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                                                            <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                            <TextBlock Text="{Binding GxAccount}" FontSize="10.5" Foreground="{StaticResource Ok}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
+                                                    </Grid>
                                                 </DockPanel>
                                                 <StackPanel>
                                                     <StackPanel.Style>
                                                         <Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SettingsAuthGx}" Value="api"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style>
                                                     </StackPanel.Style>
-                                                    <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10" BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False" Text="{Binding SettingsApiKeyGx, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <PasswordBox Style="{StaticResource ApiKeyBox}" controls:PasswordBoxAssistant.BoundPassword="{Binding SettingsApiKeyGx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                                     <TextBlock Text="{StaticResource L.ApiKeyHint}" FontSize="9.5" Foreground="{StaticResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                                                 </StackPanel>
                                             </StackPanel>
@@ -2298,6 +2318,11 @@
                                                     </DockPanel>
                                                     <TextBlock Text="{Binding GeminiDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GeminiDetectLabel}"/>
                                                     <ComboBox ItemsSource="{Binding AgModels}" SelectedItem="{Binding SettingsModelAg, Mode=TwoWay}" Margin="0,8,0,0" HorizontalAlignment="Stretch"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding AgAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                                                        <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="{Binding AgAccount}" FontSize="10.5" Foreground="{StaticResource Ok}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
                                                     <Button Style="{StaticResource ChipButton}" Tag="ag" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" HorizontalAlignment="Left" Margin="0,8,0,0"/>
                                                 </StackPanel>
                                                 <StackPanel Grid.Column="2">
@@ -2310,6 +2335,11 @@
                                                     </DockPanel>
                                                     <TextBlock Text="{Binding AgyDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding AgyDetectLabel}"/>
                                                     <ComboBox ItemsSource="{Binding AgyModels}" SelectedItem="{Binding SettingsModelAgy, Mode=TwoWay}" Margin="0,8,0,0" HorizontalAlignment="Stretch"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding AgyAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                                                        <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{StaticResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="{Binding AgyAccount}" FontSize="10.5" Foreground="{StaticResource Ok}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
                                                     <Button Style="{StaticResource ChipButton}" Tag="agy" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" HorizontalAlignment="Left" Margin="0,8,0,0"/>
                                                 </StackPanel>
                                             </Grid>

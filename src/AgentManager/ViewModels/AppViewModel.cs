@@ -138,6 +138,14 @@ public sealed partial class AppViewModel : ObservableObject
 
     public void Dispose()
     {
+        // 창을 닫을 때 진행 중인 세션을 먼저 취소해 엔진 자식 프로세스(cc/gx/ag/agy) 트리를 정리한다.
+        // ct.Register(() => proc.Kill(entireProcessTree: true))가 걸려 있어 Cancel()이 프로세스 트리를 죽인다.
+        // 비차단(non-blocking)으로 발사만 한다 — UI 스레드에서 절대 .Wait()/.Result로 막지 않는다.
+        foreach (var cts in _running.Values.ToArray())
+        {
+            try { cts.Cancel(); } catch { /* 이미 dispose된 CTS일 수 있음 */ }
+        }
+
         _scheduler.JobDue -= Scheduler_JobDue;
         _scheduler.Dispose();
         _runtimeTimer.Stop();
@@ -773,7 +781,15 @@ public sealed partial class AppViewModel : ObservableObject
     {
         OnChanged(nameof(ClaudeDetectLabel)); OnChanged(nameof(CodexDetectLabel));
         OnChanged(nameof(GeminiDetectLabel)); OnChanged(nameof(AgyDetectLabel));
+        OnChanged(nameof(CcAccount)); OnChanged(nameof(GxAccount));
+        OnChanged(nameof(AgAccount)); OnChanged(nameof(AgyAccount));
     }
+
+    // 각 CLI의 로그인 계정(구독 인증) — 이메일, 미로그인 시 "". UI: 비어있으면 Sign in, 있으면 계정 표시.
+    public string CcAccount => Persistence.EngineAccounts.For("cc") ?? "";
+    public string GxAccount => Persistence.EngineAccounts.For("gx") ?? "";
+    public string AgAccount => Persistence.EngineAccounts.For("ag") ?? "";
+    public string AgyAccount => Persistence.EngineAccounts.For("agy") ?? "";
     private string _settingsStatus = "";
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
 
@@ -1233,6 +1249,7 @@ public sealed partial class AppViewModel : ObservableObject
         SettingsAuthGx = _engineAuthMode.GetValueOrDefault("gx", "subscription");
         SettingsApiKeyCc = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("cc", ""));
         SettingsApiKeyGx = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("gx", ""));
+        RefreshDetectLabels(); // CLI 경로 감지 라벨 + 로그인 계정 표시 갱신
         SettingsStatus = "";
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;

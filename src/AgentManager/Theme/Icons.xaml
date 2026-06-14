@@ -260,4 +260,9 @@
         <PathGeometry Figures="M3.5 12l8.5 4.5 8.5-4.5M3.5 16l8.5 4.5 8.5-4.5"/>
     </GeometryGroup>
 
+    <GeometryGroup x:Key="IconUser">
+        <EllipseGeometry Center="12,8" RadiusX="3.5" RadiusY="3.5"/>
+        <PathGeometry Figures="M5.5 20v-1.5a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4V20"/>
+    </GeometryGroup>
+
 </ResourceDictionary>

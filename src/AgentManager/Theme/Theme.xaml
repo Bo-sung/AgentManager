@@ -340,6 +340,19 @@
         <Setter Property="Padding" Value="13,11"/>
     </Style>
 
+    <!-- API 키 입력용 마스킹 PasswordBox (주변 ComposerInput TextBox와 외형 일치) -->
+    <Style x:Key="ApiKeyBox" TargetType="PasswordBox">
+        <Setter Property="Background" Value="{StaticResource Bg1}"/>
+        <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Accent}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontFamily" Value="{StaticResource Sans}"/>
+        <Setter Property="FontSize" Value="13.5"/>
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
     <!-- ===== Dark scrollbar (thin, rounded thumb — matches the design CSS) ===== -->
     <Style x:Key="ScrollThumb" TargetType="Thumb">
         <Setter Property="Template">
