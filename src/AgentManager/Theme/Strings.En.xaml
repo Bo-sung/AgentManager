@@ -4,7 +4,7 @@
     <sys:String x:Key="L.EnglishUi">ENGLISH UI</sys:String>
     <sys:String x:Key="L.EnglishUiTip">Applies after restart</sys:String>
     <sys:String x:Key="L.SettingsSaved">Settings saved</sys:String>
-    <sys:String x:Key="L.SettingsSavedRestart">Settings saved - theme/language applies after restart</sys:String>
+    <sys:String x:Key="L.SettingsSavedRestart">Settings saved - language applies after restart</sys:String>
     <sys:String x:Key="L.File">File</sys:String>
     <sys:String x:Key="L.Edit">Edit</sys:String>
     <sys:String x:Key="L.View">View</sys:String>
@@ -54,6 +54,7 @@
     <sys:String x:Key="L.KpiFleet">Fleet throughput</sys:String>
     <sys:String x:Key="L.KpiFleetSub">all sessions</sys:String>
     <sys:String x:Key="L.LiveWorkers">Live workers</sys:String>
+    <sys:String x:Key="L.NativeWorkers">Native workers</sys:String>
     <sys:String x:Key="L.RecentCompleted">Recent &amp; completed</sys:String>
     <sys:String x:Key="L.OrchEmptyLive">No active workers</sys:String>
     <sys:String x:Key="L.OrchEmptyRecent">Nothing completed yet</sys:String>
@@ -228,7 +229,7 @@
     <sys:String x:Key="L.NonGitNotice">NON-GIT NOTICE</sys:String>
     <sys:String x:Key="L.NonGitNoticeTip">Show the 'running without isolation(worktree)' notice when starting a session in a non-git folder</sys:String>
     <sys:String x:Key="L.LightTheme">LIGHT THEME</sys:String>
-    <sys:String x:Key="L.LightThemeTip">Light theme - applies after restart</sys:String>
+    <sys:String x:Key="L.LightThemeTip">Light theme (applies instantly)</sys:String>
     <sys:String x:Key="L.McpConfigPath">MCP CONFIG (.mcp.json path, empty = unused)</sys:String>
     <sys:String x:Key="L.AddFolder">Add folder</sys:String>
     <sys:String x:Key="L.AddExtraPathTip">Additional root folders the agent can access (claude --add-dir / codex writable_roots)</sys:String>

@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using AgentManager.Persistence;
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
+using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
@@ -27,6 +28,7 @@ public sealed partial class AppViewModel : ObservableObject
     private OllamaTranslator _translator = CreateTranslator("http://localhost:11434", "exaone3.5:7.8b");
     private static string L(string key, params object?[] args) => AgentManager.App.L(key, args);
     private readonly List<SessionViewModel> _allSessions = [];
+    private readonly Dictionary<string, INativeWorkObserver> _nativeObservers = [];
     private readonly DispatcherTimer _runtimeTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly TimerScheduler _scheduler = new();
     private string _claudePath = "";
@@ -614,7 +616,19 @@ public sealed partial class AppViewModel : ObservableObject
     private bool _settingsWarnNoWorktree;
     public bool SettingsWarnNoWorktree { get => _settingsWarnNoWorktree; set => Set(ref _settingsWarnNoWorktree, value); }
     private bool _settingsLightTheme;
-    public bool SettingsLightTheme { get => _settingsLightTheme; set => Set(ref _settingsLightTheme, value); }
+    public bool SettingsLightTheme
+    {
+        get => _settingsLightTheme;
+        // 테마는 라이브 적용(accent와 동일). 팔레트 교체 후 사용자의 강조색을 재적용한다.
+        set
+        {
+            if (Set(ref _settingsLightTheme, value))
+            {
+                Theme.ThemePalette.Apply(value ? "light" : "dark");
+                Theme.AccentPalette.Apply(Theme.AccentPalette.Normalize(SettingsAccent));
+            }
+        }
+    }
     private string _theme = "dark";
     private bool _settingsEnglishUi;
     public bool SettingsEnglishUi { get => _settingsEnglishUi; set => Set(ref _settingsEnglishUi, value); }
@@ -1352,7 +1366,8 @@ public sealed partial class AppViewModel : ObservableObject
     private MainViewKind _viewBeforeSettings = MainViewKind.Orchestrator;
     private void CloseSettings()
     {
-        // 라이브 미리보기한 강조색을 저장값으로 되돌린다
+        // 라이브 미리보기한 테마/강조색을 저장값으로 되돌린다
+        Theme.ThemePalette.Apply(_theme);
         Theme.AccentPalette.Apply(_accent);
         ShowSettings = false;
         CurrentView = _viewBeforeSettings;
@@ -1393,14 +1408,12 @@ public sealed partial class AppViewModel : ObservableObject
         }
         SaveEngineAuth("cc", SettingsAuthCc, SettingsApiKeyCc);
         SaveEngineAuth("gx", SettingsAuthGx, SettingsApiKeyGx);
-        var newTheme = SettingsLightTheme ? "light" : "dark";
-        var themeChanged = newTheme != _theme;
-        _theme = newTheme;
+        _theme = SettingsLightTheme ? "light" : "dark"; // 테마는 이미 라이브 적용됨
         var newLanguage = SettingsEnglishUi ? "en" : "ko";
         var languageChanged = newLanguage != _language;
         _language = newLanguage;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
-        SettingsStatus = themeChanged || languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
+        SettingsStatus = languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
         SaveState();
     }
 
@@ -1753,11 +1766,17 @@ public sealed partial class AppViewModel : ObservableObject
             AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
             ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
             ExtraEnvironment = ApiEnvFor(s.AgentId),
+            NativeHookSpoolDirectory = NativeHookSpoolDirectoryFor(s),
+            NativeHookCommand = s.AgentId == "gx" ? NativeHookCommandFactory.WindowsPowerShellSpoolWriter() : null,
+            BypassHookTrust = s.AgentId == "gx",
         };
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;
         try
         {
+            s.NativeWorkItems.Clear();
+            ClearNativeHookSpool(options.NativeHookSpoolDirectory);
+            await StartNativeObserverAsync(s, options);
             s.Activity = s.TranslationEnabled ? L("L.TranslatingStartingEngine") : L("L.StartingEngine");
             await Task.Run(() => session.RunAsync(options, prompt, cts.Token), cts.Token);
             if (s.Status == "running") s.Status = "done";
@@ -1777,12 +1796,76 @@ public sealed partial class AppViewModel : ObservableObject
         }
         finally
         {
+            await StopNativeObserverAsync(s);
             ExpirePendingApprovals(s);
             await RefreshReviewAsync(s);
             SaveState();
             _running.Remove(s.Id);
             cts.Dispose();
         }
+    }
+
+    private static string? NativeHookSpoolDirectoryFor(SessionViewModel s)
+    {
+        if (s.AgentId != "gx") return null;
+        var root = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "AgentManager",
+            "native-hooks");
+        return Path.Combine(root, SafeFileName(s.Id));
+    }
+
+    private static string SafeFileName(string value)
+        => string.Concat(value.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch));
+
+    private static void ClearNativeHookSpool(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path)) return;
+        foreach (var file in Directory.EnumerateFiles(path, "*.json"))
+        {
+            try { File.Delete(file); } catch { }
+        }
+    }
+
+    private async Task StartNativeObserverAsync(SessionViewModel s, SessionOptions? options = null)
+    {
+        if (_nativeObservers.ContainsKey(s.Id)) return;
+
+        INativeWorkObserver? observer = null;
+        if (s.AgentId == "gx" && (options?.NativeHookSpoolDirectory ?? NativeHookSpoolDirectoryFor(s)) is { } spool)
+            observer = new HookSpoolNativeWorkObserver("gx", spool);
+        else if (s.AgentId == "agy" && !string.IsNullOrWhiteSpace(s.EngineSessionId))
+            observer = new AgyNativeWorkObserver();
+
+        if (observer is null) return;
+        observer.WorkItemChanged += (_, item) =>
+            Application.Current.Dispatcher.Invoke(() => UpsertNativeWorkItem(s, item));
+        _nativeObservers[s.Id] = observer;
+
+        await observer.StartAsync(new NativeWorkObservationTarget(
+            EngineId: s.AgentId,
+            ParentSessionId: s.Id,
+            WorkingDirectory: s.WorktreePath ?? s.ProjectPath,
+            EngineSessionId: s.EngineSessionId,
+            ManagedByAgentManager: true));
+
+        foreach (var item in await observer.SnapshotAsync())
+            UpsertNativeWorkItem(s, item);
+    }
+
+    private async Task StopNativeObserverAsync(SessionViewModel s)
+    {
+        if (!_nativeObservers.Remove(s.Id, out var observer)) return;
+        await observer.DisposeAsync();
+    }
+
+    private static void UpsertNativeWorkItem(SessionViewModel s, ObservedWorkItem item)
+    {
+        var existing = s.NativeWorkItems.FirstOrDefault(x => x.Id == item.Id);
+        if (existing is null)
+            s.NativeWorkItems.Insert(0, new NativeWorkItemViewModel(item));
+        else
+            existing.Update(item);
     }
 
     public async Task SelectReviewChangeAsync(ReviewChangeViewModel? change)
@@ -1978,6 +2061,8 @@ public sealed partial class AppViewModel : ObservableObject
             case SessionStarted started:
                 if (!string.IsNullOrWhiteSpace(started.SessionId))
                     s.EngineSessionId = started.SessionId;
+                if (s.AgentId == "agy")
+                    _ = StartNativeObserverAsync(s);
                 if (!string.IsNullOrWhiteSpace(started.Model))
                     s.MarkRunSignal(L("L.ConnectedModel", started.Model));
                 else

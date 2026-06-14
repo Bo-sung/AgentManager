@@ -4,7 +4,7 @@
     <sys:String x:Key="L.EnglishUi">ENGLISH UI</sys:String>
     <sys:String x:Key="L.EnglishUiTip">재시작 후 적용</sys:String>
     <sys:String x:Key="L.SettingsSaved">Settings saved</sys:String>
-    <sys:String x:Key="L.SettingsSavedRestart">Settings saved - 테마/언어는 재시작 후 적용</sys:String>
+    <sys:String x:Key="L.SettingsSavedRestart">설정 저장됨 - 언어는 재시작 후 적용</sys:String>
     <sys:String x:Key="L.File">File</sys:String>
     <sys:String x:Key="L.Edit">Edit</sys:String>
     <sys:String x:Key="L.View">View</sys:String>
@@ -54,6 +54,7 @@
     <sys:String x:Key="L.KpiFleet">플릿 처리량</sys:String>
     <sys:String x:Key="L.KpiFleetSub">전체 세션</sys:String>
     <sys:String x:Key="L.LiveWorkers">실행 중인 작업자</sys:String>
+    <sys:String x:Key="L.NativeWorkers">네이티브 작업자</sys:String>
     <sys:String x:Key="L.RecentCompleted">최근 · 완료</sys:String>
     <sys:String x:Key="L.OrchEmptyLive">실행 중인 작업자 없음</sys:String>
     <sys:String x:Key="L.OrchEmptyRecent">완료된 작업 없음</sys:String>
@@ -228,7 +229,7 @@
     <sys:String x:Key="L.NonGitNotice">NON-GIT NOTICE</sys:String>
     <sys:String x:Key="L.NonGitNoticeTip">비-git 폴더에서 세션 시작 시 '격리(worktree) 없이 실행' 안내를 표시</sys:String>
     <sys:String x:Key="L.LightTheme">LIGHT THEME</sys:String>
-    <sys:String x:Key="L.LightThemeTip">라이트 테마 - 재시작 후 적용</sys:String>
+    <sys:String x:Key="L.LightThemeTip">라이트 테마 (즉시 적용)</sys:String>
     <sys:String x:Key="L.McpConfigPath">MCP CONFIG (.mcp.json path, empty = unused)</sys:String>
     <sys:String x:Key="L.AddFolder">Add folder</sys:String>
     <sys:String x:Key="L.AddExtraPathTip">에이전트가 접근할 추가 루트 폴더 (claude --add-dir / codex writable_roots)</sys:String>
