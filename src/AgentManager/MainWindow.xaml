@@ -12,7 +12,8 @@
         FontFamily="{StaticResource Sans}" FontSize="13">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="34" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0"/>
+        <WindowChrome CaptionHeight="34" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
     <Window.InputBindings>
@@ -319,10 +320,11 @@
                         <Run Text="{StaticResource L.Cost}"/><Run Text="{Binding TotalCostLabel, Mode=OneWay}" Foreground="{StaticResource Ok}"/></TextBlock>
                 </StackPanel>
 
-                <StackPanel Grid.Column="4" Orientation="Horizontal" shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button x:Name="MinBtn" Style="{StaticResource MenuButton}" Content="—" Width="44" Click="MinBtn_Click" ToolTip="{StaticResource L.MinimizeTip}"/>
-                    <Button x:Name="MaxBtn" Style="{StaticResource MenuButton}" Content="▢" Width="44" Click="MaxBtn_Click" ToolTip="{StaticResource L.MaximizeTip}"/>
-                    <Button x:Name="CloseBtn" Style="{StaticResource MenuButton}" Content="✕" Width="44" Click="CloseBtn_Click" ToolTip="{StaticResource L.CloseTip}"/>
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Stretch" Height="34"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button x:Name="MinBtn" Style="{StaticResource MenuButton}" shell:WindowChrome.IsHitTestVisibleInChrome="True" Content="—" Width="44" Height="34" Click="MinBtn_Click" ToolTip="{StaticResource L.MinimizeTip}"/>
+                    <Button x:Name="MaxBtn" Style="{StaticResource MenuButton}" shell:WindowChrome.IsHitTestVisibleInChrome="True" Content="▢" Width="44" Height="34" Click="MaxBtn_Click" ToolTip="{StaticResource L.MaximizeTip}"/>
+                    <Button x:Name="CloseBtn" Style="{StaticResource MenuButton}" shell:WindowChrome.IsHitTestVisibleInChrome="True" Content="✕" Width="44" Height="34" Click="CloseBtn_Click" ToolTip="{StaticResource L.CloseTip}"/>
                 </StackPanel>
             </Grid>
         </Border>
