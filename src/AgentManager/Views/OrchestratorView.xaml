@@ -67,14 +67,6 @@
                                             <DataTrigger Binding="{Binding IsLive}" Value="False">
                                                 <Setter Property="Opacity" Value="0.72"/>
                                             </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                <DataTrigger.EnterActions>
-                                                    <BeginStoryboard Name="SparkAnimation" Storyboard="{StaticResource SparkStoryboard}"/>
-                                                </DataTrigger.EnterActions>
-                                                <DataTrigger.ExitActions>
-                                                    <StopStoryboard BeginStoryboardName="SparkAnimation"/>
-                                                </DataTrigger.ExitActions>
-                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
@@ -216,6 +208,17 @@
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
+                            <DataTemplate.Triggers>
+                                <!-- 실행 중 이퀄라이저: Style이 아닌 DataTemplate.Triggers에서 시작해야 TargetName(Bar*) 해석 가능 -->
+                                <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard Name="SparkAnimation" Storyboard="{StaticResource SparkStoryboard}"/>
+                                    </DataTrigger.EnterActions>
+                                    <DataTrigger.ExitActions>
+                                        <StopStoryboard BeginStoryboardName="SparkAnimation"/>
+                                    </DataTrigger.ExitActions>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </Grid.Resources>
                     <DockPanel LastChildFill="True">
