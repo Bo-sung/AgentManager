@@ -294,7 +294,7 @@
                                                 <TextBlock Text="{StaticResource L.ApprovalPolicyTitle}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
                                                 <TextBlock Text="{StaticResource L.ApprovalPolicyDesc}" FontSize="10.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,10" TextWrapping="Wrap"/>
                                                 <!-- ask -->
-                                                <Border Tag="ask" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9" Margin="0,0,0,6">
+                                                <Border Tag="policy:ask" MouseLeftButtonUp="SegSelect_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9" Margin="0,0,0,6">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="{StaticResource Bg1}"/>
@@ -313,7 +313,7 @@
                                                     </StackPanel>
                                                 </Border>
                                                 <!-- safe -->
-                                                <Border Tag="safe" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9" Margin="0,0,0,6">
+                                                <Border Tag="policy:safe" MouseLeftButtonUp="SegSelect_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9" Margin="0,0,0,6">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="{StaticResource Bg1}"/>
@@ -332,7 +332,7 @@
                                                     </StackPanel>
                                                 </Border>
                                                 <!-- yolo -->
-                                                <Border Tag="yolo" MouseLeftButtonUp="ApprovalPolicy_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9">
+                                                <Border Tag="policy:yolo" MouseLeftButtonUp="SegSelect_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,9">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="{StaticResource Bg1}"/>
@@ -422,16 +422,16 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </StackPanel.Resources>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFFF5A2C" Tag="ember" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Ember"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFF5B531" Tag="amber" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Amber"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FF2BD4C4" Tag="teal" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Teal"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FF5B8CFF" Tag="azure" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Azure"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFA87BFF" Tag="violet" MouseLeftButtonUp="AccentSwatch_Click" ToolTip="Violet"/>
+                                                    <Border Style="{StaticResource Swatch}" Background="#FFFF5A2C" Tag="accent:ember" MouseLeftButtonUp="SegSelect_Click" ToolTip="Ember"/>
+                                                    <Border Style="{StaticResource Swatch}" Background="#FFF5B531" Tag="accent:amber" MouseLeftButtonUp="SegSelect_Click" ToolTip="Amber"/>
+                                                    <Border Style="{StaticResource Swatch}" Background="#FF2BD4C4" Tag="accent:teal" MouseLeftButtonUp="SegSelect_Click" ToolTip="Teal"/>
+                                                    <Border Style="{StaticResource Swatch}" Background="#FF5B8CFF" Tag="accent:azure" MouseLeftButtonUp="SegSelect_Click" ToolTip="Azure"/>
+                                                    <Border Style="{StaticResource Swatch}" Background="#FFA87BFF" Tag="accent:violet" MouseLeftButtonUp="SegSelect_Click" ToolTip="Violet"/>
                                                 </StackPanel>
                                                 <!-- Density -->
                                                 <TextBlock Text="{StaticResource L.Density}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" Margin="0,16,0,8"/>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Border Tag="comfortable" MouseLeftButtonUp="DensitySeg_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="14,7" Margin="0,0,8,0">
+                                                    <Border Tag="density:comfortable" MouseLeftButtonUp="SegSelect_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="14,7" Margin="0,0,8,0">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="Background" Value="{StaticResource Bg1}"/>
@@ -446,7 +446,7 @@
                                                         </Border.Style>
                                                         <TextBlock Text="{StaticResource L.DensityComfortable}" FontSize="11.5" Foreground="{StaticResource Txt0}"/>
                                                     </Border>
-                                                    <Border Tag="compact" MouseLeftButtonUp="DensitySeg_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="14,7">
+                                                    <Border Tag="density:compact" MouseLeftButtonUp="SegSelect_Click" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="14,7">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="Background" Value="{StaticResource Bg1}"/>

@@ -19,25 +19,20 @@ public partial class SettingsView : UserControl
             target.BringIntoView();
     }
 
-    /// <summary>Permissions: 승인 정책 세그(ask/safe/yolo).</summary>
-    private void ApprovalPolicy_Click(object sender, MouseButtonEventArgs e)
+    /// <summary>세그먼트 선택 통합 핸들러. Tag="group:value" (group = policy|accent|density).
+    /// 이전의 ApprovalPolicy/AccentSwatch/DensitySeg 핸들러를 하나로 합쳤다.</summary>
+    private void SegSelect_Click(object sender, MouseButtonEventArgs e)
     {
-        if (Vm is { } vm && (sender as FrameworkElement)?.Tag is string policy)
-            vm.SettingsApprovalPolicy = policy;
-    }
-
-    /// <summary>Appearance: 강조색 스와치 (라이브 적용).</summary>
-    private void AccentSwatch_Click(object sender, MouseButtonEventArgs e)
-    {
-        if (Vm is { } vm && (sender as FrameworkElement)?.Tag is string accent)
-            vm.SettingsAccent = accent;
-    }
-
-    /// <summary>Appearance: 밀도 세그(comfortable/compact).</summary>
-    private void DensitySeg_Click(object sender, MouseButtonEventArgs e)
-    {
-        if (Vm is { } vm && (sender as FrameworkElement)?.Tag is string density)
-            vm.SettingsDensity = density;
+        if (Vm is not { } vm || (sender as FrameworkElement)?.Tag is not string tag) return;
+        var i = tag.IndexOf(':');
+        if (i < 0) return;
+        var (group, value) = (tag[..i], tag[(i + 1)..]);
+        switch (group)
+        {
+            case "policy": vm.SettingsApprovalPolicy = value; break;
+            case "accent": vm.SettingsAccent = value; break;
+            case "density": vm.SettingsDensity = value; break;
+        }
     }
 
     /// <summary>Runtimes: 엔진 CLI를 새 터미널로 열어 로그인.</summary>
