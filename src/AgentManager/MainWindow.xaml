@@ -1140,8 +1140,7 @@
 
                     <StackPanel Margin="18">
                         <TextBlock Text="{StaticResource L.Task}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
-                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
-                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                        <TextBox Style="{StaticResource SettingsInput}"
                                  Text="{Binding NewScheduleTitle, UpdateSourceTrigger=PropertyChanged}"/>
 
                         <TextBlock Text="{StaticResource L.SchedPrompt}" Style="{StaticResource Lbl}" Margin="0,14,0,8"/>
@@ -1201,16 +1200,14 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="{StaticResource L.SchedCadence}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
-                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
-                                         BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                <TextBox Style="{StaticResource SettingsInput}"
                                          Text="{Binding NewScheduleCadence, UpdateSourceTrigger=PropertyChanged}"/>
                                 <TextBlock Text="{StaticResource L.SchedCadenceHint}" FontFamily="{StaticResource Mono}" FontSize="9.5"
                                            Foreground="{StaticResource Txt3}" Margin="2,5,0,0"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="{StaticResource L.SchedTargetBranch}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
-                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
-                                         BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                <TextBox Style="{StaticResource SettingsInput}"
                                          Text="{Binding NewScheduleTargetBranch, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                         </Grid>
@@ -1369,8 +1366,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="{StaticResource L.Task}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
-                                <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
-                                         BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                                <TextBox Style="{StaticResource SettingsInput}"
                                          Text="{Binding NewAgentTitle, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
@@ -1420,8 +1416,7 @@
                     </Border>
                     <StackPanel Margin="18">
                         <TextBlock Text="{StaticResource L.Name}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
-                        <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
-                                 BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                        <TextBox Style="{StaticResource SettingsInput}"
                                  Text="{Binding NewProjectName, UpdateSourceTrigger=PropertyChanged}"/>
 
                         <TextBlock Text="{StaticResource L.FolderPath}" Style="{StaticResource Lbl}" Margin="0,16,0,8"/>
@@ -1434,8 +1429,7 @@
                                     <TextBlock Text="{StaticResource L.Browse}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <TextBox Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}" Padding="10"
-                                     BorderBrush="{StaticResource Line}" BorderThickness="1" AcceptsReturn="False"
+                            <TextBox Style="{StaticResource SettingsInput}"
                                      Text="{Binding NewProjectPath, UpdateSourceTrigger=PropertyChanged}"/>
                         </DockPanel>
                         <TextBlock Text="{StaticResource L.MissingFolderNote}" FontFamily="{StaticResource Mono}"

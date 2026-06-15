@@ -340,6 +340,15 @@
         <Setter Property="Padding" Value="13,11"/>
     </Style>
 
+    <!-- 설정/입력용 단일행 TextBox (ComposerInput 기반 + Bg1 배경·테두리). 반복되던 인라인 속성을 통합. -->
+    <Style x:Key="SettingsInput" TargetType="TextBox" BasedOn="{StaticResource ComposerInput}">
+        <Setter Property="Background" Value="{StaticResource Bg1}"/>
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="AcceptsReturn" Value="False"/>
+    </Style>
+
     <!-- API 키 입력용 마스킹 PasswordBox (주변 ComposerInput TextBox와 외형 일치) -->
     <Style x:Key="ApiKeyBox" TargetType="PasswordBox">
         <Setter Property="Background" Value="{StaticResource Bg1}"/>
