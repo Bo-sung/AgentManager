@@ -17,6 +17,7 @@ public sealed class SessionViewModel : ObservableObject
     public ObservableCollection<TranscriptItem> Transcript { get; } = [];
     public ObservableCollection<ReviewChangeViewModel> Changes { get; } = [];
     public ObservableCollection<ArtifactViewModel> Artifacts { get; } = [];
+    public ObservableCollection<NativeWorkItemViewModel> NativeWorkItems { get; } = [];
 
     /// <summary>Images queued for the next turn (paste/⊞). Cleared on send; not persisted.</summary>
     public ObservableCollection<string> PendingImages { get; } = [];
@@ -53,7 +54,10 @@ public sealed class SessionViewModel : ObservableObject
         AvailableModels = engine.Models;
         _reasoningEffort = engine.Id switch { "gx" => "medium", "cc" => "default", _ => "" };
         StartedAt = startedAt ?? DateTime.Now;
+        NativeWorkItems.CollectionChanged += (_, _) => OnChanged(nameof(HasNativeWorkItems));
     }
+
+    public bool HasNativeWorkItems => NativeWorkItems.Count > 0;
 
     private string _title;
     public string Title { get => _title; set => Set(ref _title, value); }

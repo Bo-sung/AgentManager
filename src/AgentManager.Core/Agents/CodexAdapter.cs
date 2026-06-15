@@ -42,6 +42,7 @@ public sealed class CodexAdapter : IAgentAdapter
             psi.ArgumentList.Add(options.ResumeSessionId!);
         }
         psi.ArgumentList.Add("--json");
+        AddNativeHookConfig(psi, options);
         if (options.BypassPermissions && options.Sandbox == SandboxMode.DangerFullAccess)
             psi.ArgumentList.Add("--dangerously-bypass-approvals-and-sandbox");
         else
@@ -77,6 +78,22 @@ public sealed class CodexAdapter : IAgentAdapter
         psi.ArgumentList.Add(prompt); // prompt is a positional arg for Codex
         return psi;
     }
+
+    private static void AddNativeHookConfig(ProcessStartInfo psi, SessionOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(options.NativeHookCommand)) return;
+        if (options.BypassHookTrust) psi.ArgumentList.Add("--dangerously-bypass-hook-trust");
+
+        var command = TomlString(options.NativeHookCommand);
+        var hook = $"[{{ matcher=\"\", hooks=[{{ type=\"command\", command={command}, timeout=5 }}] }}]";
+        psi.ArgumentList.Add("-c");
+        psi.ArgumentList.Add($"hooks.SubagentStart={hook}");
+        psi.ArgumentList.Add("-c");
+        psi.ArgumentList.Add($"hooks.SubagentStop={hook}");
+    }
+
+    private static string TomlString(string value)
+        => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
 
     public IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options) => []; // prompt goes via args; stdin is closed
 

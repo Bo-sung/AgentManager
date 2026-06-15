@@ -34,6 +34,7 @@ public sealed class ClaudeAdapter : IAgentAdapter
         psi.ArgumentList.Add("--output-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--input-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--verbose");
+        AddNativeHookSettings(psi, options);
         if (options.Sandbox == SandboxMode.ReadOnly)
         {
             // No approval broker yet: read-only maps to plan mode (no edits/commands).
@@ -51,6 +52,35 @@ public sealed class ClaudeAdapter : IAgentAdapter
         foreach (var dir in options.AdditionalDirectories)
             if (Directory.Exists(dir)) { psi.ArgumentList.Add("--add-dir"); psi.ArgumentList.Add(dir); }
         return psi;
+    }
+
+    private static void AddNativeHookSettings(ProcessStartInfo psi, SessionOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(options.NativeHookCommand)) return;
+        var settings = JsonSerializer.Serialize(new
+        {
+            hooks = new Dictionary<string, object[]>
+            {
+                ["SubagentStart"] =
+                [
+                    new
+                    {
+                        matcher = "",
+                        hooks = new object[] { new { type = "command", command = options.NativeHookCommand, timeout = 5 } }
+                    }
+                ],
+                ["SubagentStop"] =
+                [
+                    new
+                    {
+                        matcher = "",
+                        hooks = new object[] { new { type = "command", command = options.NativeHookCommand, timeout = 5 } }
+                    }
+                ]
+            }
+        });
+        psi.ArgumentList.Add("--settings");
+        psi.ArgumentList.Add(settings);
     }
 
     public IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options)

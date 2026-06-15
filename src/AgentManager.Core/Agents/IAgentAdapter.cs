@@ -42,6 +42,9 @@ public sealed record SessionOptions
     /// <summary>자식 프로세스에 주입할 추가 환경변수 (예: API key 인증 시 ANTHROPIC_API_KEY 등).
     /// AgentSession이 BuildStartInfo 후 psi.Environment에 일괄 적용.</summary>
     public IReadOnlyDictionary<string, string> ExtraEnvironment { get; init; } = new Dictionary<string, string>();
+    public string? NativeHookSpoolDirectory { get; init; }
+    public string? NativeHookCommand { get; init; }
+    public bool BypassHookTrust { get; init; }
 }
 
 /// <summary>

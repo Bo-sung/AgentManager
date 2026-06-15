@@ -6,6 +6,7 @@ using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
 using AgentManager.Core.Workspace;
 using AgentManager.Core.Hosting;
+using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 
 if (args.Contains("--sched-check"))
@@ -17,6 +18,36 @@ if (args.Contains("--sched-check"))
 if (args.Contains("--sched-create-check"))
 {
     RunSchedCreateCheck();
+    return;
+}
+
+if (args.Contains("--native-observer-check"))
+{
+    await NativeObserverCheckAsync();
+    return;
+}
+
+if (args.Contains("--agy-observer-check"))
+{
+    await AgyObserverCheckAsync();
+    return;
+}
+
+if (args.Contains("--codex-hook-args-check"))
+{
+    CodexHookArgsCheck();
+    return;
+}
+
+if (args.Contains("--claude-hook-args-check"))
+{
+    ClaudeHookArgsCheck();
+    return;
+}
+
+if (args.Contains("--live-claude-native-observer"))
+{
+    await LiveClaudeNativeObserverAsync();
     return;
 }
 
@@ -138,6 +169,231 @@ static async Task AgyPtyCheckAsync()
     Console.WriteLine(tail);
     Console.WriteLine(clean.Contains("OK") ? "agy PTY spike: OUTPUT VISIBLE — PASS" : "agy PTY spike: no expected output — FAIL");
     try { Directory.Delete(tmp, true); } catch { }
+}
+
+static async Task NativeObserverCheckAsync()
+{
+    var spool = Path.Combine(Path.GetTempPath(), "am_native_observer_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(spool);
+    var target = new NativeWorkObservationTarget(
+        EngineId: "gx",
+        ParentSessionId: "app-session-1",
+        WorkingDirectory: Environment.CurrentDirectory,
+        EngineSessionId: "vendor-session-1",
+        ManagedByAgentManager: true);
+
+    var changed = new List<ObservedWorkItem>();
+    await using var observer = new HookSpoolNativeWorkObserver("gx", spool);
+    observer.WorkItemChanged += (_, item) => changed.Add(item);
+    await observer.StartAsync(target);
+
+    await File.WriteAllTextAsync(Path.Combine(spool, "start.json"), """
+    {
+      "hook_event_name": "SubagentStart",
+      "session_id": "vendor-session-1",
+      "agent_id": "agent-abc123",
+      "agent_type": "Explore",
+      "cwd": "J:\\prj\\AgentManager",
+      "transcript_path": "C:\\tmp\\parent.jsonl"
+    }
+    """);
+
+    await Task.Delay(150);
+
+    await File.WriteAllTextAsync(Path.Combine(spool, "stop.json"), """
+    {
+      "hook_event_name": "SubagentStop",
+      "session_id": "vendor-session-1",
+      "agent_id": "agent-abc123",
+      "agent_type": "Explore",
+      "agent_transcript_path": "C:\\tmp\\subagent.jsonl",
+      "last_assistant_message": "done"
+    }
+    """);
+
+    await Task.Delay(250);
+    var snapshot = await observer.SnapshotAsync();
+    var item = snapshot.SingleOrDefault(i => i.AgentId == "agent-abc123");
+    var ok = item is
+    {
+        EngineId: "gx",
+        ParentSessionId: "app-session-1",
+        VendorParentSessionId: "vendor-session-1",
+        State: ObservedState.Completed,
+        Confidence: ObservationConfidence.High,
+        ManagedByAgentManager: true,
+        LastMessage: "done"
+    } && changed.Count >= 2;
+
+    Console.WriteLine($"[native-observer] changes={changed.Count} snapshot={snapshot.Count}");
+    Console.WriteLine(ok ? "native observer PASS" : "native observer FAIL");
+    try { Directory.Delete(spool, true); } catch { }
+}
+
+static async Task AgyObserverCheckAsync()
+{
+    var home = Path.Combine(Path.GetTempPath(), "am_agy_observer_" + Guid.NewGuid().ToString("N")[..8]);
+    var cwd = Path.Combine(home, "project");
+    var conversationId = "conv-parent-1";
+    var childId = "conv-child-1";
+    var cache = Path.Combine(home, ".gemini", "antigravity-cli", "cache");
+    var system = Path.Combine(home, ".gemini", "antigravity", "brain", conversationId, ".system_generated");
+    var logs = Path.Combine(system, "logs");
+    var messages = Path.Combine(system, "messages");
+    Directory.CreateDirectory(cwd);
+    Directory.CreateDirectory(cache);
+    Directory.CreateDirectory(logs);
+    Directory.CreateDirectory(messages);
+
+    var escapedCwd = cwd.Replace("\\", "\\\\");
+    await File.WriteAllTextAsync(Path.Combine(cache, "last_conversations.json"),
+        $"{{\n  \"{escapedCwd}\": \"{conversationId}\"\n}}");
+
+    await File.WriteAllTextAsync(Path.Combine(logs, "transcript.jsonl"),
+        $"{{\"step\":\"INVOKE_SUBAGENT\",\"toolOutput\":{{\"conversationId\":\"{childId}\",\"logAbsoluteUri\":\"file:///C:/tmp/child-log.jsonl\",\"workspaceUris\":[\"file:///C:/tmp/subagent-worktree\"],\"role\":\"Implement\"}}}}");
+
+    var changed = new List<ObservedWorkItem>();
+    await using var observer = new AgyNativeWorkObserver(home);
+    observer.WorkItemChanged += (_, item) => changed.Add(item);
+    await observer.StartAsync(new NativeWorkObservationTarget(
+        EngineId: "agy",
+        ParentSessionId: "app-agy-session-1",
+        WorkingDirectory: cwd,
+        ManagedByAgentManager: true));
+
+    await Task.Delay(100);
+    await File.WriteAllTextAsync(Path.Combine(messages, "done.json"),
+        $"{{\n  \"sender\": \"{childId}\",\n  \"recipient\": \"parent\",\n  \"content\": \"completed successfully\"\n}}");
+
+    await Task.Delay(250);
+    var snapshot = await observer.SnapshotAsync();
+    var item = snapshot.SingleOrDefault(i => i.VendorWorkId == childId);
+    var ok = item is
+    {
+        EngineId: "agy",
+        ParentSessionId: "app-agy-session-1",
+        VendorParentSessionId: "conv-parent-1",
+        Kind: WorkItemKind.NativeSubagent,
+        State: ObservedState.Completed,
+        Confidence: ObservationConfidence.Medium,
+        ManagedByAgentManager: true
+    };
+
+    Console.WriteLine($"[agy-observer] changes={changed.Count} snapshot={snapshot.Count}");
+    Console.WriteLine(ok ? "agy observer PASS" : "agy observer FAIL");
+    try { Directory.Delete(home, true); } catch { }
+}
+
+static void CodexHookArgsCheck()
+{
+    var cwd = Environment.CurrentDirectory;
+    var command = NativeHookCommandFactory.WindowsPowerShellSpoolWriter();
+    var args = new CodexAdapter().BuildStartInfo("codex", new SessionOptions
+    {
+        WorkingDirectory = cwd,
+        BypassPermissions = true,
+        Sandbox = SandboxMode.DangerFullAccess,
+        NativeHookSpoolDirectory = Path.Combine(Path.GetTempPath(), "am-hooks"),
+        NativeHookCommand = command,
+        BypassHookTrust = true
+    }, "p").ArgumentList.ToArray();
+
+    var joined = string.Join("\n", args);
+    var ok = args.Contains("--dangerously-bypass-hook-trust")
+        && joined.Contains("hooks.SubagentStart=", StringComparison.Ordinal)
+        && joined.Contains("hooks.SubagentStop=", StringComparison.Ordinal)
+        && joined.Contains("AGENTMANAGER_HOOK_SPOOL", StringComparison.Ordinal)
+        && joined.Contains("powershell", StringComparison.OrdinalIgnoreCase);
+
+    Console.WriteLine($"[codex-hook-args] args={args.Length}");
+    Console.WriteLine(ok ? "codex hook args PASS" : "codex hook args FAIL");
+}
+
+static void ClaudeHookArgsCheck()
+{
+    var cwd = Environment.CurrentDirectory;
+    var command = NativeHookCommandFactory.WindowsPowerShellSpoolWriter();
+    var args = new ClaudeAdapter().BuildStartInfo("claude", new SessionOptions
+    {
+        WorkingDirectory = cwd,
+        BypassPermissions = true,
+        Sandbox = SandboxMode.DangerFullAccess,
+        NativeHookSpoolDirectory = Path.Combine(Path.GetTempPath(), "am-hooks"),
+        NativeHookCommand = command
+    }, "p").ArgumentList.ToArray();
+
+    var joined = string.Join("\n", args);
+    var ok = args.Contains("--settings")
+        && joined.Contains("SubagentStart", StringComparison.Ordinal)
+        && joined.Contains("SubagentStop", StringComparison.Ordinal)
+        && joined.Contains("AGENTMANAGER_HOOK_SPOOL", StringComparison.Ordinal)
+        && joined.Contains("powershell", StringComparison.OrdinalIgnoreCase);
+
+    Console.WriteLine($"[claude-hook-args] args={args.Length}");
+    Console.WriteLine(ok ? "claude hook args PASS" : "claude hook args FAIL");
+}
+
+static async Task LiveClaudeNativeObserverAsync()
+{
+    var exe = FindOnPath("claude") ?? "claude";
+    var tmp = Directory.CreateTempSubdirectory("am_claude_native_").FullName;
+    await File.WriteAllTextAsync(Path.Combine(tmp, "probe.txt"), "native-observer");
+    var spool = Path.Combine(Path.GetTempPath(), "am_claude_hooks_" + Guid.NewGuid().ToString("N")[..8]);
+    var command = NativeHookCommandFactory.WindowsPowerShellSpoolScript(spool);
+    var options = new SessionOptions
+    {
+        WorkingDirectory = tmp,
+        BypassPermissions = true,
+        Sandbox = SandboxMode.DangerFullAccess,
+        NativeHookSpoolDirectory = spool,
+        NativeHookCommand = command
+    };
+
+    var observed = new List<ObservedWorkItem>();
+    await using var observer = new HookSpoolNativeWorkObserver("cc", spool);
+    observer.WorkItemChanged += (_, item) =>
+    {
+        lock (observed) observed.Add(item);
+    };
+    await observer.StartAsync(new NativeWorkObservationTarget("cc", "smoke-claude-session", tmp, null, true));
+
+    var session = new AgentSession(new ClaudeAdapter(), exe);
+    var done = false;
+    var failed = false;
+    session.EventReceived += ev =>
+    {
+        Console.WriteLine("  " + Describe(ev));
+        if (ev is TurnCompleted tc) { done = true; failed = tc.IsError; }
+    };
+
+    using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+    await session.RunAsync(options,
+        "Use the Explore subagent to list the files in the current working directory. Then answer exactly: done",
+        cts.Token);
+
+    await Task.Delay(500);
+    var snapshot = await observer.SnapshotAsync();
+    var sawCompleted = snapshot.Any(i => i.EngineId == "cc" && i.State == ObservedState.Completed && i.AgentId is not null);
+    Console.WriteLine($"[claude-native] done={done} failed={failed} observed={snapshot.Count} spool={spool}");
+    Console.WriteLine(done && !failed && sawCompleted ? "claude native observer PASS" : "claude native observer FAIL");
+    try { Directory.Delete(tmp, true); } catch { }
+}
+
+static string? FindOnPath(string executable)
+{
+    var paths = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator);
+    var names = OperatingSystem.IsWindows() ? new[] { executable + ".exe", executable + ".cmd", executable + ".bat", executable } : [executable];
+    foreach (var path in paths)
+    foreach (var name in names)
+    {
+        try
+        {
+            var full = Path.Combine(path, name);
+            if (File.Exists(full)) return full;
+        }
+        catch { }
+    }
+    return null;
 }
 
 static async Task AgyCheckAsync()
