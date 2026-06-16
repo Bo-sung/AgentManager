@@ -117,10 +117,14 @@
     <sys:String x:Key="L.Telemetry">익명 텔레메트리</sys:String>
     <sys:String x:Key="L.TelemetryDesc">로컬 전용 opt-in. AgentManager는 어떤 것도 기기 밖으로 보내지 않습니다.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
-    <sys:String x:Key="L.UsageRemaining">잔여 {0}</sys:String>
-    <sys:String x:Key="L.UsageRemainingReset">잔여 {0} · {1} 후 리셋</sys:String>
+    <sys:String x:Key="L.UsageRemaining">{0}: 잔여 {1}</sys:String>
+    <sys:String x:Key="L.UsageRemainingReset">{0}: 잔여 {1} · {2} 후 리셋</sys:String>
     <sys:String x:Key="L.UsageChecking">사용량 확인 중…</sys:String>
     <sys:String x:Key="L.CheckUsage">사용량 체크</sys:String>
+    <sys:String x:Key="L.UsageJustNow">방금</sys:String>
+    <sys:String x:Key="L.UsageMinAgo">{0}분 전</sys:String>
+    <sys:String x:Key="L.UsageHrAgo">{0}시간 전</sys:String>
+    <sys:String x:Key="L.UsageStale">{0}: 갱신 필요</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
     <sys:String x:Key="L.Project">PROJECT</sys:String>

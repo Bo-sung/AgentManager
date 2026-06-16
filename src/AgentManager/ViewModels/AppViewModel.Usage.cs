@@ -44,17 +44,45 @@ public sealed partial class AppViewModel
     {
         if (_checkingUsage) return; // 확인 중에는 "확인 중…" 텍스트 유지
         UsageSnapshot? snap = null;
-        var id = ActiveSession?.AgentId;
-        if (id is not null) _usage.TryGetValue(id, out snap);
+        var displayEngineId = ActiveSession?.AgentId;
+        if (displayEngineId is not null && !_usage.TryGetValue(displayEngineId, out snap))
+            displayEngineId = null;
         if (snap is null && _usage.Count > 0)
         {
-            foreach (var v in _usage.Values)
-                if (snap is null || v.CapturedUtc > snap.CapturedUtc) snap = v;
+            foreach (var pair in _usage)
+            {
+                if (snap is null || pair.Value.CapturedUtc > snap.CapturedUtc)
+                {
+                    displayEngineId = pair.Key;
+                    snap = pair.Value;
+                }
+            }
         }
         if (snap is null) { QuotaText = ""; return; }
+
+        var engineName = displayEngineId is null ? "" : EngineRegistry.Get(displayEngineId).Name;
+        var ageSuffix = " · " + AgeText(snap.CapturedUtc);
+
+        // 리셋 시각이 이미 지났으면 윈도우가 갱신돼 표시값이 무효 → 재확인 안내
+        if (snap.ResetsAtUnix > 0 && snap.ResetsAtUnix <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+        {
+            QuotaText = L("L.UsageStale", engineName) + ageSuffix;
+            return;
+        }
+
         var remain = Math.Clamp(1 - snap.Utilization, 0, 1).ToString("P0");
         var reset = ResetText(snap.ResetsAtUnix);
-        QuotaText = reset is null ? L("L.UsageRemaining", remain) : L("L.UsageRemainingReset", remain, reset);
+        var baseText = reset is null ? L("L.UsageRemaining", engineName, remain) : L("L.UsageRemainingReset", engineName, remain, reset);
+        QuotaText = baseText + ageSuffix;
+    }
+
+    /// <summary>스냅샷 캡처 후 경과: 방금 / N분 전 / N시간 전. (footer 신선도 라벨)</summary>
+    private static string AgeText(DateTime capturedUtc)
+    {
+        var mins = (int)Math.Max(0, (DateTime.UtcNow - capturedUtc).TotalMinutes);
+        if (mins < 1) return L("L.UsageJustNow");
+        if (mins < 60) return L("L.UsageMinAgo", mins);
+        return L("L.UsageHrAgo", mins / 60);
     }
 
     /// <summary>리셋까지 남은 시간을 "3h 12m"/"45m"로. 정보 없으면 null.</summary>
@@ -80,7 +108,7 @@ public sealed partial class AppViewModel
                 try { await ProbeUsageAsync(id); } catch { /* 한 엔진 실패해도 계속 */ }
             }
         }
-        finally { CheckingUsage = false; RefreshQuotaText(); }
+        finally { CheckingUsage = false; RefreshQuotaText(); SaveState(); }
     }
 
     private async Task ProbeUsageAsync(string id)

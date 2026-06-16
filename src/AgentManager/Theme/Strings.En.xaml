@@ -117,10 +117,14 @@
     <sys:String x:Key="L.Telemetry">Anonymous telemetry</sys:String>
     <sys:String x:Key="L.TelemetryDesc">Local-only opt-in. AgentManager never sends anything off your machine.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>
-    <sys:String x:Key="L.UsageRemaining">{0} left</sys:String>
-    <sys:String x:Key="L.UsageRemainingReset">{0} left · resets in {1}</sys:String>
+    <sys:String x:Key="L.UsageRemaining">{0}: {1} left</sys:String>
+    <sys:String x:Key="L.UsageRemainingReset">{0}: {1} left · resets in {2}</sys:String>
     <sys:String x:Key="L.UsageChecking">Checking usage…</sys:String>
     <sys:String x:Key="L.CheckUsage">Check usage</sys:String>
+    <sys:String x:Key="L.UsageJustNow">just now</sys:String>
+    <sys:String x:Key="L.UsageMinAgo">{0}m ago</sys:String>
+    <sys:String x:Key="L.UsageHrAgo">{0}h ago</sys:String>
+    <sys:String x:Key="L.UsageStale">{0}: stale</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
     <sys:String x:Key="L.Project">PROJECT</sys:String>

@@ -50,6 +50,9 @@ public sealed partial class AppViewModel
         foreach (var kv in state.Settings.EngineAuthMode ?? new()) _engineAuthMode[kv.Key] = kv.Value;
         _engineApiKey.Clear();
         foreach (var kv in state.Settings.EngineApiKey ?? new()) _engineApiKey[kv.Key] = kv.Value;
+        _usage.Clear();
+        foreach (var kv in state.Settings.Usage ?? new())
+            _usage[kv.Key] = new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc);
         _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
         _language = state.Settings.Language == "en" ? "en" : "ko";
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
@@ -112,6 +115,7 @@ public sealed partial class AppViewModel
 
         ActiveProject = Projects.FirstOrDefault(p => p.Id == state.ActiveProjectId) ?? Projects[0];
         RefreshProjectSessions();
+        RefreshQuotaText(); // 복원된 사용량 스냅샷을 footer에 즉시 표시(신선도 라벨 포함)
     }
 
     private void SaveState()
@@ -144,6 +148,13 @@ public sealed partial class AppViewModel
                     DisabledEngines = _disabledEngines.ToList(),
                     EngineAuthMode = new Dictionary<string, string>(_engineAuthMode),
                     EngineApiKey = new Dictionary<string, string>(_engineApiKey),
+                    Usage = _usage.ToDictionary(k => k.Key, v => new UsageSnapshotDto
+                    {
+                        Utilization = v.Value.Utilization,
+                        ResetsAtUnix = v.Value.ResetsAtUnix,
+                        RateLimitType = v.Value.RateLimitType,
+                        CapturedUtc = v.Value.CapturedUtc,
+                    }),
                 },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto

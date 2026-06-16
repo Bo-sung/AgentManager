@@ -65,7 +65,7 @@ public sealed partial class AppViewModel : ObservableObject
             CurrentView = MainViewKind.Session;
         }
         NewProjectPath = WorkingDirectory;
-        _runtimeTimer.Tick += (_, _) => RefreshRunningSessions();
+        _runtimeTimer.Tick += (_, _) => { RefreshRunningSessions(); RefreshQuotaText(); };
         _runtimeTimer.Start();
 
         NewAgentCommand = new RelayCommand(_ => ShowNewAgent = true);

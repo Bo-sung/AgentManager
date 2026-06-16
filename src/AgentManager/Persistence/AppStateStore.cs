@@ -49,6 +49,16 @@ public sealed record AppSettingsDto
     public Dictionary<string, string> EngineAuthMode { get; init; } = new();
     /// <summary>엔진별 API 키 (DPAPI 암호화 base64, engineId → blob). 평문 저장 금지.</summary>
     public Dictionary<string, string> EngineApiKey { get; init; } = new();
+    /// <summary>엔진별 마지막 사용량(rate-limit) 스냅샷. 재시작 후 footer 복원용 — 신선도 라벨과 함께 표시.</summary>
+    public Dictionary<string, UsageSnapshotDto> Usage { get; init; } = new();
+}
+
+public sealed record UsageSnapshotDto
+{
+    public double Utilization { get; init; }
+    public long ResetsAtUnix { get; init; }
+    public string RateLimitType { get; init; } = "";
+    public DateTime CapturedUtc { get; init; }
 }
 
 public sealed record ProjectDto
