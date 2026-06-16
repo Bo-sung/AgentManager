@@ -125,6 +125,10 @@
     <sys:String x:Key="L.UsageMinAgo">{0}분 전</sys:String>
     <sys:String x:Key="L.UsageHrAgo">{0}시간 전</sys:String>
     <sys:String x:Key="L.UsageStale">{0}: 갱신 필요</sys:String>
+    <sys:String x:Key="L.UsageDual">{0}: 세션 {1} · 주간 {2}</sys:String>
+    <sys:String x:Key="L.UsageSingleUsed">{0}: {1} 사용</sys:String>
+    <sys:String x:Key="L.UsageNeedsCheck">{0}: 사용량 미확인</sys:String>
+    <sys:String x:Key="L.UsageResetIn">{0} 후 리셋</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
     <sys:String x:Key="L.Project">PROJECT</sys:String>

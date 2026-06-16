@@ -152,8 +152,11 @@ public sealed class ClaudeAdapter : IAgentAdapter
 
             case "rate_limit_event":
                 if (root.TryGetProperty("rate_limit_info", out var rl))
+                    // 구독 사용자의 rate_limit_event엔 utilization 필드가 없다(리셋 시각·타입만 옴).
+                    // 실제 사용량 %는 /usage 명령으로만 나오므로, 없으면 -1(미상)로 전달한다.
                     yield return new QuotaUpdate(
-                        Dbl(rl, "utilization"), Lng(rl, "resetsAt"),
+                        rl.TryGetProperty("utilization", out var ut) && ut.ValueKind == JsonValueKind.Number ? ut.GetDouble() : -1,
+                        Lng(rl, "resetsAt"),
                         Str(rl, "rateLimitType") ?? "", Str(rl, "status") ?? "");
                 break;
 

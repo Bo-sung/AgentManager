@@ -22,9 +22,11 @@ public sealed partial class AppViewModel
     private string _quotaText = "";
     public string QuotaText { get => _quotaText; set => Set(ref _quotaText, value); }
 
-    // ----- 잔여 사용량(rate-limit) -----
-    // 엔진별 마지막 스냅샷(인메모리). cc/gx만 쿼터를 방출 — ag/agy는 없음.
-    public sealed record UsageSnapshot(double Utilization, long ResetsAtUnix, string RateLimitType, DateTime CapturedUtc);
+    // ----- 사용량(rate-limit) -----
+    // 엔진별 마지막 스냅샷. Utilization/WeekUtilization = 0~1(사용 비율), -1 = 미상.
+    //   cc: 세션/주간 % 는 /usage 명령 텍스트에서만 나온다(rate_limit_event엔 리셋 시각만 있음).
+    //   gx: app-server account/rateLimits/updated 의 usedPercent 가 실 사용량.
+    public sealed record UsageSnapshot(double Utilization, long ResetsAtUnix, string RateLimitType, DateTime CapturedUtc, double WeekUtilization = -1);
     private readonly Dictionary<string, UsageSnapshot> _usage = new();
     private bool _checkingUsage;
     public bool CheckingUsage
@@ -33,9 +35,17 @@ public sealed partial class AppViewModel
         set { if (Set(ref _checkingUsage, value)) System.Windows.Input.CommandManager.InvalidateRequerySuggested(); }
     }
 
+    /// <summary>실행 중 패시브 캡처. 실 사용량(util>=0, gx)이면 갱신, cc의 리셋전용 이벤트(util&lt;0)면
+    /// 리셋 시각만 갱신하고 기존 %·캡처시각은 유지한다.</summary>
     private void RecordUsage(string engineId, QuotaUpdate q)
     {
-        _usage[engineId] = new UsageSnapshot(q.Utilization, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow);
+        _usage.TryGetValue(engineId, out var prev);
+        if (q.Utilization >= 0)
+            _usage[engineId] = new UsageSnapshot(q.Utilization, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow, prev?.WeekUtilization ?? -1);
+        else if (prev is not null)
+            _usage[engineId] = prev with { ResetsAtUnix = q.ResetsAtUnix, RateLimitType = q.RateLimitType };
+        else
+            _usage[engineId] = new UsageSnapshot(-1, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow);
         RefreshQuotaText();
     }
 
@@ -61,20 +71,31 @@ public sealed partial class AppViewModel
         if (snap is null) { QuotaText = ""; return; }
 
         var engineName = displayEngineId is null ? "" : EngineRegistry.Get(displayEngineId).Name;
-        var ageSuffix = " · " + AgeText(snap.CapturedUtc);
+        var hasPercent = snap.Utilization >= 0;
 
-        // 리셋 시각이 이미 지났으면 윈도우가 갱신돼 표시값이 무효 → 재확인 안내
-        if (snap.ResetsAtUnix > 0 && snap.ResetsAtUnix <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+        // %를 아는데 리셋이 지났으면 윈도우가 갱신돼 값이 무효 → 재확인 안내
+        if (hasPercent && snap.ResetsAtUnix > 0 && snap.ResetsAtUnix <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
         {
-            QuotaText = L("L.UsageStale", engineName) + ageSuffix;
+            QuotaText = L("L.UsageStale", engineName) + " · " + AgeText(snap.CapturedUtc);
             return;
         }
 
-        var remain = Math.Clamp(1 - snap.Utilization, 0, 1).ToString("P0");
+        var parts = new List<string>();
+        if (!hasPercent)
+            parts.Add(L("L.UsageNeedsCheck", engineName));                                  // cc: /usage 미실행 → 미상
+        else if (snap.WeekUtilization >= 0)
+            parts.Add(L("L.UsageDual", engineName, Pct(snap.Utilization), Pct(snap.WeekUtilization))); // cc: 세션·주간
+        else
+            parts.Add(L("L.UsageSingleUsed", engineName, Pct(snap.Utilization)));           // gx: 단일
+
         var reset = ResetText(snap.ResetsAtUnix);
-        var baseText = reset is null ? L("L.UsageRemaining", engineName, remain) : L("L.UsageRemainingReset", engineName, remain, reset);
-        QuotaText = baseText + ageSuffix;
+        if (reset is not null) parts.Add(L("L.UsageResetIn", reset));
+        if (hasPercent) parts.Add(AgeText(snap.CapturedUtc));
+
+        QuotaText = string.Join(" · ", parts);
     }
+
+    private static string Pct(double u) => ((int)Math.Round(Math.Clamp(u, 0, 1) * 100)) + "%";
 
     /// <summary>스냅샷 캡처 후 경과: 방금 / N분 전 / N시간 전. (footer 신선도 라벨)</summary>
     private static string AgeText(DateTime capturedUtc)
@@ -120,14 +141,30 @@ public sealed partial class AppViewModel
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
         var session = new AgentSession(adapter, exe, null, translationEnabled: false);
+        long resetAt = 0; string rlType = "";
         session.EventReceived += ev =>
         {
-            if (ev is QuotaUpdate q)
+            switch (ev)
             {
-                // 쿼터 수신: 저장하고 즉시 턴 종료(프로브 목적 달성)
-                Application.Current.Dispatcher.Invoke(() =>
-                    _usage[id] = new UsageSnapshot(q.Utilization, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow));
-                try { cts.Cancel(); } catch { }
+                case QuotaUpdate q when id == "gx" && q.Utilization >= 0:
+                    // gx: app-server usedPercent = 실 사용량
+                    Application.Current.Dispatcher.Invoke(() =>
+                        _usage[id] = new UsageSnapshot(q.Utilization, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow));
+                    try { cts.Cancel(); } catch { }
+                    break;
+                case QuotaUpdate q:
+                    // cc: rate_limit_event = 리셋 시각·타입만 (%는 아래 /usage 텍스트에서)
+                    resetAt = q.ResetsAtUnix; rlType = q.RateLimitType;
+                    break;
+                case AssistantText at when id == "cc":
+                    var (sUtil, wUtil) = ParseUsageText(at.Text);
+                    if (sUtil >= 0)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                            _usage[id] = new UsageSnapshot(sUtil, resetAt, rlType.Length > 0 ? rlType : "five_hour", DateTime.UtcNow, wUtil));
+                        try { cts.Cancel(); } catch { }
+                    }
+                    break;
             }
         };
         var options = new SessionOptions
@@ -137,9 +174,24 @@ public sealed partial class AppViewModel
             ExtraEnvironment = ApiEnvFor(id),
             Model = DefaultModelFor(id) is { Length: > 0 } m ? m : null,
         };
-        try { await Task.Run(() => session.RunAsync(options, "ok", cts.Token), cts.Token); }
-        catch (OperationCanceledException) { /* 정상: 쿼터 받고 취소했거나 타임아웃 */ }
+        // cc는 /usage(구독 세션·주간 사용량) 명령, gx는 최소 턴으로 쿼터 유도.
+        var prompt = id == "cc" ? "/usage" : "ok";
+        try { await Task.Run(() => session.RunAsync(options, prompt, cts.Token), cts.Token); }
+        catch (OperationCanceledException) { /* 정상: 받고 취소했거나 타임아웃 */ }
         catch { }
+    }
+
+    /// <summary>/usage 응답 텍스트에서 세션·주간 사용 비율(0~1)을 추출. 못 찾으면 -1.</summary>
+    private static (double session, double week) ParseUsageText(string text)
+    {
+        double s = -1, w = -1;
+        var ms = System.Text.RegularExpressions.Regex.Match(text, @"session[^0-9]*(\d+)\s*%\s*used",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (ms.Success) s = int.Parse(ms.Groups[1].Value) / 100.0;
+        var mw = System.Text.RegularExpressions.Regex.Match(text, @"week[^0-9]*(\d+)\s*%\s*used",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (mw.Success) w = int.Parse(mw.Groups[1].Value) / 100.0;
+        return (s, w);
     }
 
 }
