@@ -128,6 +128,9 @@
     <sys:String x:Key="L.UsageSingleUsed">{0}: {1} used</sys:String>
     <sys:String x:Key="L.UsageNeedsCheck">{0}: usage not checked</sys:String>
     <sys:String x:Key="L.UsageResetIn">resets in {0}</sys:String>
+    <sys:String x:Key="L.UsageCheckTitle">Usage check</sys:String>
+    <sys:String x:Key="L.UsageCheckDesc">Refresh Claude Code and Codex subscription quota from the installed CLIs.</sys:String>
+    <sys:String x:Key="L.UsageNoData">No usage data checked yet</sys:String>
     <sys:String x:Key="L.Active">ACTIVE</sys:String>
     <sys:String x:Key="L.Projects">PROJECTS</sys:String>
     <sys:String x:Key="L.Project">PROJECT</sys:String>

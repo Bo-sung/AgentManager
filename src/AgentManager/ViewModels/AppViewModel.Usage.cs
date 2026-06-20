@@ -20,7 +20,16 @@ public sealed partial class AppViewModel
     private bool _translationEnabled = true;
     public bool TranslationEnabled { get => _translationEnabled; set => Set(ref _translationEnabled, value); }
     private string _quotaText = "";
-    public string QuotaText { get => _quotaText; set => Set(ref _quotaText, value); }
+    public string QuotaText
+    {
+        get => _quotaText;
+        set
+        {
+            if (Set(ref _quotaText, value))
+                OnChanged(nameof(UsageStatusText));
+        }
+    }
+    public string UsageStatusText => string.IsNullOrWhiteSpace(QuotaText) ? L("L.UsageNoData") : QuotaText;
 
     // ----- 사용량(rate-limit) -----
     // 엔진별 마지막 스냅샷. Utilization/WeekUtilization = 0~1(사용 비율), -1 = 미상.

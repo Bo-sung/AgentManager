@@ -200,6 +200,25 @@
                                                     <Button Style="{StaticResource ChipButton}" Tag="agy" Click="EngineSignIn_Click" Content="{StaticResource L.SignIn}" HorizontalAlignment="Left" Margin="0,8,0,0"/>
                                                 </StackPanel>
                                         </Border>
+                                        <!-- Usage check -->
+                                        <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                                            <DockPanel>
+                                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Command="{Binding CheckUsageCommand}" ToolTip="{StaticResource L.CheckUsage}" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <controls:IconView Icon="{StaticResource IconRefresh}" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{StaticResource L.CheckUsage}" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Border DockPanel.Dock="Left" Width="30" Height="30" CornerRadius="6" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
+                                                    <controls:IconView Icon="{StaticResource IconClock}" Width="15" Height="15" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{StaticResource L.UsageCheckTitle}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}"/>
+                                                    <TextBlock Text="{StaticResource L.UsageCheckDesc}" FontSize="10" Foreground="{StaticResource Txt3}" Margin="0,2,0,4" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding UsageStatusText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}" TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
                                     </StackPanel>
 
                                     <!-- 02 Translation (ours) -->
