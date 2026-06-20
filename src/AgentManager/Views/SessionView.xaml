@@ -261,9 +261,6 @@
                                                 <DataTrigger Binding="{Binding AgentId}" Value="gx">
                                                     <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
-                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="agy">
                                                     <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
                                                 </DataTrigger>
@@ -295,10 +292,6 @@
                                                                     <Setter Property="Background" Value="{StaticResource GxDim}"/>
                                                                     <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
                                                                 </DataTrigger>
-                                                                <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                                                                    <Setter Property="Background" Value="{StaticResource InfoDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource InfoLine}"/>
-                                                                </DataTrigger>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="agy">
                                                                     <Setter Property="Background" Value="{StaticResource AgyDim}"/>
                                                                     <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
@@ -320,9 +313,6 @@
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="gx">
                                                                             <Setter Property="Foreground" Value="{StaticResource Gx}"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                                                                            <Setter Property="Foreground" Value="{StaticResource Info}"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="agy">
                                                                             <Setter Property="Foreground" Value="{StaticResource Agy}"/>
@@ -358,9 +348,6 @@
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding AgentId}" Value="gx">
                                                                                 <Setter Property="Foreground" Value="{StaticResource Gx}"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                                                                                <Setter Property="Foreground" Value="{StaticResource Info}"/>
                                                                             </DataTrigger>
                                                                             <DataTrigger Binding="{Binding AgentId}" Value="agy">
                                                                                 <Setter Property="Foreground" Value="{StaticResource Agy}"/>

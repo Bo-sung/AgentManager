@@ -8,8 +8,7 @@ namespace AgentManager.Persistence;
 /// 토큰 값은 사용하지 않고 계정 식별 필드만 추출한다. 로그인 안 됐으면 null.
 ///   cc  : ~/.claude.json → oauthAccount.emailAddress
 ///   gx  : ~/.codex/auth.json → tokens.id_token(JWT)의 email, 없으면 OPENAI_API_KEY 모드
-///   ag  : ~/.gemini/google_accounts.json → active
-///   agy : 동일 Google 계정(~/.gemini) 공유</summary>
+///   agy : ~/.gemini/google_accounts.json → active (Antigravity는 Google 계정 공유)</summary>
 internal static class EngineAccounts
 {
     private static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -18,7 +17,6 @@ internal static class EngineAccounts
     {
         "cc" => Claude(),
         "gx" => Codex(),
-        "ag" => Gemini(),
         "agy" => Gemini(), // agy는 ~/.gemini의 Google 계정을 공유
         _ => null,
     };

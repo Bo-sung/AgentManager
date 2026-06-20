@@ -270,7 +270,6 @@
                                 <Separator/>
                                 <MenuItem Header="{StaticResource L.NewClaudeSession}" Click="NewAgentEngine_Click" Tag="cc"/>
                                 <MenuItem Header="{StaticResource L.NewCodexSession}" Click="NewAgentEngine_Click" Tag="gx"/>
-                                <MenuItem Header="{StaticResource L.NewGeminiSession}" Click="NewAgentEngine_Click" Tag="ag"/>
                                 <MenuItem Header="{StaticResource L.NewAntigravitySession}" Click="NewAgentEngine_Click" Tag="agy"/>
                                 <Separator/>
                                 <MenuItem Header="{StaticResource L.OrchestratorDashboard}" InputGestureText="Ctrl+1" Command="{Binding ShowViewCommand}" CommandParameter="orchestrator"/>

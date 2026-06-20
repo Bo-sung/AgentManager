@@ -197,8 +197,6 @@
     </GeometryGroup>
 
     <!-- Gemini: 4점 곡선 스파클 (Filled 권장) -->
-    <PathGeometry x:Key="IconEngineGemini" Figures="M12,2.5 C12.9,7.8 16.2,11.1 21.5,12 C16.2,12.9 12.9,16.2 12,21.5 C11.1,16.2 7.8,12.9 2.5,12 C7.8,11.1 11.1,7.8 12,2.5 Z"/>
-
     <!-- Antigravity: 부유하는 구 (반중력) -->
     <GeometryGroup x:Key="IconEngineAgy">
         <EllipseGeometry Center="12,8" RadiusX="3.2" RadiusY="3.2"/>
@@ -217,11 +215,6 @@
             <DataTrigger Binding="{Binding AgentId}" Value="gx">
                 <Setter Property="Icon" Value="{StaticResource IconEngineOpenAi}"/>
                 <Setter Property="Foreground" Value="{StaticResource Gx}"/>
-            </DataTrigger>
-            <DataTrigger Binding="{Binding AgentId}" Value="ag">
-                <Setter Property="Icon" Value="{StaticResource IconEngineGemini}"/>
-                <Setter Property="Foreground" Value="{StaticResource Info}"/>
-                <Setter Property="Filled" Value="True"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding AgentId}" Value="agy">
                 <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
@@ -242,11 +235,6 @@
             <DataTrigger Binding="{Binding Id}" Value="gx">
                 <Setter Property="Icon" Value="{StaticResource IconEngineOpenAi}"/>
                 <Setter Property="Foreground" Value="{StaticResource Gx}"/>
-            </DataTrigger>
-            <DataTrigger Binding="{Binding Id}" Value="ag">
-                <Setter Property="Icon" Value="{StaticResource IconEngineGemini}"/>
-                <Setter Property="Foreground" Value="{StaticResource Info}"/>
-                <Setter Property="Filled" Value="True"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding Id}" Value="agy">
                 <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>

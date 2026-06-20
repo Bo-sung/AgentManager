@@ -75,7 +75,6 @@ public sealed partial class AppViewModel
     private Dictionary<string, string> _defaultModels = new();
     public string[] CcModels => EngineModels("cc");
     public string[] GxModels => EngineModels("gx");
-    public string[] AgModels => EngineModels("ag");
     public string[] AgyModels => EngineModels("agy");
     private string[] EngineModels(string id) => Array.Find(AllEngines, e => e.Id == id)?.Models ?? [];
     /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
@@ -93,8 +92,6 @@ public sealed partial class AppViewModel
     private string _settingsModelCc = "";
     public string SettingsModelGx { get => _settingsModelGx; set => Set(ref _settingsModelGx, value); }
     private string _settingsModelGx = "";
-    public string SettingsModelAg { get => _settingsModelAg; set => Set(ref _settingsModelAg, value); }
-    private string _settingsModelAg = "";
     public string SettingsModelAgy { get => _settingsModelAgy; set => Set(ref _settingsModelAgy, value); }
     private string _settingsModelAgy = "";
 
@@ -103,20 +100,17 @@ public sealed partial class AppViewModel
     private bool _settingsEngineCc = true;
     public bool SettingsEngineGx { get => _settingsEngineGx; set => Set(ref _settingsEngineGx, value); }
     private bool _settingsEngineGx = true;
-    public bool SettingsEngineAg { get => _settingsEngineAg; set => Set(ref _settingsEngineAg, value); }
-    private bool _settingsEngineAg = true;
     public bool SettingsEngineAgy { get => _settingsEngineAgy; set => Set(ref _settingsEngineAgy, value); }
     private bool _settingsEngineAgy = true;
 
     // ----- per-engine auth (subscription / api key) -----
     private readonly Dictionary<string, string> _engineAuthMode = new();   // id → "subscription" | "api"
     private readonly Dictionary<string, string> _engineApiKey = new();     // id → DPAPI base64
-    /// <summary>엔진의 API 키 env 변수명 (cc/gx/ag). 없으면 null.</summary>
+    /// <summary>엔진의 API 키 env 변수명 (cc/gx). 없으면 null.</summary>
     private static string? ApiEnvVar(string id) => id switch
     {
         "cc" => "ANTHROPIC_API_KEY",
         "gx" => "OPENAI_API_KEY",
-        "ag" => "GEMINI_API_KEY",
         _ => null,
     };
     /// <summary>실행 시 주입할 env: api 모드 + 키 있음 → { 변수명: 복호화키 }.</summary>
@@ -201,7 +195,6 @@ public sealed partial class AppViewModel
 
     public string ClaudeDetectLabel => DetectLabel("cc", _claudePath);
     public string CodexDetectLabel => DetectLabel("gx", _codexPath);
-    public string GeminiDetectLabel => DetectLabel("ag", null);
     public string AgyDetectLabel => DetectLabel("agy", null);
     private static string DetectLabel(string id, string? overridePath)
     {
@@ -213,15 +206,14 @@ public sealed partial class AppViewModel
     private void RefreshDetectLabels()
     {
         OnChanged(nameof(ClaudeDetectLabel)); OnChanged(nameof(CodexDetectLabel));
-        OnChanged(nameof(GeminiDetectLabel)); OnChanged(nameof(AgyDetectLabel));
+        OnChanged(nameof(AgyDetectLabel));
         OnChanged(nameof(CcAccount)); OnChanged(nameof(GxAccount));
-        OnChanged(nameof(AgAccount)); OnChanged(nameof(AgyAccount));
+        OnChanged(nameof(AgyAccount));
     }
 
     // 각 CLI의 로그인 계정(구독 인증) — 이메일, 미로그인 시 "". UI: 비어있으면 Sign in, 있으면 계정 표시.
     public string CcAccount => Persistence.EngineAccounts.For("cc") ?? "";
     public string GxAccount => Persistence.EngineAccounts.For("gx") ?? "";
-    public string AgAccount => Persistence.EngineAccounts.For("ag") ?? "";
     public string AgyAccount => Persistence.EngineAccounts.For("agy") ?? "";
     private string _settingsStatus = "";
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
@@ -242,14 +234,12 @@ public sealed partial class AppViewModel
         SettingsStreamLogs = _streamLogs;
         SettingsModelCc = DefaultModelFor("cc");
         SettingsModelGx = DefaultModelFor("gx");
-        SettingsModelAg = DefaultModelFor("ag");
         SettingsModelAgy = DefaultModelFor("agy");
         SettingsAccent = _accent;
         SettingsDensity = _density;
         SettingsTelemetry = _telemetry;
         SettingsEngineCc = !_disabledEngines.Contains("cc");
         SettingsEngineGx = !_disabledEngines.Contains("gx");
-        SettingsEngineAg = !_disabledEngines.Contains("ag");
         SettingsEngineAgy = !_disabledEngines.Contains("agy");
         SettingsAuthCc = _engineAuthMode.GetValueOrDefault("cc", "subscription");
         SettingsAuthGx = _engineAuthMode.GetValueOrDefault("gx", "subscription");
@@ -285,7 +275,6 @@ public sealed partial class AppViewModel
         StreamLogs = SettingsStreamLogs;
         SetDefaultModel("cc", SettingsModelCc);
         SetDefaultModel("gx", SettingsModelGx);
-        SetDefaultModel("ag", SettingsModelAg);
         SetDefaultModel("agy", SettingsModelAgy);
         _accent = Theme.AccentPalette.Normalize(SettingsAccent);
         _density = SettingsDensity == "compact" ? "compact" : "comfortable";
@@ -295,7 +284,6 @@ public sealed partial class AppViewModel
         var disabled = new HashSet<string>();
         if (!SettingsEngineCc) disabled.Add("cc");
         if (!SettingsEngineGx) disabled.Add("gx");
-        if (!SettingsEngineAg) disabled.Add("ag");
         if (!SettingsEngineAgy) disabled.Add("agy");
         if (disabled.Count < AllEngines.Length)
         {

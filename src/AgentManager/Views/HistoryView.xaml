@@ -38,7 +38,6 @@
                                     <ComboBoxItem Content="{StaticResource L.FilterAllAgents}" Tag="all"/>
                                     <ComboBoxItem Content="Claude Code" Tag="cc"/>
                                     <ComboBoxItem Content="Codex" Tag="gx"/>
-                                    <ComboBoxItem Content="Gemini" Tag="ag"/>
                                     <ComboBoxItem Content="Antigravity" Tag="agy"/>
                                 </ComboBox>
 

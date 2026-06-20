@@ -5,7 +5,7 @@ namespace AgentManager.Core.Scheduling;
 public sealed record ScheduledJob
 {
     public required string Id { get; init; }
-    public required string AgentId { get; init; } // "cc", "gx", "ag", "agy"
+    public required string AgentId { get; init; } // "cc", "gx", "agy"
     public string ProjectId { get; init; } = "";
     public string ProjectPath { get; init; } = "";
     public required string Title { get; init; }

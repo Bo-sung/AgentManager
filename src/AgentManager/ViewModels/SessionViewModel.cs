@@ -70,8 +70,8 @@ public sealed class SessionViewModel : ObservableObject
     public bool IsClaude => AgentId == "cc";
 
     /// <summary>추론 강도 옵션 — 엔진별 가짓수가 다름 (실측: claude --effort 5단계 + default, codex 4단계,
-    /// gemini/antigravity는 플래그 없음 → 피커 비노출).</summary>
-    public bool HasEffort => AgentId is not ("ag" or "agy");
+    /// antigravity는 플래그 없음 → 피커 비노출).</summary>
+    public bool HasEffort => AgentId is not "agy";
     public string[] EffortOptions => IsCodex
         ? ["low", "medium", "high", "xhigh"]
         : ["default", "low", "medium", "high", "xhigh", "max"];
