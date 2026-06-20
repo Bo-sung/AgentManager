@@ -88,8 +88,22 @@
 - Hook spool file was written.
 - `HookSpoolNativeWorkObserver` observed a completed Claude native subagent.
 
+## WPF Visual Verification (2026-06-21)
+
+Confirmed in the running WPF app that the Native workers strip renders observed
+Claude subagents. Two passes:
+
+- **Render pipeline (synthetic, no quota):** injected fake `ObservedWorkItem`s into
+  `SessionViewModel.NativeWorkItems`. The strip showed the count and three cards with
+  correct per-state colors — Running (accent), Completed (ok), Failed (err) — and the
+  `Title` / `Status` / `Source (Hook / High)` / `LastMessage` layout.
+- **Live end-to-end (real Claude run):** a cc session was prompted to delegate a
+  read-only file count to an Explore subagent. The strip rendered the real subagent
+  live as **Running → Completed** (driven by the `SubagentStart` / `SubagentStop`
+  hook spool), with `Source = Hook / High`. Subagent reported "657 .cs files under
+  src/"; turn cost ≈ $0.36.
+
 ## Remaining Work
 
-- Run the WPF app visually and confirm the Native workers strip renders the observed Claude item.
 - Decide whether to add a separate background-session poller for `claude agents --json`.
 - Add optional transcript tailing for failed/rate-limited subagent inference.
