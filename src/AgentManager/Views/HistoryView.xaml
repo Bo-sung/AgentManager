@@ -87,7 +87,7 @@
                             </ListView.ItemsPanel>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Margin="4,2" CornerRadius="6" Padding="12,10" BorderThickness="1" Cursor="Hand" MouseLeftButtonUp="HistoryRow_Click">
+                                    <Border Margin="4,2" CornerRadius="6" Padding="12,10" BorderThickness="1" Cursor="Hand" controls:MouseClick.Command="{Binding DataContext.OpenHistoryRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" controls:MouseClick.CommandParameter="{Binding}">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Setter Property="Background" Value="{StaticResource Bg1}"/>

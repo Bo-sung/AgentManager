@@ -19,40 +19,6 @@ public partial class SettingsView : UserControl
             target.BringIntoView();
     }
 
-    /// <summary>세그먼트 선택 통합 핸들러. Tag="group:value" (group = policy|accent|density).
-    /// 이전의 ApprovalPolicy/AccentSwatch/DensitySeg 핸들러를 하나로 합쳤다.</summary>
-    private void SegSelect_Click(object sender, MouseButtonEventArgs e)
-    {
-        if (Vm is not { } vm || (sender as FrameworkElement)?.Tag is not string tag) return;
-        var i = tag.IndexOf(':');
-        if (i < 0) return;
-        var (group, value) = (tag[..i], tag[(i + 1)..]);
-        switch (group)
-        {
-            case "policy": vm.SettingsApprovalPolicy = value; break;
-            case "accent": vm.SettingsAccent = value; break;
-            case "density": vm.SettingsDensity = value; break;
-        }
-    }
-
-    /// <summary>Runtimes: 엔진 CLI를 새 터미널로 열어 로그인.</summary>
-    private void EngineSignIn_Click(object sender, RoutedEventArgs e)
-    {
-        if (Vm is { } vm && (sender as FrameworkElement)?.Tag is string id)
-            vm.SignIn(id);
-    }
-
-    /// <summary>Runtimes: 인증 모드 세그 (Tag="cc:api" → 엔진별 모드).</summary>
-    private void AuthMode_Click(object sender, MouseButtonEventArgs e)
-    {
-        if (Vm is not { } vm || (sender as FrameworkElement)?.Tag is not string tag) return;
-        var parts = tag.Split(':');
-        if (parts.Length != 2) return;
-        var (engine, mode) = (parts[0], parts[1]);
-        if (engine == "cc") vm.SettingsAuthCc = mode;
-        else if (engine == "gx") vm.SettingsAuthGx = mode;
-    }
-
     /// <summary>Project: 추가 폴더(Extra path) 선택.</summary>
     private void AddExtraPath_Click(object sender, RoutedEventArgs e)
     {

@@ -268,9 +268,9 @@
                                 <MenuItem Header="{StaticResource L.NewAgent}" InputGestureText="Ctrl+N" Command="{Binding NewAgentCommand}"/>
                                 <MenuItem Header="{StaticResource L.NewProject}" Command="{Binding NewProjectCommand}"/>
                                 <Separator/>
-                                <MenuItem Header="{StaticResource L.NewClaudeSession}" Click="NewAgentEngine_Click" Tag="cc"/>
-                                <MenuItem Header="{StaticResource L.NewCodexSession}" Click="NewAgentEngine_Click" Tag="gx"/>
-                                <MenuItem Header="{StaticResource L.NewAntigravitySession}" Click="NewAgentEngine_Click" Tag="agy"/>
+                                <MenuItem Header="{StaticResource L.NewClaudeSession}" Command="{Binding NewAgentForEngineCommand}" CommandParameter="cc"/>
+                                <MenuItem Header="{StaticResource L.NewCodexSession}" Command="{Binding NewAgentForEngineCommand}" CommandParameter="gx"/>
+                                <MenuItem Header="{StaticResource L.NewAntigravitySession}" Command="{Binding NewAgentForEngineCommand}" CommandParameter="agy"/>
                                 <Separator/>
                                 <MenuItem Header="{StaticResource L.OrchestratorDashboard}" InputGestureText="Ctrl+1" Command="{Binding ShowViewCommand}" CommandParameter="orchestrator"/>
                             </ContextMenu>
@@ -382,7 +382,7 @@
                             </Style>
                         </StackPanel.Resources>
                         <!-- Orchestrator -->
-                        <Border MouseLeftButtonUp="Orchestrator_Click" ToolTip="{StaticResource L.CurrentViewTip}">
+                        <Border controls:MouseClick.Command="{Binding ShowViewCommand}" controls:MouseClick.CommandParameter="orchestrator" ToolTip="{StaticResource L.CurrentViewTip}">
                             <Border.Style>
                                 <Style TargetType="Border" BasedOn="{StaticResource NavItemBase}">
                                     <Style.Triggers>
@@ -399,7 +399,7 @@
                             </StackPanel>
                         </Border>
                         <!-- Activity History -->
-                        <Border MouseLeftButtonUp="ActivityHistory_Click" ToolTip="{StaticResource L.ActivityHistoryTip}">
+                        <Border controls:MouseClick.Command="{Binding ShowViewCommand}" controls:MouseClick.CommandParameter="history" ToolTip="{StaticResource L.ActivityHistoryTip}">
                             <Border.Style>
                                 <Style TargetType="Border" BasedOn="{StaticResource NavItemBase}">
                                     <Style.Triggers>
@@ -416,7 +416,7 @@
                             </StackPanel>
                         </Border>
                         <!-- Scheduled Tasks -->
-                        <Border MouseLeftButtonUp="ScheduledTasks_Click" ToolTip="{StaticResource L.ScheduledTasksTip}">
+                        <Border controls:MouseClick.Command="{Binding ShowViewCommand}" controls:MouseClick.CommandParameter="scheduled" ToolTip="{StaticResource L.ScheduledTasksTip}">
                             <Border.Style>
                                 <Style TargetType="Border" BasedOn="{StaticResource NavItemBase}">
                                     <Style.Triggers>
@@ -516,7 +516,7 @@
                                             </Storyboard>
                                         </DataTemplate.Resources>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,8" Cursor="Hand"
-                                                MouseLeftButtonUp="SessionRow_Click">
+                                                controls:MouseClick.Command="{Binding DataContext.SelectSessionCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}">
                                             <Border.ContextMenu>
                                                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                                     <MenuItem Header="{StaticResource L.Archive}" Command="{Binding DataContext.ArchiveSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
@@ -665,7 +665,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,7" Cursor="Hand"
-                                                MouseLeftButtonUp="ProjectRow_Click" ToolTip="{Binding Path}">
+                                                controls:MouseClick.Command="{Binding DataContext.SelectProjectCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}" ToolTip="{Binding Path}">
                                             <Border.ContextMenu>
                                                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                                     <MenuItem Header="{StaticResource L.RemoveProject}" Command="{Binding DataContext.RemoveProjectCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
@@ -727,7 +727,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,8" Cursor="Hand"
-                                                MouseLeftButtonUp="SessionRow_Click">
+                                                controls:MouseClick.Command="{Binding DataContext.SelectSessionCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}">
                                             <Border.ContextMenu>
                                                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                                     <MenuItem Header="{StaticResource L.Archive}" Command="{Binding DataContext.ArchiveSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
@@ -821,7 +821,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,7" Cursor="Hand" Opacity="0.85"
-                                                MouseLeftButtonUp="CliHistoryRow_Click"
+                                                controls:MouseClick.Command="{Binding DataContext.ImportCliSessionCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}"
                                                 ToolTip="{StaticResource L.ImportCliTip}">
                                             <Border.Style>
                                                 <Style TargetType="Border">
@@ -858,7 +858,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Margin="6,1" CornerRadius="7" Padding="10,8" Cursor="Hand"
-                                                Opacity="0.72" MouseLeftButtonUp="SessionRow_Click">
+                                                Opacity="0.72" controls:MouseClick.Command="{Binding DataContext.SelectSessionCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}">
                                             <Border.ContextMenu>
                                                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                                     <MenuItem Header="{StaticResource L.Unarchive}" Command="{Binding DataContext.ArchiveSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
@@ -1341,7 +1341,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Margin="0,0,9,0" Background="{StaticResource Bg1}" BorderThickness="1"
-                                            CornerRadius="7" Padding="11,13" Cursor="Hand" MouseLeftButtonUp="EngineOpt_Click">
+                                            CornerRadius="7" Padding="11,13" Cursor="Hand" controls:MouseClick.Command="{Binding DataContext.SelectEngineCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}">
                                         <Border.BorderBrush>
                                             <MultiBinding Converter="{StaticResource SelBrush}">
                                                 <Binding Path="Id"/>

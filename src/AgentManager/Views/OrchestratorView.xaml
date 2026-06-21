@@ -123,7 +123,7 @@
                                                 <controls:IconView Icon="{StaticResource IconChevRight}" Width="11" Height="11" Margin="4,0,0,0" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
-                                        <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Padding="9,4" Margin="0,0,6,0" Click="OrchCardDiff_Click">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Padding="9,4" Margin="0,0,6,0" Command="{Binding DataContext.OpenSessionReviewCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                                             <StackPanel Orientation="Horizontal">
                                                 <controls:IconView Icon="{StaticResource IconLayers}" Width="10" Height="10" Foreground="{StaticResource Txt1}" Margin="0,0,4,0" VerticalAlignment="Center"/>
                                                 <TextBlock Text="{StaticResource L.OrchDiff}" FontSize="10" VerticalAlignment="Center"/>

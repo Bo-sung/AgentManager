@@ -124,17 +124,6 @@ public partial class MainWindow : Window
     /// <summary>Edit ▸ Search sessions: 사이드바 검색창으로 포커스 이동 (Ctrl+F).</summary>
     private void FocusSearch_Click(object sender, RoutedEventArgs e) => SessionSearchBox.Focus();
 
-    /// <summary>Agents ▸ 엔진별 새 세션: 엔진을 미리 선택한 채 New Agent 폼을 연다.</summary>
-    private void NewAgentEngine_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is string id)
-        {
-            var engine = _vm.Engines.FirstOrDefault(en => en.Id == id);
-            if (engine is not null) _vm.NewAgentSelectedEngine = engine;
-        }
-        _vm.ShowNewAgent = true;
-    }
-
     /// <summary>타이틀바 메뉴 버튼: 좌클릭으로 ContextMenu를 드롭다운처럼 연다.</summary>
     private void MenuButton_Click(object sender, RoutedEventArgs e)
     {
@@ -175,44 +164,11 @@ public partial class MainWindow : Window
 
     private void CloseBtn_Click(object sender, RoutedEventArgs e) => Close();
 
-    private void SessionRow_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is SessionViewModel s)
-            _vm.ActiveSession = s;
-    }
-
-    private void Orchestrator_Click(object sender, MouseButtonEventArgs e)
-    {
-        _vm.CurrentView = MainViewKind.Orchestrator;
-    }
-
-    private void ActivityHistory_Click(object sender, MouseButtonEventArgs e)
-    {
-        _vm.CurrentView = MainViewKind.History;
-    }
-
-    private void ScheduledTasks_Click(object sender, MouseButtonEventArgs e)
-    {
-        _vm.CurrentView = MainViewKind.Scheduled;
-    }
-
     // 뷰별 핸들러는 Views/*.xaml.cs로 이동:
     //   Settings  -> SettingsView (SettingsToc/ApprovalPolicy/AccentSwatch/DensitySeg/EngineSignIn/AuthMode/AddExtraPath)
     //   History   -> HistoryView (HistoryRow_Click)
     //   Orchestr. -> OrchestratorView (OrchCardDiff_Click)
     //   Session   -> SessionView (트랜스크립트 스크롤·내보내기, 컴포저 전송/서제스천/이미지/받아쓰기/모델·노력 선택)
-
-    private void ProjectRow_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is ProjectViewModel p)
-            _vm.ActiveProject = p;
-    }
-
-    private void EngineOpt_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is EngineDef def)
-            _vm.NewAgentSelectedEngine = def;
-    }
 
     private void ReviewChanges_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -262,12 +218,6 @@ public partial class MainWindow : Window
             { Left = l; Top = t; Width = w; Height = h; }
         }
         catch { }
-    }
-
-    private void CliHistoryRow_Click(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is CliHistoryItemViewModel h)
-            _vm.ImportCliSessionCommand.Execute(h);
     }
 
     private void BrowseProjectFolder_Click(object sender, RoutedEventArgs e)
