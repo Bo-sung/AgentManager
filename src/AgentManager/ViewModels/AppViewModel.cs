@@ -130,6 +130,7 @@ public sealed partial class AppViewModel : ObservableObject
         SetHistoryStatusFilterCommand = new RelayCommand(p => { HistoryStatusFilter = p?.ToString() ?? "all"; });
         _scheduler.JobDue += Scheduler_JobDue;
         _scheduler.Start();
+        InitNavCommands();
     }
 
     public RelayCommand OpenIdeCommand { get; }
