@@ -348,7 +348,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="280"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="{Binding ReviewPaneWidth}"/>
+                <ColumnDefinition x:Name="ReviewCol" Width="0"/>
             </Grid.ColumnDefinitions>
 
             <!-- Sidebar -->

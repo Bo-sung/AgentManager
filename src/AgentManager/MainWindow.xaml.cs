@@ -14,6 +14,12 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _vm;
         _vm.Dialogs = new MessageBoxDialogService();
+        // Review pane 펼침/접힘 .22s 슬라이드 (GridLength는 XAML 애니메이션 불가 → code-behind).
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ViewModels.AppViewModel.ReviewPaneWidth)) AnimateReviewPane();
+        };
+        Loaded += (_, _) => AnimateReviewPane();
         _vm.AttentionRequested += OnAttentionRequested;
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Find, (_, _) => SessionSearchBox.Focus()));
         InputBindings.Add(new KeyBinding(ApplicationCommands.Find, Key.F, ModifierKeys.Control));
@@ -155,6 +161,21 @@ public partial class MainWindow : Window
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = docs, UseShellExecute = true });
         else
             MessageBox.Show(this, App.L("L.DocsNotFound"), App.L("L.HelpTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    /// <summary>Review pane 컬럼 폭을 현재값에서 목표(0/420)로 0.22s EaseOut 애니메이션.</summary>
+    private void AnimateReviewPane()
+    {
+        var anim = new Controls.GridLengthAnimation
+        {
+            To = _vm.ReviewPaneWidth,
+            Duration = new Duration(TimeSpan.FromSeconds(0.22)),
+            EasingFunction = new System.Windows.Media.Animation.CubicEase
+            {
+                EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut
+            },
+        };
+        ReviewCol.BeginAnimation(ColumnDefinition.WidthProperty, anim);
     }
 
     private void MinBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
