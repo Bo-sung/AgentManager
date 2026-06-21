@@ -49,9 +49,9 @@ function Icon({ name, size = 16, style }) {
 
 /* ---------- Agent runtimes ---------- */
 const AGENTS = {
-  cc:  { id:'cc',  badge:'CC', name:'Claude Code',    cli:'claude',      model:'Claude Sonnet 4.5', models:['Claude Sonnet 4.5','Claude Opus 4.1','Claude Haiku 4'], desc:'anthropic · cli' },
-  gx:  { id:'gx',  badge:'GX', name:'GPT / Codex',    cli:'codex',       model:'GPT-5.1 Codex',     models:['GPT-5.1 Codex','GPT-5.1','o4-mini'],                 desc:'openai · cli' },
-  ag:  { id:'ag',  badge:'AG', name:'Antigravity CLI',cli:'antigravity', model:'Gemini 3.5 Flash',  models:['Gemini 3.5 Flash','Gemini 3.5 Pro','Gemini 3.0 Pro'], desc:'google · cli' },
+  cc:  { id:'cc',  badge:'CC', name:'Claude Code',    cli:'claude',      model:'Claude Sonnet 4.5', models:['Claude Sonnet 4.5','Claude Opus 4.1','Claude Haiku 4'], desc:'anthropic · cli', tint:'#d97757', soft:'rgba(217,119,87,.16)', line:'rgba(217,119,87,.45)' },
+  gx:  { id:'gx',  badge:'GX', name:'GPT / Codex',    cli:'codex',       model:'GPT-5.1 Codex',     models:['GPT-5.1 Codex','GPT-5.1','o4-mini'],                 desc:'openai · cli', tint:'#19c37d', soft:'rgba(25,195,125,.15)', line:'rgba(25,195,125,.45)' },
+  ag:  { id:'ag',  badge:'AG', name:'Antigravity CLI',cli:'antigravity', model:'Gemini 3.5 Flash',  models:['Gemini 3.5 Flash','Gemini 3.5 Pro','Gemini 3.0 Pro'], desc:'google · cli', tint:'#4790f7', soft:'rgba(71,144,247,.15)', line:'rgba(71,144,247,.45)' },
 };
 const AGENT_LIST = [AGENTS.cc, AGENTS.gx, AGENTS.ag];
 
@@ -112,7 +112,7 @@ const SESSIONS = [
     ],
     files:[
       { name:'test/webhooks/stripe.e2e.test.ts', add:148, del:0, hunks:[
-        { h:'@@ -0,0 +1,9 @@ new file', lines:[
+        { h:"@@ -0,0 +1,9 @@ new file", lines:[
           ['add',"import { describe, it, expect } from 'vitest';"],['add',"import { signEvent } from './helpers/sign';"],['ctx',""],['add',"describe('stripe webhook · signature', () => {"],['add',"  it('rejects an unsigned body with 400', async () => {"],['add',"    const res = await post('/webhooks/stripe', rawBody);"],['add',"    expect(res.status).toBe(400);"],['add',"  });"],['add',"});"],
         ]},
       ]},
@@ -164,7 +164,7 @@ const SESSIONS = [
         ]},
       ]},
       { name:'test/fs/watcher.test.ts', add:22, del:8, hunks:[
-        { h:'@@ -34,12 +34,14 @@ it(', lines:[
+        { h:"@@ -34,12 +34,14 @@ it('", lines:[
           ['del',"  expect(events).toEqual(['add', 'change']);"],['add',"  expect(new Set(events)).toEqual(new Set(['add', 'change']));"],
         ]},
       ]},

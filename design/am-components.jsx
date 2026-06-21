@@ -41,7 +41,8 @@ function AgentBadge({ agentId, size }){
   const a = AGENTS[agentId];
   const s = size || 26;
   return (
-    <div className="ses-badge" style={{ width:s, height:s, flexBasis:s, fontSize: s>30?12:10 }}>
+    <div className="ses-badge" style={{ width:s, height:s, flexBasis:s, fontSize: s>30?12:10,
+      color:a.tint, borderColor:a.line, background:a.soft }}>
       {a.badge}
     </div>
   );

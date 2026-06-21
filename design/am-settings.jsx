@@ -99,7 +99,7 @@ function LinkedAccount({ agentId, cfg, onPlan, onUnlink }){
   const pct = Math.round(info.used/info.limit*100);
   return (
     <div className="acct-card">
-      <div className="acct-av">{a.badge}</div>
+      <div className="acct-av" style={{ color:a.tint, borderColor:a.line, background:a.soft }}>{a.badge}</div>
       <div className="acct-info">
         <div className="acct-row1">
           <b>{info.email}</b>
@@ -121,7 +121,7 @@ function EmptyAccount({ agentId, onLink }){
   const a = SetAGMAP[agentId];
   return (
     <div className="acct-empty">
-      <div className="acct-av">{a.badge}</div>
+      <div className="acct-av" style={{ color:a.tint, borderColor:a.line, background:a.soft }}>{a.badge}</div>
       <div className="txt">Sign in with your {info.provider} subscription to run this agent on your plan's included usage instead of metered API billing.</div>
       <button className="acct-link-btn" onClick={onLink}><SetIcon name="bolt" size={14} /> Link {info.provider} account</button>
     </div>
@@ -141,7 +141,7 @@ function LinkAccountModal({ agentId, onClose, onAuthorize }){
         </div>
         <div className="modal-b">
           <div className="prov-head">
-            <div className="prov-badge">{a.badge}</div>
+            <div className="prov-badge" style={{ color:a.tint, borderColor:a.line, background:a.soft }}>{a.badge}</div>
             <div>
               <div className="pn">Authorize AgentManager</div>
               <div className="ps">{a.name} · {info.provider} subscription</div>
@@ -257,7 +257,7 @@ function SettingsView({ onClose }){
               return (
                 <div className="set-card" key={a.id}>
                   <div className="rt-head">
-                    <div className="rt-badge">{a.badge}</div>
+                    <div className="rt-badge" style={{ color:a.tint, borderColor:a.line, background:a.soft }}>{a.badge}</div>
                     <div style={{ flex:1 }}>
                       <div className="rt-name">{a.name}</div>
                       <div className="rt-sub">{a.cli} · {a.desc}</div>

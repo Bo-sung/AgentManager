@@ -30,7 +30,7 @@ function OrchCard({ s, tokens, onOpen, onReview }){
   return (
     <div className={`ocard ${live?'live':''} ${(s.status==='done'||s.status==='error')?'dim':''}`} onClick={()=>onOpen(s.id)}>
       <div className="ocard-head">
-        <div className="ocard-badge">{a.badge}</div>
+        <div className="ocard-badge" style={{ color:a.tint, borderColor:a.line, background:a.soft }}>{a.badge}</div>
         <div className="ocard-id">
           <div className="ocard-ag">{a.name}</div>
           <div className="ocard-model">{s.model}</div>
@@ -193,7 +193,7 @@ function HistoryRow({ e, onOpen }){
   return (
     <div className="hrow" onClick={()=>onOpen && onOpen(e.sid)}>
       <span className="time">{timeStr(e.t)}</span>
-      <span className="badge-mini">{a.badge}</span>
+      <span className="badge-mini" style={{ color:a.tint, borderColor:a.line, background:a.soft }}>{a.badge}</span>
       <span className={`ev-ico ${e.status}`}><VIcon name={EV_ICON[e.ico]||'dots'} size={13} /></span>
       <span className="txt">
         <b>{e.session}</b> · {c.lead} {c.code && <code>{c.code}</code>} {c.plain && <span>{c.plain}</span>}
@@ -256,7 +256,7 @@ function HistoryView({ sessions, onOpen }){
               <div className={`chip ${agent==='all'?'on':''}`} onClick={()=>setAgent('all')}>All agents</div>
               {VLIST.map(a=>(
                 <div key={a.id} className={`chip ${agent===a.id?'on':''}`} onClick={()=>setAgent(a.id)}>
-                  <span className="badge-mini">{a.badge}</span>{a.name.split(' ')[0]}
+                  <span className="badge-mini" style={{ color:a.tint }}>{a.badge}</span>{a.name.split(' ')[0]}
                 </div>
               ))}
             </div>

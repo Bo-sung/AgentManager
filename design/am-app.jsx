@@ -169,7 +169,7 @@ function NewAgentModal({ onClose, onCreate }){
             <div className="agent-grid">
               {AALIST.map(a=>(
                 <div key={a.id} className={`agent-opt ${agentId===a.id?'sel':''}`} onClick={()=>setAgentId(a.id)}>
-                  <div className="badge">{a.badge}</div>
+                  <div className="badge" style={{ color:a.tint, borderColor:a.line, background:a.soft }}>{a.badge}</div>
                   <div className="nm">{a.name}</div>
                   <div className="ds">{a.desc}</div>
                 </div>

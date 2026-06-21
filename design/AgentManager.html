@@ -255,12 +255,12 @@ body{
 
 /* transcript */
 .scroll{flex:1;overflow-y:auto;min-height:0}
-.thread{max-width:880px;margin:0 auto;padding:26px 28px 40px}
+.thread{max-width:1240px;margin:0 auto;padding:24px 48px 40px}
 
 .msg-user{display:flex;justify-content:flex-end;margin:18px 0}
 .bubble{
   background:var(--bg-3);border:1px solid var(--line);border-radius:10px 10px 2px 10px;
-  padding:11px 14px;max-width:78%;font-size:13px;color:var(--txt-0);line-height:1.55;white-space:pre-wrap;
+  padding:11px 14px;max-width:62%;font-size:13px;color:var(--txt-0);line-height:1.55;white-space:pre-wrap;
 }
 .bubble .b-head{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--txt-2);margin-bottom:5px;text-transform:uppercase}
 
@@ -343,7 +343,7 @@ body{
 .errblk-b{font-family:var(--mono);font-size:11px;color:var(--txt-1);line-height:1.6;white-space:pre-wrap}
 
 /* ---------- Composer ---------- */
-.composer{padding:0 28px 18px;max-width:880px;margin:0 auto;width:100%}
+.composer{padding:0 48px 18px;max-width:1240px;margin:0 auto;width:100%}
 .comp-box{
   background:var(--bg-3);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;
   transition:border-color .15s;
@@ -588,7 +588,7 @@ body{
 .view-scroll{flex:1;overflow-y:auto;min-height:0}
 
 /* ---------- Orchestrator ---------- */
-.orch-page{max-width:1080px;margin:0 auto;padding:18px 24px 50px}
+.orch-page{max-width:1320px;margin:0 auto;padding:18px 40px 50px}
 .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:8px}
 .kpi{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--bg-2);padding:14px 15px;position:relative;overflow:hidden}
 .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent-line)}
@@ -649,7 +649,7 @@ body{
 @keyframes indet{0%{left:-40%}100%{left:100%}}
 
 /* ---------- Activity History ---------- */
-.hist-bar{display:flex;align-items:center;gap:10px;padding:12px 0;max-width:920px;margin:0 auto;width:100%}
+.hist-bar{display:flex;align-items:center;gap:10px;padding:12px 0;max-width:1240px;margin:0 auto;width:100%}
 .hist-search{display:flex;align-items:center;gap:8px;background:var(--bg-3);border:1px solid var(--line);border-radius:var(--r-md);padding:7px 11px;width:230px}
 .hist-search input{background:none;border:0;outline:none;color:var(--txt-0);font-family:var(--sans);font-size:12.5px;width:100%}
 .hist-search input::placeholder{color:var(--txt-2)}
@@ -659,7 +659,7 @@ body{
 .chip.on{background:var(--accent-dim);border-color:var(--accent-line);color:var(--accent)}
 .chip .badge-mini{font-weight:600}
 .chip-group{display:flex;gap:6px}
-.hist-page{max-width:920px;margin:0 auto;padding:0 24px 50px}
+.hist-page{max-width:1240px;margin:0 auto;padding:0 40px 50px}
 .hist-day{display:flex;align-items:center;gap:12px;margin:18px 0 6px}
 .hist-day .d{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-2)}
 .hist-day .rule{flex:1;height:1px;background:var(--line-soft)}
@@ -687,7 +687,7 @@ body{
 .hist-empty{text-align:center;padding:50px;font-family:var(--mono);font-size:12px;color:var(--txt-2)}
 
 /* ---------- Scheduled ---------- */
-.sched-page{max-width:760px;margin:0 auto;padding:18px 24px 50px}
+.sched-page{max-width:940px;margin:0 auto;padding:18px 40px 50px}
 .sched-card{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--bg-2);padding:14px 16px}
 .sched-card + .sched-card{margin-top:10px}
 .sched-ico{width:36px;height:36px;flex:0 0 36px;border-radius:var(--r-sm);border:1px solid var(--line-bright);background:var(--bg-1);display:grid;place-items:center;color:var(--accent)}

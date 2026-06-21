@@ -130,12 +130,12 @@ function AgentRun({ session, blocks, streamShown, onReview, onApprove, onReject 
   return (
     <div className="msg-agent">
       <div className="ag-rail">
-        <div className="ag-mark">{a.badge}</div>
+        <div className="ag-mark" style={{ color:a.tint, borderColor:a.line, background:a.soft }}>{a.badge}</div>
         <div className="ag-line" />
       </div>
       <div className="ag-body">
         <div className="ag-name">
-          <span className="n">{a.name}</span>
+          <span className="n" style={{ color:a.tint }}>{a.name}</span>
           <span className="m">/ {session.model}</span>
         </div>
         {blocks.map((b,i)=>{
@@ -195,7 +195,8 @@ function Composer({ session, value, onChange, onSend, onModel }){
   const send = ()=>{ if(value.trim()){ onSend(); if(ref.current){ ref.current.style.height='46px'; } } };
   return (
     <div className="composer">
-      <div className={`comp-box ${focus?'focus':''}`}>
+      <div className={`comp-box ${focus?'focus':''}`}
+        style={focus?{ borderColor:a.line, boxShadow:`0 0 0 3px ${a.soft}` }:{}}>
         <textarea
           ref={ref}
           className="comp-input"
@@ -210,13 +211,14 @@ function Composer({ session, value, onChange, onSend, onModel }){
           <div className="comp-pill" title="Worktree"><CIcon name="branch" size={13} /> Worktree · {session.branch.split('/').pop()}</div>
           <div style={{ position:'relative' }}>
             <div className="comp-pill model" onClick={e=>{ e.stopPropagation(); setMenu(m=>!m); }}>
-              <CIcon name="spark" size={13} /> <b>{session.model}</b> <CIcon name="chevup" size={12} />
+              <CIcon name="spark" size={13} /> <b style={{ color:a.tint }}>{session.model}</b> <CIcon name="chevup" size={12} />
             </div>
             {menu && <ModelMenu agent={a} value={session.model} onPick={onModel} onClose={()=>setMenu(false)} />}
           </div>
           <span className="comp-spacer" />
           <button className="c-ico" title="Dictate"><CIcon name="mic" size={18} /></button>
-          <button className="send" disabled={!value.trim()} onClick={send}><CIcon name="send" size={17} /></button>
+          <button className="send" disabled={!value.trim()} onClick={send}
+            style={value.trim()?{ background:a.tint }:{}}><CIcon name="send" size={17} /></button>
         </div>
       </div>
       <div className="comp-hint">
