@@ -86,10 +86,22 @@
 | **API key 인증** — Runtimes 카드(cc/gx) Subscription/API key 세그 + 키 필드, DPAPI(CurrentUser) 암호화 저장(crypt32 P/Invoke, 평문 금지), 실행 시 env 주입(SessionOptions.ExtraEnvironment → AgentSession; cc=ANTHROPIC_API_KEY/gx=OPENAI_API_KEY/ag 백엔드). DPAPI 라운드트립 OS 확인 | c6ee1d6 |
 | **레거시 어댑터 정리** — 구형 standalone Gemini CLI / Antigravity 어댑터(AntigravityAdapter.cs) 제거, Google 계열을 agy 엔진으로 일원화 (등록 엔진 = cc·gx·agy) | 8da33b0 |
 
+### 🛠 세션 2026-06-21
+| **Native worker 관측 시각 검증** — Claude subagent strip 합성 주입 + 라이브 런(Explore subagent Running→Completed, hook spool) 확인 | 2e4a390 |
+| **Usage check 카드** — Settings▸Permissions 카드(상태줄+Check 버튼), UsageStatusText no-data 폴백 | 3559196 |
+| **Native 관측 확장** — `claude agents --json` 백그라운드 세션 폴러(ProcessPoll) + 실패/rate-limit subagent transcript tailing(isApiErrorMessage→Failed). 스모크 --claude-agents-probe / --subagent-failure-check | dafb23f |
+| **MVVM 리팩터** — VM↔View 분리(ApplySuggestion/RenameDraft/IDialogService/ShowAbout) · 로직 추출(TranscriptExporter·ImageAttachmentStore) · 클릭→커맨드(MouseClick behavior+nav 커맨드) | e91cb4a, 92225c8, a3c7ee0, 0893da9 |
+| **디자인 충실도** — 원본 애니메이션 재현: pulse(StatusDot)·fade/rise(모달)·spin(Spinner)·blink(WorkingBlock)·border hover(BorderHover)·Review pane .22s(GridLengthAnimation) + **IBM Plex Sans/Mono 번들** | 9144878, d72ff8b, 6947773, 55a4cbe, 07c348a |
+| **docs 정합성** — legacy 엔진 제거를 README/FEATURES/ROADMAP/DESIGN_SPEC/PROGRESS에 반영 | 7b0b210 |
+
+> **agy v2 실측(2026-06-21)**: `--model gemini-3.5-flash` exit 0(포맷 유효) 확인, AgyAdapter는 Model≠"default"일 때 이미 `--model` 전달 → **agy 모델 선택 작동 중**. (`agy models` 카탈로그는 ConPTY 전용이라 헤드리스 캡처 불가 — 갱신 필요 시 실 터미널에서 `agy models`)
+
 ## 🔜 다음
-1. **agy v2 후보**: --model 포맷 실측 → 모델 선택 활성화 · agy 구조화 출력 추가 시 풀 이벤트 전환
-2. **마이크로 폴리시(선택)**: HudTicks(둥근 카드 코너틱) 시각 확정 · "JK" 아바타(목업 잔재) 제네릭화 · accent 라이브 frozen 폴백 실측 · API key UI를 ag/agy까지 확장 · API key 필드 마스킹(PasswordBox)
-3. **뒤로 미룸(결정)**: 풀 MCP
+1. **마이크로 폴리시(선택, 낮은 효용)**: nav/사이드바 background hover 전환(active 하이라이트와 Bg3 충돌 → 선택-인지 behavior 필요) · 입력창 focus border .15s 전환 · HudTicks 둥근 코너틱 · accent 라이브 frozen 폴백 실측
+2. **observer 앱 레벨 폴러**: 현재 백그라운드 세션 폴러는 턴 범위 v1 → 항시 폴링 수요 생기면 앱 레벨로 승격
+3. **뒤로 미룸(결정)**: 풀 MCP · agy 구조화 출력(추가 시 풀 이벤트 전환)
+
+> 정리됨: API key 필드 마스킹(이미 구현)·"JK" 아바타(흔적 없음)·API key UI ag/agy 확장(agy는 계정 기반, API key 개념 없음)·agy --model(실측·작동 확인) — 모두 완료/무의미로 "다음"에서 제거.
 
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
