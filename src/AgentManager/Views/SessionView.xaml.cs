@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using AgentManager.Persistence;
 using AgentManager.ViewModels;
 
 namespace AgentManager.Views;
@@ -88,33 +89,6 @@ public partial class SessionView : UserControl
 
     // ----- 트랜스크립트 내보내기 -----
 
-    private static string BuildTranscriptMarkdown(SessionViewModel s)
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine("# " + s.Title).AppendLine();
-        foreach (var item in s.Transcript)
-        {
-            switch (item)
-            {
-                case UserBlock u:
-                    sb.AppendLine("## 🧑 User").AppendLine(u.Text);
-                    if (u.HasSent) sb.AppendLine().AppendLine("> sent (EN): " + u.SentText);
-                    sb.AppendLine();
-                    break;
-                case AgentTextBlock a: sb.AppendLine("## 🤖 " + s.AgentName).AppendLine(a.Text).AppendLine(); break;
-                case ToolBlock t:
-                    sb.AppendLine("### 🔧 " + t.Name);
-                    if (!string.IsNullOrWhiteSpace(t.Body)) sb.AppendLine("```").AppendLine(t.Body.TrimEnd()).AppendLine("```");
-                    sb.AppendLine();
-                    break;
-                case ErrorBlock err: sb.AppendLine("### ❌ " + err.Title).AppendLine(err.Body).AppendLine(); break;
-                case ApprovalBlock p: sb.AppendLine("### ⚠ Approval: " + p.ToolName + " → " + p.State).AppendLine(); break;
-                case WorkingBlock w: sb.AppendLine("> " + w.Text).AppendLine(); break;
-            }
-        }
-        return sb.ToString();
-    }
-
     private void ExportTranscript_Click(object sender, RoutedEventArgs e)
     {
         if (Vm?.ActiveSession is not { } s) return;
@@ -124,13 +98,13 @@ public partial class SessionView : UserControl
             Filter = AgentManager.App.L("L.MarkdownFilter")
         };
         if (dlg.ShowDialog() != true) return;
-        try { System.IO.File.WriteAllText(dlg.FileName, BuildTranscriptMarkdown(s)); } catch { }
+        try { System.IO.File.WriteAllText(dlg.FileName, TranscriptExporter.ToMarkdown(s)); } catch { }
     }
 
     private void CopyTranscript_Click(object sender, RoutedEventArgs e)
     {
         if (Vm?.ActiveSession is not { } s) return;
-        try { Clipboard.SetText(BuildTranscriptMarkdown(s)); } catch { }
+        try { Clipboard.SetText(TranscriptExporter.ToMarkdown(s)); } catch { }
     }
 
     // ----- 컴포저: 전송 / 받아쓰기 / @·/ 서제스천 / 이미지 -----
@@ -157,10 +131,6 @@ public partial class SessionView : UserControl
         keybd_event(VK_H, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
         keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
     }
-
-    private static readonly string AttachmentsDir =
-        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AgentManager", "attachments");
 
     private void Composer_PreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -221,19 +191,9 @@ public partial class SessionView : UserControl
     private void PasteClipboardImage()
     {
         if (Vm?.ActiveSession is not { } s) return;
-        try
-        {
-            var img = Clipboard.GetImage();
-            if (img is null) return;
-            System.IO.Directory.CreateDirectory(AttachmentsDir);
-            var file = System.IO.Path.Combine(AttachmentsDir,
-                "paste-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") + ".png");
-            var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
-            enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(img));
-            using (var fs = System.IO.File.Create(file)) enc.Save(fs);
-            s.PendingImages.Add(file);
-        }
-        catch { }
+        var img = Clipboard.GetImage();
+        if (img is not null && ImageAttachmentStore.SavePng(img) is { } path)
+            s.PendingImages.Add(path);
     }
 
     private void AttachImage_Click(object sender, RoutedEventArgs e)
