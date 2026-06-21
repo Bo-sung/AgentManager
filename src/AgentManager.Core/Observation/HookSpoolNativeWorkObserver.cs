@@ -88,10 +88,29 @@ public sealed class HookSpoolNativeWorkObserver(string engineId, string spoolDir
         if (hookEvent is null) return;
         if (_target is not null && !ParentMatchesTarget(hookEvent.ParentSessionId)) return;
 
-        var item = Merge(hookEvent.ToObservedWorkItem(
+        var observed = ApplyFailureInference(hookEvent.ToObservedWorkItem(
             _target?.ParentSessionId,
-            _target?.ManagedByAgentManager ?? false));
+            _target?.ManagedByAgentManager ?? false), hookEvent);
+        var item = Merge(observed);
         WorkItemChanged?.Invoke(this, item);
+    }
+
+    /// <summary>훅이 종료를 Completed로 보고했어도 subagent transcript(또는 last_assistant_message)에
+    /// API 오류/한도 종료가 보이면 Failed 로 보정한다. 실패/rate-limit subagent 가시화용.</summary>
+    private static ObservedWorkItem ApplyFailureInference(ObservedWorkItem item, NativeHookEvent ev)
+    {
+        var failure = SubagentTranscriptInspector.Inspect(ev.AgentTranscriptPath ?? "");
+        if (!failure.Failed && SubagentTranscriptInspector.LooksLikeLimit(ev.LastAssistantMessage))
+            failure = new SubagentFailure(true, true, ev.LastAssistantMessage);
+        if (!failure.Failed) return item;
+
+        return item with
+        {
+            State = ObservedState.Failed,
+            Error = failure.Message ?? item.Error,
+            LastMessage = failure.Message ?? item.LastMessage,
+            CompletedAt = item.CompletedAt ?? item.LastActivityAt,
+        };
     }
 
     private bool ParentMatchesTarget(string parentSessionId)

@@ -27,6 +27,18 @@ if (args.Contains("--native-observer-check"))
     return;
 }
 
+if (args.Contains("--subagent-failure-check"))
+{
+    SubagentFailureCheck();
+    return;
+}
+
+if (args.Contains("--claude-agents-probe"))
+{
+    await ClaudeAgentsProbeCheckAsync();
+    return;
+}
+
 if (args.Contains("--agy-observer-check"))
 {
     await AgyObserverCheckAsync();
@@ -162,6 +174,42 @@ static async Task AgyPtyCheckAsync()
     Console.WriteLine(tail);
     Console.WriteLine(clean.Contains("OK") ? "agy PTY spike: OUTPUT VISIBLE — PASS" : "agy PTY spike: no expected output — FAIL");
     try { Directory.Delete(tmp, true); } catch { }
+}
+
+// B: subagent transcript 의 실패/rate-limit 추론 (오프라인 어서션).
+static void SubagentFailureCheck()
+{
+    var rateLine = "{\"type\":\"assistant\",\"isApiErrorMessage\":true,\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"You've hit your weekly limit — resets 8am (Asia/Seoul)\"}]}}";
+    var okLine = "{\"type\":\"assistant\",\"isApiErrorMessage\":false,\"message\":{\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"content\":[{\"type\":\"text\",\"text\":\"done\"}]}}";
+    var f = SubagentTranscriptInspector.InspectLine(rateLine);
+    var n = SubagentTranscriptInspector.InspectLine(okLine);
+    var hint = SubagentTranscriptInspector.LooksLikeLimit("You've hit your weekly limit");
+    bool ok = f is { Failed: true, RateLimited: true } && (f.Message?.Contains("weekly limit") ?? false)
+              && n is null && hint;
+    Console.WriteLine($"[subagent-failure] rate={f?.RateLimited} msg=\"{f?.Message}\" normal={(n is null ? "ignored" : "MISFIRE")} hint={hint}");
+    Console.WriteLine($"[subagent-failure] {(ok ? "PASS" : "FAIL")}");
+    Environment.Exit(ok ? 0 : 1);
+}
+
+// A: `claude agents --json` 파싱(오프라인 어서션) + (claude 있으면) 라이브 호출.
+static async Task ClaudeAgentsProbeCheckAsync()
+{
+    const string fixture = "[{\"pid\":15484,\"cwd\":\"J:\\\\prj\\\\x\",\"kind\":\"interactive\",\"startedAt\":1782031919148,\"sessionId\":\"b7ba3331-1e89\"}," +
+                           "{\"pid\":71028,\"cwd\":\"J:\\\\prj\\\\AgentManager\",\"kind\":\"background\",\"startedAt\":1782032048549,\"sessionId\":\"ad19458c\"}]";
+    var parsed = ClaudeAgentsProbe.Parse(fixture);
+    bool ok = parsed.Count == 2 && parsed[0].Pid == 15484 && parsed[1].Kind == "background"
+              && parsed[0].SessionId == "b7ba3331-1e89" && ClaudeAgentsProbe.Parse("not json").Count == 0;
+    Console.WriteLine($"[agents-probe] parse fixture rows={parsed.Count} -> {(ok ? "PASS" : "FAIL")}");
+    var exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin", "claude.exe");
+    if (File.Exists(exe))
+    {
+        var live = await ClaudeAgentsProbe.RunAsync(exe);
+        Console.WriteLine($"[agents-probe] live rows={live.Count}");
+        foreach (var r in live)
+            Console.WriteLine($"  pid={r.Pid} kind={r.Kind} cwd={r.Cwd} session={r.SessionId[..Math.Min(12, r.SessionId.Length)]}…");
+    }
+    else Console.WriteLine("[agents-probe] (claude not found — skipped live)");
+    Environment.Exit(ok ? 0 : 1);
 }
 
 static async Task NativeObserverCheckAsync()

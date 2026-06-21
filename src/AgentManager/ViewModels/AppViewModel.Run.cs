@@ -171,7 +171,13 @@ public sealed partial class AppViewModel
 
         INativeWorkObserver? observer = null;
         if (s.AgentId is "gx" or "cc" && (options?.NativeHookSpoolDirectory ?? NativeHookSpoolDirectoryFor(s)) is { } spool)
-            observer = new HookSpoolNativeWorkObserver(s.AgentId, spool);
+        {
+            var hook = new HookSpoolNativeWorkObserver(s.AgentId, spool);
+            // cc: 훅(in-session subagent)에 더해 `claude agents --json` 폴러로 같은 트리의 별도 세션도 관측.
+            observer = s.AgentId == "cc" && EngineRegistry.ResolveExe("cc", _claudePath, _codexPath) is { } ccExe
+                ? new CompositeNativeWorkObserver("cc", hook, new ClaudeBackgroundSessionObserver(ccExe))
+                : hook;
+        }
         else if (s.AgentId == "agy" && !string.IsNullOrWhiteSpace(s.EngineSessionId))
             observer = new AgyNativeWorkObserver();
 

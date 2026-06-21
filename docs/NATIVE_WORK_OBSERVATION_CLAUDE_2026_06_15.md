@@ -103,7 +103,22 @@ Claude subagents. Two passes:
   hook spool), with `Source = Hook / High`. Subagent reported "657 .cs files under
   src/"; turn cost ≈ $0.36.
 
+## Follow-ups Done (2026-06-21)
+
+- **Background-session poller** — `ClaudeAgentsProbe` runs `claude agents --json`
+  (schema: `[{pid, cwd, kind, startedAt(ms), sessionId}]`) and
+  `ClaudeBackgroundSessionObserver` polls it on an interval, surfacing *other*
+  claude sessions in the same working tree as `NativeBackgroundSession`
+  (`Source=ProcessPoll`), with a Stopped transition when a session leaves the
+  poll. Composed with the hook observer for cc via `CompositeNativeWorkObserver`.
+  Smoke: `--claude-agents-probe` (fixture parse + live call).
+- **Failed/rate-limited subagent inference** — `SubagentTranscriptInspector`
+  scans the agent transcript for `isApiErrorMessage:true` (and matches limit
+  phrasing like "weekly limit … resets"); `HookSpoolNativeWorkObserver` upgrades
+  a subagent to `Failed` (with the error text) even when the Stop hook reports
+  Completed. Smoke: `--subagent-failure-check`.
+
 ## Remaining Work
 
-- Decide whether to add a separate background-session poller for `claude agents --json`.
-- Add optional transcript tailing for failed/rate-limited subagent inference.
+- (none tracked — revisit app-level vs turn-scoped polling if background-session
+  usage grows; the poller currently runs within the per-session observer lifecycle.)
