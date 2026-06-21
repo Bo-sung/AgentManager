@@ -79,7 +79,7 @@
 | 기능 | 비고 |
 |---|---|
 | **Multi-agent pipeline / Handoff** (Claude plan→Codex impl→verify) | 제품 차별점, 그러나 무거움 |
-| Antigravity CLI 어댑터 | 전환(6/18)·표면 확정 후 |
+| Antigravity CLI 어댑터 | ✅ agy 엔진으로 출시 (ConPTY 기반, ~/.gemini Google 계정 공유) |
 | Browser QA / screenshot 검증 | AG 강점, 매우 무거움 |
 | Scheduled tasks (cron) | sidecar 필요. 사이드바에 비활성 자리 존재 |
 | Activity History 뷰 (세션 횡단 활동 이력) | ✅ Task A에서 읽기 전용 창 구현 |

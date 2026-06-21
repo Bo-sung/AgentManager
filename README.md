@@ -116,7 +116,7 @@ dotnet run --project src/AgentManager/AgentManager.csproj
 
 ## 🗺️ 로드맵 (예정 기능)
 
-*   **승인 Stage 2, Antigravity CLI 어댑터, 풀 MCP 연동, 백그라운드 Scheduled Tasks** 등이 순차적으로 고도화될 예정입니다.
+*   **승인 Stage 2, 풀 MCP 연동, 백그라운드 Scheduled Tasks** 등이 순차적으로 고도화될 예정입니다. (Antigravity 지원은 agy 엔진으로 이미 제공됩니다.)
 
 ---
 

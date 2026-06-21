@@ -24,7 +24,7 @@
 - ⬜ 승인 프롬프트 UI(approve/reject) — M *(Claude 우선, Codex는 제약)*
 - ⬜ 권한/샌드박스 모드 선택(read-only/workspace-write/yolo) — S
 - ✅ 작업 디렉터리/worktree 세션별 지정 — M
-- ⬜ Antigravity 어댑터 — M *(전환 후)*
+- ✅ Antigravity 어댑터 — agy 엔진으로 출시 (ConPTY 기반, ~/.gemini Google 계정 공유)
 
 ### C. 번역 레이어 (차별점)
 - 🟡 KO↔EN (기본 ON, UI 토글 없음)
@@ -107,7 +107,7 @@ Stop · 멀티턴(resume) · 모델 선택 연결 · 경과타이머/비용
 리뷰 드로어 diff · 사이드바 그룹화 · 메시지 액션 · 스트리밍 타이핑 · 알림
 
 **M5 — 확장**
-Antigravity 어댑터 · 이미지 첨부 · 검색/필터 · Codex 승인(app-server)
+~~Antigravity 어댑터~~(✅ agy) · 이미지 첨부 · 검색/필터 · Codex 승인(app-server)
 
 ---
 

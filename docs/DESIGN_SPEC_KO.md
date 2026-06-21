@@ -97,7 +97,7 @@ public interface IAgentAdapter {
 ## 8. 범위 / 비범위
 - **범위**: 멀티 에이전트 구동·관리, 번역(입출력+서브에이전트 결과), 원문/전송문 토글, 토큰 대시보드
 - **비범위(IDE 기능 제외)**: diff 뷰어, 파일 편집 UI, 체크포인트(git), MCP 관리 UI
-- **보류**: Antigravity/Gemini(6/18 전환·표면 미확정), ACP 통합(후속)
+- **보류**: ACP 통합(후속) · (Antigravity/Gemini는 agy 엔진으로 출시 완료)
 
 ## 9. 로드맵
 1. **Phase 0 스파이크** (Claude/Codex 프로토콜 매핑표) ← 언어 무관, 선행

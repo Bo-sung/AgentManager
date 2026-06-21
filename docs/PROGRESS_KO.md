@@ -84,6 +84,7 @@
 | **NewAgent 모달 정렬** — 런타임 선택 하이라이트(SelectedBrushConverter) + 모델 피커 + worktree 미리보기 필 | f1a0198 |
 | **Accent 선택 링 + 클린업 + 점검** — 스와치 선택 링, subagent 브랜치/낡은 감사문서 정리, 하드코딩 'Failed' i18n·사이드바 설정 기어 | c766db1, 2eed05d, d81fd2a |
 | **API key 인증** — Runtimes 카드(cc/gx) Subscription/API key 세그 + 키 필드, DPAPI(CurrentUser) 암호화 저장(crypt32 P/Invoke, 평문 금지), 실행 시 env 주입(SessionOptions.ExtraEnvironment → AgentSession; cc=ANTHROPIC_API_KEY/gx=OPENAI_API_KEY/ag 백엔드). DPAPI 라운드트립 OS 확인 | c6ee1d6 |
+| **레거시 어댑터 정리** — 구형 standalone Gemini CLI / Antigravity 어댑터(AntigravityAdapter.cs) 제거, Google 계열을 agy 엔진으로 일원화 (등록 엔진 = cc·gx·agy) | 8da33b0 |
 
 ## 🔜 다음
 1. **agy v2 후보**: --model 포맷 실측 → 모델 선택 활성화 · agy 구조화 출력 추가 시 풀 이벤트 전환
@@ -93,7 +94,7 @@
 ## ⏸ 보류 / 후순위
 - 멀티에이전트 파이프라인/Handoff → **P2** (결정됨)
 - Browser QA · SSH/원격 · 컨테이너 · 팀공유 · Extension SDK → P2 이후
-- Antigravity 어댑터 → 전환(6/18)·표면 확정 후
+- ~~Antigravity 어댑터 → 전환(6/18)·표면 확정 후~~ → ✅ agy 엔진으로 출시 (8da33b0)
 
 ## 결정 로그 (요약)
 - 세션 모델 = **단발+resume** / 승인 = **bypass 유지** / 파이프라인 = **P2**
