@@ -15,6 +15,10 @@ public sealed class ProjectViewModel(string id, string name, string path) : Obse
     private bool _isActive;
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
 
+    /// <summary>이름 변경 입력 바인딩(메뉴의 Rename TextBox). 커맨드가 이 값을 읽는다.</summary>
+    private string _renameDraft = "";
+    public string RenameDraft { get => _renameDraft; set => Set(ref _renameDraft, value); }
+
     /// <summary>MCP 패스스루: 사용자가 관리하는 mcp 설정 파일 경로(.mcp.json 등) → claude --mcp-config.</summary>
     private string _mcpConfigPath = "";
     public string McpConfigPath { get => _mcpConfigPath; set => Set(ref _mcpConfigPath, value); }

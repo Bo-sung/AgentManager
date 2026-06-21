@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Windows.Controls;
 
 namespace AgentManager.ViewModels;
 
@@ -36,11 +35,13 @@ public partial class AppViewModel
 
     private int _suggestionStartTokenIndex = -1;
     private char _suggestionMode = '\0';
+    private int _suggestionQueryLength;
 
     public void TriggerComposerSuggestion(char mode, string query, int tokenStartIndex)
     {
         _suggestionMode = mode;
         _suggestionStartTokenIndex = tokenStartIndex;
+        _suggestionQueryLength = query?.Length ?? 0;
         ComposerSuggestions.Clear();
 
         if (mode == '@')
@@ -134,16 +135,44 @@ public partial class AppViewModel
         SelectedComposerSuggestion = null;
         _suggestionStartTokenIndex = -1;
         _suggestionMode = '\0';
+        _suggestionQueryLength = 0;
     }
 
-    public void ApplySuggestion(TextBox tb)
+    /// <summary>@·/ 토큰 스캔(View에서 이관): caret 직전부터 공백 전까지 거슬러 올라가 '@'/'/'를 찾는다.</summary>
+    public void UpdateComposerSuggestion(string text, int caret)
     {
-        if (SelectedComposerSuggestion == null || _suggestionStartTokenIndex == -1) return;
+        text ??= "";
+        if (caret < 0 || caret > text.Length) return;
+
+        int tokenStart = -1;
+        char mode = '\0';
+        for (int i = caret - 1; i >= 0; i--)
+        {
+            char c = text[i];
+            if (c == ' ' || c == '\n' || c == '\r') break;
+            if (c == '@' || c == '/') { tokenStart = i; mode = c; break; }
+        }
+
+        if (tokenStart != -1)
+        {
+            var query = text.Substring(tokenStart + 1, caret - (tokenStart + 1));
+            TriggerComposerSuggestion(mode, query, tokenStart);
+        }
+        else
+        {
+            CloseComposerSuggestion();
+        }
+    }
+
+    /// <summary>선택된 서제스천을 ActiveSession.Draft에 적용하고 원하는 캐럿 위치를 반환. 적용 안 되면 -1.</summary>
+    public int ApplySelectedSuggestion()
+    {
+        if (SelectedComposerSuggestion == null || _suggestionStartTokenIndex == -1 || ActiveSession is not { } session) return -1;
 
         var insertVal = SelectedComposerSuggestion.Value;
         if (_suggestionMode == '@' && SelectedComposerSuggestion.Type == "File")
         {
-            string searchDir = ActiveSession?.WorktreePath ?? ActiveProject?.Path ?? "";
+            string searchDir = session.WorktreePath ?? ActiveProject?.Path ?? "";
             if (!string.IsNullOrEmpty(searchDir))
             {
                 var absPath = Path.Combine(searchDir, insertVal).Replace("\\", "/");
@@ -151,60 +180,47 @@ public partial class AppViewModel
             }
         }
 
-        var text = tb.Text ?? "";
-        var caret = tb.CaretIndex;
-        if (caret < _suggestionStartTokenIndex) caret = text.Length;
+        var text = session.Draft ?? "";
+        var caret = _suggestionStartTokenIndex + 1 + _suggestionQueryLength;
+        if (caret > text.Length) caret = text.Length;
 
-        var before = text.Substring(0, _suggestionStartTokenIndex);
-        var after = text.Substring(caret);
+        var before = text[.._suggestionStartTokenIndex];
+        var after = text[caret..];
 
         // slash command specific handlers
         if (_suggestionMode == '/' && insertVal.StartsWith("/"))
         {
             if (insertVal == "/clear")
             {
-                if (ActiveSession != null) ActiveSession.Draft = "";
+                session.Draft = "";
                 CloseComposerSuggestion();
-                tb.Focus();
-                return;
+                return 0;
             }
             if (insertVal == "/review")
             {
                 ToggleReviewCommand.Execute(null);
-                if (ActiveSession != null) ActiveSession.Draft = "";
+                session.Draft = "";
                 CloseComposerSuggestion();
-                tb.Focus();
-                return;
+                return 0;
             }
             if (insertVal == "/settings")
             {
                 ShowSettingsCommand.Execute(null);
-                if (ActiveSession != null) ActiveSession.Draft = "";
+                session.Draft = "";
                 CloseComposerSuggestion();
-                tb.Focus();
-                return;
+                return 0;
             }
             if (insertVal == "/help")
             {
-                if (ActiveSession != null)
-                {
-                    ActiveSession.Draft = "Help: Use @ to mention files or sessions, and / to trigger slash actions.";
-                    CloseComposerSuggestion();
-                    tb.CaretIndex = ActiveSession.Draft.Length;
-                }
-                else
-                {
-                    CloseComposerSuggestion();
-                }
-                tb.Focus();
-                return;
+                session.Draft = "Help: Use @ to mention files or sessions, and / to trigger slash actions.";
+                var len = session.Draft.Length;
+                CloseComposerSuggestion();
+                return len;
             }
         }
 
-        tb.Text = before + insertVal + " " + after;
-        tb.CaretIndex = _suggestionStartTokenIndex + insertVal.Length + 1;
-        tb.Focus();
-
+        session.Draft = before + insertVal + " " + after;
         CloseComposerSuggestion();
+        return _suggestionStartTokenIndex + insertVal.Length + 1;
     }
 }

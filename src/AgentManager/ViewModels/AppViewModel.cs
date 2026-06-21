@@ -81,6 +81,8 @@ public sealed partial class AppViewModel : ObservableObject
         });
         NewProjectCommand = new RelayCommand(_ => ShowNewProject = true);
         CancelNewProjectCommand = new RelayCommand(_ => ShowNewProject = false);
+        ShowAboutCommand = new RelayCommand(_ => ShowAbout = true);
+        CloseAboutCommand = new RelayCommand(_ => ShowAbout = false);
         CreateProjectCommand = new RelayCommand(_ => CreateProject(), _ => !string.IsNullOrWhiteSpace(NewProjectPath));
         SelectProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel vm) ActiveProject = vm; });
         ImportCliSessionCommand = new RelayCommand(p => { if (p is CliHistoryItemViewModel h) ImportCliSession(h); });
@@ -98,9 +100,9 @@ public sealed partial class AppViewModel : ObservableObject
         RenameSessionCommand = new RelayCommand(p => { if (p is string t) RenameSession(ActiveSession, t); }, _ => ActiveSession is not null);
         RenameProjectCommand = new RelayCommand(p =>
         {
-            if (p is System.Windows.Controls.TextBox tb && tb.DataContext is ProjectViewModel proj && !string.IsNullOrWhiteSpace(tb.Text))
+            if (p is ProjectViewModel proj && !string.IsNullOrWhiteSpace(proj.RenameDraft))
             {
-                RenameProject(proj, tb.Text);
+                RenameProject(proj, proj.RenameDraft.Trim());
             }
         });
         RemoveProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel proj) RemoveProject(proj); });
@@ -271,6 +273,8 @@ public sealed partial class AppViewModel : ObservableObject
     public RelayCommand SelectSessionCommand { get; }
     public RelayCommand NewProjectCommand { get; }
     public RelayCommand CancelNewProjectCommand { get; }
+    public RelayCommand ShowAboutCommand { get; }
+    public RelayCommand CloseAboutCommand { get; }
     public RelayCommand CreateProjectCommand { get; }
     public RelayCommand SelectProjectCommand { get; }
     public RelayCommand ImportCliSessionCommand { get; }
@@ -294,6 +298,9 @@ public sealed partial class AppViewModel : ObservableObject
     public RelayCommand CommitReviewCommand { get; }
     public RelayCommand ForkSessionCommand { get; }
     public RelayCommand SendDiffFeedbackCommand { get; }
+
+    /// <summary>확인 다이얼로그 시임(View가 주입). null이면 무조건 진행(헤드리스/테스트).</summary>
+    public IDialogService? Dialogs { get; set; }
 
     /// <summary>동시 실행 세션 수 제한 (설정, 영속).</summary>
     private int _maxConcurrentSessions = 3;
@@ -426,12 +433,8 @@ public sealed partial class AppViewModel : ObservableObject
         if (p is null) return;
 
         var sessionsToRemove = _allSessions.Where(s => s.ProjectId == p.Id).ToList();
-        if (sessionsToRemove.Any())
-        {
-            var res = MessageBox.Show(L("L.ProjectRemoveConfirm", sessionsToRemove.Count), L("L.ProjectRemoveTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (res != MessageBoxResult.Yes)
-                return;
-        }
+        if (sessionsToRemove.Any() && Dialogs is { } d && !d.Confirm(L("L.ProjectRemoveConfirm", sessionsToRemove.Count), L("L.ProjectRemoveTitle")))
+            return;
 
         foreach (var s in sessionsToRemove)
         {
@@ -573,6 +576,10 @@ public sealed partial class AppViewModel : ObservableObject
         get => _newTitle;
         set { if (Set(ref _newTitle, value)) OnChanged(nameof(NewAgentBranchPreview)); }
     }
+
+    // ----- about overlay state -----
+    private bool _showAbout;
+    public bool ShowAbout { get => _showAbout; set => Set(ref _showAbout, value); }
 
     // ----- new-project overlay state -----
     private bool _showNewProject;

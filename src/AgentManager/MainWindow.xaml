@@ -291,10 +291,10 @@
                     <Button Style="{StaticResource MenuButton}" Content="{StaticResource L.Help}" Click="MenuButton_Click">
                         <Button.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="{StaticResource L.KeyboardShortcuts}" Click="HelpAbout_Click"/>
+                                <MenuItem Header="{StaticResource L.KeyboardShortcuts}" Command="{Binding ShowAboutCommand}"/>
                                 <MenuItem Header="{StaticResource L.OpenDocsFolder}" Click="HelpDocs_Click"/>
                                 <Separator/>
-                                <MenuItem Header="{StaticResource L.AboutAgentManager}" Click="HelpAbout_Click"/>
+                                <MenuItem Header="{StaticResource L.AboutAgentManager}" Command="{Binding ShowAboutCommand}"/>
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
@@ -674,10 +674,10 @@
                                                         <TextBlock Text="{StaticResource L.Rename}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                         <TextBox x:Name="ProjRenameBox" Style="{StaticResource ComposerInput}" Background="{StaticResource Bg1}"
                                                                  BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="8"
-                                                                 AcceptsReturn="False" Text="{Binding Name, Mode=OneWay}"/>
+                                                                 AcceptsReturn="False" Text="{Binding RenameDraft, UpdateSourceTrigger=PropertyChanged}"/>
                                                         <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Apply}" Margin="0,8,0,0"
                                                                 Command="{Binding DataContext.RenameProjectCommand, Source={x:Reference Root}}"
-                                                                CommandParameter="{Binding ElementName=ProjRenameBox}"/>
+                                                                CommandParameter="{Binding}"/>
                                                     </StackPanel>
                                                 </ContextMenu>
                                             </Border.ContextMenu>
@@ -1234,7 +1234,7 @@
         </Grid>
 
         <!-- ===================== About / keyboard shortcuts overlay ===================== -->
-        <Grid x:Name="AboutOverlay" Grid.RowSpan="2" Background="#9E05080B" Visibility="Collapsed"
+        <Grid x:Name="AboutOverlay" Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowAbout, Converter={StaticResource BoolVis}}"
               MouseLeftButtonUp="AboutOverlay_BackdropClick">
             <Border Width="460" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
                     BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10"
@@ -1244,7 +1244,7 @@
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.AboutTitle}" Style="{StaticResource Lbl}"
                                        Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Click="CloseAbout_Click"
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Command="{Binding CloseAboutCommand}"
                                     ToolTip="{StaticResource L.CloseTip}">
                                 <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
                             </Button>
@@ -1311,7 +1311,7 @@
 
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Background="{StaticResource Bg1}" Padding="18,14">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Style="{StaticResource AccentButton}" Content="{StaticResource L.Close}" Click="CloseAbout_Click"/>
+                            <Button Style="{StaticResource AccentButton}" Content="{StaticResource L.Close}" Command="{Binding CloseAboutCommand}"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

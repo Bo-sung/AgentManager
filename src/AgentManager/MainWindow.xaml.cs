@@ -13,6 +13,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = _vm;
+        _vm.Dialogs = new MessageBoxDialogService();
         _vm.AttentionRequested += OnAttentionRequested;
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Find, (_, _) => SessionSearchBox.Focus()));
         InputBindings.Add(new KeyBinding(ApplicationCommands.Find, Key.F, ModifierKeys.Control));
@@ -146,16 +147,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void HelpAbout_Click(object sender, RoutedEventArgs e)
-    {
-        AboutOverlay.Visibility = Visibility.Visible;
-    }
-
-    private void CloseAbout_Click(object sender, RoutedEventArgs e) => AboutOverlay.Visibility = Visibility.Collapsed;
-
     private void AboutOverlay_BackdropClick(object sender, MouseButtonEventArgs e)
     {
-        AboutOverlay.Visibility = Visibility.Collapsed;
+        _vm.ShowAbout = false;
     }
 
     private void AboutOverlay_CardClick(object sender, MouseButtonEventArgs e)
@@ -244,7 +238,7 @@ public partial class MainWindow : Window
         base.OnPreviewKeyDown(e);
         if (e.Key == System.Windows.Input.Key.Escape)
         {
-            if (AboutOverlay.Visibility == Visibility.Visible) { AboutOverlay.Visibility = Visibility.Collapsed; e.Handled = true; }
+            if (_vm.ShowAbout) { _vm.ShowAbout = false; e.Handled = true; }
             else if (_vm.ShowNewAgent) { _vm.ShowNewAgent = false; e.Handled = true; }
             else if (_vm.ShowNewProject) { _vm.ShowNewProject = false; e.Handled = true; }
             else if (_vm.ShowNewSchedule) { _vm.ShowNewSchedule = false; e.Handled = true; }

@@ -169,7 +169,7 @@ public partial class SessionView : UserControl
         {
             if (e.Key == Key.Up) { MoveSuggestionSelection(-1); e.Handled = true; return; }
             if (e.Key == Key.Down) { MoveSuggestionSelection(1); e.Handled = true; return; }
-            if (e.Key == Key.Enter || e.Key == Key.Tab) { vm.ApplySuggestion(ComposerBox); e.Handled = true; return; }
+            if (e.Key == Key.Enter || e.Key == Key.Tab) { ApplySuggestionToComposer(); e.Handled = true; return; }
             if (e.Key == Key.Escape) { vm.CloseComposerSuggestion(); e.Handled = true; return; }
         }
 
@@ -182,28 +182,18 @@ public partial class SessionView : UserControl
 
     private void ComposerBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (Vm is not { } vm || sender is not TextBox tb) return;
-        var text = tb.Text ?? "";
-        var caret = tb.CaretIndex;
-        if (caret < 0 || caret > text.Length) return;
+        if (Vm is { } vm && sender is TextBox tb) vm.UpdateComposerSuggestion(tb.Text ?? "", tb.CaretIndex);
+    }
 
-        int tokenStart = -1;
-        char mode = '\0';
-        for (int i = caret - 1; i >= 0; i--)
+    /// <summary>VM에서 서제스천을 Draft에 적용한 뒤, 반환된 캐럿 위치로 TextBox 포커스/캐럿을 맞춘다.</summary>
+    private void ApplySuggestionToComposer()
+    {
+        if (Vm is not { } vm) return;
+        var caret = vm.ApplySelectedSuggestion();
+        if (caret >= 0)
         {
-            char c = text[i];
-            if (c == ' ' || c == '\n' || c == '\r') break;
-            if (c == '@' || c == '/') { tokenStart = i; mode = c; break; }
-        }
-
-        if (tokenStart != -1)
-        {
-            var query = text.Substring(tokenStart + 1, caret - (tokenStart + 1));
-            vm.TriggerComposerSuggestion(mode, query, tokenStart);
-        }
-        else
-        {
-            vm.CloseComposerSuggestion();
+            ComposerBox.CaretIndex = Math.Min(caret, ComposerBox.Text?.Length ?? 0);
+            ComposerBox.Focus();
         }
     }
 
@@ -219,12 +209,12 @@ public partial class SessionView : UserControl
     }
 
     private void SuggestionList_DoubleClick(object sender, MouseButtonEventArgs e)
-        => Vm?.ApplySuggestion(ComposerBox);
+        => ApplySuggestionToComposer();
 
     private void SuggestionList_KeyDown(object sender, KeyEventArgs e)
     {
         if (Vm is not { } vm) return;
-        if (e.Key == Key.Enter || e.Key == Key.Tab) { vm.ApplySuggestion(ComposerBox); e.Handled = true; }
+        if (e.Key == Key.Enter || e.Key == Key.Tab) { ApplySuggestionToComposer(); e.Handled = true; }
         else if (e.Key == Key.Escape) { vm.CloseComposerSuggestion(); e.Handled = true; }
     }
 
