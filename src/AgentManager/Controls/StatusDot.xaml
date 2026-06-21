@@ -1,0 +1,61 @@
+<UserControl x:Class="AgentManager.Controls.StatusDot"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:AgentManager.Controls">
+    <!-- 상태 닷: 코어 점 + (running일 때) pulse 헤일로. 원본 .dot.running box-shadow 리플 재현.
+         @keyframes pulse { 0%: shadow 0; 70%: spread 5px, fade; 100%: 0 } 1.6s infinite. -->
+    <Grid Width="18" Height="18">
+        <!-- pulse halo: running일 때만 1→2.6 확대 + 0.5→0 페이드 반복 -->
+        <Ellipse x:Name="Halo" Width="7" Height="7" Fill="{StaticResource Accent}" Opacity="0"
+                 RenderTransformOrigin="0.5,0.5">
+            <Ellipse.RenderTransform>
+                <ScaleTransform x:Name="HaloScale" ScaleX="1" ScaleY="1"/>
+            </Ellipse.RenderTransform>
+            <Ellipse.Style>
+                <Style TargetType="Ellipse">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="running">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard Name="Pulse">
+                                    <Storyboard RepeatBehavior="Forever" Duration="0:0:1.6">
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                         From="1" To="2.6" Duration="0:0:1.6"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                         From="1" To="2.6" Duration="0:0:1.6"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="0.5" To="0" Duration="0:0:1.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <StopStoryboard BeginStoryboardName="Pulse"/>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Ellipse.Style>
+        </Ellipse>
+        <!-- core dot: 상태별 색 -->
+        <Ellipse x:Name="Core" Width="7" Height="7">
+            <Ellipse.Style>
+                <Style TargetType="Ellipse">
+                    <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="running">
+                            <Setter Property="Fill" Value="{StaticResource Accent}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="waiting">
+                            <Setter Property="Fill" Value="{StaticResource Warn}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="done">
+                            <Setter Property="Fill" Value="{StaticResource Ok}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="error">
+                            <Setter Property="Fill" Value="{StaticResource Err}"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Ellipse.Style>
+        </Ellipse>
+    </Grid>
+</UserControl>
