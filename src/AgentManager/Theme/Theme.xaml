@@ -8,6 +8,20 @@
     <CornerRadius x:Key="RMd">7</CornerRadius>
     <CornerRadius x:Key="RLg">10</CornerRadius>
 
+    <!-- ===== 오버레이/모달 진입 애니메이션 (원본 @keyframes fade .15s / rise .2s ease) =====
+         backdrop = OverlayFadeIn(불투명 0→1), card = OverlayRiseIn(Y 10→0 + 0→1, EaseOut).
+         각 요소 자신을 타깃(TargetName 없음) → 요소의 Style.DataTrigger EnterActions에서 시작. -->
+    <Storyboard x:Key="OverlayFadeIn">
+        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.15"/>
+    </Storyboard>
+    <Storyboard x:Key="OverlayRiseIn">
+        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.2"/>
+        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                         From="10" To="0" Duration="0:0:0.2">
+            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+    </Storyboard>
+
     <!-- 한글 폴백을 명시(Malgun Gothic)해 컨트롤별 폰트 폴백 차이를 제거 -->
     <FontFamily x:Key="Sans">Segoe UI, Malgun Gothic, sans-serif</FontFamily>
     <FontFamily x:Key="Mono">Consolas, Malgun Gothic, Cascadia Mono, monospace</FontFamily>

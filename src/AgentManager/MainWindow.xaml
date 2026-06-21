@@ -1115,8 +1115,27 @@
 
         <!-- ===================== New-schedule overlay ===================== -->
         <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNewSchedule, Converter={StaticResource BoolVis}}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowNewSchedule}" Value="True">
+                            <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayFadeIn}"/></DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Border Width="620" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
-                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10">
+                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowNewSchedule}" Value="True">
+                                <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayRiseIn}"/></DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <StackPanel>
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
                         <DockPanel>
@@ -1224,9 +1243,28 @@
         <!-- ===================== About / keyboard shortcuts overlay ===================== -->
         <Grid x:Name="AboutOverlay" Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowAbout, Converter={StaticResource BoolVis}}"
               MouseLeftButtonUp="AboutOverlay_BackdropClick">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowAbout}" Value="True">
+                            <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayFadeIn}"/></DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Border Width="460" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
                     BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10"
-                    MouseLeftButtonUp="AboutOverlay_CardClick">
+                    MouseLeftButtonUp="AboutOverlay_CardClick" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowAbout}" Value="True">
+                                <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayRiseIn}"/></DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <StackPanel>
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
                         <DockPanel>
@@ -1308,8 +1346,27 @@
 
         <!-- ===================== New-agent overlay ===================== -->
         <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNewAgent, Converter={StaticResource BoolVis}}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowNewAgent}" Value="True">
+                            <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayFadeIn}"/></DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Border Width="540" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
-                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10">
+                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowNewAgent}" Value="True">
+                                <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayRiseIn}"/></DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <StackPanel>
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
                         <DockPanel>
@@ -1392,8 +1449,27 @@
 
         <!-- ===================== New-project overlay ===================== -->
         <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNewProject, Converter={StaticResource BoolVis}}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowNewProject}" Value="True">
+                            <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayFadeIn}"/></DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Border Width="560" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{StaticResource Bg2}"
-                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10">
+                    BorderBrush="{StaticResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowNewProject}" Value="True">
+                                <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayRiseIn}"/></DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <StackPanel>
                     <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
                         <DockPanel>
