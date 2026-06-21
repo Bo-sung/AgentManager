@@ -124,6 +124,7 @@
                                         </Style>
                                     </Border.Style>
                                     <StackPanel Orientation="Horizontal">
+                                        <controls:Spinner VerticalAlignment="Center" Margin="0,0,7,0"/>
                                         <TextBlock Text="{StaticResource L.Running}" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,8,0"/>
                                         <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,8,0"/>
                                         <TextBlock Text="{Binding LastSignalLabel}" Foreground="{StaticResource Txt2}"/>

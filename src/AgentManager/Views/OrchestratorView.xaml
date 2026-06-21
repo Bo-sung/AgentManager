@@ -59,7 +59,8 @@
 
                         <!-- shared orchestrator session card (live + recent) -->
                         <DataTemplate x:Key="OrchCardTemplate">
-                            <Border Width="236" Margin="0,0,12,12" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="12">
+                            <Border Width="236" Margin="0,0,12,12" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="12"
+                                    controls:BorderHover.Brush="{StaticResource AccentLine}">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="Opacity" Value="1.0"/>
