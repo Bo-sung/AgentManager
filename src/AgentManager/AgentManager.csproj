@@ -16,6 +16,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 1차 릴리즈 -->
+    <Version>1.0.0</Version>
+    <Product>AgentManager</Product>
   </PropertyGroup>
 
 </Project>
