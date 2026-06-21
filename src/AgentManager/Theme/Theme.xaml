@@ -22,9 +22,10 @@
         </DoubleAnimation>
     </Storyboard>
 
-    <!-- 한글 폴백을 명시(Malgun Gothic)해 컨트롤별 폰트 폴백 차이를 제거 -->
-    <FontFamily x:Key="Sans">Segoe UI, Malgun Gothic, sans-serif</FontFamily>
-    <FontFamily x:Key="Mono">Consolas, Malgun Gothic, Cascadia Mono, monospace</FontFamily>
+    <!-- 원본 타이포그래피 재현: 번들된 IBM Plex (Latin). 한글 등 미포함 글리프는 WPF 폰트
+         폴백이 시스템 폰트(Malgun Gothic 등)로 자동 처리한다(원본도 IBM Plex는 Latin 전용). -->
+    <FontFamily x:Key="Sans">pack://application:,,,/Resources/Fonts/#IBM Plex Sans</FontFamily>
+    <FontFamily x:Key="Mono">pack://application:,,,/Resources/Fonts/#IBM Plex Mono</FontFamily>
 
     <!-- ===== Dark ToolTip (기본 흰 배경 → 테마 색) ===== -->
     <Style TargetType="ToolTip">

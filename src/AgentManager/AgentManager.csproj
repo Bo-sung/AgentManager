@@ -4,6 +4,11 @@
     <ProjectReference Include="..\AgentManager.Core\AgentManager.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Bundle IBM Plex (OFL) for design-fidelity typography; Korean falls back to system. -->
+    <Resource Include="Resources\Fonts\*.ttf" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
