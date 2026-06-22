@@ -12,11 +12,11 @@ public static class EngineRegistry
     [
         // 버전 명시 풀네임 (claude --model은 별칭/풀네임 모두 허용 — 실측; sonnet[1m] = 1M 컨텍스트 별칭)
         new("cc", "CC", "Claude Code",     "claude",      ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5", "sonnet[1m]"], "anthropic · cli", true),
-        new("gx", "GX", "GPT / Codex",     "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true),
+        new("gx", "GX", "Codex",           "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true),
         // Google 계열은 agy(Antigravity)로 일원화 — 구형 Gemini CLI는 제거됨.
         // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략.
         // 슬러그 형식 실측 확인: `agy -p "Say OK" --model gemini-3.5-flash` → OK (2026-06-13)
-        new("agy", "AGY", "Antigravity (agy)", "agy",
+        new("agy", "AG", "Antigravity",    "agy",
             ["default", "gemini-3.5-flash", "gemini-3.1-pro", "claude-sonnet-4-6", "claude-opus-4-6", "gpt-oss-120b"],
             "google · pty", true),
     ];

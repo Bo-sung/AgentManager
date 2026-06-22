@@ -7,7 +7,7 @@ public sealed class CliHistoryItemViewModel(CliHistoryEntry entry)
 {
     public CliHistoryEntry Entry { get; } = entry;
     public string AgentId => Entry.EngineId; // EngineIcon 스타일 트리거용
-    public string Badge => Entry.EngineId switch { "cc" => "CC", "agy" => "AGY", _ => "GX" };
+    public string Badge => Entry.EngineId switch { "cc" => "CC", "agy" => "AG", _ => "GX" };
     public string Title => Entry.Title;
     public string TimeLabel => Entry.LastWriteUtc.ToLocalTime().ToString("MM-dd HH:mm");
 }

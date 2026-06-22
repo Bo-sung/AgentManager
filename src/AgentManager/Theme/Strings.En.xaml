@@ -21,7 +21,7 @@
     <sys:String x:Key="L.MaximizeRestore">Maximize / Restore</sys:String>
     <sys:String x:Key="L.NewClaudeSession">New Claude Code session</sys:String>
     <sys:String x:Key="L.NewCodexSession">New Codex session</sys:String>
-    <sys:String x:Key="L.NewAntigravitySession">New Antigravity (agy) session</sys:String>
+    <sys:String x:Key="L.NewAntigravitySession">New Antigravity session</sys:String>
     <sys:String x:Key="L.AboutAgentManager">About AgentManager</sys:String>
     <sys:String x:Key="L.OpenDocsFolder">Open docs folder</sys:String>
     <sys:String x:Key="L.Running">RUNNING</sys:String>
@@ -233,7 +233,7 @@
     <sys:String x:Key="L.AutoDetectHint">leave blank for auto-detect/PATH</sys:String>
     <sys:String x:Key="L.ClaudeCliPath">CLAUDE CLI PATH</sys:String>
     <sys:String x:Key="L.CodexCliPath">CODEX CLI PATH</sys:String>
-    <sys:String x:Key="L.AntigravityAgyAuto">ANTIGRAVITY AGY (auto)</sys:String>
+    <sys:String x:Key="L.AntigravityAgyAuto">ANTIGRAVITY (auto)</sys:String>
     <sys:String x:Key="L.OllamaTranslation">OLLAMA TRANSLATION</sys:String>
     <sys:String x:Key="L.Endpoint">ENDPOINT</sys:String>
     <sys:String x:Key="L.DefaultTranslation">DEFAULT TRANSLATION</sys:String>
@@ -337,7 +337,7 @@
     <sys:String x:Key="L.AboutBody">AgentManager {0}\n\nMulti-Agent Development Control Plane\nClaude Code · Codex / local LLM Korean-English translation layer\n\nMIT License</sys:String>
     <sys:String x:Key="L.AboutTitle">About</sys:String>
     <sys:String x:Key="L.AboutBuildPattern">build {0} · {1} runtimes registered</sys:String>
-    <sys:String x:Key="L.AboutDescription">Run Claude Code, GPT / Codex, and Antigravity side by side, each in its own isolated git worktree, orchestrated from a single client.</sys:String>
+    <sys:String x:Key="L.AboutDescription">Run Claude Code, Codex, and Antigravity side by side, each in its own isolated git worktree, orchestrated from a single client.</sys:String>
     <sys:String x:Key="L.ShortcutSpawn">Spawn a new agent</sys:String>
     <sys:String x:Key="L.ShortcutViews">Orchestrator · History · Scheduled</sys:String>
     <sys:String x:Key="L.ShortcutDiff">Toggle diff review panel</sys:String>
