@@ -22,15 +22,14 @@ public partial class App : Application
             theme = "dark";
             language = "ko";
         }
-        if (theme == "light" || language == "en")
-        {
-            var dicts = Resources.MergedDictionaries;
-            dicts.Clear();
-            dicts.Add(new ResourceDictionary { Source = new Uri(theme == "light" ? "Theme/Colors.Light.xaml" : "Theme/Colors.Dark.xaml", UriKind.Relative) });
-            dicts.Add(new ResourceDictionary { Source = new Uri("Theme/Theme.xaml", UriKind.Relative) });
-            dicts.Add(new ResourceDictionary { Source = new Uri("Theme/Icons.xaml", UriKind.Relative) });
-            dicts.Add(new ResourceDictionary { Source = new Uri(language == "en" ? "Theme/Strings.En.xaml" : "Theme/Strings.Ko.xaml", UriKind.Relative) });
-        }
+        // 저장된 테마/언어로 팔레트를 머지한다(색 토큰은 DynamicResource로 참조되므로 시작 시 이 팔레트가
+        // 보이면 됨; 이후 전환은 ThemePalette.Apply가 엔트리를 덮어써 라이브 반영).
+        var dicts = Resources.MergedDictionaries;
+        dicts.Clear();
+        dicts.Add(new ResourceDictionary { Source = new Uri(Theme.ThemePalette.FileFor(theme), UriKind.Relative) });
+        dicts.Add(new ResourceDictionary { Source = new Uri("Theme/Theme.xaml", UriKind.Relative) });
+        dicts.Add(new ResourceDictionary { Source = new Uri("Theme/Icons.xaml", UriKind.Relative) });
+        dicts.Add(new ResourceDictionary { Source = new Uri(language == "en" ? "Theme/Strings.En.xaml" : "Theme/Strings.Ko.xaml", UriKind.Relative) });
         base.OnStartup(e);
     }
 

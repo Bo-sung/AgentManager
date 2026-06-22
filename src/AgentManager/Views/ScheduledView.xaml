@@ -5,20 +5,20 @@
              xmlns:vm="clr-namespace:AgentManager.ViewModels"
              xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              x:Name="ViewRoot"
-             Background="{StaticResource Bg0}">
+             Background="{DynamicResource Bg0}">
                     <DockPanel LastChildFill="True">
                         <!-- Head -->
-                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
                             <DockPanel LastChildFill="False">
-                                <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconCalendar}" Width="15" Height="15" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.ScheduledTasks}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center"/>
-                                <TextBlock DockPanel.Dock="Left" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0">
+                                <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconCalendar}" Width="15" Height="15" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.ScheduledTasks}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Left" FontSize="11" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="6,0,0,0">
                                     <Run Text="· "/><Run Text="{Binding ScheduledJobs.Count, Mode=OneWay}"/><Run Text=" "/><Run Text="{StaticResource L.SchedJobsSuffix}"/></TextBlock>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource AccentButton}" Command="{Binding NewScheduleCommand}">
                                     <StackPanel Orientation="Horizontal">
                                         <controls:IconView Icon="{StaticResource IconPlus}" Width="13" Height="13"
-                                                           Foreground="{StaticResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{StaticResource L.NewSchedule}" Foreground="{StaticResource AccentText}" FontWeight="SemiBold"/>
+                                                           Foreground="{DynamicResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.NewSchedule}" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Button>
                             </DockPanel>
@@ -30,7 +30,7 @@
                                 <ItemsControl ItemsSource="{Binding ScheduledJobs}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="0,0,0,8" Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                            <Border Margin="0,0,0,8" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="40"/>
@@ -39,29 +39,29 @@
                                                     </Grid.ColumnDefinitions>
 
                                                     <!-- Icon -->
-                                                    <controls:IconView Grid.Column="0" Icon="{StaticResource IconCalendar}" Width="16" Height="16" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                                    <controls:IconView Grid.Column="0" Icon="{StaticResource IconCalendar}" Width="16" Height="16" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
 
                                                     <!-- Main Info -->
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" Margin="0,0,0,4"/>
+                                                        <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" Margin="0,0,0,4"/>
                                                         <StackPanel Orientation="Horizontal">
-                                                            <Border Width="24" Height="20" CornerRadius="4" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
-                                                                <TextBlock Text="{Binding EngineBadge}" FontFamily="{StaticResource Mono}" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource Txt1}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            <Border Width="24" Height="20" CornerRadius="4" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
+                                                                <TextBlock Text="{Binding EngineBadge}" FontFamily="{StaticResource Mono}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
-                                                            <TextBlock Text="{Binding EngineName}" FontSize="11" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                            <TextBlock Text="{Binding EngineName}" FontSize="11" Foreground="{DynamicResource Txt1}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                                                             
-                                                            <controls:IconView Icon="{StaticResource IconRefresh}" Width="10" Height="10" Foreground="{StaticResource Txt2}" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding CadenceText}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                            <controls:IconView Icon="{StaticResource IconRefresh}" Width="10" Height="10" Foreground="{DynamicResource Txt2}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding CadenceText}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,12,0"/>
 
-                                                            <controls:IconView Icon="{StaticResource IconBranch}" Width="10" Height="10" Foreground="{StaticResource Txt2}" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding TargetBranch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+                                                            <controls:IconView Icon="{StaticResource IconBranch}" Width="10" Height="10" Foreground="{DynamicResource Txt2}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding TargetBranch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </StackPanel>
 
                                                     <!-- Next run -->
                                                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                        <TextBlock Text="{StaticResource L.SchedNextRun}" FontSize="9.5" Foreground="{StaticResource Txt2}" HorizontalAlignment="Right"/>
-                                                        <TextBlock Text="{Binding NextRunLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Accent}" HorizontalAlignment="Right"/>
+                                                        <TextBlock Text="{StaticResource L.SchedNextRun}" FontSize="9.5" Foreground="{DynamicResource Txt2}" HorizontalAlignment="Right"/>
+                                                        <TextBlock Text="{Binding NextRunLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Accent}" HorizontalAlignment="Right"/>
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>

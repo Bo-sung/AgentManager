@@ -6,7 +6,7 @@
          @keyframes pulse { 0%: shadow 0; 70%: spread 5px, fade; 100%: 0 } 1.6s infinite. -->
     <Grid Width="18" Height="18">
         <!-- pulse halo: running일 때만 1→2.6 확대 + 0.5→0 페이드 반복 -->
-        <Ellipse x:Name="Halo" Width="7" Height="7" Fill="{StaticResource Accent}" Opacity="0"
+        <Ellipse x:Name="Halo" Width="7" Height="7" Fill="{DynamicResource Accent}" Opacity="0"
                  RenderTransformOrigin="0.5,0.5">
             <Ellipse.RenderTransform>
                 <ScaleTransform x:Name="HaloScale" ScaleX="1" ScaleY="1"/>
@@ -39,19 +39,19 @@
         <Ellipse x:Name="Core" Width="7" Height="7">
             <Ellipse.Style>
                 <Style TargetType="Ellipse">
-                    <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                    <Setter Property="Fill" Value="{DynamicResource Txt3}"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="running">
-                            <Setter Property="Fill" Value="{StaticResource Accent}"/>
+                            <Setter Property="Fill" Value="{DynamicResource Accent}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="waiting">
-                            <Setter Property="Fill" Value="{StaticResource Warn}"/>
+                            <Setter Property="Fill" Value="{DynamicResource Warn}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="done">
-                            <Setter Property="Fill" Value="{StaticResource Ok}"/>
+                            <Setter Property="Fill" Value="{DynamicResource Ok}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Status, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="error">
-                            <Setter Property="Fill" Value="{StaticResource Err}"/>
+                            <Setter Property="Fill" Value="{DynamicResource Err}"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

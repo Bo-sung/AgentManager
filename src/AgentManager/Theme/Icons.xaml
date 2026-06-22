@@ -210,15 +210,15 @@
         <Style.Triggers>
             <DataTrigger Binding="{Binding AgentId}" Value="cc">
                 <Setter Property="Icon" Value="{StaticResource IconEngineClaude}"/>
-                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding AgentId}" Value="gx">
                 <Setter Property="Icon" Value="{StaticResource IconEngineOpenAi}"/>
-                <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding AgentId}" Value="agy">
                 <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
-                <Setter Property="Foreground" Value="{StaticResource Agy}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Agy}"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -230,15 +230,15 @@
         <Style.Triggers>
             <DataTrigger Binding="{Binding Id}" Value="cc">
                 <Setter Property="Icon" Value="{StaticResource IconEngineClaude}"/>
-                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding Id}" Value="gx">
                 <Setter Property="Icon" Value="{StaticResource IconEngineOpenAi}"/>
-                <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding Id}" Value="agy">
                 <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
-                <Setter Property="Foreground" Value="{StaticResource Agy}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Agy}"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>

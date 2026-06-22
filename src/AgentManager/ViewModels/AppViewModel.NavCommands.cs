@@ -21,6 +21,8 @@ public sealed partial class AppViewModel
     public RelayCommand AuthModeCommand { get; private set; } = null!;
     /// <summary>Runtimes: 엔진 CLI 로그인.</summary>
     public RelayCommand SignInCommand { get; private set; } = null!;
+    /// <summary>Appearance: 테마 선택(파라미터 = 테마 id).</summary>
+    public RelayCommand ThemeSelectCommand { get; private set; } = null!;
 
     private void InitNavCommands()
     {
@@ -61,5 +63,6 @@ public sealed partial class AppViewModel
             else if (parts[0] == "gx") SettingsAuthGx = parts[1];
         });
         SignInCommand = new RelayCommand(p => { if (p is string id) SignIn(id); });
+        ThemeSelectCommand = new RelayCommand(p => { if (p is string id) SettingsTheme = id; });
     }
 }

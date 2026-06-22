@@ -11,7 +11,7 @@
                                HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource Txt2}"/>
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding DataContext.HasActive, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
@@ -35,19 +35,19 @@
                         </DockPanel.Style>
 
                         <!-- tabbar -->
-                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1">
                             <DockPanel Margin="14,0">
-                                <TextBlock DockPanel.Dock="Left" Text="{Binding Project}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
-                                <TextBlock DockPanel.Dock="Left" Text="  ›  " Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding Project}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Left" Text="  ›  " Foreground="{DynamicResource Txt3}" VerticalAlignment="Center"/>
                                 <!-- 리뷰 토글은 최우측: 패널이 우측에서 열리므로 위치=동작 (사용자 요청) -->
                                 <Button DockPanel.Dock="Right" Width="30" Height="30"
                                         ToolTip="{StaticResource L.DiffReviewToggleTip}"
                                         Command="{Binding DataContext.ToggleReviewCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                                     <Button.Style>
                                         <Style TargetType="Button">
-                                            <Setter Property="Background" Value="{StaticResource Bg3}"/>
-                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
-                                            <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
+                                            <Setter Property="Background" Value="{DynamicResource Bg3}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource Txt1}"/>
                                             <Setter Property="Cursor" Value="Hand"/>
                                             <Setter Property="Template">
                                                 <Setter.Value>
@@ -63,26 +63,26 @@
                                             </Setter>
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Foreground" Value="{StaticResource Txt0}"/>
-                                                    <Setter Property="BorderBrush" Value="{StaticResource LineBright}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource Txt0}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource LineBright}"/>
                                                 </Trigger>
                                                 <DataTrigger Binding="{Binding DataContext.IsReviewOpen, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                                    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
-                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
                                 </Button>
-                                <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center" Margin="0,0,8,0">
-                                    <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt1}"/>
+                                <Border DockPanel.Dock="Right" Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center" Margin="0,0,8,0">
+                                    <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt1}"/>
                                 </Border>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
                                         ToolTip="{StaticResource L.OpenIdeTip}"
                                         Command="{Binding DataContext.OpenIdeCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                                     <StackPanel Orientation="Horizontal">
                                         <controls:IconView Icon="{StaticResource IconIde}" Width="13" Height="13"
-                                                           Foreground="{StaticResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                           Foreground="{DynamicResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="{StaticResource L.OpenIde}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
@@ -102,38 +102,38 @@
                                         <TextBlock Text="{StaticResource L.CopyAll}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
-                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                             </DockPanel>
                         </Border>
 
                         <!-- status strip -->
-                        <Border DockPanel.Dock="Top" Height="38" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1">
+                        <Border DockPanel.Dock="Top" Height="38" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1">
                             <DockPanel Margin="16,0" LastChildFill="False" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10.5">
-                                <TextBlock DockPanel.Dock="Left" Text="{Binding StatusLabel}" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                                <Border DockPanel.Dock="Left" Background="{StaticResource AccentDim}"
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding StatusLabel}" Foreground="{DynamicResource Txt1}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                <Border DockPanel.Dock="Left" Background="{DynamicResource AccentDim}"
                                         BorderThickness="1" CornerRadius="13" Padding="9,3" VerticalAlignment="Center" Margin="0,0,16,0"
                                         Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsQuiet}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource Warn}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
                                     <StackPanel Orientation="Horizontal">
                                         <controls:Spinner VerticalAlignment="Center" Margin="0,0,7,0"/>
-                                        <TextBlock Text="{StaticResource L.Running}" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                                        <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,8,0"/>
-                                        <TextBlock Text="{Binding LastSignalLabel}" Foreground="{StaticResource Txt2}"/>
+                                        <TextBlock Text="{StaticResource L.Running}" Foreground="{DynamicResource Accent}" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{DynamicResource Txt0}" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding LastSignalLabel}" Foreground="{DynamicResource Txt2}"/>
                                     </StackPanel>
                                 </Border>
-                                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource Txt2}">
-                                    <Run Text="{StaticResource L.StatusAgent}"/><Run Text="{Binding AgentName, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
-                                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
-                                    <Run Text="{StaticResource L.StatusModel}"/><Run Text="{Binding Model, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
+                                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{DynamicResource Txt2}">
+                                    <Run Text="{StaticResource L.StatusAgent}"/><Run Text="{Binding AgentName, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
+                                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}">
+                                    <Run Text="{StaticResource L.StatusModel}"/><Run Text="{Binding Model, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
                                               IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
                                               Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"
@@ -145,22 +145,22 @@
                                 <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding Source={StaticResource SandboxModes}}"
                                           SelectedItem="{Binding Sandbox, Mode=TwoWay}"
                                           FontFamily="{StaticResource Mono}" FontSize="10" Width="132" Height="24"
-                                          Background="{StaticResource Bg1}" Foreground="{StaticResource Txt1}"
-                                          BorderBrush="{StaticResource Line}" Margin="8,0,0,0"/>
-                                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}">
-                                    <Run Text="{StaticResource L.Tkn}"/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{StaticResource Txt0}"/></TextBlock>
-                                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Txt2}" Margin="0,0,16,0">
-                                    <Run Text="{StaticResource L.Cost}"/><Run Text="{Binding CostLabel, Mode=OneWay}" Foreground="{StaticResource Ok}"/></TextBlock>
+                                          Background="{DynamicResource Bg1}" Foreground="{DynamicResource Txt1}"
+                                          BorderBrush="{DynamicResource Line}" Margin="8,0,0,0"/>
+                                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}">
+                                    <Run Text="{StaticResource L.Tkn}"/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
+                                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}" Margin="0,0,16,0">
+                                    <Run Text="{StaticResource L.Cost}"/><Run Text="{Binding CostLabel, Mode=OneWay}" Foreground="{DynamicResource Ok}"/></TextBlock>
                             </DockPanel>
                         </Border>
 
                         <!-- native workers / subagents -->
-                        <Border DockPanel.Dock="Top" Background="{StaticResource Bg1}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="16,8"
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="16,8"
                                 Visibility="{Binding HasNativeWorkItems, Converter={StaticResource BoolVis}}">
                             <DockPanel>
                                 <StackPanel DockPanel.Dock="Left" Width="128" VerticalAlignment="Center">
-                                    <TextBlock Text="{StaticResource L.NativeWorkers}" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt2}"/>
-                                    <TextBlock Text="{Binding NativeWorkItems.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Txt3}" Margin="0,2,0,0"/>
+                                    <TextBlock Text="{StaticResource L.NativeWorkers}" Style="{StaticResource Lbl}" Foreground="{DynamicResource Txt2}"/>
+                                    <TextBlock Text="{Binding NativeWorkItems.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt3}" Margin="0,2,0,0"/>
                                 </StackPanel>
                                 <ItemsControl ItemsSource="{Binding NativeWorkItems}">
                                     <ItemsControl.ItemsPanel>
@@ -169,19 +169,19 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border MinWidth="160" MaxWidth="260" Margin="0,0,8,0" Padding="9,7" CornerRadius="6"
-                                                    Background="{StaticResource Bg2}" BorderThickness="1">
+                                                    Background="{DynamicResource Bg2}" BorderThickness="1">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                                <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                <Setter Property="BorderBrush" Value="{StaticResource Ok}"/>
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource Ok}"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsFailed}" Value="True">
-                                                                <Setter Property="BorderBrush" Value="{StaticResource Err}"/>
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource Err}"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -190,16 +190,16 @@
                                                     <Ellipse DockPanel.Dock="Left" Width="7" Height="7" Margin="0,4,8,0">
                                                         <Ellipse.Style>
                                                             <Style TargetType="Ellipse">
-                                                                <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                                <Setter Property="Fill" Value="{DynamicResource Txt3}"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                                        <Setter Property="Fill" Value="{StaticResource Accent}"/>
+                                                                        <Setter Property="Fill" Value="{DynamicResource Accent}"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                        <Setter Property="Fill" Value="{StaticResource Ok}"/>
+                                                                        <Setter Property="Fill" Value="{DynamicResource Ok}"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding IsFailed}" Value="True">
-                                                                        <Setter Property="Fill" Value="{StaticResource Err}"/>
+                                                                        <Setter Property="Fill" Value="{DynamicResource Err}"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -207,14 +207,14 @@
                                                     </Ellipse>
                                                     <StackPanel>
                                                         <DockPanel>
-                                                            <TextBlock Text="{Binding Title}" Foreground="{StaticResource Txt0}" FontSize="11.5" FontWeight="SemiBold"
+                                                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Txt0}" FontSize="11.5" FontWeight="SemiBold"
                                                                        TextTrimming="CharacterEllipsis"/>
                                                             <TextBlock DockPanel.Dock="Right" Text="{Binding Status}" FontFamily="{StaticResource Mono}" FontSize="9.5"
-                                                                       Foreground="{StaticResource Txt2}" Margin="8,0,0,0"/>
+                                                                       Foreground="{DynamicResource Txt2}" Margin="8,0,0,0"/>
                                                         </DockPanel>
-                                                        <TextBlock Text="{Binding Source}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt3}"
+                                                        <TextBlock Text="{Binding Source}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}"
                                                                    Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
-                                                        <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Txt2}" Margin="0,3,0,0"
+                                                        <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{DynamicResource Txt2}" Margin="0,3,0,0"
                                                                    TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
                                                 </DockPanel>
@@ -228,42 +228,42 @@
                         <!-- composer (bottom) -->
                         <Border DockPanel.Dock="Bottom" Margin="14,0,14,14" MinWidth="520" HorizontalAlignment="Stretch">
                             <StackPanel>
-                                <Border Margin="4,0,4,8" Background="{StaticResource AccentDim}" BorderThickness="1" CornerRadius="8"
+                                <Border Margin="4,0,4,8" Background="{DynamicResource AccentDim}" BorderThickness="1" CornerRadius="8"
                                         Padding="11,8" Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsQuiet}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource Warn}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource Warn}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
                                     <DockPanel TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10.5">
                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0">
-                                            <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{StaticResource Txt0}" Margin="0,0,10,0"/>
-                                            <TextBlock Text="{Binding LastSignalLabel}" Foreground="{StaticResource Txt2}"/>
+                                            <TextBlock Text="{Binding RunningElapsedLabel}" Foreground="{DynamicResource Txt0}" Margin="0,0,10,0"/>
+                                            <TextBlock Text="{Binding LastSignalLabel}" Foreground="{DynamicResource Txt2}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{StaticResource L.Running}" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,10,0"/>
-                                            <TextBlock Text="{Binding BusyLine}" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{StaticResource L.Running}" Foreground="{DynamicResource Accent}" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                                            <TextBlock Text="{Binding BusyLine}" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </Border>
-                                <Border Background="{StaticResource Bg3}" BorderThickness="1.5" CornerRadius="10">
+                                <Border Background="{DynamicResource Bg3}" BorderThickness="1.5" CornerRadius="10">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource GxLine}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AgyLine}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -282,20 +282,20 @@
                                                         ToolTip="{StaticResource L.AgentEngineTip}">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="{StaticResource Bg1}"/>
-                                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                            <Setter Property="Background" Value="{DynamicResource Bg1}"/>
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                                    <Setter Property="Background" Value="{StaticResource AccentDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                                    <Setter Property="Background" Value="{DynamicResource AccentDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                    <Setter Property="Background" Value="{StaticResource GxDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource GxLine}"/>
+                                                                    <Setter Property="Background" Value="{DynamicResource GxDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource GxLine}"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                    <Setter Property="Background" Value="{StaticResource AgyDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource AgyLine}"/>
+                                                                    <Setter Property="Background" Value="{DynamicResource AgyDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource AgyLine}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -307,16 +307,16 @@
                                                                    VerticalAlignment="Center" Text="{Binding Badge}">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="{StaticResource Txt1}"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Txt1}"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                                            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                            <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                            <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                            <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                            <Setter Property="Foreground" Value="{StaticResource Agy}"/>
+                                                                            <Setter Property="Foreground" Value="{DynamicResource Agy}"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -328,10 +328,10 @@
                                                         VerticalAlignment="Center" ToolTip="{Binding Branch}">
                                                     <StackPanel Orientation="Horizontal">
                                                         <controls:IconView Icon="{StaticResource IconBranch}" Width="13" Height="13"
-                                                                           Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" Foreground="{StaticResource Txt1}"
+                                                                           Foreground="{DynamicResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" Foreground="{DynamicResource Txt1}"
                                                                    VerticalAlignment="Center">
-                                                            <Run Text="{StaticResource L.WorktreePrefix}" Foreground="{StaticResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
+                                                            <Run Text="{StaticResource L.WorktreePrefix}" Foreground="{DynamicResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
                                                         </TextBlock>
                                                     </StackPanel>
                                                 </Border>
@@ -340,30 +340,30 @@
                                                                   Height="30" Padding="12,0" Cursor="Hand" ToolTip="{StaticResource L.ModelSelectTip}">
                                                         <StackPanel Orientation="Horizontal">
                                                             <controls:IconView Icon="{StaticResource IconSpark}" Width="13" Height="13"
-                                                                               Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                                               Foreground="{DynamicResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                             <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
                                                                        Text="{Binding Model}" FontWeight="SemiBold">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                                <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                                <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
                                                                             </DataTrigger>
                                                                             <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                                <Setter Property="Foreground" Value="{StaticResource Agy}"/>
+                                                                                <Setter Property="Foreground" Value="{DynamicResource Agy}"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </TextBlock.Style>
                                                             </TextBlock>
                                                             <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
-                                                                               Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
+                                                                               Foreground="{DynamicResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </ToggleButton>
                                                     <Popup IsOpen="{Binding IsChecked, ElementName=ModelMenuBtn, Mode=TwoWay}"
                                                            StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
-                                                        <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource LineBright}" BorderThickness="1"
+                                                        <Border Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1"
                                                                 CornerRadius="7" Padding="5" Margin="8" MinWidth="200">
                                                             <Border.Effect>
                                                                 <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
@@ -385,12 +385,12 @@
                                                                                         </Border>
                                                                                         <ControlTemplate.Triggers>
                                                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                                                <Setter TargetName="mi" Property="Background" Value="{StaticResource Bg4}"/>
+                                                                                                <Setter TargetName="mi" Property="Background" Value="{DynamicResource Bg4}"/>
                                                                                             </Trigger>
                                                                                         </ControlTemplate.Triggers>
                                                                                     </ControlTemplate>
                                                                                 </Button.Template>
-                                                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt0}" Text="{Binding}"/>
+                                                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Txt0}" Text="{Binding}"/>
                                                                             </Button>
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
@@ -406,27 +406,27 @@
                                                                   ToolTip="{StaticResource L.EffortTip}">
                                                         <StackPanel Orientation="Horizontal">
                                                             <controls:IconView Icon="{StaticResource IconBolt}" Width="13" Height="13"
-                                                                               Foreground="{StaticResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                                               Foreground="{DynamicResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                             <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
                                                                        Text="{Binding ReasoningEffort}" FontWeight="SemiBold">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                                <Setter Property="Foreground" Value="{StaticResource Gx}"/>
+                                                                                <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </TextBlock.Style>
                                                             </TextBlock>
                                                             <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11"
-                                                                               Foreground="{StaticResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
+                                                                               Foreground="{DynamicResource Txt2}" Margin="7,1,0,0" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </ToggleButton>
                                                     <Popup IsOpen="{Binding IsChecked, ElementName=EffortMenuBtn, Mode=TwoWay}"
                                                            StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
-                                                        <Border Background="{StaticResource Bg3}" BorderBrush="{StaticResource LineBright}" BorderThickness="1"
+                                                        <Border Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1"
                                                                 CornerRadius="7" Padding="5" Margin="8" MinWidth="160">
                                                             <Border.Effect>
                                                                 <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
@@ -446,12 +446,12 @@
                                                                                         </Border>
                                                                                         <ControlTemplate.Triggers>
                                                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                                                <Setter TargetName="ei" Property="Background" Value="{StaticResource Bg4}"/>
+                                                                                                <Setter TargetName="ei" Property="Background" Value="{DynamicResource Bg4}"/>
                                                                                             </Trigger>
                                                                                         </ControlTemplate.Triggers>
                                                                                     </ControlTemplate>
                                                                                 </Button.Template>
-                                                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Txt0}" Text="{Binding}"/>
+                                                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Txt0}" Text="{Binding}"/>
                                                                             </Button>
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
@@ -467,7 +467,7 @@
                                                     <controls:IconView Icon="{StaticResource IconStop}" Filled="True" Width="14" Height="14"/>
                                                     <Button.Template>
                                                         <ControlTemplate TargetType="Button">
-                                                            <Border x:Name="sb" Background="{StaticResource Err}" CornerRadius="7">
+                                                            <Border x:Name="sb" Background="{DynamicResource Err}" CornerRadius="7">
                                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
                                                             <ControlTemplate.Triggers>
@@ -479,7 +479,7 @@
                                                     </Button.Template>
                                                 </Button>
                                                 <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}"
-                                                        Foreground="{StaticResource AccentText}" ToolTip="{StaticResource L.SendTip}"
+                                                        Foreground="{DynamicResource AccentText}" ToolTip="{StaticResource L.SendTip}"
                                                         Command="{Binding DataContext.SendCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                                                     <controls:IconView Icon="{StaticResource IconSend}" Width="15" Height="15"/>
                                                 </Button>
@@ -497,16 +497,16 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="{StaticResource Bg1}" BorderBrush="{StaticResource AccentLine}" BorderThickness="1"
+                                                    <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource AccentLine}" BorderThickness="1"
                                                             CornerRadius="10" Padding="8,3" Margin="0,2,6,2" ToolTip="{Binding}">
                                                         <StackPanel Orientation="Horizontal">
                                                             <TextBlock Text="🖼" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding}" FontFamily="{StaticResource Mono}" FontSize="9.5"
-                                                                       Foreground="{StaticResource Txt1}" MaxWidth="180"
+                                                                       Foreground="{DynamicResource Txt1}" MaxWidth="180"
                                                                        TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                                             <Button Content="✕" FontSize="9" Margin="6,0,0,0" Padding="2,0"
                                                                     Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                                                    Foreground="{StaticResource Txt2}" ToolTip="{StaticResource L.Remove}"
+                                                                    Foreground="{DynamicResource Txt2}" ToolTip="{StaticResource L.Remove}"
                                                                     Click="RemovePendingImage_Click"/>
                                                         </StackPanel>
                                                     </Border>
@@ -521,7 +521,7 @@
                                                      KeyDown="Composer_KeyDown"
                                                      PreviewKeyDown="Composer_PreviewKeyDown"
                                                      TextChanged="ComposerBox_TextChanged"/>
-                                            <TextBlock Margin="15,12,15,0" Foreground="{StaticResource Txt2}" IsHitTestVisible="False"
+                                            <TextBlock Margin="15,12,15,0" Foreground="{DynamicResource Txt2}" IsHitTestVisible="False"
                                                        FontSize="13.5" LineHeight="20" VerticalAlignment="Top">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
@@ -544,7 +544,7 @@
                                                    StaysOpen="False"
                                                    HorizontalOffset="10"
                                                    VerticalOffset="-5">
-                                                <Border Background="{StaticResource Bg2}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Width="380" MaxHeight="250">
+                                                <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Width="380" MaxHeight="250">
                                                     <Border.Effect>
                                                         <DropShadowEffect BlurRadius="15" Color="Black" Opacity="0.5" ShadowDepth="3"/>
                                                     </Border.Effect>
@@ -554,8 +554,8 @@
                                                             <RowDefinition Height="*"/>
                                                         </Grid.RowDefinitions>
                                                         <!-- Header -->
-                                                        <Border Grid.Row="0" Background="{StaticResource Bg3}" Padding="10,6" CornerRadius="8,8,0,0" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
-                                                            <TextBlock Text="{Binding DataContext.ComposerSuggestionHeader, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource Txt1}" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource Mono}"/>
+                                                        <Border Grid.Row="0" Background="{DynamicResource Bg3}" Padding="10,6" CornerRadius="8,8,0,0" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1">
+                                                            <TextBlock Text="{Binding DataContext.ComposerSuggestionHeader, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource Txt1}" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource Mono}"/>
                                                         </Border>
                                                         <!-- Suggestions List -->
                                                         <ListBox Grid.Row="1" x:Name="SuggestionList"
@@ -583,11 +583,11 @@
                                                                                 </Border>
                                                                                 <ControlTemplate.Triggers>
                                                                                     <Trigger Property="IsMouseOver" Value="true">
-                                                                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource Bg3}"/>
+                                                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Bg3}"/>
                                                                                     </Trigger>
                                                                                     <Trigger Property="IsSelected" Value="true">
-                                                                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentDim}"/>
-                                                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentLine}"/>
+                                                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentDim}"/>
+                                                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
                                                                                         <Setter TargetName="Bd" Property="BorderThickness" Value="0,0,3,0"/>
                                                                                     </Trigger>
                                                                                 </ControlTemplate.Triggers>
@@ -609,24 +609,24 @@
                                                                             <TextBlock.Style>
                                                                                 <Style TargetType="TextBlock">
                                                                                     <Setter Property="Text" Value="📄"/>
-                                                                                    <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
+                                                                                    <Setter Property="Foreground" Value="{DynamicResource Txt2}"/>
                                                                                     <Style.Triggers>
                                                                                         <DataTrigger Binding="{Binding Type}" Value="Session">
                                                                                             <Setter Property="Text" Value="⚡"/>
-                                                                                            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
                                                                                         </DataTrigger>
                                                                                         <DataTrigger Binding="{Binding Type}" Value="Command">
                                                                                             <Setter Property="Text" Value="⚙️"/>
-                                                                                            <Setter Property="Foreground" Value="{StaticResource Info}"/>
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource Info}"/>
                                                                                         </DataTrigger>
                                                                                     </Style.Triggers>
                                                                                 </Style>
                                                                             </TextBlock.Style>
                                                                         </TextBlock>
                                                                         <!-- Label -->
-                                                                        <TextBlock Grid.Column="1" Text="{Binding Label}" Foreground="{StaticResource Txt0}" FontSize="12.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="{StaticResource Mono}"/>
+                                                                        <TextBlock Grid.Column="1" Text="{Binding Label}" Foreground="{DynamicResource Txt0}" FontSize="12.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="{StaticResource Mono}"/>
                                                                         <!-- Type Text -->
-                                                                        <TextBlock Grid.Column="2" Text="{Binding Type}" Foreground="{StaticResource Txt2}" FontSize="10" VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="{StaticResource Mono}"/>
+                                                                        <TextBlock Grid.Column="2" Text="{Binding Type}" Foreground="{DynamicResource Txt2}" FontSize="10" VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="{StaticResource Mono}"/>
                                                                     </Grid>
                                                                 </DataTemplate>
                                                             </ListBox.ItemTemplate>
@@ -638,8 +638,8 @@
                                     </DockPanel>
                                 </Border>
                                 <DockPanel Margin="4,6,4,0" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="9.5">
-                                    <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.EnterHint}" Foreground="{StaticResource Txt3}"/>
-                                    <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource Txt3}">
+                                    <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.EnterHint}" Foreground="{DynamicResource Txt3}"/>
+                                    <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource Txt3}">
                                         <Run Text="{Binding Cli, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Branch, Mode=OneWay}"/>
                                     </TextBlock>
                                 </DockPanel>

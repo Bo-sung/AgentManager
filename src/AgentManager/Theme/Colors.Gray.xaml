@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== Gray: 중성 다크 그레이 팔레트 ===== -->
+    <Color x:Key="Bg0Color">#FF111315</Color>
+    <SolidColorBrush x:Key="Bg0" Color="#FF111315"/>
+    <SolidColorBrush x:Key="Bg1" Color="#FF16191C"/>
+    <SolidColorBrush x:Key="Bg2" Color="#FF1B1F23"/>
+    <SolidColorBrush x:Key="Bg3" Color="#FF22262B"/>
+    <SolidColorBrush x:Key="Bg4" Color="#FF2C3137"/>
+    <SolidColorBrush x:Key="Bg5" Color="#FF373D44"/>
+    <SolidColorBrush x:Key="Line" Color="#FF2E343A"/>
+    <SolidColorBrush x:Key="LineSoft" Color="#FF24292E"/>
+    <SolidColorBrush x:Key="LineBright" Color="#FF3F464D"/>
+    <SolidColorBrush x:Key="Txt0" Color="#FFE3E6E9"/>
+    <SolidColorBrush x:Key="Txt1" Color="#FF9AA1A8"/>
+    <SolidColorBrush x:Key="Txt2" Color="#FF6B727A"/>
+    <SolidColorBrush x:Key="Txt3" Color="#FF4B5158"/>
+    <SolidColorBrush x:Key="Accent" Color="#FFFF5A2C"/>
+    <SolidColorBrush x:Key="AccentBright" Color="#FFFF7048"/>
+    <SolidColorBrush x:Key="AccentDim" Color="#24FF5A2C"/>
+    <SolidColorBrush x:Key="AccentLine" Color="#66FF5A2C"/>
+    <SolidColorBrush x:Key="Warn" Color="#FFE6B84D"/>
+    <SolidColorBrush x:Key="Ok" Color="#FF40C9A2"/>
+    <SolidColorBrush x:Key="Err" Color="#FFE5556A"/>
+    <SolidColorBrush x:Key="Info" Color="#FF6AA8FF"/>
+    <SolidColorBrush x:Key="Add" Color="#FF3AA876"/>
+    <SolidColorBrush x:Key="AddBg" Color="#1A3AA876"/>
+    <SolidColorBrush x:Key="Del" Color="#FFD9606E"/>
+    <SolidColorBrush x:Key="DelBg" Color="#17D9606E"/>
+    <SolidColorBrush x:Key="Run" Color="#FFFF5A2C"/>
+    <SolidColorBrush x:Key="AccentText" Color="#FF1A0C06"/>
+
+    <SolidColorBrush x:Key="Gx" Color="#FF8B5CF6"/>
+    <SolidColorBrush x:Key="GxLine" Color="#668B5CF6"/>
+    <SolidColorBrush x:Key="GxDim" Color="#248B5CF6"/>
+    <SolidColorBrush x:Key="InfoLine" Color="#666AA8FF"/>
+    <SolidColorBrush x:Key="InfoDim" Color="#246AA8FF"/>
+    <SolidColorBrush x:Key="Agy" Color="#FF2BC5B4"/>
+    <SolidColorBrush x:Key="AgyLine" Color="#662BC5B4"/>
+    <SolidColorBrush x:Key="AgyDim" Color="#242BC5B4"/>
+</ResourceDictionary>

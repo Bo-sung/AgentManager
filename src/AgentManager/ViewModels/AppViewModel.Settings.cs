@@ -31,20 +31,22 @@ public sealed partial class AppViewModel
     public bool SettingsDefaultTranslationEnabled { get => _settingsDefaultTranslationEnabled; set => Set(ref _settingsDefaultTranslationEnabled, value); }
     private bool _settingsWarnNoWorktree;
     public bool SettingsWarnNoWorktree { get => _settingsWarnNoWorktree; set => Set(ref _settingsWarnNoWorktree, value); }
-    private bool _settingsLightTheme;
-    public bool SettingsLightTheme
+    private string _settingsTheme = "dark";
+    public string SettingsTheme
     {
-        get => _settingsLightTheme;
+        get => _settingsTheme;
         // 테마는 라이브 적용(accent와 동일). 팔레트 교체 후 사용자의 강조색을 재적용한다.
         set
         {
-            if (Set(ref _settingsLightTheme, value))
+            if (Set(ref _settingsTheme, value))
             {
-                Theme.ThemePalette.Apply(value ? "light" : "dark");
+                Theme.ThemePalette.Apply(value);
                 Theme.AccentPalette.Apply(Theme.AccentPalette.Normalize(SettingsAccent));
             }
         }
     }
+    /// <summary>설정 UI의 테마 선택지 (다크/라이트 + IDE 프리셋).</summary>
+    public IReadOnlyList<Theme.ThemeDef> AvailableThemes => Theme.ThemePalette.All;
     private string _theme = "dark";
     private bool _settingsEnglishUi;
     public bool SettingsEnglishUi { get => _settingsEnglishUi; set => Set(ref _settingsEnglishUi, value); }
@@ -226,7 +228,7 @@ public sealed partial class AppViewModel
         SettingsOllamaModel = _ollamaModel;
         SettingsDefaultTranslationEnabled = TranslationEnabled;
         SettingsWarnNoWorktree = _warnNoWorktree;
-        SettingsLightTheme = _theme == "light";
+        SettingsTheme = Theme.ThemePalette.Normalize(_theme);
         SettingsEnglishUi = _language == "en";
         SettingsApprovalPolicy = _approvalPolicy;
         SettingsWorktreeBase = _worktreeBase;
@@ -293,7 +295,7 @@ public sealed partial class AppViewModel
         }
         SaveEngineAuth("cc", SettingsAuthCc, SettingsApiKeyCc);
         SaveEngineAuth("gx", SettingsAuthGx, SettingsApiKeyGx);
-        _theme = SettingsLightTheme ? "light" : "dark"; // 테마는 이미 라이브 적용됨
+        _theme = Theme.ThemePalette.Normalize(SettingsTheme); // 테마는 이미 라이브 적용됨
         var newLanguage = SettingsEnglishUi ? "en" : "ko";
         var languageChanged = newLanguage != _language;
         _language = newLanguage;

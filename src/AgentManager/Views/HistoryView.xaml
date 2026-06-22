@@ -5,10 +5,10 @@
              xmlns:vm="clr-namespace:AgentManager.ViewModels"
              xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              x:Name="ViewRoot"
-             Background="{StaticResource Bg0}">
+             Background="{DynamicResource Bg0}">
                     <DockPanel LastChildFill="True">
                         <!-- Head -->
-                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
+                        <Border DockPanel.Dock="Top" Height="44" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -21,8 +21,8 @@
                                     <ColumnDefinition Width="220"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Text="{StaticResource L.ActivityHistoryHeader}" Style="{StaticResource Lbl}" Foreground="{StaticResource Txt1}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                                <TextBlock Grid.Column="1" Text="{Binding HistorySummaryText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt2}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="{StaticResource L.ActivityHistoryHeader}" Style="{StaticResource Lbl}" Foreground="{DynamicResource Txt1}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <TextBlock Grid.Column="1" Text="{Binding HistorySummaryText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
 
                                 <!-- Status Filter -->
                                 <ComboBox Grid.Column="3" SelectedValue="{Binding HistoryStatusFilter, Mode=TwoWay}" SelectedValuePath="Tag" Height="28" VerticalAlignment="Center">
@@ -42,13 +42,13 @@
                                 </ComboBox>
 
                                 <!-- Search -->
-                                <Border Grid.Column="7" Background="{StaticResource Bg1}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Height="28" VerticalAlignment="Center" Padding="6,0,8,0">
+                                <Border Grid.Column="7" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="7" Height="28" VerticalAlignment="Center" Padding="6,0,8,0">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <controls:IconView Grid.Column="0" Icon="{StaticResource IconSearch}" Width="12" Height="12" Foreground="{StaticResource Txt2}" Margin="4,0,6,0" VerticalAlignment="Center"/>
+                                        <controls:IconView Grid.Column="0" Icon="{StaticResource IconSearch}" Width="12" Height="12" Foreground="{DynamicResource Txt2}" Margin="4,0,6,0" VerticalAlignment="Center"/>
                                         <TextBox Grid.Column="1" Style="{StaticResource ComposerInput}" Background="Transparent" BorderThickness="0" Padding="0" VerticalAlignment="Center" AcceptsReturn="False" TextWrapping="NoWrap" Text="{Binding HistoryFilterText, UpdateSourceTrigger=PropertyChanged}"/>
                                     </Grid>
                                 </Border>
@@ -56,9 +56,9 @@
                         </Border>
 
                         <!-- Bottom status / filter summary bar -->
-                        <Border DockPanel.Dock="Bottom" Height="36" Background="{StaticResource Bg2}" BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0" Padding="14,0">
+                        <Border DockPanel.Dock="Bottom" Height="36" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,1,0,0" Padding="14,0">
                             <DockPanel VerticalAlignment="Center">
-                                <TextBlock DockPanel.Dock="Left" Text="{Binding HistoryFilterSummaryText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Txt3}" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding HistoryFilterSummaryText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt3}" VerticalAlignment="Center"/>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.Refresh}" Command="{Binding RefreshHistoryCommand}"/>
                             </DockPanel>
                         </Border>
@@ -90,13 +90,13 @@
                                     <Border Margin="4,2" CornerRadius="6" Padding="12,10" BorderThickness="1" Cursor="Hand" controls:MouseClick.Command="{Binding DataContext.OpenHistoryRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" controls:MouseClick.CommandParameter="{Binding}">
                                         <Border.Style>
                                             <Style TargetType="Border">
-                                                <Setter Property="Background" Value="{StaticResource Bg1}"/>
-                                                <Setter Property="BorderBrush" Value="{StaticResource LineSoft}"/>
+                                                <Setter Property="Background" Value="{DynamicResource Bg1}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource LineSoft}"/>
                                                 <Setter Property="Opacity" Value="1"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="{StaticResource Bg3}"/>
-                                                        <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                                        <Setter Property="Background" Value="{DynamicResource Bg3}"/>
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
                                                     </Trigger>
                                                     <DataTrigger Binding="{Binding IsArchived}" Value="True">
                                                         <Setter Property="Opacity" Value="0.6"/>
@@ -119,12 +119,12 @@
                                                 <Ellipse Width="12" Height="12" Opacity="0.15">
                                                     <Ellipse.Style>
                                                         <Style TargetType="Ellipse">
-                                                            <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                            <Setter Property="Fill" Value="{DynamicResource Txt3}"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{DynamicResource Accent}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{DynamicResource Warn}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{DynamicResource Ok}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{DynamicResource Err}"/></DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Ellipse.Style>
@@ -133,12 +133,12 @@
                                                 <Ellipse Width="6" Height="6" VerticalAlignment="Center" HorizontalAlignment="Center">
                                                     <Ellipse.Style>
                                                         <Style TargetType="Ellipse">
-                                                            <Setter Property="Fill" Value="{StaticResource Txt3}"/>
+                                                            <Setter Property="Fill" Value="{DynamicResource Txt3}"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{StaticResource Accent}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{StaticResource Warn}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{StaticResource Ok}"/></DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{StaticResource Err}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="running"><Setter Property="Fill" Value="{DynamicResource Accent}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="waiting"><Setter Property="Fill" Value="{DynamicResource Warn}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="done"><Setter Property="Fill" Value="{DynamicResource Ok}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="error"><Setter Property="Fill" Value="{DynamicResource Err}"/></DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Ellipse.Style>
@@ -146,39 +146,39 @@
                                             </Grid>
 
                                             <!-- Engine Badge with Brand Icon -->
-                                            <Border Grid.Column="1" Width="24" Height="24" CornerRadius="5" Background="{StaticResource Bg0}" BorderBrush="{StaticResource LineSoft}" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTip="{Binding AgentName}">
+                                            <Border Grid.Column="1" Width="24" Height="24" CornerRadius="5" Background="{DynamicResource Bg0}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTip="{Binding AgentName}">
                                                 <controls:IconView Style="{StaticResource EngineIcon}" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                             </Border>
 
                                             <!-- Main Text Block -->
                                             <StackPanel Grid.Column="2" Margin="8,0,16,0" VerticalAlignment="Center">
                                                 <DockPanel LastChildFill="True">
-                                                    <Border DockPanel.Dock="Right" Background="{StaticResource Bg3}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="8,0,0,0" Visibility="{Binding IsArchived, Converter={StaticResource BoolVis}}">
-                                                        <TextBlock Text="{StaticResource L.ArchivedBadge}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{StaticResource Txt2}"/>
+                                                    <Border DockPanel.Dock="Right" Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="8,0,0,0" Visibility="{Binding IsArchived, Converter={StaticResource BoolVis}}">
+                                                        <TextBlock Text="{StaticResource L.ArchivedBadge}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Txt2}"/>
                                                     </Border>
-                                                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
                                                 </DockPanel>
-                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt3}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0">
-                                                    <Run Text="{Binding Project, Mode=OneWay}" Foreground="{StaticResource Txt2}"/><Run Text=" / "/><Run Text="{Binding Branch, Mode=OneWay}"/>
+                                                <TextBlock FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0">
+                                                    <Run Text="{Binding Project, Mode=OneWay}" Foreground="{DynamicResource Txt2}"/><Run Text=" / "/><Run Text="{Binding Branch, Mode=OneWay}"/>
                                                 </TextBlock>
                                             </StackPanel>
 
                                             <!-- Stacked Time & Blocks metadata column -->
                                             <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,16,0" HorizontalAlignment="Left">
-                                                <TextBlock Text="{Binding StartedText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt1}"/>
-                                                <TextBlock Text="{Binding BlocksText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt2}" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding StartedText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt1}"/>
+                                                <TextBlock Text="{Binding BlocksText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" Margin="0,2,0,0"/>
                                             </StackPanel>
 
                                             <!-- Stacked Tokens & Cost metadata column -->
                                             <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="0,0,8,0" HorizontalAlignment="Left">
-                                                <TextBlock Text="{Binding TokensText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{StaticResource Txt1}"/>
+                                                <TextBlock Text="{Binding TokensText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt1}"/>
                                                 <TextBlock Text="{Binding CostText}" FontFamily="{StaticResource Mono}" FontSize="9.5" Margin="0,2,0,0">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="{StaticResource Ok}"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource Ok}"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Text" Value="-">
-                                                                    <Setter Property="Foreground" Value="{StaticResource Txt2}"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Txt2}"/>
                                                                 </Trigger>
                                                             </Style.Triggers>
                                                         </Style>

@@ -16,8 +16,8 @@
                 </BeginStoryboard>
             </EventTrigger>
         </Grid.Triggers>
-        <Ellipse Stroke="{StaticResource AccentDim}" StrokeThickness="1.5"/>
-        <Path Stroke="{StaticResource Accent}" StrokeThickness="1.5"
+        <Ellipse Stroke="{DynamicResource AccentDim}" StrokeThickness="1.5"/>
+        <Path Stroke="{DynamicResource Accent}" StrokeThickness="1.5"
               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
               Data="M 5.5,0.75 A 4.75,4.75 0 0 1 10.25,5.5"/>
     </Grid>

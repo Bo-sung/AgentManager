@@ -31,14 +31,10 @@ public static class AccentPalette
         SetBrush("AccentLine", WithAlpha(p.Accent, 0x66));  // ~0.40
     }
 
+    // 색 토큰은 DynamicResource로 참조되므로 엔트리를 덮어쓰면 소비자가 즉시 재해석한다.
     private static void SetBrush(string key, Color c)
     {
-        var res = Application.Current?.Resources;
-        if (res is null) return;
-        if (res[key] is SolidColorBrush b && !b.IsFrozen)
-            b.Color = c;
-        else
-            res[key] = new SolidColorBrush(c);
+        if (Application.Current?.Resources is { } res) res[key] = new SolidColorBrush(c);
     }
 
     private static Color Hex(string s) => (Color)ColorConverter.ConvertFromString(s)!;

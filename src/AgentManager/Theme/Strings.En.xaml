@@ -239,6 +239,8 @@
     <sys:String x:Key="L.NonGitNoticeTip">Show the 'running without isolation(worktree)' notice when starting a session in a non-git folder</sys:String>
     <sys:String x:Key="L.LightTheme">LIGHT THEME</sys:String>
     <sys:String x:Key="L.LightThemeTip">Light theme (applies instantly)</sys:String>
+    <sys:String x:Key="L.Theme">Theme</sys:String>
+    <sys:String x:Key="L.ThemeDesc">Applies live across the whole client.</sys:String>
     <sys:String x:Key="L.McpConfigPath">MCP CONFIG (.mcp.json path, empty = unused)</sys:String>
     <sys:String x:Key="L.AddFolder">Add folder</sys:String>
     <sys:String x:Key="L.AddExtraPathTip">Additional root folders the agent can access (claude --add-dir / codex writable_roots)</sys:String>
