@@ -1,8 +1,8 @@
 # AgentManager
 
-**여러 코딩 에이전트(Claude Code · Codex · Antigravity)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 한↔영 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
+**여러 코딩 에이전트(Claude Code · Codex · Antigravity)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.0.0
+`WPF · .NET 10 · Windows` · v1.2.0
 
 ---
 
@@ -17,8 +17,8 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 | ID | 이름 | CLI | 구동 방식 | 모델(예) |
 |----|------|-----|-----------|----------|
 | `cc` | **Claude Code** | `claude` | stream-json (단발 + `--resume`) | claude-sonnet-4-6 · claude-opus-4-8 · claude-haiku-4-5 · sonnet[1m] |
-| `gx` | **GPT / Codex** | `codex` | `exec --json` / 승인 시 app-server | gpt-5.5 · gpt-5.4 · gpt-5.4-mini |
-| `agy` | **Antigravity (agy)** | `agy` | TTY 전용 → ConPTY 구동 (텍스트 v1) | default · gemini-3.5-flash · gemini-3.1-pro · claude-* · gpt-oss-120b |
+| `gx` | **Codex** | `codex` | `exec --json` / 승인 시 app-server | gpt-5.5 · gpt-5.4 · gpt-5.4-mini |
+| `agy` | **Antigravity** (badge `AG`) | `agy` | TTY 전용 → ConPTY 구동 (텍스트 v1) | default · gemini-3.5-flash · gemini-3.1-pro · claude-* · gpt-oss-120b |
 
 > Google 계열은 `agy` 엔진으로 일원화되었습니다(구형 standalone Gemini CLI 어댑터는 제거). 각 엔진은 사이드바·New Agent에서 식별색으로 구분됩니다.
 
@@ -48,8 +48,9 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 - Claude = stream-json 승인(Stage 1), Codex = app-server JSON-RPC 승인(Stage 2)
 - 샌드박스 모드(read-only / workspace-write / danger) 선택
 
-### 로컬 LLM 한↔영 번역 레이어 (차별점)
-- **입력 KO→EN** 전송 · **출력 EN→KO** 자동 표시 · 블록별 **ORIGINAL** 토글로 원문 교차검증
+### 로컬 LLM 번역 레이어 (차별점)
+- **번역 언어 쌍 설정** — *번역 전 언어*(내가 입력·표시)와 *번역 후 언어*(엔진에 전달, 토큰 절감)를 각각 드롭다운에서 선택(기본 한국어→English, 11개 언어). 입력은 *전→후*, 출력은 *후→전*으로 자동 변환
+- 블록별 **ORIGINAL** 토글로 원문 교차검증, "이미 번역됨" 스킵은 언어별 스크립트(한글/가나/한자/키릴/아랍/데바나가리) 감지
 - 코드블록·인라인 코드·`@file` 참조 등은 **마스킹**하여 번역 손상 방지
 - Ollama 기반(기본 권장 모델 `exaone3.5:7.8b`, 엔드포인트/모델 설정 가능)
 
@@ -74,12 +75,14 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 ### CLI HISTORY
 - AgentManager 밖에서 돌린 `claude`/`codex` 세션 발견 → 가져오기·resume, 과거 트랜스크립트 복원(대형 기록 청크 비동기 + UI 가상화), 사이드바 재스캔
 
-### 설정 (중앙 Settings 페인)
-- **Runtimes** — 엔진 경로 · enable/disable · **인증(구독/API key)** + DPAPI 암호화 저장(평문 금지) · CLI Sign in
+### 설정 (중앙 Settings 페인 · VS Code식 settings.json)
+- 설정은 별도 **`settings.json`** 으로 저장 — "Open settings.json"으로 손편집 + 외부 편집 **라이브 리로드**(앱 내 변경과 양방향 동기화). API key는 DPAPI 암호화로 보관(평문 금지)
+- **Runtimes** — 엔진 경로 · enable/disable · **인증(구독/API key)** · CLI Sign in
 - **Translation** — Ollama 엔드포인트/모델 · 새 세션 번역 기본값
 - **Orchestration** — worktree base · auto-start · stream-logs · 동시 실행 cap
-- **Permissions** — 승인 정책(ask / safe / yolo)
-- **Appearance** — **라이트/다크 테마**(즉시 적용) · accent 5색 프리셋(라이브) · density 스케일 · **언어 KO/EN**
+- **Permissions** — 승인 정책(ask / safe / yolo) · **익명 텔레메트리**(opt-in, 로컬 전용·외부 전송 없음)
+- **Appearance** — **IDE 테마 프리셋 7종**(Dark · Light · Gray · Visual Studio · VS Code · Monokai · Nord) **실시간 전환** · accent 5색 프리셋(라이브) · density 스케일
+- **Language** — **UI 언어**(한국어/English) · **번역 전/후 언어** 드롭다운(번역 언어 쌍)
 - **Project** — EXTRA FOLDERS · MCP config 경로
 
 ### 편의 / 디테일
@@ -159,6 +162,7 @@ dotnet run --project src/AgentManager.Smoke
 ## 데이터 위치
 
 - 상태/세션/트랜스크립트: `%LocalAppData%\AgentManager\state.json`
+- 설정: `%LocalAppData%\AgentManager\settings.json` (VS Code식 손편집 + 라이브 리로드)
 - 창 상태: `%LocalAppData%\AgentManager\window.json`
 - worktree: `%LocalAppData%\AgentManager\worktrees\...`
 - 첨부 이미지: `%LocalAppData%\AgentManager\attachments\`
@@ -172,6 +176,7 @@ dotnet run --project src/AgentManager.Smoke
 |------|------|
 | [DESIGN_SPEC_KO.md](docs/DESIGN_SPEC_KO.md) | 3계층 아키텍처·정규화 이벤트·번역 프롬프트 명세 |
 | [FEATURES_KO.md](docs/FEATURES_KO.md) | 기능 정의·우선순위·횡단 결정 |
+| [FRONTEND_KO.md](docs/FRONTEND_KO.md) | 프론트엔드 렌더링 구조·영역 명칭·테마 시스템 위키 |
 | [PROGRESS_KO.md](docs/PROGRESS_KO.md) | 구현 진행 상태·커밋 로그(단일 진실 소스) |
 | [ROADMAP_KO.md](docs/ROADMAP_KO.md) | 기능 로드맵·마일스톤 |
 | [SETTINGS_BACKEND_PLAN_KO.md](docs/SETTINGS_BACKEND_PLAN_KO.md) | 설정 백엔드 설계 |
