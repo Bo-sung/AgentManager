@@ -483,7 +483,7 @@
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </ToggleButton.Template>
-                            <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" Margin="0"/>
+                            <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="0"/>
                         </ToggleButton>
                         <Path Data="M0,0 L4,4 L8,0" Stroke="{DynamicResource Txt2}" StrokeThickness="1.4"
                               HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1,10,0" IsHitTestVisible="False"/>

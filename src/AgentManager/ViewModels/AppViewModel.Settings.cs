@@ -14,6 +14,9 @@ using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
 
+/// <summary>UI 언어 선택 항목 (id = ko|en, Name = 표시명).</summary>
+public sealed record LanguageDef(string Id, string Name);
+
 public sealed partial class AppViewModel
 {
     // ----- settings overlay state -----
@@ -48,8 +51,11 @@ public sealed partial class AppViewModel
     /// <summary>설정 UI의 테마 선택지 (다크/라이트 + IDE 프리셋).</summary>
     public IReadOnlyList<Theme.ThemeDef> AvailableThemes => Theme.ThemePalette.All;
     private string _theme = "dark";
-    private bool _settingsEnglishUi;
-    public bool SettingsEnglishUi { get => _settingsEnglishUi; set => Set(ref _settingsEnglishUi, value); }
+    private string _settingsLanguage = "ko";
+    /// <summary>설정 UI 언어 선택(ko|en) — 드롭다운 바인딩.</summary>
+    public string SettingsLanguage { get => _settingsLanguage; set => Set(ref _settingsLanguage, value); }
+    /// <summary>언어 선택지 (id + 표시명).</summary>
+    public IReadOnlyList<LanguageDef> AvailableLanguages { get; } = [new("ko", "한국어"), new("en", "English")];
     private string _language = "ko";
 
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내를 띄울지 (기본 끔 — 비-git 사용이 일반 흐름인 사용자 배려).</summary>
@@ -230,7 +236,7 @@ public sealed partial class AppViewModel
         SettingsDefaultTranslationEnabled = TranslationEnabled;
         SettingsWarnNoWorktree = _warnNoWorktree;
         SettingsTheme = Theme.ThemePalette.Normalize(_theme);
-        SettingsEnglishUi = _language == "en";
+        SettingsLanguage = _language == "en" ? "en" : "ko";
         SettingsApprovalPolicy = _approvalPolicy;
         SettingsWorktreeBase = _worktreeBase;
         SettingsAutoStart = _autoStartLastSession;
@@ -318,7 +324,7 @@ public sealed partial class AppViewModel
         SaveEngineAuth("cc", SettingsAuthCc, SettingsApiKeyCc);
         SaveEngineAuth("gx", SettingsAuthGx, SettingsApiKeyGx);
         _theme = Theme.ThemePalette.Normalize(SettingsTheme); // 테마는 이미 라이브 적용됨
-        var newLanguage = SettingsEnglishUi ? "en" : "ko";
+        var newLanguage = SettingsLanguage == "en" ? "en" : "ko";
         var languageChanged = newLanguage != _language;
         _language = newLanguage;
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);

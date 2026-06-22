@@ -502,8 +502,13 @@
                                             <StackPanel>
                                                 <TextBlock Text="{StaticResource L.SecLanguage}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
                                                 <TextBlock Text="{StaticResource L.LanguageDesc}" FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="0,2,0,10"/>
-                                                <ToggleButton Style="{StaticResource TogglePillButton}" HorizontalAlignment="Left" IsChecked="{Binding SettingsEnglishUi, Mode=TwoWay}" Content="{StaticResource L.EnglishUi}" ToolTip="{StaticResource L.EnglishUiTip}"/>
-                                                <TextBlock Text="{StaticResource L.EnglishUiTip}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                                                <ComboBox ItemsSource="{Binding AvailableLanguages}" SelectedValuePath="Id"
+                                                          SelectedValue="{Binding SettingsLanguage, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                                <TextBlock Text="{StaticResource L.EnglishUiTip}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,8,0,0" TextWrapping="Wrap"/>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>
