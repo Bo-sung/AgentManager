@@ -77,6 +77,9 @@
     <sys:String x:Key="L.SecOrchestration">Orchestration</sys:String>
     <sys:String x:Key="L.SecPermissions">Permissions</sys:String>
     <sys:String x:Key="L.SecAppearance">Appearance</sys:String>
+    <sys:String x:Key="L.SecLanguage">Language</sys:String>
+    <sys:String x:Key="L.LanguageDesc">Interface language for the client.</sys:String>
+    <sys:String x:Key="L.Privacy">Privacy</sys:String>
     <sys:String x:Key="L.SecProject">Project</sys:String>
     <sys:String x:Key="L.AuthCliManaged">Authentication · managed by the runtime's own CLI login</sys:String>
     <sys:String x:Key="L.PlannedBadge">PLANNED</sys:String>

@@ -77,6 +77,9 @@
     <sys:String x:Key="L.SecOrchestration">오케스트레이션</sys:String>
     <sys:String x:Key="L.SecPermissions">권한</sys:String>
     <sys:String x:Key="L.SecAppearance">외관</sys:String>
+    <sys:String x:Key="L.SecLanguage">언어</sys:String>
+    <sys:String x:Key="L.LanguageDesc">클라이언트 인터페이스 언어.</sys:String>
+    <sys:String x:Key="L.Privacy">개인정보</sys:String>
     <sys:String x:Key="L.SecProject">프로젝트</sys:String>
     <sys:String x:Key="L.AuthCliManaged">인증 · 각 런타임의 자체 CLI 로그인으로 관리됩니다</sys:String>
     <sys:String x:Key="L.PlannedBadge">예정</sys:String>
