@@ -16,8 +16,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.1.0: IDE 테마 프리셋·라이브 전환, settings.json, 엔진 명칭/설정 재편 -->
-    <Version>1.1.0</Version>
+    <!-- 1.2.0: 언어 설정 드롭다운화 + 설정 가능한 번역 언어 쌍(번역 전/후) -->
+    <Version>1.2.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
