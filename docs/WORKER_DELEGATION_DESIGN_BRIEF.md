@@ -62,6 +62,16 @@
 
 ---
 
+## D. 추가 디자인 표면 (결정 반영 — 팝업 외)
+
+이번 결정들로 팝업 3종 외에 아래 표면도 디자인 필요:
+
+1. **사이드바 `WORKERS` 그룹** (am-sidebar.jsx) — 활성 프로젝트 세션 목록에 별도 그룹. 각 워커 행: 엔진 `.badge` + 이름 + 모델(`.ds`) + 상태칩(idle/busy) + **담당 메인** 라벨(`↳ <main name>`, `--txt-3`). 그룹 헤더에 `+ 새 워커`. 우클릭/호버에 삭제. 일반 세션과 시각적으로 구별(역할 강조색/배지).
+2. **Settings 추가** (am-settings.jsx):
+   - **Orchestration** 섹션에 `워커 동시 실행 수(MaxConcurrentWorkers)` 숫자 필드(기존 동시 실행 cap 옆).
+   - **Workers** 카드(신규): **전역 행동 규칙 preamble 템플릿** `textarea`(기본값 prefill) — 새 워커 생성 시 이 값으로 시작.
+3. **메인 채팅 응답 블록** (am-chat.jsx) — 에이전트 응답 헤더(복사 `⧉` 옆)에 **`▸ 워커로 위임`** 액션 추가(본문 선택 시 선택 텍스트 위임).
+
 ## 디자인에 넘길 프롬프트 (복붙용)
 
 ```
@@ -91,6 +101,13 @@ CSS 변수 --txt-0..3/--run/--warn/--ok/--err/--accent, AGENTS[id].tint/line/sof
    펼침: 위임 프롬프트+보고 미리보기+'워커 세션 열기' 링크.
    액션: 완료 시 [보고 붙여넣기], 실패 시 에러요약+[다시 위임].
    메인 컴포저 옆 '보고 수신함' 배지(ready 건수), ready≥2면 [합쳐 붙여넣기(N건)].
+
+또한 팝업 외 표면도 같은 스타일로 추가:
+- 사이드바(am-sidebar.jsx)에 'WORKERS' 그룹: 워커 행(배지+이름+모델+idle/busy 칩+'↳ 담당메인'),
+  그룹 헤더 '+ 새 워커', 일반 세션과 구별되는 역할 강조.
+- Settings(am-settings.jsx): Orchestration에 'MaxConcurrentWorkers' 숫자 필드,
+  신규 'Workers' 카드에 전역 행동 규칙 preamble textarea.
+- 메인 채팅 응답 헤더(am-chat.jsx, 복사 아이콘 옆)에 '워커로 위임' 액션.
 
 샘플 데이터로 idle 1 + busy 1 워커, ready 보고 2건 상태를 보여줘.
 다크/라이트 등 기존 테마 변수만 쓰고 하드코딩 색 금지.
