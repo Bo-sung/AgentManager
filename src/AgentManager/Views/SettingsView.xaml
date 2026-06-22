@@ -25,6 +25,7 @@
                                     <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Cancel}" Margin="0,0,9,0" Command="{Binding CancelSettingsCommand}"/>
                                     <Button Style="{StaticResource AccentButton}" Content="{StaticResource L.SaveSettings}" Command="{Binding SaveSettingsCommand}"/>
                                 </StackPanel>
+                                <Button DockPanel.Dock="Left" Style="{StaticResource ChipButton}" Margin="0,0,12,0" Command="{Binding OpenSettingsFileCommand}" Content="{StaticResource L.OpenSettingsJson}" ToolTip="{StaticResource L.OpenSettingsJsonTip}"/>
                                 <TextBlock Text="{Binding SettingsStatus}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Ok}" VerticalAlignment="Center"/>
                             </DockPanel>
                         </Border>

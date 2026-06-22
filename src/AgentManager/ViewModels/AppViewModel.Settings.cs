@@ -220,7 +220,8 @@ public sealed partial class AppViewModel
     private string _settingsStatus = "";
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
 
-    private void OpenSettings()
+    /// <summary>VM 필드 → 설정 에디터(Settings* 미러) 프로퍼티로 끌어온다. OpenSettings + 외부 리로드에서 공용.</summary>
+    private void PullSettingsToEditor()
     {
         SettingsClaudePath = _claudePath;
         SettingsCodexPath = _codexPath;
@@ -248,9 +249,30 @@ public sealed partial class AppViewModel
         SettingsApiKeyCc = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("cc", ""));
         SettingsApiKeyGx = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("gx", ""));
         RefreshDetectLabels(); // CLI 경로 감지 라벨 + 로그인 계정 표시 갱신
+    }
+
+    private void OpenSettings()
+    {
+        PullSettingsToEditor();
         SettingsStatus = "";
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
+    }
+
+    /// <summary>settings.json을 기본 편집기로 연다(없으면 먼저 기록). VS Code식 손편집 진입점.</summary>
+    private void OpenSettingsFile()
+    {
+        try
+        {
+            if (!System.IO.File.Exists(Persistence.SettingsStore.SettingsPath))
+                Persistence.SettingsStore.Save(BuildSettingsDto());
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = Persistence.SettingsStore.SettingsPath,
+                UseShellExecute = true,
+            });
+        }
+        catch { }
     }
     private MainViewKind _viewBeforeSettings = MainViewKind.Orchestrator;
     private void CloseSettings()

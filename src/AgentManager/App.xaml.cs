@@ -13,9 +13,9 @@ public partial class App : Application
         string language;
         try
         {
-            var settings = Persistence.AppStateStore.Load()?.Settings;
-            theme = settings?.Theme ?? "dark";
-            language = settings?.Language ?? "ko";
+            var settings = Persistence.SettingsStore.Load();
+            theme = settings.Theme ?? "dark";
+            language = settings.Language ?? "ko";
         }
         catch
         {

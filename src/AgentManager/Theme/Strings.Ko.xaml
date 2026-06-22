@@ -80,6 +80,8 @@
     <sys:String x:Key="L.SecLanguage">언어</sys:String>
     <sys:String x:Key="L.LanguageDesc">클라이언트 인터페이스 언어.</sys:String>
     <sys:String x:Key="L.Privacy">개인정보</sys:String>
+    <sys:String x:Key="L.OpenSettingsJson">settings.json 열기</sys:String>
+    <sys:String x:Key="L.OpenSettingsJsonTip">설정을 JSON으로 편집 — 외부 변경은 즉시 반영됩니다.</sys:String>
     <sys:String x:Key="L.SecProject">프로젝트</sys:String>
     <sys:String x:Key="L.AuthCliManaged">인증 · 각 런타임의 자체 CLI 로그인으로 관리됩니다</sys:String>
     <sys:String x:Key="L.PlannedBadge">예정</sys:String>

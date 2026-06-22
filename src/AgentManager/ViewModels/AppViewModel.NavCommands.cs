@@ -23,6 +23,8 @@ public sealed partial class AppViewModel
     public RelayCommand SignInCommand { get; private set; } = null!;
     /// <summary>Appearance: 테마 선택(파라미터 = 테마 id).</summary>
     public RelayCommand ThemeSelectCommand { get; private set; } = null!;
+    /// <summary>settings.json을 기본 편집기로 열기.</summary>
+    public RelayCommand OpenSettingsFileCommand { get; private set; } = null!;
 
     private void InitNavCommands()
     {
@@ -64,5 +66,6 @@ public sealed partial class AppViewModel
         });
         SignInCommand = new RelayCommand(p => { if (p is string id) SignIn(id); });
         ThemeSelectCommand = new RelayCommand(p => { if (p is string id) SettingsTheme = id; });
+        OpenSettingsFileCommand = new RelayCommand(_ => OpenSettingsFile());
     }
 }

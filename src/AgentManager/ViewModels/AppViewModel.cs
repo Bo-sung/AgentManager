@@ -131,6 +131,7 @@ public sealed partial class AppViewModel : ObservableObject
         _scheduler.JobDue += Scheduler_JobDue;
         _scheduler.Start();
         InitNavCommands();
+        StartSettingsWatcher();
     }
 
     public RelayCommand OpenIdeCommand { get; }

@@ -7,6 +7,8 @@ namespace AgentManager.Persistence;
 public sealed record AppStateDto
 {
     public string? ActiveProjectId { get; init; }
+    /// <summary>설정은 settings.json(SettingsStore)으로 분리 저장 — state.json에는 직렬화하지 않는다.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public AppSettingsDto Settings { get; init; } = new();
     public List<ProjectDto> Projects { get; init; } = [];
     public List<SessionDto> Sessions { get; init; } = [];

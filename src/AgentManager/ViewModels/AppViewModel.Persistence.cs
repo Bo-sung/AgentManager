@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Threading;
 using AgentManager.Persistence;
@@ -16,8 +17,78 @@ namespace AgentManager.ViewModels;
 
 public sealed partial class AppViewModel
 {
+    /// <summary>settings.json(또는 마이그레이션)에서 읽은 설정을 VM 필드에 적용하고 테마/강조색/번역기를
+    /// 재구성한다. 시작 시(RestoreState)와 외부 편집 리로드(ReloadSettingsFromDisk) 양쪽에서 쓰인다.</summary>
+    private void ApplySettings(AppSettingsDto s)
+    {
+        _claudePath = s.ClaudePath;
+        _codexPath = s.CodexPath;
+        _ollamaEndpoint = string.IsNullOrWhiteSpace(s.OllamaEndpoint) ? _ollamaEndpoint : s.OllamaEndpoint;
+        _ollamaModel = string.IsNullOrWhiteSpace(s.OllamaModel) ? _ollamaModel : s.OllamaModel;
+        TranslationEnabled = s.TranslationEnabled;
+        MaxConcurrentSessions = s.MaxConcurrentSessions;
+        _isReviewOpen = s.ReviewPaneOpen;
+        _warnNoWorktree = s.WarnNoWorktree;
+        _approvalPolicy = s.ApprovalPolicy is "ask" or "safe" ? s.ApprovalPolicy : "yolo";
+        _worktreeBase = (s.WorktreeBase ?? "").Trim();
+        _autoStartLastSession = s.AutoStartLastSession;
+        _streamLogs = s.StreamLogs;
+        _defaultModels = s.DefaultModels ?? new();
+        _accent = Theme.AccentPalette.Normalize(s.Accent);
+        _density = s.Density == "compact" ? "compact" : "comfortable";
+        _telemetry = s.Telemetry;
+        _disabledEngines.Clear();
+        foreach (var d in s.DisabledEngines ?? []) _disabledEngines.Add(d);
+        _engineAuthMode.Clear();
+        foreach (var kv in s.EngineAuthMode ?? new()) _engineAuthMode[kv.Key] = kv.Value;
+        _engineApiKey.Clear();
+        foreach (var kv in s.EngineApiKey ?? new()) _engineApiKey[kv.Key] = kv.Value;
+        _usage.Clear();
+        foreach (var kv in s.Usage ?? new())
+            _usage[kv.Key] = new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc);
+        _theme = Theme.ThemePalette.Normalize(s.Theme);
+        _language = s.Language == "en" ? "en" : "ko";
+        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
+        Theme.ThemePalette.Apply(_theme);
+        Theme.AccentPalette.Apply(_accent);
+    }
+
+    /// <summary>현재 설정을 settings.json DTO로 직렬화.</summary>
+    private AppSettingsDto BuildSettingsDto() => new()
+    {
+        ClaudePath = _claudePath,
+        CodexPath = _codexPath,
+        OllamaEndpoint = _ollamaEndpoint,
+        OllamaModel = _ollamaModel,
+        TranslationEnabled = TranslationEnabled,
+        MaxConcurrentSessions = MaxConcurrentSessions,
+        ReviewPaneOpen = IsReviewOpen,
+        WarnNoWorktree = _warnNoWorktree,
+        Theme = _theme,
+        Language = _language,
+        ApprovalPolicy = _approvalPolicy,
+        WorktreeBase = _worktreeBase,
+        AutoStartLastSession = _autoStartLastSession,
+        StreamLogs = _streamLogs,
+        DefaultModels = new Dictionary<string, string>(_defaultModels),
+        Accent = _accent,
+        Density = _density,
+        Telemetry = _telemetry,
+        DisabledEngines = _disabledEngines.ToList(),
+        EngineAuthMode = new Dictionary<string, string>(_engineAuthMode),
+        EngineApiKey = new Dictionary<string, string>(_engineApiKey),
+        Usage = _usage.ToDictionary(k => k.Key, v => new UsageSnapshotDto
+        {
+            Utilization = v.Value.Utilization,
+            ResetsAtUnix = v.Value.ResetsAtUnix,
+            RateLimitType = v.Value.RateLimitType,
+            CapturedUtc = v.Value.CapturedUtc,
+        }),
+    };
+
     private void RestoreState()
     {
+        ApplySettings(SettingsStore.Load());
         var state = AppStateStore.Load();
         if (state is null || state.Projects.Count == 0)
         {
@@ -27,35 +98,6 @@ public sealed partial class AppViewModel
             ActiveProject = project;
             return;
         }
-
-        _claudePath = state.Settings.ClaudePath;
-        _codexPath = state.Settings.CodexPath;
-        _ollamaEndpoint = string.IsNullOrWhiteSpace(state.Settings.OllamaEndpoint) ? _ollamaEndpoint : state.Settings.OllamaEndpoint;
-        _ollamaModel = string.IsNullOrWhiteSpace(state.Settings.OllamaModel) ? _ollamaModel : state.Settings.OllamaModel;
-        TranslationEnabled = state.Settings.TranslationEnabled;
-        MaxConcurrentSessions = state.Settings.MaxConcurrentSessions;
-        _isReviewOpen = state.Settings.ReviewPaneOpen;
-        _warnNoWorktree = state.Settings.WarnNoWorktree;
-        _approvalPolicy = state.Settings.ApprovalPolicy is "ask" or "safe" ? state.Settings.ApprovalPolicy : "yolo";
-        _worktreeBase = (state.Settings.WorktreeBase ?? "").Trim();
-        _autoStartLastSession = state.Settings.AutoStartLastSession;
-        _streamLogs = state.Settings.StreamLogs;
-        _defaultModels = state.Settings.DefaultModels ?? new();
-        _accent = Theme.AccentPalette.Normalize(state.Settings.Accent);
-        _density = state.Settings.Density == "compact" ? "compact" : "comfortable";
-        _telemetry = state.Settings.Telemetry;
-        _disabledEngines.Clear();
-        foreach (var d in state.Settings.DisabledEngines ?? []) _disabledEngines.Add(d);
-        _engineAuthMode.Clear();
-        foreach (var kv in state.Settings.EngineAuthMode ?? new()) _engineAuthMode[kv.Key] = kv.Value;
-        _engineApiKey.Clear();
-        foreach (var kv in state.Settings.EngineApiKey ?? new()) _engineApiKey[kv.Key] = kv.Value;
-        _usage.Clear();
-        foreach (var kv in state.Settings.Usage ?? new())
-            _usage[kv.Key] = new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc);
-        _theme = string.IsNullOrWhiteSpace(state.Settings.Theme) ? "dark" : state.Settings.Theme;
-        _language = state.Settings.Language == "en" ? "en" : "ko";
-        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
 
         foreach (var p in state.Projects.Where(p => Directory.Exists(p.Path)))
         {
@@ -122,40 +164,11 @@ public sealed partial class AppViewModel
     {
         try
         {
+            // 설정은 settings.json으로 분리 저장(SettingsStore). 자기-쓰기로 인한 리로드는 ReloadSettingsFromDisk가 내용 비교로 무시.
+            SettingsStore.Save(BuildSettingsDto());
             AppStateStore.Save(new AppStateDto
             {
                 ActiveProjectId = ActiveProject?.Id,
-                Settings = new AppSettingsDto
-                {
-                    ClaudePath = _claudePath,
-                    CodexPath = _codexPath,
-                    OllamaEndpoint = _ollamaEndpoint,
-                    OllamaModel = _ollamaModel,
-                    TranslationEnabled = TranslationEnabled,
-                    MaxConcurrentSessions = MaxConcurrentSessions,
-                    ReviewPaneOpen = IsReviewOpen,
-                    WarnNoWorktree = _warnNoWorktree,
-                    Theme = _theme,
-                    Language = _language,
-                    ApprovalPolicy = _approvalPolicy,
-                    WorktreeBase = _worktreeBase,
-                    AutoStartLastSession = _autoStartLastSession,
-                    StreamLogs = _streamLogs,
-                    DefaultModels = new Dictionary<string, string>(_defaultModels),
-                    Accent = _accent,
-                    Density = _density,
-                    Telemetry = _telemetry,
-                    DisabledEngines = _disabledEngines.ToList(),
-                    EngineAuthMode = new Dictionary<string, string>(_engineAuthMode),
-                    EngineApiKey = new Dictionary<string, string>(_engineApiKey),
-                    Usage = _usage.ToDictionary(k => k.Key, v => new UsageSnapshotDto
-                    {
-                        Utilization = v.Value.Utilization,
-                        ResetsAtUnix = v.Value.ResetsAtUnix,
-                        RateLimitType = v.Value.RateLimitType,
-                        CapturedUtc = v.Value.CapturedUtc,
-                    }),
-                },
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
                 {
@@ -191,6 +204,53 @@ public sealed partial class AppViewModel
         {
             // Persistence should never interrupt an agent run or UI interaction.
         }
+    }
+
+    // ----- settings.json 외부 편집 감시 (VS Code식 라이브 리로드) -----
+    private FileSystemWatcher? _settingsWatcher;
+
+    /// <summary>settings.json 파일 변경을 감시해 외부(손)편집을 라이브 반영한다.</summary>
+    private void StartSettingsWatcher()
+    {
+        try
+        {
+            var path = SettingsStore.SettingsPath;
+            var dir = Path.GetDirectoryName(path)!;
+            Directory.CreateDirectory(dir);
+            _settingsWatcher = new FileSystemWatcher(dir, Path.GetFileName(path))
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
+                EnableRaisingEvents = true,
+            };
+            void OnChange(object _, FileSystemEventArgs __) => _ = DebouncedReloadAsync();
+            _settingsWatcher.Changed += OnChange;
+            _settingsWatcher.Created += OnChange;
+            _settingsWatcher.Renamed += (_, _) => _ = DebouncedReloadAsync();
+        }
+        catch { }
+    }
+
+    private async Task DebouncedReloadAsync()
+    {
+        await Task.Delay(250).ConfigureAwait(false); // 편집기가 여러 이벤트를 쏘므로 디바운스
+        var disp = Application.Current?.Dispatcher;
+        if (disp is not null) await disp.InvokeAsync(ReloadSettingsFromDisk);
+    }
+
+    /// <summary>디스크의 settings.json을 읽어 VM에 적용. 자기-쓰기는 내용 비교로 무시(루프 방지).</summary>
+    private void ReloadSettingsFromDisk()
+    {
+        try
+        {
+            var disk = SettingsStore.Load();
+            var opts = new JsonSerializerOptions();
+            if (JsonSerializer.Serialize(disk, opts) == JsonSerializer.Serialize(BuildSettingsDto(), opts))
+                return; // 우리가 쓴 내용과 동일 → 외부 변경 아님
+            ApplySettings(disk);
+            OnChanged(nameof(DensityScale));
+            if (CurrentView == MainViewKind.Settings) PullSettingsToEditor();
+        }
+        catch { }
     }
 
     private static readonly string DefaultWorktreesRoot =
