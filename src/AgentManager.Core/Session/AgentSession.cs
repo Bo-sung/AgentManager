@@ -32,7 +32,7 @@ public sealed class AgentSession(
         var prompt = userPrompt;
         if (TranslationEnabled && translator is not null)
         {
-            prompt = await translator.TranslateAsync(userPrompt, TranslationDirection.KoToEn, ct);
+            prompt = await translator.TranslateAsync(userPrompt, TranslationDirection.SourceToTarget, ct);
             if (!string.Equals(prompt, userPrompt, StringComparison.Ordinal))
                 Emit(new PromptTranslated(prompt)); // 검수용: 실제 전송된 영문
         }
@@ -133,7 +133,7 @@ public sealed class AgentSession(
             {
                 case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
                     var originalText = at.Text;
-                    var translatedText = await translator.TranslateAsync(originalText, TranslationDirection.EnToKo, ct);
+                    var translatedText = await translator.TranslateAsync(originalText, TranslationDirection.TargetToSource, ct);
                     ev = at with
                     {
                         Text = translatedText,
@@ -143,7 +143,7 @@ public sealed class AgentSession(
                 // Only subagent (Task) results are natural language worth translating.
                 case ToolResult { FromSubagent: true, IsError: false } tr when !string.IsNullOrWhiteSpace(tr.Content):
                     var originalContent = tr.Content;
-                    var translatedContent = await translator.TranslateAsync(originalContent, TranslationDirection.EnToKo, ct);
+                    var translatedContent = await translator.TranslateAsync(originalContent, TranslationDirection.TargetToSource, ct);
                     ev = tr with
                     {
                         Content = translatedContent,

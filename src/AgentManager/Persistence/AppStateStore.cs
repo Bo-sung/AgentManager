@@ -29,6 +29,10 @@ public sealed record AppSettingsDto
     public string Theme { get; init; } = "dark";
     /// <summary>UI language: ko | en (applies after restart).</summary>
     public string Language { get; init; } = "ko";
+    /// <summary>번역 전 언어(사용자 입력·표시) — 영어 표기. 예: Korean.</summary>
+    public string TranslateSourceLanguage { get; init; } = "Korean";
+    /// <summary>번역 후 언어(엔진 전달, 토큰 절감) — 영어 표기. 예: English.</summary>
+    public string TranslateTargetLanguage { get; init; } = "English";
     /// <summary>새 세션 기본 승인 정책: ask | safe | yolo (RequireApproval + Sandbox 시드).</summary>
     public string ApprovalPolicy { get; init; } = "yolo";
     /// <summary>worktree 격리 기준 경로 (빈 값 = 기본 앱 데이터 폴더).</summary>

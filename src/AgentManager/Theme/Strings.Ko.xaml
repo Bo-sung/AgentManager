@@ -78,7 +78,12 @@
     <sys:String x:Key="L.SecPermissions">권한</sys:String>
     <sys:String x:Key="L.SecAppearance">외관</sys:String>
     <sys:String x:Key="L.SecLanguage">언어</sys:String>
-    <sys:String x:Key="L.LanguageDesc">클라이언트 인터페이스 언어.</sys:String>
+    <sys:String x:Key="L.LanguageDesc">인터페이스 언어와 KO↔EN 번역에 쓰는 언어 쌍.</sys:String>
+    <sys:String x:Key="L.UiLanguage">UI 언어</sys:String>
+    <sys:String x:Key="L.TranslateSource">번역 전 언어</sys:String>
+    <sys:String x:Key="L.TranslateSourceDesc">내가 입력하고 화면에 표시되는 언어.</sys:String>
+    <sys:String x:Key="L.TranslateTarget">번역 후 언어</sys:String>
+    <sys:String x:Key="L.TranslateTargetDesc">에이전트에 전달되는 언어 (토큰 절감). 보통 English.</sys:String>
     <sys:String x:Key="L.Privacy">개인정보</sys:String>
     <sys:String x:Key="L.OpenSettingsJson">settings.json 열기</sys:String>
     <sys:String x:Key="L.OpenSettingsJsonTip">설정을 JSON으로 편집 — 외부 변경은 즉시 반영됩니다.</sys:String>

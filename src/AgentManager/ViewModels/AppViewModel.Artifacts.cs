@@ -144,10 +144,12 @@ public sealed partial class AppViewModel
         return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     }
 
-    private static OllamaTranslator CreateTranslator(string endpoint, string model) =>
+    private static OllamaTranslator CreateTranslator(string endpoint, string model, string sourceLang = "Korean", string targetLang = "English") =>
         new(new OllamaOptions
         {
             Endpoint = string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:11434" : endpoint.Trim(),
             Model = string.IsNullOrWhiteSpace(model) ? "exaone3.5:7.8b" : model.Trim(),
+            SourceLanguage = string.IsNullOrWhiteSpace(sourceLang) ? "Korean" : sourceLang.Trim(),
+            TargetLanguage = string.IsNullOrWhiteSpace(targetLang) ? "English" : targetLang.Trim(),
         });
 }

@@ -501,14 +501,37 @@
                                         <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
                                             <StackPanel>
                                                 <TextBlock Text="{StaticResource L.SecLanguage}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
-                                                <TextBlock Text="{StaticResource L.LanguageDesc}" FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="0,2,0,10"/>
+                                                <TextBlock Text="{StaticResource L.LanguageDesc}" FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="0,2,0,14"/>
+
+                                                <!-- UI 언어 -->
+                                                <TextBlock Text="{StaticResource L.UiLanguage}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}"/>
                                                 <ComboBox ItemsSource="{Binding AvailableLanguages}" SelectedValuePath="Id"
-                                                          SelectedValue="{Binding SettingsLanguage, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200">
+                                                          SelectedValue="{Binding SettingsLanguage, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200" Margin="0,4,0,0">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate>
                                                     </ComboBox.ItemTemplate>
                                                 </ComboBox>
-                                                <TextBlock Text="{StaticResource L.EnglishUiTip}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{StaticResource L.EnglishUiTip}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,4,0,14" TextWrapping="Wrap"/>
+
+                                                <!-- 번역 전 언어 (사용자 입력·표시) -->
+                                                <TextBlock Text="{StaticResource L.TranslateSource}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}"/>
+                                                <TextBlock Text="{StaticResource L.TranslateSourceDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,2,0,4" TextWrapping="Wrap"/>
+                                                <ComboBox ItemsSource="{Binding AvailableTranslationLanguages}" SelectedValuePath="Id"
+                                                          SelectedValue="{Binding SettingsTranslateSource, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+
+                                                <!-- 번역 후 언어 (엔진 전달) -->
+                                                <TextBlock Text="{StaticResource L.TranslateTarget}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}" Margin="0,14,0,0"/>
+                                                <TextBlock Text="{StaticResource L.TranslateTargetDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,2,0,4" TextWrapping="Wrap"/>
+                                                <ComboBox ItemsSource="{Binding AvailableTranslationLanguages}" SelectedValuePath="Id"
+                                                          SelectedValue="{Binding SettingsTranslateTarget, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>

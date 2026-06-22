@@ -48,7 +48,9 @@ public sealed partial class AppViewModel
             _usage[kv.Key] = new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc);
         _theme = Theme.ThemePalette.Normalize(s.Theme);
         _language = s.Language == "en" ? "en" : "ko";
-        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
+        _translateSource = NormalizeTranslationLang(s.TranslateSourceLanguage, "Korean");
+        _translateTarget = NormalizeTranslationLang(s.TranslateTargetLanguage, "English");
+        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel, _translateSource, _translateTarget);
         Theme.ThemePalette.Apply(_theme);
         Theme.AccentPalette.Apply(_accent);
     }
@@ -66,6 +68,8 @@ public sealed partial class AppViewModel
         WarnNoWorktree = _warnNoWorktree,
         Theme = _theme,
         Language = _language,
+        TranslateSourceLanguage = _translateSource,
+        TranslateTargetLanguage = _translateTarget,
         ApprovalPolicy = _approvalPolicy,
         WorktreeBase = _worktreeBase,
         AutoStartLastSession = _autoStartLastSession,

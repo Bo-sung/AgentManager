@@ -78,7 +78,12 @@
     <sys:String x:Key="L.SecPermissions">Permissions</sys:String>
     <sys:String x:Key="L.SecAppearance">Appearance</sys:String>
     <sys:String x:Key="L.SecLanguage">Language</sys:String>
-    <sys:String x:Key="L.LanguageDesc">Interface language for the client.</sys:String>
+    <sys:String x:Key="L.LanguageDesc">Interface language and the translation language pair.</sys:String>
+    <sys:String x:Key="L.UiLanguage">UI language</sys:String>
+    <sys:String x:Key="L.TranslateSource">Source language</sys:String>
+    <sys:String x:Key="L.TranslateSourceDesc">The language you type and read on screen.</sys:String>
+    <sys:String x:Key="L.TranslateTarget">Target language</sys:String>
+    <sys:String x:Key="L.TranslateTargetDesc">The language sent to the agent (saves tokens). Usually English.</sys:String>
     <sys:String x:Key="L.Privacy">Privacy</sys:String>
     <sys:String x:Key="L.OpenSettingsJson">Open settings.json</sys:String>
     <sys:String x:Key="L.OpenSettingsJsonTip">Edit settings as JSON; external changes apply live.</sys:String>

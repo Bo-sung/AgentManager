@@ -58,6 +58,24 @@ public sealed partial class AppViewModel
     public IReadOnlyList<LanguageDef> AvailableLanguages { get; } = [new("ko", "한국어"), new("en", "English")];
     private string _language = "ko";
 
+    // ----- 번역 언어 쌍 (번역 전 = 사용자 언어, 번역 후 = 엔진 전달 언어) -----
+    private string _translateSource = "Korean";
+    private string _translateTarget = "English";
+    private string _settingsTranslateSource = "Korean";
+    /// <summary>번역 전 언어(사용자 입력·표시). Id = 프롬프트용 영어 표기.</summary>
+    public string SettingsTranslateSource { get => _settingsTranslateSource; set => Set(ref _settingsTranslateSource, value); }
+    private string _settingsTranslateTarget = "English";
+    /// <summary>번역 후 언어(엔진에 전달, 토큰 절감용). Id = 프롬프트용 영어 표기.</summary>
+    public string SettingsTranslateTarget { get => _settingsTranslateTarget; set => Set(ref _settingsTranslateTarget, value); }
+    /// <summary>번역 언어 선택지 (Id = 영어 표기, Name = 현지 표기).</summary>
+    public IReadOnlyList<LanguageDef> AvailableTranslationLanguages { get; } =
+    [
+        new("Korean", "한국어"), new("English", "English"), new("Japanese", "日本語"),
+        new("Chinese", "中文"), new("Spanish", "Español"), new("French", "Français"),
+        new("German", "Deutsch"), new("Russian", "Русский"), new("Portuguese", "Português"),
+        new("Italian", "Italiano"), new("Vietnamese", "Tiếng Việt"),
+    ];
+
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내를 띄울지 (기본 끔 — 비-git 사용이 일반 흐름인 사용자 배려).</summary>
     private bool _warnNoWorktree;
 
@@ -234,6 +252,8 @@ public sealed partial class AppViewModel
         SettingsOllamaEndpoint = _ollamaEndpoint;
         SettingsOllamaModel = _ollamaModel;
         SettingsDefaultTranslationEnabled = TranslationEnabled;
+        SettingsTranslateSource = _translateSource;
+        SettingsTranslateTarget = _translateTarget;
         SettingsWarnNoWorktree = _warnNoWorktree;
         SettingsTheme = Theme.ThemePalette.Normalize(_theme);
         SettingsLanguage = _language == "en" ? "en" : "ko";
@@ -327,11 +347,22 @@ public sealed partial class AppViewModel
         var newLanguage = SettingsLanguage == "en" ? "en" : "ko";
         var languageChanged = newLanguage != _language;
         _language = newLanguage;
-        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel);
+        _translateSource = NormalizeTranslationLang(SettingsTranslateSource, "Korean");
+        _translateTarget = NormalizeTranslationLang(SettingsTranslateTarget, "English");
+        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel, _translateSource, _translateTarget);
         SettingsStatus = languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
         SaveState();
     }
 
     private static string Clean(string value) => value.Trim().Trim('"');
+
+    /// <summary>번역 언어 값을 선택지(영어 표기)로 정규화. 미상이면 기본값.</summary>
+    private string NormalizeTranslationLang(string? value, string fallback)
+    {
+        var v = (value ?? "").Trim();
+        return AvailableTranslationLanguages.Any(l => string.Equals(l.Id, v, StringComparison.OrdinalIgnoreCase))
+            ? AvailableTranslationLanguages.First(l => string.Equals(l.Id, v, StringComparison.OrdinalIgnoreCase)).Id
+            : fallback;
+    }
 
 }
