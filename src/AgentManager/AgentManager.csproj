@@ -16,8 +16,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1차 릴리즈 -->
-    <Version>1.0.0</Version>
+    <!-- 1.1.0: IDE 테마 프리셋·라이브 전환, settings.json, 엔진 명칭/설정 재편 -->
+    <Version>1.1.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
