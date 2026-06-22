@@ -35,6 +35,7 @@
 2. **새 워커 생성(선택 시 펼침)** — `NewAgentModal` 필드 차용:
    - Runtime(`.agent-grid` 엔진 선택) · Model(`.select-pill`+`.menu`) · 이름(`.modal-input`)
    - **번역 정책(고정값)**: 토글 `번역 ON/OFF` + (ON일 때) `번역 전 언어`/`번역 후 언어` `.select-pill` 2개. *주: 이 값은 워커에 고정됨* 안내 캡션.
+   - **행동 규칙(preamble)**: `.modal-input` textarea(3~5줄), 전역 기본 템플릿 prefill, 편집 가능. *주: 위임 프롬프트 앞에 자동 부착되며 워커에 고정* 캡션.
 3. **field "위임 프롬프트"** — `.modal-input`(textarea, 4~6줄). 메인 선택 텍스트로 prefill, 편집 가능.
 4. **field "worktree"**(작게) — `.select-pill`로 `공유 / 독립` 선택(기본값은 추후 확정, placeholder로 "독립").
 
@@ -75,7 +76,8 @@ CSS 변수 --txt-0..3/--run/--warn/--ok/--err/--accent, AGENTS[id].tint/line/sof
    - 워커 선택 리스트(엔진 배지+이름+모델+상태칩 idle/busy+번역정책 칩 'TR ON KO→EN'/'TR OFF'),
      busy 워커는 비활성.
    - '+ 새 워커' 선택 시 생성 폼 펼침: Runtime/Model/이름 + 번역 정책(ON/OFF 토글 + 번역 전/후 언어
-     select-pill, '이 값은 워커에 고정' 캡션) + worktree 공유/독립 select.
+     select-pill, '이 값은 워커에 고정' 캡션) + 행동 규칙(preamble) textarea(기본 템플릿 prefill,
+     '위임 프롬프트 앞에 자동 부착·워커 고정' 캡션) + worktree 공유/독립 select.
    - '위임 프롬프트' textarea(메인 텍스트 prefill, 편집 가능).
    - 푸터: 좌측 체크박스 '완료 시 보고 자동 주입', 우측 [취소]/[위임 보내기](bolt 아이콘).
      워커 미선택 시 위임 버튼 비활성.
