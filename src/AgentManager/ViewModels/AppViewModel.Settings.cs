@@ -30,6 +30,30 @@ public sealed partial class AppViewModel
     public string SettingsOllamaEndpoint { get => _settingsOllamaEndpoint; set => Set(ref _settingsOllamaEndpoint, value); }
     private string _settingsOllamaModel = "";
     public string SettingsOllamaModel { get => _settingsOllamaModel; set => Set(ref _settingsOllamaModel, value); }
+
+    /// <summary>"설치 모델 조회"로 채워지는 Ollama 모델 목록(드롭다운).</summary>
+    public ObservableCollection<string> OllamaModels { get; } = [];
+    private string _ollamaModelsStatus = "";
+    /// <summary>조회 상태 라벨(조회 중/N개/실패).</summary>
+    public string OllamaModelsStatus { get => _ollamaModelsStatus; private set => Set(ref _ollamaModelsStatus, value); }
+
+    /// <summary>현재 엔드포인트의 설치된 Ollama 모델을 조회해 드롭다운을 채운다.</summary>
+    public async Task QueryOllamaModelsAsync()
+    {
+        OllamaModelsStatus = App.L("L.Querying");
+        try
+        {
+            var endpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint;
+            var models = await Core.Translation.OllamaTranslator.ListModelsAsync(endpoint);
+            OllamaModels.Clear();
+            foreach (var m in models) OllamaModels.Add(m);
+            OllamaModelsStatus = models.Count > 0 ? App.L("L.ModelsFound", models.Count) : App.L("L.NoModels");
+        }
+        catch
+        {
+            OllamaModelsStatus = App.L("L.QueryFailed");
+        }
+    }
     private bool _settingsDefaultTranslationEnabled = true;
     public bool SettingsDefaultTranslationEnabled { get => _settingsDefaultTranslationEnabled; set => Set(ref _settingsDefaultTranslationEnabled, value); }
     private bool _settingsWarnNoWorktree;

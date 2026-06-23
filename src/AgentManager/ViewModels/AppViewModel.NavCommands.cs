@@ -31,9 +31,12 @@ public sealed partial class AppViewModel
     public RelayCommand ZoomResetCommand { get; private set; } = null!;
     /// <summary>본문·모달 배율 모두 100%로 초기화(설정 버튼).</summary>
     public RelayCommand ZoomResetAllCommand { get; private set; } = null!;
+    /// <summary>설치된 Ollama 모델 조회(번역 모델 드롭다운 채우기).</summary>
+    public RelayCommand QueryOllamaModelsCommand { get; private set; } = null!;
 
     private void InitNavCommands()
     {
+        QueryOllamaModelsCommand = new RelayCommand(_ => _ = QueryOllamaModelsAsync());
         ZoomInCommand = new RelayCommand(_ => ZoomBy(+1));
         ZoomOutCommand = new RelayCommand(_ => ZoomBy(-1));
         ZoomResetCommand = new RelayCommand(_ => ZoomReset());

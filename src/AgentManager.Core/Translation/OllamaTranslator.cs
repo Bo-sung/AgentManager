@@ -29,6 +29,23 @@ public sealed partial class OllamaTranslator(OllamaOptions options, HttpClient? 
 
     public bool ContainsKorean(string text) => KoreanRegex().IsMatch(text);
 
+    /// <summary>Ollama에 설치된 모델 이름 목록(/api/tags). 실패 시 예외 — 호출부에서 처리.</summary>
+    public static async Task<IReadOnlyList<string>> ListModelsAsync(string endpoint, CancellationToken ct = default)
+    {
+        var ep = (string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:11434" : endpoint.Trim()).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+        using var resp = await http.GetAsync($"{ep}/api/tags", ct);
+        resp.EnsureSuccessStatusCode();
+        using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+        var list = new List<string>();
+        if (doc.RootElement.TryGetProperty("models", out var models) && models.ValueKind == JsonValueKind.Array)
+            foreach (var m in models.EnumerateArray())
+                if (m.TryGetProperty("name", out var n) && n.GetString() is { Length: > 0 } name)
+                    list.Add(name);
+        return list;
+    }
+
     /// <summary>번역 전 언어의 고유 문자(스크립트)가 텍스트에 있는지. 라틴 계열은 식별 불가 → null.</summary>
     private Regex? SourceScript => ScriptFor(_opt.SourceLanguage);
 

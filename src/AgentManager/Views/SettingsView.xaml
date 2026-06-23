@@ -41,7 +41,6 @@
                                 <TextBlock Text="{StaticResource L.SecOrchestration}" Tag="SecOrchestration" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
                                 <TextBlock Text="{StaticResource L.SecPermissions}" Tag="SecPermissions" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
                                 <TextBlock Text="{StaticResource L.SecAppearance}" Tag="SecAppearance" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
-                                <TextBlock Text="{StaticResource L.SecLanguage}" Tag="SecLanguage" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
                                 <TextBlock Text="{StaticResource L.SecProject}" Tag="SecProject" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
                             </StackPanel>
 
@@ -62,12 +61,12 @@
                                                         <TextBlock Text="CC" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
                                                     <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineCc, Mode=TwoWay}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ClaudeDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ClaudeDetectLabel}"/>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="Claude Code" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
                                                         <TextBlock Text="claude · anthropic · cli" FontSize="10" Foreground="{DynamicResource Txt2}"/>
                                                     </StackPanel>
                                                 </DockPanel>
+                                                <TextBlock Text="{Binding ClaudeDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ClaudeDetectLabel}" Margin="0,0,0,8"/>
                                                 <TextBlock Text="{StaticResource L.ClaudeCliPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                 <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsClaudePath, UpdateSourceTrigger=PropertyChanged}"/>
                                                 <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
@@ -126,12 +125,12 @@
                                                         <TextBlock Text="GX" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Gx}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
                                                     <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineGx, Mode=TwoWay}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding CodexDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding CodexDetectLabel}"/>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="Codex" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
                                                         <TextBlock Text="codex · openai · cli" FontSize="10" Foreground="{DynamicResource Txt2}"/>
                                                     </StackPanel>
                                                 </DockPanel>
+                                                <TextBlock Text="{Binding CodexDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding CodexDetectLabel}" Margin="0,0,0,8"/>
                                                 <TextBlock Text="{StaticResource L.CodexCliPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                 <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsCodexPath, UpdateSourceTrigger=PropertyChanged}"/>
                                                 <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
@@ -232,22 +231,46 @@
                                         </DockPanel>
                                         <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
                                             <StackPanel>
+                                                <!-- UI 언어 -->
+                                                <TextBlock Text="{StaticResource L.UiLanguage}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}"/>
+                                                <ComboBox ItemsSource="{Binding AvailableLanguages}" SelectedValuePath="Id" SelectedValue="{Binding SettingsLanguage, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200" Margin="0,4,0,0">
+                                                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate></ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                                <TextBlock Text="{StaticResource L.EnglishUiTip}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+
+                                                <Border Height="1" Background="{DynamicResource LineSoft}" Margin="0,14"/>
+
+                                                <!-- 번역 전/후 언어 -->
                                                 <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="14"/>
-                                                        <ColumnDefinition Width="220"/>
-                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                                     <StackPanel Grid.Column="0">
-                                                        <TextBlock Text="{StaticResource L.Endpoint}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsOllamaEndpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                                                        <TextBlock Text="{StaticResource L.TranslateSource}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}"/>
+                                                        <TextBlock Text="{StaticResource L.TranslateSourceDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,2,0,4" TextWrapping="Wrap"/>
+                                                        <ComboBox ItemsSource="{Binding AvailableTranslationLanguages}" SelectedValuePath="Id" SelectedValue="{Binding SettingsTranslateSource, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                                                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate></ComboBox.ItemTemplate>
+                                                        </ComboBox>
                                                     </StackPanel>
                                                     <StackPanel Grid.Column="2">
-                                                        <TextBlock Text="{StaticResource L.StatusModel}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsOllamaModel, UpdateSourceTrigger=PropertyChanged}"/>
+                                                        <TextBlock Text="{StaticResource L.TranslateTarget}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}"/>
+                                                        <TextBlock Text="{StaticResource L.TranslateTargetDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,2,0,4" TextWrapping="Wrap"/>
+                                                        <ComboBox ItemsSource="{Binding AvailableTranslationLanguages}" SelectedValuePath="Id" SelectedValue="{Binding SettingsTranslateTarget, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                                                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate></ComboBox.ItemTemplate>
+                                                        </ComboBox>
                                                     </StackPanel>
                                                 </Grid>
-                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,10,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}" Content="{StaticResource L.DefaultTranslation}" ToolTip="{StaticResource L.DefaultTranslationTip}"/>
+
+                                                <Border Height="1" Background="{DynamicResource LineSoft}" Margin="0,14"/>
+
+                                                <!-- 번역 엔진 (Ollama) -->
+                                                <TextBlock Text="{StaticResource L.Endpoint}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsOllamaEndpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="{StaticResource L.TranslationModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.QueryModels}" Command="{Binding QueryOllamaModelsCommand}" VerticalAlignment="Top" Margin="8,0,0,0"/>
+                                                    <ComboBox IsEditable="True" ItemsSource="{Binding OllamaModels}" Text="{Binding SettingsOllamaModel, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch"/>
+                                                </DockPanel>
+                                                <TextBlock Text="{Binding OllamaModelsStatus}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0"/>
+                                                <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,12,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}" Content="{StaticResource L.DefaultTranslation}" ToolTip="{StaticResource L.DefaultTranslationTip}"/>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>
@@ -473,62 +496,22 @@
                                         </Border>
                                     </StackPanel>
 
-                                    <!-- 06 Language -->
-                                    <StackPanel x:Name="SecLanguage" Margin="0,14,0,0">
-                                        <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="06" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecLanguage}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
-                                            <Border Height="1" Background="{DynamicResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </DockPanel>
-                                        <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
-                                            <StackPanel>
-                                                <TextBlock Text="{StaticResource L.SecLanguage}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
-                                                <TextBlock Text="{StaticResource L.LanguageDesc}" FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="0,2,0,14"/>
 
-                                                <!-- UI 언어 -->
-                                                <TextBlock Text="{StaticResource L.UiLanguage}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}"/>
-                                                <ComboBox ItemsSource="{Binding AvailableLanguages}" SelectedValuePath="Id"
-                                                          SelectedValue="{Binding SettingsLanguage, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200" Margin="0,4,0,0">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-                                                <TextBlock Text="{StaticResource L.EnglishUiTip}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,4,0,14" TextWrapping="Wrap"/>
-
-                                                <!-- 번역 전 언어 (사용자 입력·표시) -->
-                                                <TextBlock Text="{StaticResource L.TranslateSource}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}"/>
-                                                <TextBlock Text="{StaticResource L.TranslateSourceDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,2,0,4" TextWrapping="Wrap"/>
-                                                <ComboBox ItemsSource="{Binding AvailableTranslationLanguages}" SelectedValuePath="Id"
-                                                          SelectedValue="{Binding SettingsTranslateSource, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-
-                                                <!-- 번역 후 언어 (엔진 전달) -->
-                                                <TextBlock Text="{StaticResource L.TranslateTarget}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}" Margin="0,14,0,0"/>
-                                                <TextBlock Text="{StaticResource L.TranslateTargetDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,2,0,4" TextWrapping="Wrap"/>
-                                                <ComboBox ItemsSource="{Binding AvailableTranslationLanguages}" SelectedValuePath="Id"
-                                                          SelectedValue="{Binding SettingsTranslateTarget, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="200">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- 07 Project (ours) -->
+                                    <!-- 06 Project (ours) -->
                                     <StackPanel x:Name="SecProject" Margin="0,14,0,0">
                                         <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="07" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="06" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                             <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecProject}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
                                             <Border Height="1" Background="{DynamicResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                                         </DockPanel>
                                         <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
                                             <StackPanel>
+                                                <TextBlock FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="0,0,0,12" TextWrapping="Wrap">
+                                                    <Run Text="{StaticResource L.ProjectScopeDesc}"/><Run Text=" "/><Run Text="{Binding ActiveProject.Name, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Accent}"/>
+                                                </TextBlock>
                                                 <TextBlock Text="{StaticResource L.McpConfigPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                 <TextBox Style="{StaticResource SettingsInput}" Text="{Binding ActiveProject.McpConfigPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="{StaticResource L.McpConfigDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
                                                 <DockPanel Margin="0,14,0,0">
                                                     <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" ToolTip="{StaticResource L.AddExtraPathTip}" Click="AddExtraPath_Click">
                                                         <StackPanel Orientation="Horizontal">

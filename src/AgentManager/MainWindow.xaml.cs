@@ -250,11 +250,15 @@ public partial class MainWindow : Window
         {
             if (!System.IO.File.Exists(WindowStatePath)) return;
             var parts = System.IO.File.ReadAllText(WindowStatePath).Split(',');
-            if (parts.Length == 4
+            if (parts.Length >= 4
                 && double.TryParse(parts[0], out var l) && double.TryParse(parts[1], out var t)
                 && double.TryParse(parts[2], out var w) && double.TryParse(parts[3], out var h)
                 && w > 200 && h > 200)
-            { Left = l; Top = t; Width = w; Height = h; }
+            {
+                // 저장된 건 항상 '복원(normal) 크기' — 최대화 상태에서도 RestoreBounds를 기록한다.
+                Left = l; Top = t; Width = w; Height = h;
+                if (parts.Length >= 5 && parts[4] == "max") WindowState = WindowState.Maximized;
+            }
         }
         catch { }
     }
@@ -277,8 +281,12 @@ public partial class MainWindow : Window
         try
         {
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(WindowStatePath)!);
+            // 최대화/최소화 상태에서는 RestoreBounds(복원 크기)를 저장해야 다음 실행 때 거대한 창이 안 뜬다.
+            var r = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
+            if (r.IsEmpty || r.Width < 200 || r.Height < 200) r = new Rect(Left, Top, Width, Height);
+            var state = WindowState == WindowState.Maximized ? "max" : "normal";
             System.IO.File.WriteAllText(WindowStatePath,
-                string.Join(",", Left, Top, Width, Height));
+                string.Join(",", r.Left, r.Top, r.Width, r.Height, state));
         }
         catch { }
     }

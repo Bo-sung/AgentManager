@@ -73,7 +73,15 @@
     <!-- Settings (full pane) -->
     <sys:String x:Key="L.SettingsWorkspace">workspace · local</sys:String>
     <sys:String x:Key="L.SecRuntimes">Runtimes</sys:String>
-    <sys:String x:Key="L.SecTranslation">Translation</sys:String>
+    <sys:String x:Key="L.SecTranslation">Translation &amp; Language</sys:String>
+    <sys:String x:Key="L.TranslationModel">Translation model (Ollama)</sys:String>
+    <sys:String x:Key="L.QueryModels">Query installed</sys:String>
+    <sys:String x:Key="L.Querying">Querying…</sys:String>
+    <sys:String x:Key="L.ModelsFound">{0} installed</sys:String>
+    <sys:String x:Key="L.NoModels">No models installed</sys:String>
+    <sys:String x:Key="L.QueryFailed">Query failed — is Ollama running?</sys:String>
+    <sys:String x:Key="L.ProjectScopeDesc">The settings below apply to the active project only —</sys:String>
+    <sys:String x:Key="L.McpConfigDesc">Path to an MCP server config (.mcp.json) wired into the agent. Empty = none.</sys:String>
     <sys:String x:Key="L.SecOrchestration">Orchestration</sys:String>
     <sys:String x:Key="L.SecPermissions">Permissions</sys:String>
     <sys:String x:Key="L.SecAppearance">Appearance</sys:String>

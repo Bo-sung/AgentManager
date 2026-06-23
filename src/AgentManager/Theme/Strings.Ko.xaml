@@ -73,7 +73,15 @@
     <!-- Settings (full pane) -->
     <sys:String x:Key="L.SettingsWorkspace">워크스페이스 · 로컬</sys:String>
     <sys:String x:Key="L.SecRuntimes">런타임</sys:String>
-    <sys:String x:Key="L.SecTranslation">번역</sys:String>
+    <sys:String x:Key="L.SecTranslation">번역 · 언어</sys:String>
+    <sys:String x:Key="L.TranslationModel">번역 모델 (Ollama)</sys:String>
+    <sys:String x:Key="L.QueryModels">설치 모델 조회</sys:String>
+    <sys:String x:Key="L.Querying">조회 중…</sys:String>
+    <sys:String x:Key="L.ModelsFound">{0}개 설치됨</sys:String>
+    <sys:String x:Key="L.NoModels">설치된 모델 없음</sys:String>
+    <sys:String x:Key="L.QueryFailed">조회 실패 — Ollama 실행 여부 확인</sys:String>
+    <sys:String x:Key="L.ProjectScopeDesc">아래 설정은 현재 활성 프로젝트에만 적용됩니다 —</sys:String>
+    <sys:String x:Key="L.McpConfigDesc">에이전트에 연결할 MCP 서버 설정 파일 경로(.mcp.json 등). 비우면 사용 안 함.</sys:String>
     <sys:String x:Key="L.SecOrchestration">오케스트레이션</sys:String>
     <sys:String x:Key="L.SecPermissions">권한</sys:String>
     <sys:String x:Key="L.SecAppearance">외관</sys:String>
