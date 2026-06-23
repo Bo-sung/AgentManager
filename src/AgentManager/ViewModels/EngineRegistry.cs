@@ -72,15 +72,38 @@ public static class EngineRegistry
     }
 
     private static string? ResolveCodex()
+        // 1순위: 독립 설치(npm 전역 @openai/codex)의 네이티브 바이너리.
+        // 2순위: openai.chatgpt VS Code 확장에 번들된 codex(여러 버전이면 최신).
+        => ResolveCodexNpm() ?? ResolveCodexVscode();
+
+    /// <summary>npm 전역 @openai/codex 패키지의 플랫폼 네이티브 codex.exe.
+    /// (PATH의 codex는 node 셸 심(.cmd/.ps1)이라 실제 exe를 vendor 트리에서 찾는다.)</summary>
+    private static string? ResolveCodexNpm()
     {
-        // codex CLI ships inside the openai.chatgpt VS Code extension (versioned folder).
-        var extRoot = Path.Combine(Home, ".vscode", "extensions");
-        if (Directory.Exists(extRoot))
-            foreach (var dir in Directory.EnumerateDirectories(extRoot, "openai.chatgpt-*"))
-            {
-                var c = Path.Combine(dir, "bin", "windows-x86_64", "codex.exe");
-                if (File.Exists(c)) return c;
-            }
+        var pkg = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), // %APPDATA%
+            "npm", "node_modules", "@openai", "codex",
+            "node_modules", "@openai", "codex-win32-x64", "vendor");
+        if (!Directory.Exists(pkg)) return null;
+        foreach (var exe in Directory.EnumerateFiles(pkg, "codex.exe", SearchOption.AllDirectories))
+            return exe; // .../bin/codex.exe
         return null;
+    }
+
+    /// <summary>VS Code 확장(openai.chatgpt-*) 번들 codex — 여러 버전 설치 시 가장 최근 빌드.</summary>
+    private static string? ResolveCodexVscode()
+    {
+        var extRoot = Path.Combine(Home, ".vscode", "extensions");
+        if (!Directory.Exists(extRoot)) return null;
+        string? best = null;
+        var bestTime = DateTime.MinValue;
+        foreach (var dir in Directory.EnumerateDirectories(extRoot, "openai.chatgpt-*"))
+        {
+            var c = Path.Combine(dir, "bin", "windows-x86_64", "codex.exe");
+            if (!File.Exists(c)) continue;
+            var t = File.GetLastWriteTimeUtc(c);
+            if (t > bestTime) { bestTime = t; best = c; }
+        }
+        return best;
     }
 }
