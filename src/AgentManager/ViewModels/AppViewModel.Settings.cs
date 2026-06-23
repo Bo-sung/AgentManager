@@ -174,11 +174,68 @@ public sealed partial class AppViewModel
         set { if (Set(ref _settingsAccent, value)) Theme.AccentPalette.Apply(value); }
     }
     private string _settingsAccent = "ember";
-    private string _density = "comfortable";
-    public string SettingsDensity { get => _settingsDensity; set => Set(ref _settingsDensity, value); }
-    private string _settingsDensity = "comfortable";
-    /// <summary>밀도 → 루트 콘텐츠 스케일 (라이브).</summary>
-    public double DensityScale => _density == "compact" ? 0.92 : 1.0;
+
+    // ----- UI 줌: 본문/모달 독립 배율 (Ctrl+휠·단축키는 활성 영역만 조정) -----
+    private static double ClampZoom(double v) => Math.Clamp(Math.Round(v, 2), 0.5, 2.0);
+
+    private double _bodyScale = 1.0;
+    /// <summary>본문(사이드바+콘텐츠) 스케일. clamp 0.5~2.0. Body Grid가 바인딩.</summary>
+    public double BodyScale
+    {
+        get => _bodyScale;
+        set { if (Set(ref _bodyScale, ClampZoom(value))) { OnChanged(nameof(BodyScalePercent)); DebouncedZoomSave(); } }
+    }
+    private double _modalScale = 1.0;
+    /// <summary>모달(오버레이) 스케일. 본문과 독립. clamp 0.5~2.0. 모달들이 바인딩.</summary>
+    public double ModalScale
+    {
+        get => _modalScale;
+        set { if (Set(ref _modalScale, ClampZoom(value))) { OnChanged(nameof(ModalScalePercent)); DebouncedZoomSave(); } }
+    }
+    /// <summary>설정 드롭다운용 퍼센트(양방향).</summary>
+    public int BodyScalePercent { get => (int)Math.Round(_bodyScale * 100); set => BodyScale = value / 100.0; }
+    public int ModalScalePercent { get => (int)Math.Round(_modalScale * 100); set => ModalScale = value / 100.0; }
+    /// <summary>줌 퍼센트 선택지(50~200%, 10% 간격).</summary>
+    public int[] ZoomPercentOptions { get; } = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
+
+    /// <summary>활성 줌 영역 = 모달이 하나라도 열려 있으면 모달, 아니면 본문.</summary>
+    public bool IsModalActive => ShowNewAgent || ShowWorkerAssign || ShowNoIdleWorker || ShowAbout || ShowNewProject || ShowNewSchedule;
+
+    /// <summary>Ctrl+휠·단축키: 활성 영역(모달 열림 시 모달, 아니면 본문)만 조정.</summary>
+    public void ZoomBy(int direction)
+    {
+        if (IsModalActive) { ModalScale += direction * 0.1; FlashZoomToast("모달", _modalScale); }
+        else { BodyScale += direction * 0.1; FlashZoomToast("본문", _bodyScale); }
+    }
+    public void ZoomReset()
+    {
+        if (IsModalActive) { ModalScale = 1.0; FlashZoomToast("모달", 1.0); }
+        else { BodyScale = 1.0; FlashZoomToast("본문", 1.0); }
+    }
+
+    // 줌 % 토스트 (변경 시 잠깐 표시)
+    private string _zoomToastText = "";
+    public string ZoomToastText { get => _zoomToastText; private set => Set(ref _zoomToastText, value); }
+    private bool _showZoomToast;
+    public bool ShowZoomToast { get => _showZoomToast; private set => Set(ref _showZoomToast, value); }
+    private DispatcherTimer? _zoomToastTimer;
+    private DispatcherTimer? _zoomSaveTimer;
+    private void FlashZoomToast(string region, double scale)
+    {
+        ZoomToastText = $"{region} {(int)Math.Round(scale * 100)}%";
+        ShowZoomToast = true;
+        _zoomToastTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.1) };
+        _zoomToastTimer.Tick -= ZoomToastTick; _zoomToastTimer.Tick += ZoomToastTick;
+        _zoomToastTimer.Stop(); _zoomToastTimer.Start();
+    }
+    private void ZoomToastTick(object? sender, EventArgs e) { _zoomToastTimer!.Stop(); ShowZoomToast = false; }
+    private void DebouncedZoomSave()
+    {
+        _zoomSaveTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
+        _zoomSaveTimer.Tick -= ZoomSaveTick; _zoomSaveTimer.Tick += ZoomSaveTick;
+        _zoomSaveTimer.Stop(); _zoomSaveTimer.Start();
+    }
+    private void ZoomSaveTick(object? sender, EventArgs e) { _zoomSaveTimer!.Stop(); SaveState(); }
     private bool _telemetry;
     public bool SettingsTelemetry { get => _settingsTelemetry; set => Set(ref _settingsTelemetry, value); }
     private bool _settingsTelemetry;
@@ -265,7 +322,6 @@ public sealed partial class AppViewModel
         SettingsModelGx = DefaultModelFor("gx");
         SettingsModelAgy = DefaultModelFor("agy");
         SettingsAccent = _accent;
-        SettingsDensity = _density;
         SettingsTelemetry = _telemetry;
         SettingsEngineCc = !_disabledEngines.Contains("cc");
         SettingsEngineGx = !_disabledEngines.Contains("gx");
@@ -327,8 +383,6 @@ public sealed partial class AppViewModel
         SetDefaultModel("gx", SettingsModelGx);
         SetDefaultModel("agy", SettingsModelAgy);
         _accent = Theme.AccentPalette.Normalize(SettingsAccent);
-        _density = SettingsDensity == "compact" ? "compact" : "comfortable";
-        OnChanged(nameof(DensityScale));
         _telemetry = SettingsTelemetry;
         // 엔진 비활성 집합 재구성 — 단, 최소 1개는 활성으로 유지
         var disabled = new HashSet<string>();

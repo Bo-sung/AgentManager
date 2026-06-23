@@ -112,6 +112,14 @@
     <sys:String x:Key="L.WorkerPreamble">워커 행동 규칙 (기본 템플릿)</sys:String>
     <sys:String x:Key="L.WorkerPreambleDesc">새 워커 생성 시 기본으로 채워지는 행동 규칙. 위임 프롬프트 앞에 자동 부착됩니다.</sys:String>
     <sys:String x:Key="L.DelegateAll">유휴 워커 전체에 위임</sys:String>
+    <sys:String x:Key="L.Zoom">UI 줌</sys:String>
+    <sys:String x:Key="L.ZoomDesc">본문과 모달 배율을 따로 조절 (50~200%).</sys:String>
+    <sys:String x:Key="L.ZoomReset">초기화</sys:String>
+    <sys:String x:Key="L.ZoomBody">본문</sys:String>
+    <sys:String x:Key="L.ZoomModal">모달</sys:String>
+    <sys:String x:Key="L.ZoomScopeAll">전체(모달 포함)</sys:String>
+    <sys:String x:Key="L.ZoomScopeBody">본문만</sys:String>
+    <sys:String x:Key="L.ZoomHint">Ctrl+휠 · Ctrl + + / − · Ctrl + 0 은 활성 영역(모달 열림 시 모달, 아니면 본문)만 조정. 타이틀바 제외.</sys:String>
     <sys:String x:Key="L.Privacy">개인정보</sys:String>
     <sys:String x:Key="L.OpenSettingsJson">settings.json 열기</sys:String>
     <sys:String x:Key="L.OpenSettingsJsonTip">설정을 JSON으로 편집 — 외부 변경은 즉시 반영됩니다.</sys:String>

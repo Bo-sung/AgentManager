@@ -37,7 +37,10 @@ public sealed partial class AppViewModel
         _streamLogs = s.StreamLogs;
         _defaultModels = s.DefaultModels ?? new();
         _accent = Theme.AccentPalette.Normalize(s.Accent);
-        _density = s.Density == "compact" ? "compact" : "comfortable";
+        // UI 줌: 본문/모달 독립 배율. 구버전(UiScale/ZoomScope) 마이그레이션.
+        var legacy = s.UiScale > 0 ? s.UiScale : 1.0;
+        _bodyScale = ClampZoom(s.BodyScale > 0 ? s.BodyScale : legacy);
+        _modalScale = ClampZoom(s.ModalScale > 0 ? s.ModalScale : (s.ZoomScope == "body" ? 1.0 : legacy));
         _telemetry = s.Telemetry;
         _disabledEngines.Clear();
         foreach (var d in s.DisabledEngines ?? []) _disabledEngines.Add(d);
@@ -80,7 +83,8 @@ public sealed partial class AppViewModel
         StreamLogs = _streamLogs,
         DefaultModels = new Dictionary<string, string>(_defaultModels),
         Accent = _accent,
-        Density = _density,
+        BodyScale = _bodyScale,
+        ModalScale = _modalScale,
         Telemetry = _telemetry,
         DisabledEngines = _disabledEngines.ToList(),
         EngineAuthMode = new Dictionary<string, string>(_engineAuthMode),
@@ -265,7 +269,10 @@ public sealed partial class AppViewModel
             if (JsonSerializer.Serialize(disk, opts) == JsonSerializer.Serialize(BuildSettingsDto(), opts))
                 return; // 우리가 쓴 내용과 동일 → 외부 변경 아님
             ApplySettings(disk);
-            OnChanged(nameof(DensityScale));
+            OnChanged(nameof(BodyScale));
+            OnChanged(nameof(ModalScale));
+            OnChanged(nameof(BodyScalePercent));
+            OnChanged(nameof(ModalScalePercent));
             if (CurrentView == MainViewKind.Settings) PullSettingsToEditor();
         }
         catch { }

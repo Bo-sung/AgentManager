@@ -403,7 +403,7 @@
         <!-- ===================== Body ===================== -->
         <Grid Grid.Row="1">
             <Grid.LayoutTransform>
-                <ScaleTransform ScaleX="{Binding DensityScale}" ScaleY="{Binding DensityScale}"/>
+                <ScaleTransform ScaleX="{Binding BodyScale}" ScaleY="{Binding BodyScale}"/>
             </Grid.LayoutTransform>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="280"/>
@@ -1260,6 +1260,7 @@
             <Border Width="620" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
                     BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.LayoutTransform><ScaleTransform ScaleX="{Binding ModalScale}" ScaleY="{Binding ModalScale}"/></Border.LayoutTransform>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
@@ -1389,6 +1390,7 @@
                     BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10"
                     MouseLeftButtonUp="AboutOverlay_CardClick" RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.LayoutTransform><ScaleTransform ScaleX="{Binding ModalScale}" ScaleY="{Binding ModalScale}"/></Border.LayoutTransform>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
@@ -1491,6 +1493,7 @@
             <Border Width="540" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
                     BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.LayoutTransform><ScaleTransform ScaleX="{Binding ModalScale}" ScaleY="{Binding ModalScale}"/></Border.LayoutTransform>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
@@ -1594,6 +1597,7 @@
             <Border Width="600" MaxHeight="800" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
                     BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.LayoutTransform><ScaleTransform ScaleX="{Binding ModalScale}" ScaleY="{Binding ModalScale}"/></Border.LayoutTransform>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
@@ -1769,6 +1773,7 @@
             <Border Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
                     BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.LayoutTransform><ScaleTransform ScaleX="{Binding ModalScale}" ScaleY="{Binding ModalScale}"/></Border.LayoutTransform>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
@@ -1818,6 +1823,7 @@
             <Border Width="560" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
                     BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.LayoutTransform><ScaleTransform ScaleX="{Binding ModalScale}" ScaleY="{Binding ModalScale}"/></Border.LayoutTransform>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
@@ -1875,6 +1881,13 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <!-- ===================== Zoom % toast ===================== -->
+        <Border Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Background="#CC05080B"
+                BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" Padding="24,15" IsHitTestVisible="False"
+                Visibility="{Binding ShowZoomToast, Converter={StaticResource BoolVis}}">
+            <TextBlock Text="{Binding ZoomToastText}" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
+        </Border>
 
     </Grid>
 </Window>

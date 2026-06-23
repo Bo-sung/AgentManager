@@ -465,40 +465,28 @@
                                                     <Border Style="{StaticResource Swatch}" Background="#FF5B8CFF" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:azure" ToolTip="Azure"/>
                                                     <Border Style="{StaticResource Swatch}" Background="#FFA87BFF" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:violet" ToolTip="Violet"/>
                                                 </StackPanel>
-                                                <!-- Density -->
-                                                <TextBlock Text="{StaticResource L.Density}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" Margin="0,16,0,8"/>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Border controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="density:comfortable" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="14,7" Margin="0,0,8,0">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{DynamicResource Bg1}"/>
-                                                                <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SettingsDensity}" Value="comfortable">
-                                                                        <Setter Property="Background" Value="{DynamicResource AccentDim}"/>
-                                                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{StaticResource L.DensityComfortable}" FontSize="11.5" Foreground="{DynamicResource Txt0}"/>
-                                                    </Border>
-                                                    <Border controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="density:compact" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="14,7">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{DynamicResource Bg1}"/>
-                                                                <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SettingsDensity}" Value="compact">
-                                                                        <Setter Property="Background" Value="{DynamicResource AccentDim}"/>
-                                                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{StaticResource L.DensityCompact}" FontSize="11.5" Foreground="{DynamicResource Txt0}"/>
-                                                    </Border>
-                                                </StackPanel>
+                                                <!-- UI Zoom (Ctrl+휠) -->
+                                                <TextBlock Text="{StaticResource L.Zoom}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" Margin="0,16,0,2"/>
+                                                <TextBlock Text="{StaticResource L.ZoomDesc}" FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="0,0,0,8"/>
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource ChipButton}"
+                                                            Content="{StaticResource L.ZoomReset}" Command="{Binding ZoomResetAllCommand}"/>
+                                                    <StackPanel>
+                                                        <DockPanel Margin="0,0,0,6">
+                                                            <TextBlock DockPanel.Dock="Left" Width="48" Text="{StaticResource L.ZoomBody}" FontSize="11.5" Foreground="{DynamicResource Txt1}" VerticalAlignment="Center"/>
+                                                            <ComboBox HorizontalAlignment="Left" MinWidth="92" ItemsSource="{Binding ZoomPercentOptions}" SelectedItem="{Binding BodyScalePercent, Mode=TwoWay}">
+                                                                <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat={}{0}%}"/></DataTemplate></ComboBox.ItemTemplate>
+                                                            </ComboBox>
+                                                        </DockPanel>
+                                                        <DockPanel>
+                                                            <TextBlock DockPanel.Dock="Left" Width="48" Text="{StaticResource L.ZoomModal}" FontSize="11.5" Foreground="{DynamicResource Txt1}" VerticalAlignment="Center"/>
+                                                            <ComboBox HorizontalAlignment="Left" MinWidth="92" ItemsSource="{Binding ZoomPercentOptions}" SelectedItem="{Binding ModalScalePercent, Mode=TwoWay}">
+                                                                <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat={}{0}%}"/></DataTemplate></ComboBox.ItemTemplate>
+                                                            </ComboBox>
+                                                        </DockPanel>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                                <TextBlock Text="{StaticResource L.ZoomHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,8,0,0" TextWrapping="Wrap"/>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>

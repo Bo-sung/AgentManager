@@ -25,9 +25,19 @@ public sealed partial class AppViewModel
     public RelayCommand ThemeSelectCommand { get; private set; } = null!;
     /// <summary>settings.json을 기본 편집기로 열기.</summary>
     public RelayCommand OpenSettingsFileCommand { get; private set; } = null!;
+    /// <summary>UI 줌 인/아웃/리셋 (Ctrl++ / Ctrl+- / Ctrl+0).</summary>
+    public RelayCommand ZoomInCommand { get; private set; } = null!;
+    public RelayCommand ZoomOutCommand { get; private set; } = null!;
+    public RelayCommand ZoomResetCommand { get; private set; } = null!;
+    /// <summary>본문·모달 배율 모두 100%로 초기화(설정 버튼).</summary>
+    public RelayCommand ZoomResetAllCommand { get; private set; } = null!;
 
     private void InitNavCommands()
     {
+        ZoomInCommand = new RelayCommand(_ => ZoomBy(+1));
+        ZoomOutCommand = new RelayCommand(_ => ZoomBy(-1));
+        ZoomResetCommand = new RelayCommand(_ => ZoomReset());
+        ZoomResetAllCommand = new RelayCommand(_ => { BodyScale = 1.0; ModalScale = 1.0; });
         SelectEngineCommand = new RelayCommand(p => { if (p is EngineDef def) NewAgentSelectedEngine = def; });
         NewAgentForEngineCommand = new RelayCommand(p =>
         {
@@ -53,7 +63,6 @@ public sealed partial class AppViewModel
             {
                 case "policy": SettingsApprovalPolicy = value; break;
                 case "accent": SettingsAccent = value; break;
-                case "density": SettingsDensity = value; break;
             }
         });
         AuthModeCommand = new RelayCommand(p =>

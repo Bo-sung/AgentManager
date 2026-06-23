@@ -112,6 +112,14 @@
     <sys:String x:Key="L.WorkerPreamble">Worker behavior preamble (default template)</sys:String>
     <sys:String x:Key="L.WorkerPreambleDesc">Default behavior rules for new workers, auto-prepended to delegation prompts.</sys:String>
     <sys:String x:Key="L.DelegateAll">Delegate to all idle workers</sys:String>
+    <sys:String x:Key="L.Zoom">UI zoom</sys:String>
+    <sys:String x:Key="L.ZoomDesc">Set body and modal zoom independently (50–200%).</sys:String>
+    <sys:String x:Key="L.ZoomReset">Reset</sys:String>
+    <sys:String x:Key="L.ZoomBody">Body</sys:String>
+    <sys:String x:Key="L.ZoomModal">Modal</sys:String>
+    <sys:String x:Key="L.ZoomScopeAll">All (incl. modals)</sys:String>
+    <sys:String x:Key="L.ZoomScopeBody">Body only</sys:String>
+    <sys:String x:Key="L.ZoomHint">Ctrl+wheel · Ctrl + + / − · Ctrl + 0 adjust the active area only (modal if one is open, else body). Title bar excluded.</sys:String>
     <sys:String x:Key="L.Privacy">Privacy</sys:String>
     <sys:String x:Key="L.OpenSettingsJson">Open settings.json</sys:String>
     <sys:String x:Key="L.OpenSettingsJsonTip">Edit settings as JSON; external changes apply live.</sys:String>

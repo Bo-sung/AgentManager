@@ -86,6 +86,9 @@
 | **API key 인증** — Runtimes 카드(cc/gx) Subscription/API key 세그 + 키 필드, DPAPI(CurrentUser) 암호화 저장(crypt32 P/Invoke, 평문 금지), 실행 시 env 주입(SessionOptions.ExtraEnvironment → AgentSession; cc=ANTHROPIC_API_KEY/gx=OPENAI_API_KEY/ag 백엔드). DPAPI 라운드트립 OS 확인 | c6ee1d6 |
 | **레거시 어댑터 정리** — 구형 standalone Gemini CLI / Antigravity 어댑터(AntigravityAdapter.cs) 제거, Google 계열을 agy 엔진으로 일원화 (등록 엔진 = cc·gx·agy) | 8da33b0 |
 
+### 🛠 세션 2026-06-24
+| **UI 줌(Ctrl+휠)** — 본문/모달 독립 배율(BodyScale·ModalScale), 설정 드롭다운 2개 + 초기화, Ctrl+휠·Ctrl +/−/0 은 활성 영역(모달 열림 시 모달, 아니면 본문)만 조정. LayoutTransform 리플로우(선명), 타이틀바 제외, settings.json 영속(레거시 density→마이그레이션). 설계문서 docs/UI_ZOOM_DESIGN_KO.md | feature/ui-zoom |
+
 ### 🛠 세션 2026-06-23
 | **워커 위임(Worker Delegation)** — 메인↔워커 핸드오프. Core 데이터모델(SessionRole·WorkerDelegation·WorkerDefaults) + DelegationCoordinator(CreateWorkerSession·DelegateAsync·Inject/Merge) + 워커 전용 cap·워커별 번역. UI: WorkerAssign/NoIdle 모달·DelegationCard·보고 수신함·사이드바 WORKERS 그룹·Settings(cap+preamble)·일괄 fan-out. 설계/브리프 문서 + 디자인 프로토타입(am-delegate.jsx). 라이브 검증: 단건·멀티·크로스엔진(cc→agy)·3-way 동시 fan-out 전부 통과 | feature/worker-delegation |
 | **언어 설정 드롭다운 + 번역 언어쌍** — UI 언어 드롭다운화 + 번역 전/후 언어(11개) 설정·고정, ComboBox selection-box 버그 수정 | 2734bcc, 7961ff7 |

@@ -49,8 +49,16 @@ public sealed record AppSettingsDto
     public Dictionary<string, string> DefaultModels { get; init; } = new();
     /// <summary>강조색 프리셋: ember | amber | teal | azure | violet (라이브 적용).</summary>
     public string Accent { get; init; } = "ember";
-    /// <summary>밀도: comfortable | compact (UI 스케일).</summary>
+    /// <summary>밀도(레거시): comfortable | compact. UiScale로 대체됨 — 마이그레이션 읽기용으로만 유지.</summary>
     public string Density { get; init; } = "comfortable";
+    /// <summary>본문 줌 배율(Ctrl+휠). 0.5~2.0. 0 = 미설정(마이그레이션용).</summary>
+    public double BodyScale { get; init; }
+    /// <summary>모달 줌 배율(본문과 독립). 0.5~2.0. 0 = 미설정.</summary>
+    public double ModalScale { get; init; }
+    /// <summary>(레거시) 통합 줌 배율 — BodyScale/ModalScale로 대체, 마이그레이션 읽기용.</summary>
+    public double UiScale { get; init; }
+    /// <summary>(레거시) 줌 범위 all|body — 마이그레이션 읽기용.</summary>
+    public string ZoomScope { get; init; } = "all";
     /// <summary>익명 텔레메트리 opt-in (로컬 전용, 외부 전송 없음).</summary>
     public bool Telemetry { get; init; }
     /// <summary>사용자가 비활성한 엔진 id 목록 (New Agent 피커에서 숨김).</summary>

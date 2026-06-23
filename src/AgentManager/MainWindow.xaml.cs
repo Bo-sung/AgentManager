@@ -30,12 +30,30 @@ public partial class MainWindow : Window
         InputBindings.Add(new KeyBinding(_vm.ShowViewCommand, Key.D3, ModifierKeys.Control) { CommandParameter = "scheduled" });
         InputBindings.Add(new KeyBinding(_vm.ToggleReviewCommand, Key.R, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(_vm.ShowSettingsCommand, Key.OemComma, ModifierKeys.Control));
+        // UI 줌 단축키 (Ctrl+0 리셋 · Ctrl++/Ctrl+- 인/아웃, 넘패드 포함)
+        InputBindings.Add(new KeyBinding(_vm.ZoomResetCommand, Key.D0, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(_vm.ZoomResetCommand, Key.NumPad0, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(_vm.ZoomInCommand, Key.OemPlus, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(_vm.ZoomInCommand, Key.Add, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(_vm.ZoomOutCommand, Key.OemMinus, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(_vm.ZoomOutCommand, Key.Subtract, ModifierKeys.Control));
+        PreviewMouseWheel += OnPreviewMouseWheelZoom;
         RestoreWindowPlacement();
         Closing += (_, _) =>
         {
             SaveWindowPlacement();
             _vm.Dispose();
         };
+    }
+
+    // Ctrl+휠 = UI 줌 (크롬/파폭식). Window 터널링이라 트랜스크립트 스크롤 중계보다 먼저 발화.
+    private void OnPreviewMouseWheelZoom(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && e.Delta != 0)
+        {
+            _vm.ZoomBy(System.Math.Sign(e.Delta));
+            e.Handled = true;
+        }
     }
 
     // WindowStyle=None + WindowChrome: 기본 최대화는 창을 작업영역보다 ~리사이즈보더만큼 크게
