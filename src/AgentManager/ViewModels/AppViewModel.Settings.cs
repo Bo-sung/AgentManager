@@ -26,6 +26,8 @@ public sealed partial class AppViewModel
     public string SettingsClaudePath { get => _settingsClaudePath; set => Set(ref _settingsClaudePath, value); }
     private string _settingsCodexPath = "";
     public string SettingsCodexPath { get => _settingsCodexPath; set => Set(ref _settingsCodexPath, value); }
+    private string _settingsAgyPath = "";
+    public string SettingsAgyPath { get => _settingsAgyPath; set => Set(ref _settingsAgyPath, value); }
     private string _settingsOllamaEndpoint = "";
     public string SettingsOllamaEndpoint { get => _settingsOllamaEndpoint; set => Set(ref _settingsOllamaEndpoint, value); }
     private string _settingsOllamaModel = "";
@@ -283,7 +285,7 @@ public sealed partial class AppViewModel
     /// (명령 추측 없이 각 CLI 자체 인증 플로우 사용).</summary>
     public void SignIn(string engineId)
     {
-        var exe = EngineRegistry.ResolveExe(engineId, _claudePath, _codexPath);
+        var exe = EngineRegistry.ResolveExe(engineId, _claudePath, _codexPath, _agyPath);
         if (string.IsNullOrWhiteSpace(exe))
         {
             SettingsStatus = L("L.SignInNotFound");
@@ -309,13 +311,30 @@ public sealed partial class AppViewModel
 
     public string ClaudeDetectLabel => DetectLabel("cc", _claudePath);
     public string CodexDetectLabel => DetectLabel("gx", _codexPath);
-    public string AgyDetectLabel => DetectLabel("agy", null);
+    public string AgyDetectLabel => DetectLabel("agy", _agyPath);
     private static string DetectLabel(string id, string? overridePath)
     {
-        var exe = EngineRegistry.ResolveExe(id, id == "cc" ? overridePath : null, id == "gx" ? overridePath : null);
+        var exe = EngineRegistry.ResolveExe(id,
+            id == "cc" ? overridePath : null,
+            id == "gx" ? overridePath : null,
+            id == "agy" ? overridePath : null);
         if (exe is null) return AgentManager.App.L("L.DetectMissing");
         if (File.Exists(exe)) return AgentManager.App.L("L.DetectPathPrefix", exe);
         return AgentManager.App.L("L.DetectPathDependent", exe); // bare command name — resolved at spawn time
+    }
+
+    /// <summary>'탐지' 버튼 — 오토 탐지만 수행해 결과를 해당 경로 입력란에 채운다(수동값 무시). 못 찾으면 입력값 보존.</summary>
+    public void DetectEnginePath(string id)
+    {
+        var found = EngineRegistry.DetectExe(id);
+        if (found is null) { SettingsStatus = AgentManager.App.L("L.DetectFailed"); return; }
+        switch (id)
+        {
+            case "cc": SettingsClaudePath = found; break;
+            case "gx": SettingsCodexPath = found; break;
+            case "agy": SettingsAgyPath = found; break;
+        }
+        SettingsStatus = AgentManager.App.L("L.DetectFound", found);
     }
     private void RefreshDetectLabels()
     {
@@ -337,6 +356,7 @@ public sealed partial class AppViewModel
     {
         SettingsClaudePath = _claudePath;
         SettingsCodexPath = _codexPath;
+        SettingsAgyPath = _agyPath;
         SettingsOllamaEndpoint = _ollamaEndpoint;
         SettingsOllamaModel = _ollamaModel;
         SettingsDefaultTranslationEnabled = TranslationEnabled;
@@ -402,6 +422,7 @@ public sealed partial class AppViewModel
     {
         _claudePath = Clean(SettingsClaudePath);
         _codexPath = Clean(SettingsCodexPath);
+        _agyPath = Clean(SettingsAgyPath);
         RefreshDetectLabels();
         _ollamaEndpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint.Trim();
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();

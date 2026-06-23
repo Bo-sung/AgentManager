@@ -68,7 +68,10 @@
                                                 </DockPanel>
                                                 <TextBlock Text="{Binding ClaudeDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ClaudeDetectLabel}" Margin="0,0,0,8"/>
                                                 <TextBlock Text="{StaticResource L.ClaudeCliPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsClaudePath, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.Detect}" Command="{Binding DetectEnginePathCommand}" CommandParameter="cc" VerticalAlignment="Top" Margin="8,0,0,0"/>
+                                                    <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsClaudePath, UpdateSourceTrigger=PropertyChanged}"/>
+                                                </DockPanel>
                                                 <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <ComboBox ItemsSource="{Binding CcModels}" SelectedItem="{Binding SettingsModelCc, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="240"/>
                                                 <TextBlock Text="{StaticResource L.Authentication}" Style="{StaticResource Lbl}" Margin="0,12,0,6"/>
@@ -132,7 +135,10 @@
                                                 </DockPanel>
                                                 <TextBlock Text="{Binding CodexDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding CodexDetectLabel}" Margin="0,0,0,8"/>
                                                 <TextBlock Text="{StaticResource L.CodexCliPath}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsCodexPath, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.Detect}" Command="{Binding DetectEnginePathCommand}" CommandParameter="gx" VerticalAlignment="Top" Margin="8,0,0,0"/>
+                                                    <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsCodexPath, UpdateSourceTrigger=PropertyChanged}"/>
+                                                </DockPanel>
                                                 <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <ComboBox ItemsSource="{Binding GxModels}" SelectedItem="{Binding SettingsModelGx, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="240"/>
                                                 <TextBlock Text="{StaticResource L.Authentication}" Style="{StaticResource Lbl}" Margin="0,12,0,6"/>
@@ -192,7 +198,12 @@
                                                         <TextBlock Text="Antigravity" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
                                                     </DockPanel>
                                                     <TextBlock Text="{Binding AgyDetectLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" TextTrimming="CharacterEllipsis" ToolTip="{Binding AgyDetectLabel}"/>
-                                                    <ComboBox ItemsSource="{Binding AgyModels}" SelectedItem="{Binding SettingsModelAgy, Mode=TwoWay}" Margin="0,8,0,0" HorizontalAlignment="Stretch"/>
+                                                    <TextBlock Text="{StaticResource L.AgyCliPath}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                    <DockPanel>
+                                                        <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.Detect}" Command="{Binding DetectEnginePathCommand}" CommandParameter="agy" VerticalAlignment="Top" Margin="8,0,0,0"/>
+                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsAgyPath, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    </DockPanel>
+                                                    <ComboBox ItemsSource="{Binding AgyModels}" SelectedItem="{Binding SettingsModelAgy, Mode=TwoWay}" Margin="0,10,0,0" HorizontalAlignment="Stretch"/>
                                                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                                         <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding AgyAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
                                                         <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{DynamicResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>

@@ -34,13 +34,23 @@ public static class EngineRegistry
 
     private static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-    public static string? ResolveExe(string id, string? claudePath = null, string? codexPath = null) => id switch
+    public static string? ResolveExe(string id, string? claudePath = null, string? codexPath = null, string? agyPath = null) => id switch
     {
         "cc" => ResolveOverride(claudePath) ?? ResolveClaude(),
         "gx" => ResolveOverride(codexPath) ?? ResolveCodex(),
+        "agy" => ResolveOverride(agyPath) ?? ResolveAgy(),
+        _ => null,
+    };
+
+    /// <summary>오토 탐지만 수행(수동 경로 무시) — 설정의 '탐지' 버튼용. 실제 존재하는 exe만 반환, 없으면 null.</summary>
+    public static string? DetectExe(string id) => id switch
+    {
+        "cc" => RealFile(ResolveClaude()),   // ResolveClaude는 미발견 시 "claude"(PATH 폴백)를 주므로 실제 파일만 거른다
+        "gx" => ResolveCodex(),
         "agy" => ResolveAgy(),
         _ => null,
     };
+    private static string? RealFile(string? p) => p is not null && File.Exists(p) ? p : null;
 
     private static string? ResolveAgy()
     {

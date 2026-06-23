@@ -283,6 +283,10 @@
     <sys:String x:Key="L.AutoDetectHint">leave blank for auto-detect/PATH</sys:String>
     <sys:String x:Key="L.ClaudeCliPath">CLAUDE CLI PATH</sys:String>
     <sys:String x:Key="L.CodexCliPath">CODEX CLI PATH</sys:String>
+    <sys:String x:Key="L.AgyCliPath">ANTIGRAVITY CLI PATH</sys:String>
+    <sys:String x:Key="L.Detect">Detect</sys:String>
+    <sys:String x:Key="L.DetectFound">Detected — {0}</sys:String>
+    <sys:String x:Key="L.DetectFailed">Auto-detect failed — enter the path manually</sys:String>
     <sys:String x:Key="L.AntigravityAgyAuto">ANTIGRAVITY (auto)</sys:String>
     <sys:String x:Key="L.OllamaTranslation">OLLAMA TRANSLATION</sys:String>
     <sys:String x:Key="L.Endpoint">ENDPOINT</sys:String>

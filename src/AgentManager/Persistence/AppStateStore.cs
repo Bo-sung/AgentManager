@@ -18,6 +18,7 @@ public sealed record AppSettingsDto
 {
     public string ClaudePath { get; init; } = "";
     public string CodexPath { get; init; } = "";
+    public string AgyPath { get; init; } = "";
     public string OllamaEndpoint { get; init; } = "http://localhost:11434";
     public string OllamaModel { get; init; } = "exaone3.5:7.8b";
     public bool TranslationEnabled { get; init; } = true;

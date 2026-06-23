@@ -65,7 +65,7 @@ public sealed partial class AppViewModel
         s.MarkRunStarted(s.TranslationEnabled ? L("L.TranslatingPreparingRun") : L("L.PreparingRun"));
 
         var adapter = EngineRegistry.CreateAdapter(s.AgentId, s.RequireApproval);
-        var exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath);
+        var exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath, _agyPath);
         if (adapter is null || exe is null)
         {
             s.Transcript.Add(new ErrorBlock(L("L.EngineUnavailableTitle"), L("L.EngineUnavailableBody", s.AgentName)));

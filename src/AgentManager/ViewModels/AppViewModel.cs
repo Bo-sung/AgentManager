@@ -33,6 +33,7 @@ public sealed partial class AppViewModel : ObservableObject
     private readonly TimerScheduler _scheduler = new();
     private string _claudePath = "";
     private string _codexPath = "";
+    private string _agyPath = "";
     private string _ollamaEndpoint = "http://localhost:11434";
     private string _ollamaModel = "exaone3.5:7.8b";
 

@@ -283,6 +283,10 @@
     <sys:String x:Key="L.AutoDetectHint">leave blank for auto-detect/PATH</sys:String>
     <sys:String x:Key="L.ClaudeCliPath">CLAUDE CLI PATH</sys:String>
     <sys:String x:Key="L.CodexCliPath">CODEX CLI PATH</sys:String>
+    <sys:String x:Key="L.AgyCliPath">ANTIGRAVITY CLI PATH</sys:String>
+    <sys:String x:Key="L.Detect">탐지</sys:String>
+    <sys:String x:Key="L.DetectFound">탐지됨 — {0}</sys:String>
+    <sys:String x:Key="L.DetectFailed">자동 탐지 실패 — 경로를 직접 입력하세요</sys:String>
     <sys:String x:Key="L.AntigravityAgyAuto">ANTIGRAVITY (auto)</sys:String>
     <sys:String x:Key="L.OllamaTranslation">OLLAMA TRANSLATION</sys:String>
     <sys:String x:Key="L.Endpoint">ENDPOINT</sys:String>

@@ -33,10 +33,13 @@ public sealed partial class AppViewModel
     public RelayCommand ZoomResetAllCommand { get; private set; } = null!;
     /// <summary>설치된 Ollama 모델 조회(번역 모델 드롭다운 채우기).</summary>
     public RelayCommand QueryOllamaModelsCommand { get; private set; } = null!;
+    /// <summary>엔진 CLI 경로 자동 탐지(파라미터 = cc|gx|agy) → 경로 입력란 채우기.</summary>
+    public RelayCommand DetectEnginePathCommand { get; private set; } = null!;
 
     private void InitNavCommands()
     {
         QueryOllamaModelsCommand = new RelayCommand(_ => _ = QueryOllamaModelsAsync());
+        DetectEnginePathCommand = new RelayCommand(p => { if (p is string id) DetectEnginePath(id); });
         ZoomInCommand = new RelayCommand(_ => ZoomBy(+1));
         ZoomOutCommand = new RelayCommand(_ => ZoomBy(-1));
         ZoomResetCommand = new RelayCommand(_ => ZoomReset());
