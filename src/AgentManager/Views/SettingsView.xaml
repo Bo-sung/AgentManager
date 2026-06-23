@@ -421,50 +421,32 @@
                                                             <Setter Property="BorderThickness" Value="2"/>
                                                             <Setter Property="BorderBrush" Value="Transparent"/>
                                                             <Style.Triggers>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="ember"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="ember"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="amber"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="amber"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="teal"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="teal"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="azure"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="azure"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/>
-                                                                </MultiDataTrigger>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding SettingsAccent}" Value="violet"/>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="violet"/>
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/>
-                                                                </MultiDataTrigger>
+                                                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding SettingsAccent}" Value="ember"/><Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="ember"/></MultiDataTrigger.Conditions><Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/></MultiDataTrigger>
+                                                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding SettingsAccent}" Value="amber"/><Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="amber"/></MultiDataTrigger.Conditions><Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/></MultiDataTrigger>
+                                                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding SettingsAccent}" Value="teal"/><Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="teal"/></MultiDataTrigger.Conditions><Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/></MultiDataTrigger>
+                                                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding SettingsAccent}" Value="azure"/><Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="azure"/></MultiDataTrigger.Conditions><Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/></MultiDataTrigger>
+                                                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding SettingsAccent}" Value="violet"/><Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="violet"/></MultiDataTrigger.Conditions><Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/></MultiDataTrigger>
+                                                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding SettingsAccent}" Value="coral"/><Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="coral"/></MultiDataTrigger.Conditions><Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/></MultiDataTrigger>
+                                                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding SettingsAccent}" Value="green"/><Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="green"/></MultiDataTrigger.Conditions><Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/></MultiDataTrigger>
+                                                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding SettingsAccent}" Value="cobalt"/><Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="cobalt"/></MultiDataTrigger.Conditions><Setter Property="BorderBrush" Value="{DynamicResource Txt0}"/></MultiDataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </StackPanel.Resources>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFFF5A2C" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:ember" ToolTip="Ember"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFF5B531" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:amber" ToolTip="Amber"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FF2BD4C4" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:teal" ToolTip="Teal"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FF5B8CFF" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:azure" ToolTip="Azure"/>
-                                                    <Border Style="{StaticResource Swatch}" Background="#FFA87BFF" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:violet" ToolTip="Violet"/>
+                                                    <Border Style="{StaticResource Swatch}" Tag="ember"  Background="#FFFF5A2C" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:ember" ToolTip="Ember"/>
+                                                    <Border Style="{StaticResource Swatch}" Tag="amber"  Background="#FFF5B531" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:amber" ToolTip="Amber"/>
+                                                    <Border Style="{StaticResource Swatch}" Tag="teal"   Background="#FF2BD4C4" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:teal" ToolTip="Teal"/>
+                                                    <Border Style="{StaticResource Swatch}" Tag="azure"  Background="#FF5B8CFF" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:azure" ToolTip="Azure"/>
+                                                    <Border Style="{StaticResource Swatch}" Tag="violet" Background="#FFA87BFF" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:violet" ToolTip="Violet"/>
+                                                    <Border Style="{StaticResource Swatch}" Tag="coral"  Background="#FFD97757" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:coral" ToolTip="Coral (Claude)"/>
+                                                    <Border Style="{StaticResource Swatch}" Tag="green"  Background="#FF10A37F" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:green" ToolTip="Green (Codex)"/>
+                                                    <Border Style="{StaticResource Swatch}" Tag="cobalt" Background="#FF4285F4" controls:MouseClick.Command="{Binding SettingsSegCommand}" controls:MouseClick.CommandParameter="accent:cobalt" ToolTip="Cobalt (Antigravity)"/>
                                                 </StackPanel>
+                                                <!-- 커스텀 강조색 (hex) -->
+                                                <DockPanel Margin="0,10,0,0">
+                                                    <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.AccentCustom}" FontSize="11" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                    <TextBox Style="{StaticResource SettingsInput}" Width="150" HorizontalAlignment="Left"
+                                                             Text="{Binding SettingsAccentCustom, UpdateSourceTrigger=PropertyChanged}"/>
+                                                </DockPanel>
                                                 <!-- UI Zoom (Ctrl+휠) -->
                                                 <TextBlock Text="{StaticResource L.Zoom}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" Margin="0,16,0,2"/>
                                                 <TextBlock Text="{StaticResource L.ZoomDesc}" FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="0,0,0,8"/>

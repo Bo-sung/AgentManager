@@ -174,6 +174,13 @@ public sealed partial class AppViewModel
         set { if (Set(ref _settingsAccent, value)) Theme.AccentPalette.Apply(value); }
     }
     private string _settingsAccent = "ember";
+    /// <summary>커스텀 강조색 hex 입력. 유효하면 즉시 SettingsAccent로 적용(라이브 미리보기).</summary>
+    private string _settingsAccentCustom = "";
+    public string SettingsAccentCustom
+    {
+        get => _settingsAccentCustom;
+        set { if (Set(ref _settingsAccentCustom, value) && Theme.AccentPalette.IsHex(value)) SettingsAccent = value.Trim(); }
+    }
 
     // ----- UI 줌: 본문/모달 독립 배율 (Ctrl+휠·단축키는 활성 영역만 조정) -----
     private static double ClampZoom(double v) => Math.Clamp(Math.Round(v, 2), 0.5, 2.0);
@@ -322,6 +329,7 @@ public sealed partial class AppViewModel
         SettingsModelGx = DefaultModelFor("gx");
         SettingsModelAgy = DefaultModelFor("agy");
         SettingsAccent = _accent;
+        SettingsAccentCustom = Theme.AccentPalette.IsHex(_accent) ? _accent : "";
         SettingsTelemetry = _telemetry;
         SettingsEngineCc = !_disabledEngines.Contains("cc");
         SettingsEngineGx = !_disabledEngines.Contains("gx");

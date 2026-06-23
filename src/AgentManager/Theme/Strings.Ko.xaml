@@ -156,6 +156,7 @@
     <sys:String x:Key="L.SignInNotFound">CLI를 찾을 수 없습니다 — 먼저 경로를 설정하세요.</sys:String>
     <sys:String x:Key="L.AccentColor">강조색</sys:String>
     <sys:String x:Key="L.AccentColorDesc">클라이언트 전체에 즉시 적용됩니다.</sys:String>
+    <sys:String x:Key="L.AccentCustom">커스텀 (#RRGGBB)</sys:String>
     <sys:String x:Key="L.Density">밀도</sys:String>
     <sys:String x:Key="L.DensityComfortable">여유</sys:String>
     <sys:String x:Key="L.DensityCompact">조밀</sys:String>

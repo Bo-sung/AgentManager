@@ -156,6 +156,7 @@
     <sys:String x:Key="L.SignInNotFound">CLI not found — set the path first.</sys:String>
     <sys:String x:Key="L.AccentColor">Accent color</sys:String>
     <sys:String x:Key="L.AccentColorDesc">Applies live across the whole client.</sys:String>
+    <sys:String x:Key="L.AccentCustom">Custom (#RRGGBB)</sys:String>
     <sys:String x:Key="L.Density">Density</sys:String>
     <sys:String x:Key="L.DensityComfortable">Comfortable</sys:String>
     <sys:String x:Key="L.DensityCompact">Compact</sys:String>

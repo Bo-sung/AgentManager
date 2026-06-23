@@ -25,6 +25,9 @@ public static class ThemePalette
         new("vscode",  "VS Code"),
         new("monokai", "Monokai"),
         new("nord",    "Nord"),
+        new("claude",      "Claude"),
+        new("codex",       "Codex"),
+        new("antigravity", "Antigravity"),
     ];
 
     private static readonly Dictionary<string, string> Files = new(StringComparer.OrdinalIgnoreCase)
@@ -36,6 +39,9 @@ public static class ThemePalette
         ["vscode"]  = "Theme/Colors.VsCode.xaml",
         ["monokai"] = "Theme/Colors.Monokai.xaml",
         ["nord"]    = "Theme/Colors.Nord.xaml",
+        ["claude"]      = "Theme/Colors.Claude.xaml",
+        ["codex"]       = "Theme/Colors.Codex.xaml",
+        ["antigravity"] = "Theme/Colors.Antigravity.xaml",
     };
 
     /// <summary>알 수 없는 이름은 "dark"로 정규화.</summary>
