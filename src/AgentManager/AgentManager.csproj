@@ -16,8 +16,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.2.0: 언어 설정 드롭다운화 + 설정 가능한 번역 언어 쌍(번역 전/후) -->
-    <Version>1.2.0</Version>
+    <!-- 1.3.0: 워커 위임(메인↔워커 핸드오프) — 풀·모달·카드·수신함·일괄 fan-out·크로스엔진 -->
+    <Version>1.3.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
