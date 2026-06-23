@@ -16,8 +16,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.3.0: 워커 위임(메인↔워커 핸드오프) — 풀·모달·카드·수신함·일괄 fan-out·크로스엔진 -->
-    <Version>1.3.0</Version>
+    <!-- 1.4.0: UI 줌(Ctrl+휠) — 본문/모달 독립 배율, 활성 영역 조정 -->
+    <Version>1.4.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
