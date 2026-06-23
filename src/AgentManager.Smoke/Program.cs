@@ -8,10 +8,17 @@ using AgentManager.Core.Workspace;
 using AgentManager.Core.Hosting;
 using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
+using AgentManager.Core.Workers;
 
 if (args.Contains("--sched-check"))
 {
     RunSchedCheck();
+    return;
+}
+
+if (args.Contains("--worker-prompt-check"))
+{
+    WorkerPromptCheck();
     return;
 }
 
@@ -177,6 +184,22 @@ static async Task AgyPtyCheckAsync()
 }
 
 // B: subagent transcript 의 실패/rate-limit 추론 (오프라인 어서션).
+static void WorkerPromptCheck()
+{
+    // preamble + task 조립, 빈 preamble 폴백, 공백 트림 검증
+    var p = WorkerDefaults.ComposePrompt("RULES", "do the thing");
+    var ok1 = p == "RULES\n\n## Task\ndo the thing";
+    var ok2 = WorkerDefaults.ComposePrompt("", "only task") == "only task";
+    var ok3 = WorkerDefaults.ComposePrompt("  RULES  ", "  task  ") == "RULES\n\n## Task\ntask";
+    var ok4 = WorkerDefaults.DefaultMaxConcurrentWorkers >= 1 && WorkerDefaults.BehaviorPreamble.Contains("## Report");
+    // 보고 병합: 단일은 그대로, 다수는 위임 순서로 라벨 부착
+    var ok5 = WorkerDefaults.MergeReports([("W1", "only")]) == "only";
+    var merged = WorkerDefaults.MergeReports([("Alpha", "a-result"), ("Beta", "b-result")]);
+    var ok6 = merged == "## Worker 1 (Alpha)\na-result\n\n## Worker 2 (Beta)\nb-result";
+    var ok = ok1 && ok2 && ok3 && ok4 && ok5 && ok6;
+    Console.WriteLine($"[worker-prompt] compose={ok1} emptyPreamble={ok2} trim={ok3} defaults={ok4} mergeOne={ok5} mergeMany={ok6} -> {(ok ? "PASS" : "FAIL")}");
+}
+
 static void SubagentFailureCheck()
 {
     var rateLine = "{\"type\":\"assistant\",\"isApiErrorMessage\":true,\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"You've hit your weekly limit — resets 8am (Asia/Seoul)\"}]}}";

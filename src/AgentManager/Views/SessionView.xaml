@@ -228,6 +228,25 @@
                         <!-- composer (bottom) -->
                         <Border DockPanel.Dock="Bottom" Margin="14,0,14,14" MinWidth="520" HorizontalAlignment="Stretch">
                             <StackPanel>
+                                <!-- 보고 수신함 (워커 위임 ready 보고) -->
+                                <Border Margin="4,0,4,8" Background="{DynamicResource InfoDim}" BorderBrush="{DynamicResource InfoLine}" BorderThickness="1" CornerRadius="8" Padding="11,8"
+                                        Visibility="{Binding DataContext.HasReadyReportsActive, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}">
+                                    <DockPanel>
+                                        <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconLayers}" Width="15" Height="15" Foreground="{DynamicResource Info}" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" VerticalAlignment="Center"
+                                                Visibility="{Binding DataContext.CanMergeReports, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}"
+                                                Command="{Binding DataContext.MergeReportsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <controls:IconView Icon="{StaticResource IconLayers}" Width="12" Height="12" Foreground="{DynamicResource Txt1}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                <TextBlock VerticalAlignment="Center"><Run Text="{StaticResource L.MergePaste}"/><Run Text=" ("/><Run Text="{Binding DataContext.ReadyReportsActiveCount, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"/><Run Text=")"/></TextBlock>
+                                            </StackPanel>
+                                        </Button>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{StaticResource L.ReportInbox}" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" FontSize="11.5" Margin="0,0,8,0"/>
+                                            <TextBlock Foreground="{DynamicResource Txt2}" FontSize="11" VerticalAlignment="Center"><Run Text="{Binding DataContext.ReadyReportsActiveCount, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"/><Run Text=" READY"/></TextBlock>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
                                 <Border Margin="4,0,4,8" Background="{DynamicResource AccentDim}" BorderThickness="1" CornerRadius="8"
                                         Padding="11,8" Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
                                     <Border.Style>

@@ -49,11 +49,13 @@ public sealed partial class AppViewModel
     /// <summary>Run one engine turn for a session and stream normalized events into its transcript.</summary>
     private async Task RunTurnAsync(SessionViewModel s, string prompt, string[]? images = null)
     {
-        // concurrency cap: protect the machine/quota from too many parallel engines
-        if (_running.Count >= MaxConcurrentSessions)
+        // concurrency cap: 워커와 일반 세션은 별도 cap을 소비(워커 위임이 메인 슬롯을 굶기지 않도록)
+        var cap = s.IsWorker ? MaxConcurrentWorkers : MaxConcurrentSessions;
+        var runningSameKind = _allSessions.Count(x => x.IsWorker == s.IsWorker && _running.ContainsKey(x.Id));
+        if (runningSameKind >= cap)
         {
             s.Transcript.Add(new ErrorBlock(L("L.ConcurrentLimitErrorTitle"),
-                L("L.ConcurrentLimitErrorBody", _running.Count, MaxConcurrentSessions)));
+                L("L.ConcurrentLimitErrorBody", runningSameKind, cap)));
             return;
         }
 
@@ -78,7 +80,11 @@ public sealed partial class AppViewModel
         var cwd = s.WorktreePath ?? s.ProjectPath;
 
         var tools = new Dictionary<string, ToolBlock>();
-        var session = new AgentSession(adapter, exe, _translator, s.TranslationEnabled);
+        // 워커는 생성 시 고정된 번역 언어쌍을 사용(일반 세션은 전역 번역기).
+        var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
+            ? CreateTranslator(_ollamaEndpoint, _ollamaModel, src, tgt)
+            : _translator;
+        var session = new AgentSession(adapter, exe, translator, s.TranslationEnabled);
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
         if (s.RequireApproval)
             session.PermissionHandler = pr => HandlePermissionAsync(s, pr);

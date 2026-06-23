@@ -222,9 +222,30 @@ function replyStream(agentId, task){
   return `Spinning up an isolated worktree and reading the repository to scope "${task}". Indexing the relevant modules now, drafting a plan, and I'll start applying changes incrementally — running ${a.cli==='codex'?'the test suite':'a typecheck'} after each edit so nothing regresses before I hand it back for review…`;
 }
 
+/* ---------- seed delegations (sample: 2 ready reports on session s1) ---------- */
+const SEED_DELEGATIONS = {
+  d1: { id:'d1', sessionId:'s1', agentId:'cc', workerName:'Atlas', model:'Claude Sonnet 4.5',
+        tr:{ on:true, from:'KO', to:'EN' }, status:'ready',
+        prompt:'billing.ts / projects.ts 의 인라인 토큰 검증을 제거하고 requireAuth 미들웨어 적용이 회귀 없이 동작하는지 검증하는 테스트를 작성해줘.',
+        report:'requireAuth 적용 후 billing·projects·workspaces 라우트의 401 경로를 점검했고, 회귀 테스트 12건을 추가해 전부 통과했습니다. refresh 토큰 로테이션도 그대로 유지됩니다. 누락된 admin.ts 경로 1건을 발견해 함께 수정했습니다.' },
+  d2: { id:'d2', sessionId:'s1', agentId:'ag', workerName:'Vega', model:'Gemini 3.5 Flash',
+        tr:{ on:true, from:'KO', to:'EN' }, status:'ready',
+        prompt:'AuthError 유니온 타입에 대한 문서와 사용 예시를 docs/auth.md 에 정리해줘.',
+        report:'docs/auth.md 에 AuthError 유니온(missing·expired·malformed)의 의미와 호출부 처리 예시를 정리했습니다. 401 응답 스키마 표와 마이그레이션 노트를 포함했습니다.' },
+};
+
 /* ---------- App ---------- */
 function App(){
-  const [sessions, setSessions] = useState(()=>clone(ASESSIONS));
+  const [sessions, setSessions] = useState(()=>{
+    const ss = clone(ASESSIONS);
+    const s1 = ss.find(s=>s.id==='s1');
+    if (s1) s1.blocks = [...s1.blocks, { t:'delegate', did:'d1' }, { t:'delegate', did:'d2' }];
+    return ss;
+  });
+  const [workers, setWorkers] = useState(()=>clone(window.AM.WORKERS));
+  const [delegations, setDelegations] = useState(()=>clone(SEED_DELEGATIONS));
+  const [assign, setAssign] = useState(null);   // { sourceText, startNew }
+  const [noIdle, setNoIdle] = useState(null);
   const [activeId, setActiveId] = useState('s1');
   const [nav, setNav] = useState('orchestrator');
   const [drafts, setDrafts] = useState({});
@@ -337,6 +358,53 @@ function App(){
   const openSession = (id)=>{ setActiveId(id); setNav('session'); };
   const quickSpawn = (agentId)=> spawnAgent({ agentId, title: TASK_HINTS[agentId], model: AAGENTS[agentId].model });
 
+  /* ---------- worker delegation ---------- */
+  const prefillFrom = (session)=>{
+    for (let i=session.blocks.length-1;i>=0;i--){
+      const b = session.blocks[i];
+      if (b.t==='agent' && b.prose){ const s = b.prose.find(x=>typeof x==='string'); if (s) return s.slice(0,180); }
+    }
+    return session.title;
+  };
+  const handleDelegate = (session)=>{
+    const src = prefillFrom(session);
+    const idle = workers.filter(w=>w.status==='idle');
+    if (idle.length===0) setNoIdle({ sourceText:src });
+    else setAssign({ sourceText:src, startNew:false });
+  };
+  const confirmDelegate = ({ worker, prompt, worktree, autoInject })=>{
+    const did = 'dg'+Date.now();
+    const sid = activeId;
+    // mark worker busy (add if new)
+    setWorkers(ws=> worker.isNew ? [...ws, { id:worker.id, agentId:worker.agentId, name:worker.name, model:worker.model, tr:worker.tr, status:'busy' }]
+                                 : ws.map(w=>w.id===worker.id?{...w, status:'busy'}:w));
+    setDelegations(d=>({ ...d, [did]:{ id:did, sessionId:sid, agentId:worker.agentId, workerName:worker.name, model:worker.model, tr:worker.tr, status:'running', prompt, autoInject } }));
+    setSessions(ss=>ss.map(s=>s.id===sid?{...s, blocks:[...s.blocks, { t:'delegate', did }]}:s));
+    setAssign(null);
+    // simulate the worker finishing
+    setTimeout(()=>{
+      const report = `위임 작업을 완료했습니다. 변경을 적용하고 검증까지 마쳤으며, 회귀 없이 통과했습니다. (“${prompt.slice(0,46)}${prompt.length>46?'…':''}”)`;
+      setDelegations(d=> d[did] ? { ...d, [did]:{ ...d[did], status:'ready', report } } : d);
+      setWorkers(ws=>ws.map(w=>w.id===worker.id?{...w, status:'idle'}:w));
+      if (autoInject) setDrafts(dr=>({ ...dr, [sid]: (dr[sid]?dr[sid]+'\n\n':'') + '[워커 보고] ' + report }));
+    }, 4200);
+  };
+  const pasteReport = (did)=>{
+    const del = delegations[did]; if(!del) return;
+    setDrafts(dr=>({ ...dr, [activeId]: (dr[activeId]?dr[activeId]+'\n\n':'') + '[워커 보고 · '+del.workerName+'] ' + del.report }));
+    setDelegations(d=>({ ...d, [did]:{ ...d[did], pasted:true } }));
+  };
+  const mergePaste = ()=>{
+    const ready = Object.values(delegations).filter(d=>d.status==='ready' && !d.pasted);
+    if (ready.length===0) return;
+    const merged = ready.map(d=>'[워커 보고 · '+d.workerName+'] '+d.report).join('\n\n');
+    setDrafts(dr=>({ ...dr, [activeId]: (dr[activeId]?dr[activeId]+'\n\n':'') + merged }));
+    setDelegations(d=>{ const n={...d}; ready.forEach(r=>{ n[r.id]={...n[r.id], pasted:true}; }); return n; });
+  };
+  const redelegate = (del)=> setAssign({ sourceText:del.prompt, startNew:false });
+  const openWorkerSession = ()=>{ /* would focus the worker's own session */ };
+  const readyReports = Object.values(delegations).filter(d=>d.status==='ready' && !d.pasted);
+
   /* keyboard shortcuts (mirror the menu bar) */
   useEffect(()=>{
     const h = (e)=>{
@@ -434,6 +502,13 @@ function App(){
             onToggleReview={()=>setReviewOpen(o=>!o)}
             onApprove={approve}
             onReject={reject}
+            delegations={delegations}
+            onDelegate={handleDelegate}
+            onPasteReport={pasteReport}
+            onRedelegate={redelegate}
+            onOpenWorker={openWorkerSession}
+            readyReports={readyReports}
+            onMergePaste={mergePaste}
           />
         ) : <div className="main"><div className="empty">No session selected</div></div>}
 
@@ -442,6 +517,22 @@ function App(){
 
       {modal && <NewAgentModal onClose={()=>setModal(false)} onCreate={spawnAgent} />}
       {about && <AboutModal onClose={()=>setAbout(false)} />}
+      {assign && (
+        <window.WorkerAssignModal
+          workers={workers}
+          sourceText={assign.sourceText}
+          startNew={assign.startNew}
+          onClose={()=>setAssign(null)}
+          onDelegate={confirmDelegate}
+        />
+      )}
+      {noIdle && (
+        <window.NoIdleWorkerModal
+          workers={workers}
+          onClose={()=>setNoIdle(null)}
+          onCreate={()=>{ const src=noIdle.sourceText; setNoIdle(null); setAssign({ sourceText:src, startNew:true }); }}
+        />
+      )}
     </div>
   );
 }

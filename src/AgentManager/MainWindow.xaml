@@ -91,10 +91,68 @@
                                 Click="CopyAgentText_Click">
                             <controls:IconView Icon="{StaticResource IconCopy}" Width="13" Height="13"/>
                         </Button>
+                        <Button Margin="6,0,0,0" Padding="4,0"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                Foreground="{DynamicResource Txt3}" ToolTip="{StaticResource L.DelegateToWorker}"
+                                Command="{Binding DataContext.OpenDelegateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}">
+                            <controls:IconView Icon="{StaticResource IconLayers}" Width="13" Height="13"/>
+                        </Button>
                     </StackPanel>
                     <controls:MarkdownViewer Text="{Binding DisplayText}"/>
                 </StackPanel>
             </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:DelegationBlock}">
+            <Border Margin="40,8,0,8" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <StackPanel DataContext="{Binding Delegation}">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="4" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,9,0">
+                            <TextBlock Text="{Binding WorkerBadge}" FontFamily="{StaticResource Mono}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding StatusLabel}" FontSize="10" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{StaticResource L.Delegation}" Style="{StaticResource Lbl}" Foreground="{DynamicResource Accent}"/>
+                            <TextBlock FontSize="12" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis">
+                                <Run Text="{Binding WorkerName, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=" · "/><Run Text="{Binding WorkerModel, Mode=OneWay}" Foreground="{DynamicResource Txt2}"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </DockPanel>
+                    <Border Margin="0,9,0,0" Background="{DynamicResource Bg2}" CornerRadius="6" Padding="9">
+                        <TextBlock Text="{Binding Prompt}" FontSize="11" Foreground="{DynamicResource Txt2}" TextWrapping="Wrap"/>
+                    </Border>
+                    <StackPanel Visibility="{Binding IsReady, Converter={StaticResource BoolVis}}">
+                        <TextBlock Text="{StaticResource L.Report}" Style="{StaticResource Lbl}" Margin="0,11,0,5"/>
+                        <Border Background="{DynamicResource Bg2}" CornerRadius="6" Padding="9">
+                            <TextBlock Text="{Binding Report}" FontSize="11" Foreground="{DynamicResource Txt1}" TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Visibility="{Binding IsFailed, Converter={StaticResource BoolVis}}">
+                        <TextBlock Text="{StaticResource L.ErrorLabel}" Style="{StaticResource Lbl}" Margin="0,11,0,5" Foreground="{DynamicResource Err}"/>
+                        <Border Background="{DynamicResource DelBg}" CornerRadius="6" Padding="9">
+                            <TextBlock Text="{Binding Error}" FontSize="11" Foreground="{DynamicResource Err}" TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                    <DockPanel Margin="0,10,0,0">
+                        <Button DockPanel.Dock="Left" Style="{StaticResource MenuButton}" Padding="2,0" HorizontalAlignment="Left"
+                                Command="{Binding DataContext.OpenWorkerCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                            <StackPanel Orientation="Horizontal">
+                                <controls:IconView Icon="{StaticResource IconIde}" Width="12" Height="12" Foreground="{DynamicResource Txt2}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{StaticResource L.OpenWorkerSession}" FontSize="11" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource AccentButton}" Visibility="{Binding IsReady, Converter={StaticResource BoolVis}}"
+                                    Command="{Binding DataContext.PasteReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                                <TextBlock Text="{StaticResource L.PasteReport}" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold"/>
+                            </Button>
+                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Redelegate}" Visibility="{Binding IsFailed, Converter={StaticResource BoolVis}}"
+                                    Command="{Binding DataContext.RedelegateCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:ToolBlock}">
@@ -713,6 +771,65 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <!-- WORKERS group (워커 위임 풀) -->
+                            <StackPanel Visibility="{Binding HasProjectWorkers, Converter={StaticResource BoolVis}}">
+                                <DockPanel Margin="14,14,14,6">
+                                    <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.WorkersGroup}" Style="{StaticResource Lbl}" Foreground="{DynamicResource Info}" Margin="0,0,8,0"/>
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding ProjectWorkers.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt2}"/>
+                                    <Border Height="1" Background="{DynamicResource LineSoft}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </DockPanel>
+                                <ItemsControl ItemsSource="{Binding ProjectWorkers}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="6,1" CornerRadius="7" Padding="10,7" Cursor="Hand"
+                                                    controls:MouseClick.Command="{Binding DataContext.SelectSessionCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}">
+                                                <Border.ContextMenu>
+                                                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                        <MenuItem Header="{StaticResource L.Delete}" Command="{Binding DataContext.DeleteSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    </ContextMenu>
+                                                </Border.ContextMenu>
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                                        <Setter Property="BorderThickness" Value="2,0,0,0"/>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource Bg3}"/></Trigger>
+                                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource Bg3}"/>
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource Info}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <DockPanel>
+                                                    <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="4" Margin="0,0,9,0"
+                                                            Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1">
+                                                        <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <Ellipse DockPanel.Dock="Right" Width="7" Height="7" VerticalAlignment="Center" Margin="6,0,0,0">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill" Value="{DynamicResource Ok}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsBusy}" Value="True"><Setter Property="Fill" Value="{DynamicResource Run}"/></DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Txt2}" TextTrimming="CharacterEllipsis">
+                                                            <Run Text="{Binding Model, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding DelegationTrLabel, Mode=OneWay}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
 
                             <Grid Margin="14,14,14,6" Height="22">
                                 <Grid.ColumnDefinitions>
@@ -1455,6 +1572,230 @@
                                     <controls:IconView Icon="{StaticResource IconBolt}" Width="13" Height="13"
                                                        Foreground="{DynamicResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="{StaticResource L.LaunchAgent}" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===================== Worker-assign overlay ===================== -->
+        <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowWorkerAssign, Converter={StaticResource BoolVis}}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowWorkerAssign}" Value="True">
+                            <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayFadeIn}"/></DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Border Width="600" MaxHeight="800" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
+                    BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowWorkerAssign}" Value="True">
+                                <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayRiseIn}"/></DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <DockPanel>
+                    <!-- header -->
+                    <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="DELEGATE" Style="{StaticResource Lbl}" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Command="{Binding CancelDelegateCommand}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
+                            <TextBlock Text="{StaticResource L.DelegateToWorker}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+                    <!-- footer -->
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,1,0,0" Background="{DynamicResource Bg1}" Padding="18,14">
+                        <DockPanel>
+                            <CheckBox DockPanel.Dock="Left" Content="{StaticResource L.AutoInjectReport}" IsChecked="{Binding DelegateAutoInject}" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Cancel}" Margin="0,0,9,0" Command="{Binding CancelDelegateCommand}"/>
+                                <Button Style="{StaticResource AccentButton}" Command="{Binding ConfirmDelegateCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:IconView Icon="{StaticResource IconBolt}" Width="13" Height="13" Foreground="{DynamicResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.SendDelegation}" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <!-- body -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="18">
+                            <TextBlock Text="{StaticResource L.Worker}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                            <ListBox ItemsSource="{Binding WorkerPool}" SelectedItem="{Binding SelectedWorker, Mode=TwoWay}"
+                                     Background="Transparent" BorderThickness="0" MaxHeight="170" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="Margin" Value="0,0,0,6"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                                <Setter Property="IsEnabled" Value="False"/>
+                                                <Setter Property="Opacity" Value="0.55"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="7" Padding="10">
+                                            <DockPanel>
+                                                <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Background="{DynamicResource Bg2}"
+                                                        BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
+                                                    <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Background="{DynamicResource Bg2}" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
+                                                        <TextBlock Text="{Binding DelegationTrLabel}" FontSize="9.5" Foreground="{DynamicResource Txt2}"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding StatusLabel}" FontSize="9.5" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Model}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button Style="{StaticResource ChipButton}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,2,0,0"
+                                    Content="{StaticResource L.AddNewWorker}" Command="{Binding ToggleNewWorkerCommand}"/>
+                            <!-- 일괄 fan-out: 유휴 워커 전체에 같은 프롬프트 동시 위임 -->
+                            <Button Style="{StaticResource ChipButton}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,6,0,0"
+                                    Command="{Binding DelegateAllCommand}" Visibility="{Binding CanDelegateAll, Converter={StaticResource BoolVis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconLayers}" Width="12" Height="12" Foreground="{DynamicResource Info}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock VerticalAlignment="Center"><Run Text="{StaticResource L.DelegateAll}"/><Run Text=" ("/><Run Text="{Binding IdleWorkerCount, Mode=OneWay}"/><Run Text=")"/></TextBlock>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- new worker form -->
+                            <Border Margin="0,12,0,0" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14"
+                                    Visibility="{Binding DelegateNewWorkerOpen, Converter={StaticResource BoolVis}}">
+                                <StackPanel>
+                                    <TextBlock Text="{StaticResource L.Runtime}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                                    <ItemsControl ItemsSource="{Binding WorkerEngines}">
+                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,9,0" Background="{DynamicResource Bg2}" BorderThickness="1" CornerRadius="7" Padding="10,11" Cursor="Hand"
+                                                        controls:MouseClick.Command="{Binding DataContext.SelectWorkerEngineCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}">
+                                                    <Border.BorderBrush>
+                                                        <MultiBinding Converter="{StaticResource SelBrush}">
+                                                            <Binding Path="Id"/>
+                                                            <Binding Path="DataContext.NewWorkerEngine.Id" ElementName="Root"/>
+                                                        </MultiBinding>
+                                                    </Border.BorderBrush>
+                                                    <StackPanel>
+                                                        <Border Width="28" Height="28" CornerRadius="4" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" HorizontalAlignment="Left" Margin="0,0,0,7">
+                                                            <controls:IconView Style="{StaticResource EngineIconByDef}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{StaticResource L.WorkerName}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                                            <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewWorkerName, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="{StaticResource L.ModelPick}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                                            <ComboBox ItemsSource="{Binding NewWorkerModels}" SelectedItem="{Binding NewWorkerModel, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <DockPanel Margin="0,12,0,0">
+                                        <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.TranslationPolicy}" Style="{StaticResource Lbl}" VerticalAlignment="Center"/>
+                                        <CheckBox DockPanel.Dock="Right" Content="{StaticResource L.TranslationOn}" IsChecked="{Binding NewWorkerTranslationEnabled}" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding NewWorkerTranslationEnabled, Converter={StaticResource BoolVis}}">
+                                        <StackPanel Margin="0,0,12,0">
+                                            <TextBlock Text="{StaticResource L.TranslateSource}" Style="{StaticResource Lbl}" Margin="0,0,0,4"/>
+                                            <ComboBox MinWidth="130" ItemsSource="{Binding AvailableTranslationLanguages}" SelectedValuePath="Id" SelectedValue="{Binding NewWorkerSource, Mode=TwoWay}">
+                                                <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate></ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel>
+                                            <TextBlock Text="{StaticResource L.TranslateTarget}" Style="{StaticResource Lbl}" Margin="0,0,0,4"/>
+                                            <ComboBox MinWidth="130" ItemsSource="{Binding AvailableTranslationLanguages}" SelectedValuePath="Id" SelectedValue="{Binding NewWorkerTarget, Mode=TwoWay}">
+                                                <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate></ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <TextBlock Text="{StaticResource L.WorkerFixedNote}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- delegation prompt -->
+                            <TextBlock Text="{StaticResource L.DelegationPrompt}" Style="{StaticResource Lbl}" Margin="0,16,0,8"/>
+                            <TextBox Style="{StaticResource SettingsInput}" Text="{Binding DelegatePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="84" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"/>
+
+                            <!-- worktree -->
+                            <CheckBox Margin="0,14,0,0" Content="{StaticResource L.ShareMainWorktree}" IsChecked="{Binding DelegateWorktreeShared}" Foreground="{DynamicResource Txt2}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===================== No-idle-worker overlay ===================== -->
+        <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNoIdleWorker, Converter={StaticResource BoolVis}}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowNoIdleWorker}" Value="True">
+                            <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayFadeIn}"/></DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Border Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
+                    BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowNoIdleWorker}" Value="True">
+                                <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayRiseIn}"/></DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <Border BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="WORKERS" Style="{StaticResource Lbl}" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Command="{Binding CancelDelegateCommand}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
+                            <TextBlock Text="{StaticResource L.NoIdleWorker}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+                    <TextBlock Margin="18" Text="{StaticResource L.NoIdleWorkerBody}" FontSize="12.5" Foreground="{DynamicResource Txt2}" TextWrapping="Wrap"/>
+                    <Border BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,1,0,0" Background="{DynamicResource Bg1}" Padding="18,14">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Close}" Margin="0,0,9,0" Command="{Binding CancelDelegateCommand}"/>
+                            <Button Style="{StaticResource AccentButton}" Command="{Binding NoIdleCreateCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconPlus}" Width="13" Height="13" Foreground="{DynamicResource AccentText}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{StaticResource L.Create}" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>

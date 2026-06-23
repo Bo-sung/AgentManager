@@ -179,3 +179,10 @@ public sealed class WorkingBlock : TranscriptItem
     public WorkingBlock(string text) => _text = text;
     public string Text { get => _text; set => Set(ref _text, value); }
 }
+
+/// <summary>메인 트랜스크립트에 인라인으로 박히는 워커 위임 카드. 위임 VM을 참조해 상태가 라이브로 갱신된다.</summary>
+public sealed class DelegationBlock : TranscriptItem
+{
+    public WorkerDelegationViewModel Delegation { get; }
+    public DelegationBlock(WorkerDelegationViewModel delegation) => Delegation = delegation;
+}

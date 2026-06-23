@@ -104,6 +104,7 @@ public sealed class SessionViewModel : ObservableObject
                 OnChanged(nameof(StatusLabel));
                 OnChanged(nameof(IsRunning));
                 OnChanged(nameof(IsLive));
+                OnChanged(nameof(IsBusy));
                 OnChanged(nameof(CanSend));
                 RefreshRuntimeLabels();
             }
@@ -137,6 +138,38 @@ public sealed class SessionViewModel : ObservableObject
         }
     }
     public string TranslationLabel => TranslationEnabled ? AgentManager.App.L("L.TranslationOn") : AgentManager.App.L("L.TranslationOff");
+
+    // ----- 워커 위임 (Worker Delegation) -----
+    /// <summary>세션 역할. Plain(기본)/Main/Worker.</summary>
+    private AgentManager.Core.Workers.SessionRole _role = AgentManager.Core.Workers.SessionRole.Plain;
+    public AgentManager.Core.Workers.SessionRole Role
+    {
+        get => _role;
+        set { if (Set(ref _role, value)) { OnChanged(nameof(IsWorker)); OnChanged(nameof(IsMain)); } }
+    }
+    public bool IsWorker => _role == AgentManager.Core.Workers.SessionRole.Worker;
+    public bool IsMain => _role == AgentManager.Core.Workers.SessionRole.Main;
+
+    /// <summary>워커 고정 행동 규칙(위임 프롬프트 앞에 부착). 워커일 때만 의미.</summary>
+    private string _behaviorPreamble = "";
+    public string BehaviorPreamble { get => _behaviorPreamble; set => Set(ref _behaviorPreamble, value); }
+
+    /// <summary>워커 고정 번역 언어쌍(생성 시 고정). null = 전역 설정 사용(일반 세션).</summary>
+    private string? _translateSourceLanguage;
+    public string? TranslateSourceLanguage { get => _translateSourceLanguage; set => Set(ref _translateSourceLanguage, value); }
+    private string? _translateTargetLanguage;
+    public string? TranslateTargetLanguage { get => _translateTargetLanguage; set => Set(ref _translateTargetLanguage, value); }
+
+    /// <summary>워커의 현재/마지막 담당 메인 세션 id(사이드바 "담당 메인" 라벨용).</summary>
+    private string? _lastMainSessionId;
+    public string? LastMainSessionId { get => _lastMainSessionId; set => Set(ref _lastMainSessionId, value); }
+
+    /// <summary>워커 위임 UI의 번역 정책 칩.</summary>
+    public string DelegationTrLabel => TranslationEnabled
+        ? $"TR · {_translateSourceLanguage ?? "Korean"}→{_translateTargetLanguage ?? "English"}"
+        : "TR OFF";
+    /// <summary>위임 목록에서 사용 중(busy) 표시 — 실행 상태 기준.</summary>
+    public bool IsBusy => _status == "running";
 
     private string? _engineSessionId;
     public string? EngineSessionId

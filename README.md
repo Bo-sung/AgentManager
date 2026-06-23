@@ -54,6 +54,14 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 - 코드블록·인라인 코드·`@file` 참조 등은 **마스킹**하여 번역 손상 방지
 - Ollama 기반(기본 권장 모델 `exaone3.5:7.8b`, 엔드포인트/모델 설정 가능)
 
+### 워커 위임 (Worker Delegation)
+- 대형 모델 **메인** 세션이 소형 모델 **워커**에게 잔작업을 위임하고 보고를 받는 반자동 흐름 — 토큰 비용 절감.
+- 에이전트 응답의 **위임 버튼** → 워커 선택/생성 → 위임 프롬프트 전송. 워커는 **지속 풀**(프로젝트별, 사이드바 `WORKERS` 그룹)로 관리.
+- 워커별 **고정 설정**(엔진·모델·번역 정책·행동 규칙 preamble) — 생성 시 고정. preamble은 위임 프롬프트 앞에 자동 부착되어 워커가 항상 `## Report`로 마무리.
+- 완료 시 메인 트랜스크립트의 **DelegationCard**(보고 미리보기) → `보고 붙여넣기`. 다수는 **보고 수신함** + **합쳐 붙여넣기**(위임 순서 병합).
+- **일괄 fan-out** — "유휴 워커 전체에 위임"으로 N개 워커 **동시 실행**(워커 전용 동시성 cap, 메인과 분리).
+- **크로스 엔진** — 메인=Claude, 워커=Codex/Antigravity 등 자유 조합(엔진 무관 어댑터 라우팅).
+
 ### 관측 & 대시보드
 - **Orchestrator 대시보드** — KPI(Active/Awaiting/Completed/Failed/Fleet) + Live/Recent 카드, spark 이퀄라이저, diff 바
 - **Native worker 관측** — Claude 서브에이전트를 hook으로 실시간 표시(Running→Completed/Failed), `claude agents --json` 백그라운드 세션 폴러, 실패/rate-limit subagent transcript 추론

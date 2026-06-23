@@ -41,6 +41,9 @@ public sealed partial class AppViewModel : ObservableObject
     public ObservableCollection<SessionViewModel> ActiveSessions { get; } = [];
     public ObservableCollection<SessionViewModel> ProjectSessions { get; } = [];
     public ObservableCollection<SessionViewModel> ArchivedSessions { get; } = [];
+    /// <summary>워커 위임 풀(활성 프로젝트의 Role=Worker 세션). 사이드바 WORKERS 그룹.</summary>
+    public ObservableCollection<SessionViewModel> ProjectWorkers { get; } = [];
+    public bool HasProjectWorkers => ProjectWorkers.Count > 0;
     public ObservableCollection<CliHistoryItemViewModel> CliHistory { get; } = [];
     public ObservableCollection<ScheduledJobViewModel> ScheduledJobs { get; } = [];
     public ObservableCollection<HistoryRowViewModel> HistoryRows { get; } = [];
@@ -131,6 +134,7 @@ public sealed partial class AppViewModel : ObservableObject
         _scheduler.JobDue += Scheduler_JobDue;
         _scheduler.Start();
         InitNavCommands();
+        InitDelegationCommands();
         StartSettingsWatcher();
     }
 
@@ -310,6 +314,22 @@ public sealed partial class AppViewModel : ObservableObject
     {
         get => _maxConcurrentSessions;
         set => Set(ref _maxConcurrentSessions, Math.Max(1, value));
+    }
+
+    /// <summary>워커 전용 동시 실행 cap (메인 cap과 분리, 설정·영속).</summary>
+    private int _maxConcurrentWorkers = AgentManager.Core.Workers.WorkerDefaults.DefaultMaxConcurrentWorkers;
+    public int MaxConcurrentWorkers
+    {
+        get => _maxConcurrentWorkers;
+        set => Set(ref _maxConcurrentWorkers, Math.Max(1, value));
+    }
+
+    /// <summary>새 워커 기본 행동 규칙 preamble 템플릿 (설정·영속). 빈값이면 기본 템플릿 사용.</summary>
+    private string _workerBehaviorPreamble = AgentManager.Core.Workers.WorkerDefaults.BehaviorPreamble;
+    public string WorkerBehaviorPreamble
+    {
+        get => _workerBehaviorPreamble;
+        set => Set(ref _workerBehaviorPreamble, value);
     }
 
     /// <summary>Commit-only: 에이전트 브랜치에 커밋만 하고 머지하지 않음(리뷰 보존).</summary>
@@ -720,6 +740,7 @@ public sealed partial class AppViewModel : ObservableObject
         ActiveSessions.Clear();
         ProjectSessions.Clear();
         ArchivedSessions.Clear();
+        ProjectWorkers.Clear();
         if (ActiveProject is { } project)
         {
             var filtered = _allSessions.Where(s => s.ProjectId == project.Id);
@@ -736,12 +757,14 @@ public sealed partial class AppViewModel : ObservableObject
             foreach (var s in filtered)
             {
                 Sessions.Add(s);
-                if (s.IsArchived) ArchivedSessions.Add(s);
+                if (s.IsWorker) ProjectWorkers.Add(s);          // 워커는 전용 WORKERS 그룹으로
+                else if (s.IsArchived) ArchivedSessions.Add(s);
                 else if (s.IsLive) ActiveSessions.Add(s);
                 else ProjectSessions.Add(s);
             }
         }
 
+        OnChanged(nameof(HasProjectWorkers));
         RefreshProjectCounts();
 
         if (current is not null && Sessions.Contains(current))

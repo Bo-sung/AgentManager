@@ -98,9 +98,10 @@ function ErrBlock({ b }){
 }
 
 /* ---- message action toolbar ---- */
-function MsgActions(){
+function MsgActions({ onDelegate }){
   return (
     <div className="msg-actions">
+      <button className="delegate-btn" title="워커로 위임" onClick={onDelegate}><CIcon name="send" size={14} /> 워커로 위임</button>
       <button title="Continue in IDE"><CIcon name="ide" size={15} /></button>
       <button title="Copy"><CIcon name="copy" size={15} /></button>
       <button title="Rerun"><CIcon name="refresh" size={15} /></button>
@@ -125,7 +126,7 @@ function groupBlocks(blocks){
 }
 
 /* ---- one agent run ---- */
-function AgentRun({ session, blocks, streamShown, onReview, onApprove, onReject }){
+function AgentRun({ session, blocks, streamShown, delegations, onReview, onApprove, onReject, onPasteReport, onRedelegate, onOpenWorker }){
   const a = CAGENTS[session.agentId];
   return (
     <div className="msg-agent">
@@ -144,6 +145,11 @@ function AgentRun({ session, blocks, streamShown, onReview, onApprove, onReject 
           if (b.t==='fc')    return <FileChange key={i} b={b} onReview={onReview} />;
           if (b.t==='approve') return <Approve key={i} b={b} onApprove={onApprove} onReject={onReject} />;
           if (b.t==='err')   return <ErrBlock key={i} b={b} />;
+          if (b.t==='delegate'){
+            const del = delegations && delegations[b.did];
+            if (!del) return null;
+            return <window.DelegationCard key={i} del={del} onPaste={onPasteReport} onRedelegate={onRedelegate} onOpenWorker={onOpenWorker} />;
+          }
           if (b.t==='stream'){
             const shown = b.full.slice(0, streamShown);
             const done = streamShown >= b.full.length;
@@ -268,7 +274,7 @@ function TabBar({ session, onReview, reviewOpen, onToggleReview }){
 }
 
 /* ---- whole chat pane ---- */
-function ChatPane({ session, draft, onDraft, onSend, onModel, streamShown, tokens, onReview, reviewOpen, onToggleReview, onApprove, onReject }){
+function ChatPane({ session, draft, onDraft, onSend, onModel, streamShown, tokens, onReview, reviewOpen, onToggleReview, onApprove, onReject, delegations, onDelegate, onPasteReport, onRedelegate, onOpenWorker, readyReports, onMergePaste }){
   const groups = groupBlocks(session.blocks);
   const scrollRef = React.useRef();
   React.useEffect(()=>{
@@ -291,13 +297,16 @@ function ChatPane({ session, draft, onDraft, onSend, onModel, streamShown, token
             return (
               <div key={i}>
                 <AgentRun session={session} blocks={g.blocks} streamShown={streamShown}
-                  onReview={()=>onReview(session)} onApprove={()=>onApprove(session.id)} onReject={()=>onReject(session.id)} />
-                {session.status!=='running' && i===groups.length-1 && <MsgActions />}
+                  delegations={delegations}
+                  onReview={()=>onReview(session)} onApprove={()=>onApprove(session.id)} onReject={()=>onReject(session.id)}
+                  onPasteReport={onPasteReport} onRedelegate={onRedelegate} onOpenWorker={onOpenWorker} />
+                {session.status!=='running' && i===groups.length-1 && <MsgActions onDelegate={()=>onDelegate(session)} />}
               </div>
             );
           })}
         </div>
       </div>
+      <window.ReportInbox ready={readyReports} onMerge={onMergePaste} />
       <Composer session={session} value={draft} onChange={onDraft} onSend={onSend} onModel={onModel} />
     </div>
   );

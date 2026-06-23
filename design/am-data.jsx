@@ -43,6 +43,9 @@ function Icon({ name, size = 16, style }) {
     case 'dots': return <svg {...p}><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>;
     case 'calendar': return <svg {...p}><rect x="3.5" y="5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>;
     case 'layers': return <svg {...p}><path d="M12 3.5l8.5 4.5-8.5 4.5L3.5 8z"/><path d="M3.5 12l8.5 4.5 8.5-4.5M3.5 16l8.5 4.5 8.5-4.5"/></svg>;
+    case 'inbox': return <svg {...p}><path d="M3.5 13.5L6 5.5a1.5 1.5 0 0 1 1.45-1.1h9.1A1.5 1.5 0 0 1 18 5.5l2.5 8M3.5 13.5V18a1.5 1.5 0 0 0 1.5 1.5h14a1.5 1.5 0 0 0 1.5-1.5v-4.5M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5"/></svg>;
+    case 'translate': return <svg {...p}><path d="M3.5 5.5h8M7.5 5.5v-2M9.5 5.5c0 4-3 7-6 8M5.5 8.5c0 2 2 3.5 4.5 4.5"/><path d="M12.5 20.5l4-9 4 9M14 17.5h5"/></svg>;
+    case 'user': return <svg {...p}><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"/></svg>;
     default: return null;
   }
 }
@@ -112,7 +115,7 @@ const SESSIONS = [
     ],
     files:[
       { name:'test/webhooks/stripe.e2e.test.ts', add:148, del:0, hunks:[
-        { h:"@@ -0,0 +1,9 @@ new file", lines:[
+        { h:'@@ -0,0 +1,9 @@ new file', lines:[
           ['add',"import { describe, it, expect } from 'vitest';"],['add',"import { signEvent } from './helpers/sign';"],['ctx',""],['add',"describe('stripe webhook · signature', () => {"],['add',"  it('rejects an unsigned body with 400', async () => {"],['add',"    const res = await post('/webhooks/stripe', rawBody);"],['add',"    expect(res.status).toBe(400);"],['add',"  });"],['add',"});"],
         ]},
       ]},
@@ -164,7 +167,7 @@ const SESSIONS = [
         ]},
       ]},
       { name:'test/fs/watcher.test.ts', add:22, del:8, hunks:[
-        { h:"@@ -34,12 +34,14 @@ it('", lines:[
+        { h:'@@ -34,12 +34,14 @@ it(', lines:[
           ['del',"  expect(events).toEqual(['add', 'change']);"],['add',"  expect(new Set(events)).toEqual(new Set(['add', 'change']));"],
         ]},
       ]},
@@ -204,10 +207,19 @@ const SESSIONS = [
   },
 ];
 
+/* ---------- Worker pool (for delegation) ----------
+   Sample: 2 idle + 1 busy. Each worker has a FIXED translation policy. */
+const LANGS = ['KO','EN','JA','ZH','ES','FR','DE','PT'];
+const WORKERS = [
+  { id:'w-atlas', agentId:'cc', name:'Atlas', model:'Claude Sonnet 4.5', status:'idle', tr:{ on:true,  from:'KO', to:'EN' } },
+  { id:'w-orbit', agentId:'gx', name:'Orbit', model:'GPT-5.1 Codex',     status:'busy', tr:{ on:false } },
+  { id:'w-vega',  agentId:'ag', name:'Vega',  model:'Gemini 3.5 Flash',  status:'idle', tr:{ on:true,  from:'KO', to:'EN' } },
+];
+
 const NAV = [
   { id:'orchestrator', icon:'grid',     label:'Orchestrator' },
   { id:'history',      icon:'history',  label:'Activity History' },
   { id:'scheduled',    icon:'calendar', label:'Scheduled Tasks', ct:'3' },
 ];
 
-window.AM = { Icon, AGENTS, AGENT_LIST, SESSIONS, NAV, PROJECT };
+window.AM = { Icon, AGENTS, AGENT_LIST, SESSIONS, NAV, PROJECT, WORKERS, LANGS };

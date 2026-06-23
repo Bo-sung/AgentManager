@@ -22,6 +22,10 @@ public sealed record AppSettingsDto
     public string OllamaModel { get; init; } = "exaone3.5:7.8b";
     public bool TranslationEnabled { get; init; } = true;
     public int MaxConcurrentSessions { get; init; } = 3;
+    /// <summary>워커 전용 동시 실행 cap(메인 cap과 분리). 워커 위임 병렬성.</summary>
+    public int MaxConcurrentWorkers { get; init; } = 2;
+    /// <summary>새 워커 생성 시 기본으로 채워지는 전역 행동 규칙 preamble 템플릿.</summary>
+    public string WorkerBehaviorPreamble { get; init; } = "";
     public bool ReviewPaneOpen { get; init; } = true;
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내 표시 여부 (기본 끔).</summary>
     public bool WarnNoWorktree { get; init; }
@@ -98,6 +102,16 @@ public sealed record SessionDto
     public required string Model { get; init; }
     public bool? TranslationEnabled { get; init; }
     public string? EngineSessionId { get; init; }
+    /// <summary>세션 역할: Plain | Main | Worker (워커 위임). 빈값 = Plain.</summary>
+    public string Role { get; init; } = "Plain";
+    /// <summary>워커 고정 행동 규칙(위임 프롬프트 앞 부착). 워커일 때만.</summary>
+    public string BehaviorPreamble { get; init; } = "";
+    /// <summary>워커 고정 번역 전 언어. null = 전역 설정.</summary>
+    public string? TranslateSourceLanguage { get; init; }
+    /// <summary>워커 고정 번역 후 언어. null = 전역 설정.</summary>
+    public string? TranslateTargetLanguage { get; init; }
+    /// <summary>워커의 마지막 담당 메인 세션 id.</summary>
+    public string? LastMainSessionId { get; init; }
     public required string Status { get; init; }
     public string Activity { get; init; } = "";
     public long TokensIn { get; init; }

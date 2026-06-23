@@ -27,6 +27,8 @@ public sealed partial class AppViewModel
         _ollamaModel = string.IsNullOrWhiteSpace(s.OllamaModel) ? _ollamaModel : s.OllamaModel;
         TranslationEnabled = s.TranslationEnabled;
         MaxConcurrentSessions = s.MaxConcurrentSessions;
+        MaxConcurrentWorkers = s.MaxConcurrentWorkers < 1 ? AgentManager.Core.Workers.WorkerDefaults.DefaultMaxConcurrentWorkers : s.MaxConcurrentWorkers;
+        WorkerBehaviorPreamble = string.IsNullOrWhiteSpace(s.WorkerBehaviorPreamble) ? AgentManager.Core.Workers.WorkerDefaults.BehaviorPreamble : s.WorkerBehaviorPreamble;
         _isReviewOpen = s.ReviewPaneOpen;
         _warnNoWorktree = s.WarnNoWorktree;
         _approvalPolicy = s.ApprovalPolicy is "ask" or "safe" ? s.ApprovalPolicy : "yolo";
@@ -64,6 +66,8 @@ public sealed partial class AppViewModel
         OllamaModel = _ollamaModel,
         TranslationEnabled = TranslationEnabled,
         MaxConcurrentSessions = MaxConcurrentSessions,
+        MaxConcurrentWorkers = MaxConcurrentWorkers,
+        WorkerBehaviorPreamble = WorkerBehaviorPreamble,
         ReviewPaneOpen = IsReviewOpen,
         WarnNoWorktree = _warnNoWorktree,
         Theme = _theme,
@@ -150,6 +154,11 @@ public sealed partial class AppViewModel
                     : dto.AgentId == "gx" ? "medium" : "default",
                 TranslationEnabled = dto.TranslationEnabled ?? true,
                 EngineSessionId = dto.EngineSessionId,
+                Role = Enum.TryParse<AgentManager.Core.Workers.SessionRole>(dto.Role, out var role) ? role : AgentManager.Core.Workers.SessionRole.Plain,
+                BehaviorPreamble = dto.BehaviorPreamble ?? "",
+                TranslateSourceLanguage = dto.TranslateSourceLanguage,
+                TranslateTargetLanguage = dto.TranslateTargetLanguage,
+                LastMainSessionId = dto.LastMainSessionId,
             };
             foreach (var item in dto.Transcript)
                 s.Transcript.Add(AppStateStore.FromDto(item));
@@ -186,6 +195,11 @@ public sealed partial class AppViewModel
                     Model = s.Model,
                     TranslationEnabled = s.TranslationEnabled,
                     EngineSessionId = s.EngineSessionId,
+                    Role = s.Role.ToString(),
+                    BehaviorPreamble = s.BehaviorPreamble,
+                    TranslateSourceLanguage = s.TranslateSourceLanguage,
+                    TranslateTargetLanguage = s.TranslateTargetLanguage,
+                    LastMainSessionId = s.LastMainSessionId,
                     Status = s.Status,
                     Activity = s.Activity,
                     TokensIn = s.TokensIn,
