@@ -67,6 +67,7 @@ public sealed partial class AppViewModel
             if (!Set(ref _ollamaState, value)) return;
             OnChanged(nameof(OllamaRunning)); OnChanged(nameof(OllamaStopped)); OnChanged(nameof(OllamaAbsent));
             OnChanged(nameof(OllamaStatusText)); OnChanged(nameof(CanTranslate));
+            if (value is not ("running" or "checking")) ForceTranslationOff();  // Ollama 불가 → 번역 무조건 OFF
         }
     }
     public bool OllamaRunning => _ollamaState == "running";
@@ -82,6 +83,13 @@ public sealed partial class AppViewModel
         "checking" => App.L("L.OllamaChecking"),
         _ => "",
     };
+
+    /// <summary>Ollama 불가 시 번역 무조건 OFF — 모든 세션 + New Agent 기본값. (게이팅은 유지, 켤 수만 없음)</summary>
+    private void ForceTranslationOff()
+    {
+        foreach (var s in _allSessions) if (s.TranslationEnabled) s.TranslationEnabled = false;
+        NewAgentTranslation = false;
+    }
 
     /// <summary>Ollama 상태 갱신: 핑 성공=running, 실패면 설치 여부로 stopped/absent 구분.</summary>
     public async Task RefreshOllamaStatusAsync()
