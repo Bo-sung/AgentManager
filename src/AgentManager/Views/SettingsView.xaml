@@ -226,8 +226,58 @@
                                                 </Border>
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{StaticResource L.UsageCheckTitle}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
-                                                    <TextBlock Text="{StaticResource L.UsageCheckDesc}" FontSize="10" Foreground="{DynamicResource Txt3}" Margin="0,2,0,4" TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{Binding UsageStatusText}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt1}" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{StaticResource L.UsageCheckDesc}" FontSize="10" Foreground="{DynamicResource Txt3}" Margin="0,2,0,6" TextWrapping="Wrap"/>
+                                                    <!-- 엔진별 사용량 막대 -->
+                                                    <ItemsControl ItemsSource="{Binding UsageRows}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Margin="0,0,0,7">
+                                                                    <DockPanel>
+                                                                        <TextBlock DockPanel.Dock="Left" Text="{Binding Name}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
+                                                                        <TextBlock Text="{Binding Note}" HorizontalAlignment="Right" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}" TextTrimming="CharacterEllipsis"/>
+                                                                    </DockPanel>
+                                                                    <ItemsControl ItemsSource="{Binding Bars}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate>
+                                                                                <Grid Margin="0,3,0,0">
+                                                                                    <Grid.ColumnDefinitions>
+                                                                                        <ColumnDefinition Width="34"/>
+                                                                                        <ColumnDefinition Width="*"/>
+                                                                                        <ColumnDefinition Width="38"/>
+                                                                                    </Grid.ColumnDefinitions>
+                                                                                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="9" Foreground="{DynamicResource Txt3}" VerticalAlignment="Center"/>
+                                                                                    <Border Grid.Column="1" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="4" Height="8" VerticalAlignment="Center">
+                                                                                        <Grid>
+                                                                                            <Grid.ColumnDefinitions>
+                                                                                                <ColumnDefinition Width="{Binding FillStar}"/>
+                                                                                                <ColumnDefinition Width="{Binding RestStar}"/>
+                                                                                            </Grid.ColumnDefinitions>
+                                                                                            <Border Grid.Column="0" CornerRadius="4">
+                                                                                                <Border.Style>
+                                                                                                    <Style TargetType="Border">
+                                                                                                        <Setter Property="Background" Value="{DynamicResource Ok}"/>
+                                                                                                        <Style.Triggers>
+                                                                                                            <DataTrigger Binding="{Binding Level}" Value="warn"><Setter Property="Background" Value="{DynamicResource Warn}"/></DataTrigger>
+                                                                                                            <DataTrigger Binding="{Binding Level}" Value="crit"><Setter Property="Background" Value="{DynamicResource Err}"/></DataTrigger>
+                                                                                                        </Style.Triggers>
+                                                                                                    </Style>
+                                                                                                </Border.Style>
+                                                                                            </Border>
+                                                                                        </Grid>
+                                                                                    </Border>
+                                                                                    <TextBlock Grid.Column="2" Text="{Binding Percent, StringFormat={}{0}%}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt1}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                                                </Grid>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <!-- 확인 중 / 데이터 없음 fallback -->
+                                                    <TextBlock Text="{Binding UsageStatusText}" Visibility="{Binding UsageFallbackVisible}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt2}" TextWrapping="Wrap"/>
+                                                    <!-- 안내: 비공식 추정치 -->
+                                                    <TextBlock Text="{StaticResource L.UsageApproxNote}" FontSize="9" Foreground="{DynamicResource Txt3}" TextWrapping="Wrap" Margin="0,6,0,0"/>
                                                 </StackPanel>
                                             </DockPanel>
                                         </Border>

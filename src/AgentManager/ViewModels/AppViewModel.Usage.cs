@@ -29,27 +29,52 @@ public sealed partial class AppViewModel
                 OnChanged(nameof(UsageStatusText));
         }
     }
-    /// <summary>사용량 카드: 활성화된 엔진별 한 줄씩(멀티라인). cc/gx는 실측 또는 "미확인",
-    /// agy는 사용량 API가 없어 "무료 프리뷰" — 단, 향후 agy가 쿼터를 방출하면 _usage에 잡혀 자동 표시된다.</summary>
-    public string UsageStatusText
+    /// <summary>카드 fallback 텍스트 — 확인 중이거나(행 없음) 데이터 전무일 때만 보인다(UsageFallbackVisible).</summary>
+    public string UsageStatusText => _checkingUsage ? L("L.UsageChecking") : L("L.UsageNoData");
+    public System.Windows.Visibility UsageFallbackVisible =>
+        UsageRows.Count == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+    /// <summary>사용량 카드: 활성화된 엔진별 행(이름 + 막대 + 잔여 메모). cc/gx는 실측 또는 "미확인",
+    /// agy는 API가 없어 "무료 프리뷰" — 향후 agy가 쿼터를 방출하면 _usage에 잡혀 자동으로 막대까지 표시된다.</summary>
+    public ObservableCollection<UsageRowVm> UsageRows { get; } = [];
+
+    private void RebuildUsageRows()
     {
-        get
-        {
-            if (_checkingUsage) return L("L.UsageChecking");
-            var lines = new List<string>();
+        UsageRows.Clear();
+        if (!_checkingUsage)
             foreach (var id in new[] { "cc", "gx", "agy" })
             {
                 if (_disabledEngines.Contains(id)) continue;
                 var name = EngineRegistry.Get(id).Name;
-                if (_usage.TryGetValue(id, out var snap))
-                    lines.Add(FormatUsageLine(id, name, snap));   // 데이터 있음(agy 포함 시 자동)
-                else if (id == "agy")
-                    lines.Add(L("L.UsageFreePreview", name));     // agy: 사용량 API 없음
-                else
-                    lines.Add(L("L.UsageNeedsCheck", name));      // cc/gx: 아직 미확인
+                if (_usage.TryGetValue(id, out var snap) && snap.Utilization >= 0)
+                {
+                    var stale = snap.ResetsAtUnix > 0 && snap.ResetsAtUnix <= DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    if (stale) { UsageRows.Add(new UsageRowVm { Name = name, Note = L("L.UsageStaleNote") + " · " + AgeText(snap.CapturedUtc) }); continue; }
+
+                    var bars = new List<UsageBar>();
+                    if (snap.WeekUtilization >= 0)
+                    {
+                        bars.Add(MakeBar(L("L.UsageBarSession"), snap.Utilization));
+                        bars.Add(MakeBar(L("L.UsageBarWeek"), snap.WeekUtilization));
+                    }
+                    else bars.Add(MakeBar("", snap.Utilization));
+
+                    var note = new List<string>();
+                    if (ResetText(snap.ResetsAtUnix) is { } r) note.Add(L("L.UsageResetIn", r));
+                    note.Add(AgeText(snap.CapturedUtc));
+                    UsageRows.Add(new UsageRowVm { Name = name, Note = string.Join(" · ", note), Bars = bars });
+                }
+                else if (id == "agy") UsageRows.Add(new UsageRowVm { Name = name, Note = L("L.UsageFreePreviewNote") });
+                else UsageRows.Add(new UsageRowVm { Name = name, Note = L("L.UsageNeedsCheckNote") });
             }
-            return lines.Count == 0 ? L("L.UsageNoData") : string.Join("\n", lines);
-        }
+        OnChanged(nameof(UsageFallbackVisible));
+        OnChanged(nameof(UsageStatusText));
+    }
+
+    private static UsageBar MakeBar(string label, double util)
+    {
+        var p = (int)Math.Round(Math.Clamp(util, 0, 1) * 100);
+        return new UsageBar { Label = label, Percent = p, Level = p >= 90 ? "crit" : p >= 70 ? "warn" : "ok" };
     }
 
     // ----- 사용량(rate-limit) -----
@@ -62,7 +87,7 @@ public sealed partial class AppViewModel
     public bool CheckingUsage
     {
         get => _checkingUsage;
-        set { if (Set(ref _checkingUsage, value)) { System.Windows.Input.CommandManager.InvalidateRequerySuggested(); OnChanged(nameof(UsageStatusText)); } }
+        set { if (Set(ref _checkingUsage, value)) { System.Windows.Input.CommandManager.InvalidateRequerySuggested(); RebuildUsageRows(); } }
     }
 
     /// <summary>실행 중 패시브 캡처. 실 사용량(util>=0, gx)이면 갱신, cc의 리셋전용 이벤트(util&lt;0)면
@@ -100,7 +125,7 @@ public sealed partial class AppViewModel
         }
         // footer: 단일(활성/최근) 엔진만 컴팩트하게. 카드(UsageStatusText)는 엔진별 멀티라인.
         QuotaText = snap is null ? "" : FormatUsageLine(displayEngineId!, EngineRegistry.Get(displayEngineId!).Name, snap);
-        OnChanged(nameof(UsageStatusText));
+        RebuildUsageRows();
     }
 
     /// <summary>한 엔진의 사용량 한 줄 포맷. footer(단일)·카드(엔진별) 양쪽에서 공용.</summary>
@@ -226,4 +251,22 @@ public sealed partial class AppViewModel
         return (s, w);
     }
 
+}
+
+/// <summary>사용량 카드의 엔진 1행: 이름 + 우측 메모 + 0~2개의 막대.</summary>
+public sealed class UsageRowVm
+{
+    public string Name { get; init; } = "";
+    public string Note { get; init; } = "";
+    public IReadOnlyList<UsageBar> Bars { get; init; } = [];
+}
+
+/// <summary>사용량 막대 1개. FillStar/RestStar로 컨버터 없이 비율 폭을 표현(Grid star).</summary>
+public sealed class UsageBar
+{
+    public string Label { get; init; } = "";
+    public int Percent { get; init; }
+    public string Level { get; init; } = "ok"; // ok | warn | crit → 막대 색(Ok/Warn/Err)
+    public System.Windows.GridLength FillStar => new(Percent, System.Windows.GridUnitType.Star);
+    public System.Windows.GridLength RestStar => new(System.Math.Max(0, 100 - Percent), System.Windows.GridUnitType.Star);
 }

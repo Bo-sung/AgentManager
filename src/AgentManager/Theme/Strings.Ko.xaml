@@ -183,6 +183,12 @@
     <sys:String x:Key="L.UsageSingleUsed">{0}: {1} 사용</sys:String>
     <sys:String x:Key="L.UsageNeedsCheck">{0}: 사용량 미확인</sys:String>
     <sys:String x:Key="L.UsageFreePreview">{0}: 무료 프리뷰 · 사용량 정보 없음</sys:String>
+    <sys:String x:Key="L.UsageNeedsCheckNote">사용량 미확인</sys:String>
+    <sys:String x:Key="L.UsageFreePreviewNote">무료 프리뷰 · 사용량 정보 없음</sys:String>
+    <sys:String x:Key="L.UsageStaleNote">갱신 필요</sys:String>
+    <sys:String x:Key="L.UsageBarSession">세션</sys:String>
+    <sys:String x:Key="L.UsageBarWeek">주간</sys:String>
+    <sys:String x:Key="L.UsageApproxNote">※ 공식 수치가 아닌 대략적 추정치입니다. 정확한 잔여량은 각 서비스 공식 페이지에서 확인하세요.</sys:String>
     <sys:String x:Key="L.UsageResetIn">{0} 후 리셋</sys:String>
     <sys:String x:Key="L.UsageCheckTitle">사용량 체크</sys:String>
     <sys:String x:Key="L.UsageCheckDesc">Claude Code · Codex 구독 잔여량을 새로 확인합니다. Antigravity는 무료 프리뷰라 해당 없음.</sys:String>
