@@ -14,6 +14,9 @@ public sealed partial class AppViewModel
     /// <summary>설치 &amp; 세팅 가이드 모달 열기/닫기.</summary>
     public RelayCommand OpenInstallGuideCommand { get; private set; } = null!;
     public RelayCommand CloseInstallGuideCommand { get; private set; } = null!;
+    /// <summary>Ollama 서비스 기동 / 상태 새로고침.</summary>
+    public RelayCommand StartOllamaCommand { get; private set; } = null!;
+    public RelayCommand RefreshOllamaStatusCommand { get; private set; } = null!;
     /// <summary>Agents 메뉴: 엔진을 미리 고른 채 New Agent 폼 열기.</summary>
     public RelayCommand NewAgentForEngineCommand { get; private set; } = null!;
     /// <summary>History 행 열기.</summary>
@@ -61,6 +64,8 @@ public sealed partial class AppViewModel
         });
         OpenInstallGuideCommand = new RelayCommand(_ => ShowInstallGuide = true);
         CloseInstallGuideCommand = new RelayCommand(_ => ShowInstallGuide = false);
+        StartOllamaCommand = new RelayCommand(_ => StartOllama());
+        RefreshOllamaStatusCommand = new RelayCommand(_ => _ = RefreshOllamaStatusAsync());
         NewAgentForEngineCommand = new RelayCommand(p =>
         {
             if (p is string id && Engines.FirstOrDefault(en => en.Id == id) is { } engine)

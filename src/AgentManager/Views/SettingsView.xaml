@@ -330,6 +330,31 @@
                                                 <!-- 번역 엔진 (Ollama) -->
                                                 <TextBlock Text="{StaticResource L.Endpoint}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                 <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsOllamaEndpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <!-- Ollama 서비스 상태 + 제어 -->
+                                                <DockPanel Margin="0,8,0,0">
+                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.Refresh}" Command="{Binding RefreshOllamaStatusCommand}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                    <Button DockPanel.Dock="Right" Command="{Binding StartOllamaCommand}" Content="{StaticResource L.OllamaStart}" VerticalAlignment="Center" Margin="6,0,0,0">
+                                                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource ChipButton}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding OllamaStopped}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                                                    </Button>
+                                                    <Button DockPanel.Dock="Right" Command="{Binding OpenInstallGuideCommand}" Content="{StaticResource L.InstallGuide}" VerticalAlignment="Center" Margin="6,0,0,0">
+                                                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource ChipButton}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding OllamaAbsent}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                                                    </Button>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Ellipse Width="8" Height="8" Margin="0,0,6,0">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="{DynamicResource Txt3}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding OllamaRunning}" Value="True"><Setter Property="Fill" Value="{DynamicResource Ok}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding OllamaStopped}" Value="True"><Setter Property="Fill" Value="{DynamicResource Warn}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding OllamaAbsent}" Value="True"><Setter Property="Fill" Value="{DynamicResource Err}"/></DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                        <TextBlock Text="{Binding OllamaStatusText}" FontSize="10.5" Foreground="{DynamicResource Txt1}" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </DockPanel>
                                                 <TextBlock Text="{StaticResource L.TranslationModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <DockPanel>
                                                     <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.QueryModels}" Command="{Binding QueryOllamaModelsCommand}" VerticalAlignment="Top" Margin="8,0,0,0"/>

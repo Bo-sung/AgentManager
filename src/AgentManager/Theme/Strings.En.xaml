@@ -300,6 +300,12 @@
     <sys:String x:Key="L.AutoApiOnLimitDesc">When off, this engine greys out (unselectable) in New Agent once its quota is used up.</sys:String>
     <sys:String x:Key="L.LimitReached">limit reached</sys:String>
     <sys:String x:Key="L.ApiBadge">API</sys:String>
+    <sys:String x:Key="L.OllamaRunning">Ollama running</sys:String>
+    <sys:String x:Key="L.OllamaStopped">Ollama stopped (service down)</sys:String>
+    <sys:String x:Key="L.OllamaAbsent">Ollama not installed</sys:String>
+    <sys:String x:Key="L.OllamaChecking">Checking Ollama…</sys:String>
+    <sys:String x:Key="L.OllamaStart">Start</sys:String>
+    <sys:String x:Key="L.Refresh">Refresh</sys:String>
     <sys:String x:Key="L.Detect">Detect</sys:String>
     <sys:String x:Key="L.DetectFound">Detected — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">Auto-detect failed — enter the path manually</sys:String>

@@ -136,6 +136,7 @@
                                     <Run Text="{StaticResource L.StatusModel}"/><Run Text="{Binding Model, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
                                               IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
+                                              IsEnabled="{Binding DataContext.CanTranslate, RelativeSource={RelativeSource AncestorType=Window}}"
                                               Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"
                                               Margin="16,0,0,0"/>
                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"

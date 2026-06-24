@@ -24,6 +24,14 @@ How to install each coding-agent CLI and connect it to AgentManager. Install via
 - **Connect**: Runtimes → Antigravity → Detect → Sign in → model (default)
 - Currently a **free preview** — no usage/quota info is exposed.
 
+## Translation engine (Ollama)
+Korean↔English translation runs on the local LLM **Ollama**. It must be installed and running for translation to be ON.
+- **Install**: [ollama.com/download ↗](https://ollama.com/download)
+- **Pull a model**: in a terminal, `ollama pull exaone3.5:7.8b` (recommended) — or any model you prefer
+- **Run**: launch the Ollama app or `ollama serve` (also available via the **[Start]** button under Settings → Translation · Language)
+- **Connect**: Settings → Translation · Language → check the endpoint (`http://localhost:11434`) → pick a model via **Query installed**
+- If Ollama is down or not installed, **translation ON is disabled** and input/output pass through untranslated.
+
 ## Notes
 - **Translation**: local-LLM (Ollama) translation is optional. Set the endpoint/model under Settings → Translation · Language.
 - **Usage**: the usage shown is approximate, not official. Check each provider's official page for exact remaining quota.

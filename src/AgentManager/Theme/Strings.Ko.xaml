@@ -300,6 +300,12 @@
     <sys:String x:Key="L.AutoApiOnLimitDesc">끄면 한도 소진 시 이 엔진이 New Agent에서 회색(선택 불가)으로 표시됩니다.</sys:String>
     <sys:String x:Key="L.LimitReached">한도 초과</sys:String>
     <sys:String x:Key="L.ApiBadge">API</sys:String>
+    <sys:String x:Key="L.OllamaRunning">Ollama 실행 중</sys:String>
+    <sys:String x:Key="L.OllamaStopped">Ollama 꺼짐 (서비스 중지)</sys:String>
+    <sys:String x:Key="L.OllamaAbsent">Ollama 미설치</sys:String>
+    <sys:String x:Key="L.OllamaChecking">Ollama 확인 중…</sys:String>
+    <sys:String x:Key="L.OllamaStart">실행</sys:String>
+    <sys:String x:Key="L.Refresh">새로고침</sys:String>
     <sys:String x:Key="L.Detect">탐지</sys:String>
     <sys:String x:Key="L.DetectFound">탐지됨 — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">자동 탐지 실패 — 경로를 직접 입력하세요</sys:String>

@@ -137,6 +137,7 @@ public sealed partial class AppViewModel : ObservableObject
         InitNavCommands();
         InitDelegationCommands();
         StartSettingsWatcher();
+        _ = RefreshOllamaStatusAsync();   // 시작 시 Ollama 상태 1회 확인(번역 ON 토글 활성 판단)
     }
 
     public RelayCommand OpenIdeCommand { get; }

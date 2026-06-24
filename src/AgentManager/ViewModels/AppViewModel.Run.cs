@@ -84,7 +84,9 @@ public sealed partial class AppViewModel
         var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
             ? CreateTranslator(_ollamaEndpoint, _ollamaModel, src, tgt)
             : _translator;
-        var session = new AgentSession(adapter, exe, translator, s.TranslationEnabled);
+        // 번역 ON 가능 조건: 유저가 켬 && Ollama 활성. 다운이면 번역 레이어 없이 패스스루.
+        var translateOn = s.TranslationEnabled && await Core.Translation.OllamaTranslator.PingAsync(_ollamaEndpoint, 1500);
+        var session = new AgentSession(adapter, exe, translator, translateOn);
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
         if (s.RequireApproval)
             session.PermissionHandler = pr => HandlePermissionAsync(s, pr);

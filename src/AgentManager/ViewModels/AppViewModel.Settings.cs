@@ -56,6 +56,59 @@ public sealed partial class AppViewModel
             OllamaModelsStatus = App.L("L.QueryFailed");
         }
     }
+
+    // ----- Ollama 서비스 상태 (번역 게이팅: 번역 ON 가능 = Ollama 활성 && 유저 작동) -----
+    private string _ollamaState = "unknown"; // running | stopped | absent | checking | unknown
+    public string OllamaState
+    {
+        get => _ollamaState;
+        private set
+        {
+            if (!Set(ref _ollamaState, value)) return;
+            OnChanged(nameof(OllamaRunning)); OnChanged(nameof(OllamaStopped)); OnChanged(nameof(OllamaAbsent));
+            OnChanged(nameof(OllamaStatusText)); OnChanged(nameof(CanTranslate));
+        }
+    }
+    public bool OllamaRunning => _ollamaState == "running";
+    public bool OllamaStopped => _ollamaState == "stopped";   // 설치됐지만 꺼짐
+    public bool OllamaAbsent => _ollamaState == "absent";     // 미설치
+    /// <summary>번역 레이어 사용 가능 여부 = Ollama 실행 중. (번역 ON 토글 활성 조건)</summary>
+    public bool CanTranslate => OllamaRunning;
+    public string OllamaStatusText => _ollamaState switch
+    {
+        "running" => App.L("L.OllamaRunning"),
+        "stopped" => App.L("L.OllamaStopped"),
+        "absent" => App.L("L.OllamaAbsent"),
+        "checking" => App.L("L.OllamaChecking"),
+        _ => "",
+    };
+
+    /// <summary>Ollama 상태 갱신: 핑 성공=running, 실패면 설치 여부로 stopped/absent 구분.</summary>
+    public async Task RefreshOllamaStatusAsync()
+    {
+        OllamaState = "checking";
+        var endpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? _ollamaEndpoint : SettingsOllamaEndpoint;
+        var up = await Core.Translation.OllamaTranslator.PingAsync(endpoint, 1500);
+        OllamaState = up ? "running" : (EngineRegistry.OllamaExe() is not null ? "stopped" : "absent");
+    }
+
+    /// <summary>설정의 '실행' 버튼 — 설치된 ollama를 'serve'로 백그라운드 기동 후 상태 재확인.</summary>
+    public void StartOllama()
+    {
+        var exe = EngineRegistry.OllamaExe();
+        if (exe is null) { OllamaState = "absent"; return; }
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, "serve") { UseShellExecute = false, CreateNoWindow = true });
+        }
+        catch { }
+        _ = Task.Run(async () =>
+        {
+            for (var i = 0; i < 6 && !await Core.Translation.OllamaTranslator.PingAsync(_ollamaEndpoint, 1500); i++) await Task.Delay(1000);
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await RefreshOllamaStatusAsync());
+        });
+    }
+
     private bool _settingsDefaultTranslationEnabled = true;
     public bool SettingsDefaultTranslationEnabled { get => _settingsDefaultTranslationEnabled; set => Set(ref _settingsDefaultTranslationEnabled, value); }
     private bool _settingsWarnNoWorktree;
@@ -420,6 +473,7 @@ public sealed partial class AppViewModel
     {
         PullSettingsToEditor();
         SettingsStatus = "";
+        _ = RefreshOllamaStatusAsync();   // 설정 열 때 Ollama 상태 최신화
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
     }

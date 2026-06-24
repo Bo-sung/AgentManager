@@ -74,6 +74,15 @@ public static class EngineRegistry
         return OnPath(exe); // bare 명령(예: cc의 "claude") → PATH 탐색
     }
 
+    /// <summary>설치된 ollama 실행파일 경로(PATH 또는 기본 설치 위치). 미설치면 null — '실행' 버튼·상태표시용.</summary>
+    public static string? OllamaExe()
+    {
+        var known = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Ollama", "ollama.exe");
+        if (File.Exists(known)) return known;
+        if (OnPath("ollama")) return "ollama";
+        return null;
+    }
+
     private static bool OnPath(string command)
     {
         if (Path.IsPathRooted(command)) return File.Exists(command);

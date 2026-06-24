@@ -29,6 +29,19 @@ public sealed partial class OllamaTranslator(OllamaOptions options, HttpClient? 
 
     public bool ContainsKorean(string text) => KoreanRegex().IsMatch(text);
 
+    /// <summary>Ollama 서버가 응답하는지 빠른 핑(/api/tags). 번역 게이팅/상태표시용 — 짧은 타임아웃.</summary>
+    public static async Task<bool> PingAsync(string endpoint, int timeoutMs = 1500, CancellationToken ct = default)
+    {
+        try
+        {
+            var ep = (string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:11434" : endpoint.Trim()).TrimEnd('/');
+            using var http = new HttpClient { Timeout = TimeSpan.FromMilliseconds(timeoutMs) };
+            using var resp = await http.GetAsync($"{ep}/api/tags", ct);
+            return resp.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
     /// <summary>Ollama에 설치된 모델 이름 목록(/api/tags). 실패 시 예외 — 호출부에서 처리.</summary>
     public static async Task<IReadOnlyList<string>> ListModelsAsync(string endpoint, CancellationToken ct = default)
     {
