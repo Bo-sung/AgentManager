@@ -16,8 +16,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.4.0: UI 줌(Ctrl+휠) — 본문/모달 독립 배율, 활성 영역 조정 -->
-    <Version>1.4.0</Version>
+    <!-- 1.5.0: 브랜드 테마 3종+커스텀 강조색 · 엔진 경로 수동+탐지(독립설치 우선) · 번역/언어 통합+모델 조회 · 창 복원 fix -->
+    <Version>1.5.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
