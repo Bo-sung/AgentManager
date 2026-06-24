@@ -246,26 +246,12 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
                 }
                 link.RequestNavigate += (s, e) =>
                 {
-                    try
-                    {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
+                    Shell.Open(e.Uri.AbsoluteUri);
                     e.Handled = true;
                 };
                 link.Click += (s, e) =>
                 {
-                    try
-                    {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
+                    Shell.Open(url);
                 };
                 inlines.Add(link);
             }
@@ -288,26 +274,12 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
                 }
                 link.RequestNavigate += (s, e) =>
                 {
-                    try
-                    {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
+                    Shell.Open(e.Uri.AbsoluteUri);
                     e.Handled = true;
                 };
                 link.Click += (s, e) =>
                 {
-                    try
-                    {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
+                    Shell.Open(url);
                 };
                 inlines.Add(link);
             }

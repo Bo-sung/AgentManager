@@ -487,11 +487,7 @@ public sealed partial class AppViewModel
         {
             if (!System.IO.File.Exists(Persistence.SettingsStore.SettingsPath))
                 Persistence.SettingsStore.Save(BuildSettingsDto());
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = Persistence.SettingsStore.SettingsPath,
-                UseShellExecute = true,
-            });
+            Shell.Open(Persistence.SettingsStore.SettingsPath);
         }
         catch { }
     }

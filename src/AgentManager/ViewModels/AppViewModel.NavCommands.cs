@@ -60,7 +60,7 @@ public sealed partial class AppViewModel
         OpenUrlCommand = new RelayCommand(p =>
         {
             if (p is not string url || string.IsNullOrWhiteSpace(url)) return;
-            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
+            Shell.Open(url);
         });
         OpenInstallGuideCommand = new RelayCommand(_ => ShowInstallGuide = true);
         CloseInstallGuideCommand = new RelayCommand(_ => ShowInstallGuide = false);
