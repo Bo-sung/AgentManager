@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.7.0: 엔진 가용성 게이팅(미설치 회색·설치 가이드 모달) · 한도→API 자동전환 · 번역 Ollama 게이팅+상태/실행 · CLI 삭제 영속 -->
-    <Version>1.7.0</Version>
+    <!-- 1.7.1: 공식 엔진 아이콘(Claude/Codex/Antigravity) · README 변경 이력 섹션 -->
+    <Version>1.7.1</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
