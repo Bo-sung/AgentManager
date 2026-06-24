@@ -1644,16 +1644,8 @@
                                     <ToggleButton Style="{StaticResource TogglePillButton}" HorizontalAlignment="Left"
                                                   IsChecked="{Binding NewAgentTranslation, Mode=TwoWay}"
                                                   Content="{Binding NewAgentTranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
-                                    <controls:IconView Icon="{StaticResource IconWarn}" Width="15" Height="15" Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Warn}" ToolTip="{StaticResource L.OllamaOffWarn}">
-                                        <controls:IconView.Style>
-                                            <Style TargetType="controls:IconView">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding OllamaDown}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </controls:IconView.Style>
-                                    </controls:IconView>
+                                    <controls:IconView Icon="{StaticResource IconWarn}" Width="15" Height="15" Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Warn}" ToolTip="{StaticResource L.OllamaOffWarn}"
+                                                       Visibility="{Binding OllamaDown, Converter={StaticResource BoolVis}}"/>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>

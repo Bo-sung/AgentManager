@@ -483,16 +483,8 @@
                                                 <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconWarn}" Width="15" Height="15" Margin="0,0,8,0"
                                                                    VerticalAlignment="Center" Foreground="{DynamicResource Warn}" Cursor="Hand"
                                                                    ToolTip="{StaticResource L.OllamaOffWarn}"
-                                                                   controls:MouseClick.Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
-                                                    <controls:IconView.Style>
-                                                        <Style TargetType="controls:IconView">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding DataContext.OllamaDown, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </controls:IconView.Style>
-                                                </controls:IconView>
+                                                                   Visibility="{Binding DataContext.OllamaDown, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}"
+                                                                   controls:MouseClick.Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                                 <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Foreground="White"
                                                         Margin="6,0,0,0" ToolTip="{StaticResource L.StopTip}"
                                                         Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"

@@ -29,14 +29,21 @@ public sealed partial class OllamaTranslator(OllamaOptions options, HttpClient? 
 
     public bool ContainsKorean(string text) => KoreanRegex().IsMatch(text);
 
+    /// <summary>요청용 엔드포인트 정규화. .NET HttpClient는 localhost를 IPv6(::1) 우선 해석하는데
+    /// Ollama 기본 바인딩은 127.0.0.1(IPv4)뿐이라 연결이 실패한다 → localhost를 IPv4로 직접 지정.</summary>
+    private static string Ipv4(string? endpoint)
+    {
+        var ep = string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:11434" : endpoint.Trim();
+        return ep.Replace("localhost", "127.0.0.1", StringComparison.OrdinalIgnoreCase).TrimEnd('/');
+    }
+
     /// <summary>Ollama 서버가 응답하는지 빠른 핑(/api/tags). 번역 게이팅/상태표시용 — 짧은 타임아웃.</summary>
     public static async Task<bool> PingAsync(string endpoint, int timeoutMs = 1500, CancellationToken ct = default)
     {
         try
         {
-            var ep = (string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:11434" : endpoint.Trim()).TrimEnd('/');
             using var http = new HttpClient { Timeout = TimeSpan.FromMilliseconds(timeoutMs) };
-            using var resp = await http.GetAsync($"{ep}/api/tags", ct);
+            using var resp = await http.GetAsync($"{Ipv4(endpoint)}/api/tags", ct);
             return resp.IsSuccessStatusCode;
         }
         catch { return false; }
@@ -45,7 +52,7 @@ public sealed partial class OllamaTranslator(OllamaOptions options, HttpClient? 
     /// <summary>Ollama에 설치된 모델 이름 목록(/api/tags). 실패 시 예외 — 호출부에서 처리.</summary>
     public static async Task<IReadOnlyList<string>> ListModelsAsync(string endpoint, CancellationToken ct = default)
     {
-        var ep = (string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:11434" : endpoint.Trim()).TrimEnd('/');
+        var ep = Ipv4(endpoint);
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
         using var resp = await http.GetAsync($"{ep}/api/tags", ct);
         resp.EnsureSuccessStatusCode();
@@ -86,7 +93,7 @@ public sealed partial class OllamaTranslator(OllamaOptions options, HttpClient? 
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 cts.CancelAfter(attempt == 0 ? _opt.Timeout : _opt.Timeout * 2);
                 using var resp = await _http.PostAsJsonAsync(
-                    $"{_opt.Endpoint.TrimEnd('/')}/api/generate",
+                    $"{Ipv4(_opt.Endpoint)}/api/generate",
                     // keep_alive 30m: 턴 사이 모델 퇴출로 인한 반복 콜드로드 방지
                     new { model = _opt.Model, prompt, stream = false, keep_alive = "30m", options = new { temperature = 0.1 } },
                     cts.Token);
