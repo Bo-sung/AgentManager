@@ -2,6 +2,17 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:c="clr-namespace:AgentManager.Controls">
 
+    <!-- 엔진 브랜드 색(고정) — 강조색/테마 변경과 무관하게 모델 아이콘 색을 유지한다 -->
+    <SolidColorBrush x:Key="CcBrand" Color="#FFFF5A2C"/>
+    <SolidColorBrush x:Key="GxBrand" Color="#FF8B5CF6"/>
+    <!-- Antigravity 공식 CI 무지개(파랑→초록→빨강→주황) -->
+    <LinearGradientBrush x:Key="AgyGradient" StartPoint="0,1" EndPoint="1,0">
+        <GradientStop Color="#FF4285F4" Offset="0"/>
+        <GradientStop Color="#FF34A853" Offset="0.4"/>
+        <GradientStop Color="#FFEA4335" Offset="0.72"/>
+        <GradientStop Color="#FFFB8C00" Offset="1"/>
+    </LinearGradientBrush>
+
     <Style TargetType="{x:Type c:IconView}">
         <Setter Property="Template">
             <Setter.Value>
@@ -192,15 +203,15 @@
         <Style.Triggers>
             <DataTrigger Binding="{Binding AgentId}" Value="cc">
                 <Setter Property="Icon" Value="{StaticResource IconEngineClaude}"/>
-                <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource CcBrand}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding AgentId}" Value="gx">
                 <Setter Property="Icon" Value="{StaticResource IconEngineOpenAi}"/>
-                <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
+                <Setter Property="Foreground" Value="{DynamicResource GxBrand}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding AgentId}" Value="agy">
                 <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
-                <Setter Property="Foreground" Value="{DynamicResource Agy}"/>
+                <Setter Property="Foreground" Value="{DynamicResource AgyGradient}"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -213,15 +224,15 @@
         <Style.Triggers>
             <DataTrigger Binding="{Binding Id}" Value="cc">
                 <Setter Property="Icon" Value="{StaticResource IconEngineClaude}"/>
-                <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource CcBrand}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding Id}" Value="gx">
                 <Setter Property="Icon" Value="{StaticResource IconEngineOpenAi}"/>
-                <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
+                <Setter Property="Foreground" Value="{DynamicResource GxBrand}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding Id}" Value="agy">
                 <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
-                <Setter Property="Foreground" Value="{DynamicResource Agy}"/>
+                <Setter Property="Foreground" Value="{DynamicResource AgyGradient}"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>

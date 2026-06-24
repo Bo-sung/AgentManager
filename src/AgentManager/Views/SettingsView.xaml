@@ -59,7 +59,7 @@
                                             <StackPanel>
                                                 <DockPanel Margin="0,0,0,10">
                                                     <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="5" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
-                                                        <controls:IconView Icon="{StaticResource IconEngineClaude}" Filled="True" Foreground="{DynamicResource Accent}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <controls:IconView Icon="{StaticResource IconEngineClaude}" Filled="True" Foreground="{DynamicResource CcBrand}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
                                                     <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineCc, Mode=TwoWay}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                                     <StackPanel VerticalAlignment="Center">
@@ -128,7 +128,7 @@
                                             <StackPanel>
                                                 <DockPanel Margin="0,0,0,10">
                                                     <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="5" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
-                                                        <controls:IconView Icon="{StaticResource IconEngineOpenAi}" Filled="True" Foreground="{DynamicResource Gx}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <controls:IconView Icon="{StaticResource IconEngineOpenAi}" Filled="True" Foreground="{DynamicResource GxBrand}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
                                                     <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineGx, Mode=TwoWay}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                                     <StackPanel VerticalAlignment="Center">
@@ -197,7 +197,7 @@
                                                 <StackPanel>
                                                     <DockPanel Margin="0,0,0,6">
                                                         <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="5" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,8,0">
-                                                            <controls:IconView Icon="{StaticResource IconEngineAgy}" Filled="True" Foreground="{DynamicResource Agy}" Width="15" Height="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            <controls:IconView Icon="{StaticResource IconEngineAgy}" Filled="True" Foreground="{DynamicResource AgyGradient}" Width="15" Height="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
                                                         <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.EngineEnabled}" IsChecked="{Binding SettingsEngineAgy, Mode=TwoWay}" VerticalAlignment="Center"/>
                                                         <TextBlock Text="Antigravity" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
