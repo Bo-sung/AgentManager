@@ -68,6 +68,10 @@ public sealed record AppSettingsDto
     public Dictionary<string, string> EngineAuthMode { get; init; } = new();
     /// <summary>엔진별 API 키 (DPAPI 암호화 base64, engineId → blob). 평문 저장 금지.</summary>
     public Dictionary<string, string> EngineApiKey { get; init; } = new();
+    /// <summary>엔진별 "한도 도달 시 API 자동 전환" 토글(opt-in).</summary>
+    public Dictionary<string, bool> EngineAutoApiOnLimit { get; init; } = new();
+    /// <summary>엔진별 rate-limit 차단 해제 시각(unix). 실제 실패 시 기록 — 재시작 후에도 소진 상태 유지.</summary>
+    public Dictionary<string, long> EngineLimitedUntil { get; init; } = new();
     /// <summary>엔진별 마지막 사용량(rate-limit) 스냅샷. 재시작 후 footer 복원용 — 신선도 라벨과 함께 표시.</summary>
     public Dictionary<string, UsageSnapshotDto> Usage { get; init; } = new();
 }

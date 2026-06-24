@@ -49,6 +49,10 @@ public sealed partial class AppViewModel
         foreach (var kv in s.EngineAuthMode ?? new()) _engineAuthMode[kv.Key] = kv.Value;
         _engineApiKey.Clear();
         foreach (var kv in s.EngineApiKey ?? new()) _engineApiKey[kv.Key] = kv.Value;
+        _engineAutoApi.Clear();
+        foreach (var kv in s.EngineAutoApiOnLimit ?? new()) _engineAutoApi[kv.Key] = kv.Value;
+        _engineLimitedUntil.Clear();
+        foreach (var kv in s.EngineLimitedUntil ?? new()) _engineLimitedUntil[kv.Key] = kv.Value;
         _usage.Clear();
         foreach (var kv in s.Usage ?? new())
             _usage[kv.Key] = new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc);
@@ -91,6 +95,8 @@ public sealed partial class AppViewModel
         DisabledEngines = _disabledEngines.ToList(),
         EngineAuthMode = new Dictionary<string, string>(_engineAuthMode),
         EngineApiKey = new Dictionary<string, string>(_engineApiKey),
+        EngineAutoApiOnLimit = new Dictionary<string, bool>(_engineAutoApi),
+        EngineLimitedUntil = new Dictionary<string, long>(_engineLimitedUntil),
         Usage = _usage.ToDictionary(k => k.Key, v => new UsageSnapshotDto
         {
             Utilization = v.Value.Utilization,

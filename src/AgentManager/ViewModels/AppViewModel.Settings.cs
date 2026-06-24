@@ -158,6 +158,28 @@ public sealed partial class AppViewModel
     // ----- per-engine auth (subscription / api key) -----
     private readonly Dictionary<string, string> _engineAuthMode = new();   // id → "subscription" | "api"
     private readonly Dictionary<string, string> _engineApiKey = new();     // id → DPAPI base64
+    private readonly Dictionary<string, bool> _engineAutoApi = new();      // id → 한도 도달 시 API 자동 전환(opt-in)
+    private readonly Dictionary<string, long> _engineLimitedUntil = new(); // id → rate-limit 차단 해제(unix). 실제 실패 시 기록
+
+    public bool HasApiKey(string id) => !string.IsNullOrWhiteSpace(Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault(id, "")));
+    public bool AutoApiOnLimit(string id) => _engineAutoApi.GetValueOrDefault(id);
+    /// <summary>한도 소진 상태인가 — 사용량 ~100% 또는 실제 rate-limit 실패(리셋 전).</summary>
+    public bool IsEngineLimited(string id)
+    {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (_engineLimitedUntil.TryGetValue(id, out var until) && until > now) return true;
+        if (_usage.TryGetValue(id, out var s) && s.Utilization >= 0.999 && s.ResetsAtUnix > now) return true;
+        return false;
+    }
+    /// <summary>소진 시 API로 자동 전환되어 계속 사용 가능한가(토글 ON + 키 보유).</summary>
+    public bool WillUseApiOnLimit(string id) => AutoApiOnLimit(id) && HasApiKey(id);
+    /// <summary>rate-limit 실제 실패를 기록 — 리셋 시각(모르면 +1h)까지 소진 처리.</summary>
+    public void MarkRateLimited(string id, long resetUnix)
+    {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        _engineLimitedUntil[id] = resetUnix > now ? resetUnix : now + 3600;
+    }
+
     /// <summary>엔진의 API 키 env 변수명 (cc/gx). 없으면 null.</summary>
     private static string? ApiEnvVar(string id) => id switch
     {
@@ -168,8 +190,11 @@ public sealed partial class AppViewModel
     /// <summary>실행 시 주입할 env: api 모드 + 키 있음 → { 변수명: 복호화키 }.</summary>
     private IReadOnlyDictionary<string, string> ApiEnvFor(string id)
     {
-        if (_engineAuthMode.GetValueOrDefault(id, "subscription") != "api") return EmptyEnv;
         if (ApiEnvVar(id) is not { } var) return EmptyEnv;
+        // 명시적 API 모드 OR (한도 소진 + 자동전환 ON + 키 보유) → API 키 주입
+        var useApi = _engineAuthMode.GetValueOrDefault(id, "subscription") == "api"
+                     || (IsEngineLimited(id) && WillUseApiOnLimit(id));
+        if (!useApi) return EmptyEnv;
         var key = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault(id, ""));
         return string.IsNullOrWhiteSpace(key) ? EmptyEnv : new Dictionary<string, string> { [var] = key };
     }
@@ -190,6 +215,10 @@ public sealed partial class AppViewModel
     private string _settingsAuthGx = "subscription";
     public string SettingsApiKeyGx { get => _settingsApiKeyGx; set => Set(ref _settingsApiKeyGx, value); }
     private string _settingsApiKeyGx = "";
+    private bool _settingsAutoApiCc;
+    public bool SettingsAutoApiCc { get => _settingsAutoApiCc; set => Set(ref _settingsAutoApiCc, value); }
+    private bool _settingsAutoApiGx;
+    public bool SettingsAutoApiGx { get => _settingsAutoApiGx; set => Set(ref _settingsAutoApiGx, value); }
 
     // ----- appearance: accent / density / telemetry -----
     private string _accent = "ember";
@@ -380,6 +409,8 @@ public sealed partial class AppViewModel
         SettingsEngineAgy = !_disabledEngines.Contains("agy");
         SettingsAuthCc = _engineAuthMode.GetValueOrDefault("cc", "subscription");
         SettingsAuthGx = _engineAuthMode.GetValueOrDefault("gx", "subscription");
+        SettingsAutoApiCc = _engineAutoApi.GetValueOrDefault("cc");
+        SettingsAutoApiGx = _engineAutoApi.GetValueOrDefault("gx");
         SettingsApiKeyCc = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("cc", ""));
         SettingsApiKeyGx = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("gx", ""));
         RefreshDetectLabels(); // CLI 경로 감지 라벨 + 로그인 계정 표시 갱신
@@ -450,6 +481,8 @@ public sealed partial class AppViewModel
         }
         SaveEngineAuth("cc", SettingsAuthCc, SettingsApiKeyCc);
         SaveEngineAuth("gx", SettingsAuthGx, SettingsApiKeyGx);
+        _engineAutoApi["cc"] = SettingsAutoApiCc;
+        _engineAutoApi["gx"] = SettingsAutoApiGx;
         _theme = Theme.ThemePalette.Normalize(SettingsTheme); // 테마는 이미 라이브 적용됨
         var newLanguage = SettingsLanguage == "en" ? "en" : "ko";
         var languageChanged = newLanguage != _language;

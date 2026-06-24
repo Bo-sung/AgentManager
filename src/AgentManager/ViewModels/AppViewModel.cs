@@ -576,7 +576,10 @@ public sealed partial class AppViewModel : ObservableObject
 
     /// <summary>New Agent 엔진 피커용 — 각 엔진 + 설치 여부(수동 경로/PATH 반영). 폼 열 때 새로 계산.</summary>
     public IReadOnlyList<EngineOptionVm> NewAgentEngineOptions =>
-        Engines.Select(d => new EngineOptionVm(d, EngineRegistry.IsInstalled(d.Id, _claudePath, _codexPath, _agyPath))).ToList();
+        Engines.Select(d => new EngineOptionVm(d,
+            EngineRegistry.IsInstalled(d.Id, _claudePath, _codexPath, _agyPath),
+            IsEngineLimited(d.Id),
+            WillUseApiOnLimit(d.Id))).ToList();
 
     // ----- 설치 & 세팅 가이드 모달 (Resources/Guide.<lang>.md를 MarkdownViewer로 렌더) -----
     private bool _showInstallGuide;

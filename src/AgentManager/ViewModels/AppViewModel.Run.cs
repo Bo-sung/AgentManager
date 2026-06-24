@@ -134,6 +134,9 @@ public sealed partial class AppViewModel
         }
         catch (Exception ex)
         {
+            // 실제 rate-limit 실패면 해당 엔진을 소진으로 기록(리셋 전까지 회색/자동전환 트리거)
+            if (LooksRateLimited(ex.Message))
+                MarkRateLimited(s.AgentId, _usage.TryGetValue(s.AgentId, out var snap) ? snap.ResetsAtUnix : 0);
             s.Transcript.Add(new ErrorBlock(L("L.RunFailed"), ex.Message));
             s.Status = "error";
             s.MarkRunEnded(L("L.Failed"));
@@ -147,6 +150,16 @@ public sealed partial class AppViewModel
             _running.Remove(s.Id);
             cts.Dispose();
         }
+    }
+
+    /// <summary>에러 메시지가 rate-limit/사용량 한도로 보이는가(소진 기록 트리거).</summary>
+    private static bool LooksRateLimited(string? msg)
+    {
+        if (string.IsNullOrEmpty(msg)) return false;
+        var m = msg.ToLowerInvariant();
+        return m.Contains("rate limit") || m.Contains("rate_limit") || m.Contains("ratelimit")
+            || m.Contains("usage limit") || m.Contains("quota") || m.Contains("429")
+            || m.Contains("too many requests") || m.Contains("limit reached") || m.Contains("limit exceeded");
     }
 
     private static string? NativeHookSpoolDirectoryFor(SessionViewModel s)

@@ -295,6 +295,11 @@
     <sys:String x:Key="L.InstallGuide">설치 가이드 ↗</sys:String>
     <sys:String x:Key="L.GuideBtn">가이드</sys:String>
     <sys:String x:Key="L.InstallGuideTitle">설치 &amp; 세팅 가이드</sys:String>
+    <sys:String x:Key="L.AutoApiOnLimit">한도 도달 시 API로 전환</sys:String>
+    <sys:String x:Key="L.AutoApiOnLimitTip">구독 한도 소진 시 다음 세션부터 저장된 API 키로 자동 전환됩니다(API 과금 발생). 끄면 소진 시 비활성화.</sys:String>
+    <sys:String x:Key="L.AutoApiOnLimitDesc">끄면 한도 소진 시 이 엔진이 New Agent에서 회색(선택 불가)으로 표시됩니다.</sys:String>
+    <sys:String x:Key="L.LimitReached">한도 초과</sys:String>
+    <sys:String x:Key="L.ApiBadge">API</sys:String>
     <sys:String x:Key="L.Detect">탐지</sys:String>
     <sys:String x:Key="L.DetectFound">탐지됨 — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">자동 탐지 실패 — 경로를 직접 입력하세요</sys:String>

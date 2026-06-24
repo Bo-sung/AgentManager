@@ -51,7 +51,7 @@ public sealed partial class AppViewModel
         ZoomResetAllCommand = new RelayCommand(_ => { BodyScale = 1.0; ModalScale = 1.0; });
         SelectEngineCommand = new RelayCommand(p =>
         {
-            if (p is EngineOptionVm opt) { if (opt.IsInstalled) NewAgentSelectedEngine = opt.Def; } // 미설치는 선택 불가
+            if (p is EngineOptionVm opt) { if (opt.IsAvailable) NewAgentSelectedEngine = opt.Def; } // 미설치/한도소진은 선택 불가
             else if (p is EngineDef def) NewAgentSelectedEngine = def;
         });
         OpenUrlCommand = new RelayCommand(p =>

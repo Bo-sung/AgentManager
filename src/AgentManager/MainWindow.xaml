@@ -1565,7 +1565,7 @@
                                             <Style TargetType="Border">
                                                 <Setter Property="Cursor" Value="Hand"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsInstalled}" Value="False"><Setter Property="Cursor" Value="Arrow"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Dimmed}" Value="True"><Setter Property="Cursor" Value="Arrow"/></DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
@@ -1582,7 +1582,7 @@
                                                         <Style TargetType="StackPanel">
                                                             <Setter Property="Opacity" Value="1"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsInstalled}" Value="False"><Setter Property="Opacity" Value="0.4"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding Dimmed}" Value="True"><Setter Property="Opacity" Value="0.4"/></DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </StackPanel.Style>
@@ -1599,23 +1599,26 @@
                                                         <Style TargetType="TextBlock">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsInstalled}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding ShowInstallBadge}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
                                             </StackPanel>
-                                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" CornerRadius="3" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" Padding="5,1">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsInstalled}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <TextBlock Text="{StaticResource L.NotInstalled}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{DynamicResource Txt2}"/>
-                                            </Border>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                                <Border CornerRadius="3" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" Padding="5,1">
+                                                    <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowInstallBadge}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style>
+                                                    <TextBlock Text="{StaticResource L.NotInstalled}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{DynamicResource Txt2}"/>
+                                                </Border>
+                                                <Border CornerRadius="3" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Err}" BorderThickness="1" Padding="5,1">
+                                                    <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowLimitBadge}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style>
+                                                    <TextBlock Text="{StaticResource L.LimitReached}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{DynamicResource Err}"/>
+                                                </Border>
+                                                <Border CornerRadius="3" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Accent}" BorderThickness="1" Padding="5,1">
+                                                    <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowApiBadge}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style>
+                                                    <TextBlock Text="{StaticResource L.ApiBadge}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{DynamicResource Accent}"/>
+                                                </Border>
+                                            </StackPanel>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
