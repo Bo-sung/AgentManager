@@ -478,8 +478,21 @@
                                                 <!-- 번역 토글 (모델/effort 옆) — Ollama 미실행 시 비활성 -->
                                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}" Height="30" Padding="12,0" Margin="0,0,8,0"
                                                               IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
-                                                              IsEnabled="{Binding DataContext.CanTranslate, RelativeSource={RelativeSource AncestorType=Window}}"
                                                               Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
+                                                <!-- Ollama 꺼짐 경고(번역 미적용) — 클릭 시 설정으로 -->
+                                                <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconWarn}" Width="15" Height="15" Margin="0,0,8,0"
+                                                                   VerticalAlignment="Center" Foreground="{DynamicResource Warn}" Cursor="Hand"
+                                                                   ToolTip="{StaticResource L.OllamaOffWarn}"
+                                                                   controls:MouseClick.Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                    <controls:IconView.Style>
+                                                        <Style TargetType="controls:IconView">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.OllamaDown, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </controls:IconView.Style>
+                                                </controls:IconView>
                                                 <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Foreground="White"
                                                         Margin="6,0,0,0" ToolTip="{StaticResource L.StopTip}"
                                                         Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"

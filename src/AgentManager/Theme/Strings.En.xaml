@@ -305,6 +305,7 @@
     <sys:String x:Key="L.OllamaAbsent">Ollama not installed</sys:String>
     <sys:String x:Key="L.OllamaChecking">Checking Ollama…</sys:String>
     <sys:String x:Key="L.OllamaStart">Start</sys:String>
+    <sys:String x:Key="L.OllamaOffWarn">Ollama is off, so translation won't apply — start it in Settings → Translation · Language.</sys:String>
     <sys:String x:Key="L.Detect">Detect</sys:String>
     <sys:String x:Key="L.DetectFound">Detected — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">Auto-detect failed — enter the path manually</sys:String>

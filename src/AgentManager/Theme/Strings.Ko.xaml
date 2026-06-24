@@ -305,6 +305,7 @@
     <sys:String x:Key="L.OllamaAbsent">Ollama 미설치</sys:String>
     <sys:String x:Key="L.OllamaChecking">Ollama 확인 중…</sys:String>
     <sys:String x:Key="L.OllamaStart">실행</sys:String>
+    <sys:String x:Key="L.OllamaOffWarn">Ollama가 꺼져 있어 번역이 적용되지 않습니다 — 설정 → 번역·언어에서 실행하세요.</sys:String>
     <sys:String x:Key="L.Detect">탐지</sys:String>
     <sys:String x:Key="L.DetectFound">탐지됨 — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">자동 탐지 실패 — 경로를 직접 입력하세요</sys:String>
