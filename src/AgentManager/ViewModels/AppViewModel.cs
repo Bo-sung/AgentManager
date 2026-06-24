@@ -573,7 +573,7 @@ public sealed partial class AppViewModel : ObservableObject
 
     // ----- new-agent overlay state -----
     private bool _showNew;
-    public bool ShowNewAgent { get => _showNew; set { if (Set(ref _showNew, value) && value) OnChanged(nameof(NewAgentEngineOptions)); } }
+    public bool ShowNewAgent { get => _showNew; set { if (Set(ref _showNew, value) && value) { OnChanged(nameof(NewAgentEngineOptions)); NewAgentTranslation = TranslationEnabled && CanTranslate; } } }
 
     /// <summary>New Agent 엔진 피커용 — 각 엔진 + 설치 여부(수동 경로/PATH 반영). 폼 열 때 새로 계산.</summary>
     public IReadOnlyList<EngineOptionVm> NewAgentEngineOptions =>
@@ -621,6 +621,10 @@ public sealed partial class AppViewModel : ObservableObject
     public string[] NewAgentModels => _newEngine?.Models ?? [];
     private string _newAgentModel = "";
     public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
+    /// <summary>New Agent 폼의 번역 선택(생성 시 세션에 고정). 폼 열 때 전역값+Ollama 가용성으로 초기화.</summary>
+    private bool _newAgentTranslation = true;
+    public bool NewAgentTranslation { get => _newAgentTranslation; set { if (Set(ref _newAgentTranslation, value)) OnChanged(nameof(NewAgentTranslationLabel)); } }
+    public string NewAgentTranslationLabel => _newAgentTranslation ? L("L.TranslationOn") : L("L.TranslationOff");
     /// <summary>현재 task 기준 생성될 worktree 브랜치 미리보기.</summary>
     public string NewAgentBranchPreview =>
         "agent/" + Slug(string.IsNullOrWhiteSpace(_newTitle) ? "task" : _newTitle);
@@ -659,7 +663,7 @@ public sealed partial class AppViewModel : ObservableObject
             : (DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0]);
         var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, model)
         {
-            TranslationEnabled = TranslationEnabled,
+            TranslationEnabled = NewAgentTranslation,
             RequireApproval = reqAppr,
             Sandbox = sandbox,
         };

@@ -135,11 +135,6 @@
                                 <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}">
                                     <Run Text="{StaticResource L.StatusModel}"/><Run Text="{Binding Model, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
-                                              IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
-                                              IsEnabled="{Binding DataContext.CanTranslate, RelativeSource={RelativeSource AncestorType=Window}}"
-                                              Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"
-                                              Margin="16,0,0,0"/>
-                                <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
                                               IsChecked="{Binding RequireApproval, Mode=TwoWay}"
                                               Content="{StaticResource L.Approval}" ToolTip="{StaticResource L.ApprovalToggleTip}"
                                               Margin="8,0,0,0"/>
@@ -480,6 +475,11 @@
                                                         </Border>
                                                     </Popup>
                                                 </Grid>
+                                                <!-- 번역 토글 (모델/effort 옆) — Ollama 미실행 시 비활성 -->
+                                                <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}" Height="30" Padding="12,0" Margin="0,0,8,0"
+                                                              IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
+                                                              IsEnabled="{Binding DataContext.CanTranslate, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                              Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
                                                 <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Foreground="White"
                                                         Margin="6,0,0,0" ToolTip="{StaticResource L.StopTip}"
                                                         Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}"

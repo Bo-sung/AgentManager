@@ -1639,6 +1639,10 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="{StaticResource L.ModelPick}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
                                 <ComboBox ItemsSource="{Binding NewAgentModels}" SelectedItem="{Binding NewAgentModel, Mode=TwoWay}"/>
+                                <!-- 번역 여부 (Ollama 미실행 시 비활성) -->
+                                <ToggleButton Style="{StaticResource TogglePillButton}" HorizontalAlignment="Left" Margin="0,10,0,0"
+                                              IsChecked="{Binding NewAgentTranslation, Mode=TwoWay}" IsEnabled="{Binding CanTranslate}"
+                                              Content="{Binding NewAgentTranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
                             </StackPanel>
                         </Grid>
 
