@@ -9,6 +9,8 @@ public sealed partial class AppViewModel
 {
     /// <summary>New Agent 엔진 옵션 선택.</summary>
     public RelayCommand SelectEngineCommand { get; private set; } = null!;
+    /// <summary>외부 URL 열기(엔진 설치 가이드 등). 파라미터 = URL 문자열.</summary>
+    public RelayCommand OpenUrlCommand { get; private set; } = null!;
     /// <summary>Agents 메뉴: 엔진을 미리 고른 채 New Agent 폼 열기.</summary>
     public RelayCommand NewAgentForEngineCommand { get; private set; } = null!;
     /// <summary>History 행 열기.</summary>
@@ -44,7 +46,16 @@ public sealed partial class AppViewModel
         ZoomOutCommand = new RelayCommand(_ => ZoomBy(-1));
         ZoomResetCommand = new RelayCommand(_ => ZoomReset());
         ZoomResetAllCommand = new RelayCommand(_ => { BodyScale = 1.0; ModalScale = 1.0; });
-        SelectEngineCommand = new RelayCommand(p => { if (p is EngineDef def) NewAgentSelectedEngine = def; });
+        SelectEngineCommand = new RelayCommand(p =>
+        {
+            if (p is EngineOptionVm opt) { if (opt.IsInstalled) NewAgentSelectedEngine = opt.Def; } // 미설치는 선택 불가
+            else if (p is EngineDef def) NewAgentSelectedEngine = def;
+        });
+        OpenUrlCommand = new RelayCommand(p =>
+        {
+            if (p is not string url || string.IsNullOrWhiteSpace(url)) return;
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
+        });
         NewAgentForEngineCommand = new RelayCommand(p =>
         {
             if (p is string id && Engines.FirstOrDefault(en => en.Id == id) is { } engine)

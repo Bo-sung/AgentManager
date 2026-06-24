@@ -572,7 +572,11 @@ public sealed partial class AppViewModel : ObservableObject
 
     // ----- new-agent overlay state -----
     private bool _showNew;
-    public bool ShowNewAgent { get => _showNew; set => Set(ref _showNew, value); }
+    public bool ShowNewAgent { get => _showNew; set { if (Set(ref _showNew, value) && value) OnChanged(nameof(NewAgentEngineOptions)); } }
+
+    /// <summary>New Agent 엔진 피커용 — 각 엔진 + 설치 여부(수동 경로/PATH 반영). 폼 열 때 새로 계산.</summary>
+    public IReadOnlyList<EngineOptionVm> NewAgentEngineOptions =>
+        Engines.Select(d => new EngineOptionVm(d, EngineRegistry.IsInstalled(d.Id, _claudePath, _codexPath, _agyPath))).ToList();
     private EngineDef? _newEngine;
     public EngineDef? NewAgentSelectedEngine
     {

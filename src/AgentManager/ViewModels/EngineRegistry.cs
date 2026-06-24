@@ -3,7 +3,20 @@ using AgentManager.Core.Agents;
 
 namespace AgentManager.ViewModels;
 
-public sealed record EngineDef(string Id, string Badge, string Name, string Cli, string[] Models, string Desc, bool Enabled);
+public sealed record EngineDef(string Id, string Badge, string Name, string Cli, string[] Models, string Desc, bool Enabled, string InstallUrl = "");
+
+/// <summary>New Agent 피커 항목: 엔진 정의 + 설치 여부. Id/Name/Desc/Badge/InstallUrl을 위임 노출해
+/// 기존 템플릿·아이콘(EngineIconByDef는 {Binding Id}) 바인딩과 그대로 호환된다.</summary>
+public sealed class EngineOptionVm(EngineDef def, bool isInstalled)
+{
+    public EngineDef Def { get; } = def;
+    public bool IsInstalled { get; } = isInstalled;
+    public string Id => Def.Id;
+    public string Name => Def.Name;
+    public string Desc => Def.Desc;
+    public string Badge => Def.Badge;
+    public string InstallUrl => Def.InstallUrl;
+}
 
 /// <summary>Engine catalog + adapter/executable resolution.</summary>
 public static class EngineRegistry
@@ -11,14 +24,14 @@ public static class EngineRegistry
     public static readonly EngineDef[] All =
     [
         // 버전 명시 풀네임 (claude --model은 별칭/풀네임 모두 허용 — 실측; sonnet[1m] = 1M 컨텍스트 별칭)
-        new("cc", "CC", "Claude Code",     "claude",      ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5", "sonnet[1m]"], "anthropic · cli", true),
-        new("gx", "GX", "Codex",           "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true),
+        new("cc", "CC", "Claude Code",     "claude",      ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5", "sonnet[1m]"], "anthropic · cli", true, "https://docs.claude.com/en/docs/claude-code/overview"),
+        new("gx", "GX", "Codex",           "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true, "https://github.com/openai/codex"),
         // Google 계열은 agy(Antigravity)로 일원화 — 구형 Gemini CLI는 제거됨.
         // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략.
         // 슬러그 형식 실측 확인: `agy -p "Say OK" --model gemini-3.5-flash` → OK (2026-06-13)
         new("agy", "AG", "Antigravity",    "agy",
             ["default", "gemini-3.5-flash", "gemini-3.1-pro", "claude-sonnet-4-6", "claude-opus-4-6", "gpt-oss-120b"],
-            "google · pty", true),
+            "google · pty", true, "https://antigravity.google"),
     ];
 
     public static EngineDef Get(string id) => Array.Find(All, e => e.Id == id) ?? All[0];
@@ -41,6 +54,29 @@ public static class EngineRegistry
         "agy" => ResolveOverride(agyPath) ?? ResolveAgy(),
         _ => null,
     };
+
+    /// <summary>엔진이 실제 사용 가능한가 — 수동 경로/오토 탐지로 실파일이 잡히거나, bare 명령(cc 폴백 "claude")이 PATH에 있으면 true.</summary>
+    public static bool IsInstalled(string id, string? claudePath = null, string? codexPath = null, string? agyPath = null)
+    {
+        var exe = ResolveExe(id, claudePath, codexPath, agyPath);
+        if (exe is null) return false;
+        if (File.Exists(exe)) return true;
+        return OnPath(exe); // bare 명령(예: cc의 "claude") → PATH 탐색
+    }
+
+    private static bool OnPath(string command)
+    {
+        if (Path.IsPathRooted(command)) return File.Exists(command);
+        var dirs = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator);
+        string[] exts = ["", ".exe", ".cmd", ".bat"];
+        foreach (var dir in dirs)
+        {
+            if (string.IsNullOrWhiteSpace(dir)) continue;
+            foreach (var ext in exts)
+                try { if (File.Exists(Path.Combine(dir, command + ext))) return true; } catch { }
+        }
+        return false;
+    }
 
     /// <summary>오토 탐지만 수행(수동 경로 무시) — 설정의 '탐지' 버튼용. 실제 존재하는 exe만 반환, 없으면 null.</summary>
     public static string? DetectExe(string id) => id switch

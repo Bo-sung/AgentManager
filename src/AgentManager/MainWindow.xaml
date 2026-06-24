@@ -1515,27 +1515,70 @@
                     </Border>
                     <StackPanel Margin="18">
                         <TextBlock Text="{StaticResource L.Runtime}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
-                        <ItemsControl ItemsSource="{Binding Engines}">
+                        <ItemsControl ItemsSource="{Binding NewAgentEngineOptions}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Margin="0,0,9,0" Background="{DynamicResource Bg1}" BorderThickness="1"
-                                            CornerRadius="7" Padding="11,13" Cursor="Hand" controls:MouseClick.Command="{Binding DataContext.SelectEngineCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}">
+                                            CornerRadius="7" Padding="11,13" controls:MouseClick.Command="{Binding DataContext.SelectEngineCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Cursor" Value="Hand"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsInstalled}" Value="False"><Setter Property="Cursor" Value="Arrow"/></DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
                                         <Border.BorderBrush>
                                             <MultiBinding Converter="{StaticResource SelBrush}">
                                                 <Binding Path="Id"/>
                                                 <Binding Path="DataContext.NewAgentSelectedEngine.Id" ElementName="Root"/>
                                             </MultiBinding>
                                         </Border.BorderBrush>
-                                        <StackPanel>
-                                            <Border Width="30" Height="30" CornerRadius="4" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" HorizontalAlignment="Left" Margin="0,0,0,8">
-                                                <controls:IconView Style="{StaticResource EngineIconByDef}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Grid>
+                                            <StackPanel>
+                                                <StackPanel>
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
+                                                            <Setter Property="Opacity" Value="1"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsInstalled}" Value="False"><Setter Property="Opacity" Value="0.4"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </StackPanel.Style>
+                                                    <Border Width="30" Height="30" CornerRadius="4" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" HorizontalAlignment="Left" Margin="0,0,0,8">
+                                                        <controls:IconView Style="{StaticResource EngineIconByDef}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
+                                                    <TextBlock Text="{Binding Desc}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                                <TextBlock Text="{StaticResource L.InstallGuide}" FontSize="9.5" Foreground="{DynamicResource Accent}" Cursor="Hand" TextDecorations="Underline" Margin="0,7,0,0"
+                                                           ToolTip="{Binding InstallUrl}"
+                                                           controls:MouseClick.Command="{Binding DataContext.OpenUrlCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding InstallUrl}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsInstalled}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" CornerRadius="3" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" Padding="5,1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsInstalled}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{StaticResource L.NotInstalled}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{DynamicResource Txt2}"/>
                                             </Border>
-                                            <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
-                                            <TextBlock Text="{Binding Desc}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" Margin="0,2,0,0"/>
-                                        </StackPanel>
+                                        </Grid>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
