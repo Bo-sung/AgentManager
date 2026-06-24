@@ -1479,6 +1479,44 @@
             </Border>
         </Grid>
 
+        <!-- ===================== Install & setup guide overlay (Markdown) ===================== -->
+        <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowInstallGuide, Converter={StaticResource BoolVis}}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowInstallGuide}" Value="True">
+                            <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayFadeIn}"/></DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Border Width="640" MaxHeight="720" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
+                    BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.LayoutTransform><ScaleTransform ScaleX="{Binding ModalScale}" ScaleY="{Binding ModalScale}"/></Border.LayoutTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowInstallGuide}" Value="True">
+                                <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayRiseIn}"/></DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource MenuButton}" Command="{Binding CloseInstallGuideCommand}" ToolTip="{StaticResource L.CloseTip}">
+                                <controls:IconView Icon="{StaticResource IconX}" Width="13" Height="13"/>
+                            </Button>
+                            <TextBlock Text="{StaticResource L.InstallGuideTitle}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+                    <controls:MarkdownViewer Text="{Binding InstallGuideMarkdown}" Margin="18,8,18,16"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+
         <!-- ===================== New-agent overlay ===================== -->
         <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNewAgent, Converter={StaticResource BoolVis}}">
             <Grid.Style>

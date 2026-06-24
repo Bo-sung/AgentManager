@@ -293,6 +293,8 @@
     <sys:String x:Key="L.AgyCliPath">ANTIGRAVITY CLI PATH</sys:String>
     <sys:String x:Key="L.NotInstalled">not installed</sys:String>
     <sys:String x:Key="L.InstallGuide">Install guide ↗</sys:String>
+    <sys:String x:Key="L.GuideBtn">Guide</sys:String>
+    <sys:String x:Key="L.InstallGuideTitle">Install &amp; setup guide</sys:String>
     <sys:String x:Key="L.Detect">Detect</sys:String>
     <sys:String x:Key="L.DetectFound">Detected — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">Auto-detect failed — enter the path manually</sys:String>

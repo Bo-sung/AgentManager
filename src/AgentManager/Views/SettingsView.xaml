@@ -51,6 +51,7 @@
                                         <DockPanel Margin="0,0,0,10">
                                             <TextBlock DockPanel.Dock="Left" Text="01" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                             <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecRuntimes}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.GuideBtn}" Command="{Binding OpenInstallGuideCommand}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                                             <Border Height="1" Background="{DynamicResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                                         </DockPanel>
                                         <!-- Claude (cc) -->

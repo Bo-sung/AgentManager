@@ -232,7 +232,7 @@ public sealed partial class AppViewModel
     public int[] ZoomPercentOptions { get; } = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 
     /// <summary>활성 줌 영역 = 모달이 하나라도 열려 있으면 모달, 아니면 본문.</summary>
-    public bool IsModalActive => ShowNewAgent || ShowWorkerAssign || ShowNoIdleWorker || ShowAbout || ShowNewProject || ShowNewSchedule;
+    public bool IsModalActive => ShowNewAgent || ShowWorkerAssign || ShowNoIdleWorker || ShowAbout || ShowNewProject || ShowNewSchedule || ShowInstallGuide;
 
     /// <summary>Ctrl+휠·단축키: 활성 영역(모달 열림 시 모달, 아니면 본문)만 조정.</summary>
     public void ZoomBy(int direction)

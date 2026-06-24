@@ -7,6 +7,8 @@
   <ItemGroup>
     <!-- Bundle IBM Plex (OFL) for design-fidelity typography; Korean falls back to system. -->
     <Resource Include="Resources\Fonts\*.ttf" />
+    <!-- Install/setup guide content (rendered by MarkdownViewer → theme-matched). -->
+    <Resource Include="Resources\Guide.*.md" />
   </ItemGroup>
 
   <PropertyGroup>

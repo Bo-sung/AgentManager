@@ -11,6 +11,9 @@ public sealed partial class AppViewModel
     public RelayCommand SelectEngineCommand { get; private set; } = null!;
     /// <summary>외부 URL 열기(엔진 설치 가이드 등). 파라미터 = URL 문자열.</summary>
     public RelayCommand OpenUrlCommand { get; private set; } = null!;
+    /// <summary>설치 &amp; 세팅 가이드 모달 열기/닫기.</summary>
+    public RelayCommand OpenInstallGuideCommand { get; private set; } = null!;
+    public RelayCommand CloseInstallGuideCommand { get; private set; } = null!;
     /// <summary>Agents 메뉴: 엔진을 미리 고른 채 New Agent 폼 열기.</summary>
     public RelayCommand NewAgentForEngineCommand { get; private set; } = null!;
     /// <summary>History 행 열기.</summary>
@@ -56,6 +59,8 @@ public sealed partial class AppViewModel
             if (p is not string url || string.IsNullOrWhiteSpace(url)) return;
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
         });
+        OpenInstallGuideCommand = new RelayCommand(_ => ShowInstallGuide = true);
+        CloseInstallGuideCommand = new RelayCommand(_ => ShowInstallGuide = false);
         NewAgentForEngineCommand = new RelayCommand(p =>
         {
             if (p is string id && Engines.FirstOrDefault(en => en.Id == id) is { } engine)

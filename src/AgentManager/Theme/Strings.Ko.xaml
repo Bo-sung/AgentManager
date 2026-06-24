@@ -293,6 +293,8 @@
     <sys:String x:Key="L.AgyCliPath">ANTIGRAVITY CLI PATH</sys:String>
     <sys:String x:Key="L.NotInstalled">미설치</sys:String>
     <sys:String x:Key="L.InstallGuide">설치 가이드 ↗</sys:String>
+    <sys:String x:Key="L.GuideBtn">가이드</sys:String>
+    <sys:String x:Key="L.InstallGuideTitle">설치 &amp; 세팅 가이드</sys:String>
     <sys:String x:Key="L.Detect">탐지</sys:String>
     <sys:String x:Key="L.DetectFound">탐지됨 — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">자동 탐지 실패 — 경로를 직접 입력하세요</sys:String>
