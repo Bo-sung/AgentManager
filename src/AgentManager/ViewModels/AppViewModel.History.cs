@@ -116,7 +116,8 @@ public sealed partial class AppViewModel
         var known = _allSessions.Where(s => !string.IsNullOrEmpty(s.EngineSessionId))
             .Select(s => s.EngineSessionId!).ToHashSet(StringComparer.OrdinalIgnoreCase);
         CliHistory.Clear();
-        foreach (var e in found.Where(e => !known.Contains(e.SessionId)))
+        // 가져온(known) 것 + 사용자가 삭제한(dismissed) 것은 재발견에서 제외 — 삭제가 재시작 후에도 유지되게.
+        foreach (var e in found.Where(e => !known.Contains(e.SessionId) && !_dismissedCliSessions.Contains(e.SessionId)))
             CliHistory.Add(new CliHistoryItemViewModel(e));
     }
 

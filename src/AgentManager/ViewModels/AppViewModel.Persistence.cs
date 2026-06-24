@@ -45,6 +45,8 @@ public sealed partial class AppViewModel
         _telemetry = s.Telemetry;
         _disabledEngines.Clear();
         foreach (var d in s.DisabledEngines ?? []) _disabledEngines.Add(d);
+        _dismissedCliSessions.Clear();
+        foreach (var d in s.DismissedCliSessions ?? []) _dismissedCliSessions.Add(d);
         _engineAuthMode.Clear();
         foreach (var kv in s.EngineAuthMode ?? new()) _engineAuthMode[kv.Key] = kv.Value;
         _engineApiKey.Clear();
@@ -93,6 +95,7 @@ public sealed partial class AppViewModel
         ModalScale = _modalScale,
         Telemetry = _telemetry,
         DisabledEngines = _disabledEngines.ToList(),
+        DismissedCliSessions = _dismissedCliSessions.ToList(),
         EngineAuthMode = new Dictionary<string, string>(_engineAuthMode),
         EngineApiKey = new Dictionary<string, string>(_engineApiKey),
         EngineAutoApiOnLimit = new Dictionary<string, bool>(_engineAutoApi),
