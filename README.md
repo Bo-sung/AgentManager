@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.6.0
+`WPF · .NET 10 · Windows` · v1.7.0
 
 ---
 
@@ -85,8 +85,8 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 
 ### 설정 (중앙 Settings 페인 · VS Code식 settings.json)
 - 설정은 별도 **`settings.json`** 으로 저장 — "Open settings.json"으로 손편집 + 외부 편집 **라이브 리로드**(앱 내 변경과 양방향 동기화). API key는 DPAPI 암호화로 보관(평문 금지)
-- **Runtimes** — 엔진 3종 모두 **수동 CLI 경로 + 탐지(Detect) 버튼**(자동탐지를 명시적 동작으로) · enable/disable · **인증(구독/API key)** · CLI Sign in. 탐지 우선순위는 **독립 설치 우선**(Claude `~/.local/bin`, Codex npm 전역) → 확장 번들은 폴백
-- **번역 · 언어** — UI 언어 + **번역 전/후 언어**(번역 언어 쌍) + Ollama 엔드포인트를 한 섹션에. **번역 모델은 드롭다운 + "설치 모델 조회"**(Ollama `/api/tags`) · 새 세션 번역 기본값
+- **Runtimes** — 엔진 3종 모두 **수동 CLI 경로 + 탐지(Detect) 버튼** · enable/disable · **인증(구독/API key)** · CLI Sign in. 탐지 우선순위는 **독립 설치 우선**(Claude `~/.local/bin`, Codex npm 전역) → 확장 번들 폴백. **미설치 엔진은 New Agent에서 회색+선택 불가**, **"가이드"**(설치·세팅 Markdown 모달), **한도 도달 시 API 자동전환**(opt-in) 토글
+- **번역 · 언어** — UI 언어 + **번역 전/후 언어**(11개 언어쌍) + Ollama. **번역 모델 드롭다운 + "설치 모델 조회"**. **Ollama 상태(실행/꺼짐/미설치) + [실행]**(`ollama serve`); 번역 ON은 Ollama 실행 시에만 적용, 꺼짐 시 토글 옆 ⚠ · 새 세션 번역 기본값
 - **Orchestration** — worktree base · auto-start · stream-logs · 동시 실행 cap
 - **Permissions** — 승인 정책(ask / safe / yolo) · **익명 텔레메트리**(opt-in, 로컬 전용·외부 전송 없음)
 - **Appearance** — **테마 프리셋 10종**(Dark · Light · Gray · Visual Studio · VS Code · Monokai · Nord + 브랜드 **Claude · Codex · Antigravity**) **실시간 전환** · accent 8색 프리셋 **+ 커스텀 hex**(라이브) · density 스케일
@@ -182,6 +182,7 @@ dotnet run --project src/AgentManager.Smoke
 
 | 문서 | 내용 |
 |------|------|
+| [CHANGELOG.md](CHANGELOG.md) | 버전별 변경 사항(태그 1:1) |
 | [DESIGN_SPEC_KO.md](docs/DESIGN_SPEC_KO.md) | 3계층 아키텍처·정규화 이벤트·번역 프롬프트 명세 |
 | [FEATURES_KO.md](docs/FEATURES_KO.md) | 기능 정의·우선순위·횡단 결정 |
 | [FRONTEND_KO.md](docs/FRONTEND_KO.md) | 프론트엔드 렌더링 구조·영역 명칭·테마 시스템 위키 |
