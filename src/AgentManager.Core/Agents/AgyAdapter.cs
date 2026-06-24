@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using AgentManager.Core.Events;
 using AgentManager.Core.Hosting;
+using static AgentManager.Core.Agents.Win32Args;
 
 namespace AgentManager.Core.Agents;
 
@@ -67,21 +68,6 @@ public sealed class AgyAdapter : IAgentAdapter, IPtyTurnRunner
         foreach (var dir in options.AdditionalDirectories)
             if (Directory.Exists(dir)) { parts.Add("--add-dir"); parts.Add(Quote(dir)); }
         return string.Join(" ", parts);
-    }
-
-    /// <summary>Win32 인자 인용 규칙: 역슬래시는 큰따옴표 직전에서만 특수 — 따옴표 앞 역슬래시 런만 두 배 + \" .</summary>
-    private static string Quote(string s)
-    {
-        var sb = new System.Text.StringBuilder("\"");
-        var bs = 0;
-        foreach (var c in s)
-        {
-            if (c == '\\') { bs++; continue; }
-            if (c == '"') { sb.Append('\\', bs * 2 + 1).Append('"'); bs = 0; continue; }
-            sb.Append('\\', bs); bs = 0; sb.Append(c);
-        }
-        sb.Append('\\', bs * 2).Append('"');
-        return sb.ToString();
     }
 
     /// <summary>agy 캐시의 cwd→conversation 매핑에서 이 작업 폴더의 대화 id를 찾는다 (resume용).</summary>

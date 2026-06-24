@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 using AgentManager.Core.Events;
+using static AgentManager.Core.Agents.AdapterJson;
 
 namespace AgentManager.Core.Agents;
 
@@ -10,28 +10,16 @@ namespace AgentManager.Core.Agents;
 /// docs/PHASE0_CODEX_EXEC_JSON_KO.md (measured). NOTE: stdin must be closed after
 /// start or codex hangs ("Reading additional input from stdin...").
 /// </summary>
-public sealed class CodexAdapter : IAgentAdapter
+public sealed class CodexAdapter : StdioJsonAdapter
 {
-    public string Id => "codex";
-    public AgentCapabilities Capabilities { get; } = new(
+    public override string Id => "codex";
+    public override AgentCapabilities Capabilities { get; } = new(
         Permissions: false, Thinking: false, Sessions: true, Images: true, TokenUsage: true, Quota: false);
-    public bool CloseStdinAfterStart => true;
+    public override bool CloseStdinAfterStart => true;
 
-    public ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
+    public override ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
     {
-        var psi = new ProcessStartInfo
-        {
-            FileName = executablePath,
-            WorkingDirectory = options.WorkingDirectory,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            StandardOutputEncoding = Utf8NoBom,
-            StandardErrorEncoding = Utf8NoBom,
-            StandardInputEncoding = Utf8NoBom,
-        };
+        var psi = NewStdioStartInfo(executablePath, options.WorkingDirectory);
         // 주의: `exec resume`은 `exec`과 옵션 표면이 다르다 (-C/--sandbox 미지원 — 실측 0.137).
         // resume은 세션에 기록된 cwd를 쓰므로 -C가 필요 없고, 샌드박스는 -c sandbox_mode 오버라이드로 전달.
         var resuming = !string.IsNullOrWhiteSpace(options.ResumeSessionId);
@@ -95,15 +83,10 @@ public sealed class CodexAdapter : IAgentAdapter
     private static string TomlString(string value)
         => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
 
-    public IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options) => []; // prompt goes via args; stdin is closed
+    public override IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options) => []; // prompt goes via args; stdin is closed
 
-    public IEnumerable<NormalizedEvent> ParseLine(string line)
+    protected override IEnumerable<NormalizedEvent> ParseRoot(JsonElement root, string line)
     {
-        if (string.IsNullOrWhiteSpace(line)) yield break;
-        JsonElement root;
-        try { using var doc = JsonDocument.Parse(line); root = doc.RootElement.Clone(); }
-        catch { yield break; }
-
         var type = Str(root, "type");
         switch (type)
         {
@@ -123,7 +106,7 @@ public sealed class CodexAdapter : IAgentAdapter
                     if (itemType == "command_execution")
                     {
                         if (type == "item.started")
-                            yield return new ToolUseStarted(id, "shell", JsonSerializer.Serialize(new { command = Str(item, "command") }));
+                            yield return new ToolUseStarted(id, ToolNames.Shell, JsonSerializer.Serialize(new { command = Str(item, "command") }));
                         else
                             yield return new ToolResult(
                                 id,
@@ -133,7 +116,7 @@ public sealed class CodexAdapter : IAgentAdapter
                     else if (itemType == "file_change")
                     {
                         if (type == "item.started")
-                            yield return new ToolUseStarted(id, "apply_patch", item.GetRawText());
+                            yield return new ToolUseStarted(id, ToolNames.ApplyPatch, item.GetRawText());
                         else
                             yield return new ToolResult(id, item.GetRawText(), Str(item, "status") == "failed");
                     }
@@ -175,10 +158,4 @@ public sealed class CodexAdapter : IAgentAdapter
         }
     }
 
-    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
-
-    private static string? Str(JsonElement e, string name)
-        => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
-    private static long Lng(JsonElement e, string name)
-        => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : 0;
 }

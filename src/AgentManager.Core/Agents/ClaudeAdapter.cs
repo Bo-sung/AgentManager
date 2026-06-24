@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 using AgentManager.Core.Events;
+using static AgentManager.Core.Agents.AdapterJson;
 
 namespace AgentManager.Core.Agents;
 
@@ -9,28 +9,16 @@ namespace AgentManager.Core.Agents;
 /// Claude Code CLI adapter. Drives bidirectional stream-json over stdio.
 /// Schema reference: docs/PHASE0_CLAUDE_STREAMJSON_KO.md (measured).
 /// </summary>
-public sealed class ClaudeAdapter : IAgentAdapter
+public sealed class ClaudeAdapter : StdioJsonAdapter
 {
-    public string Id => "claude";
-    public AgentCapabilities Capabilities { get; } = new(
+    public override string Id => "claude";
+    public override AgentCapabilities Capabilities { get; } = new(
         Permissions: true, Thinking: true, Sessions: true, Images: true, TokenUsage: true, Quota: true);
-    public bool CloseStdinAfterStart => false;
+    public override bool CloseStdinAfterStart => false;
 
-    public ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
+    public override ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
     {
-        var psi = new ProcessStartInfo
-        {
-            FileName = executablePath,
-            WorkingDirectory = options.WorkingDirectory,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            StandardOutputEncoding = Utf8NoBom,
-            StandardErrorEncoding = Utf8NoBom,
-            StandardInputEncoding = Utf8NoBom,
-        };
+        var psi = NewStdioStartInfo(executablePath, options.WorkingDirectory);
         psi.ArgumentList.Add("--output-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--input-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--verbose");
@@ -83,7 +71,7 @@ public sealed class ClaudeAdapter : IAgentAdapter
         psi.ArgumentList.Add(settings);
     }
 
-    public IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options)
+    public override IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options)
     {
         var init = JsonSerializer.Serialize(new
         {
@@ -132,13 +120,8 @@ public sealed class ClaudeAdapter : IAgentAdapter
         _ => "image/png",
     };
 
-    public IEnumerable<NormalizedEvent> ParseLine(string line)
+    protected override IEnumerable<NormalizedEvent> ParseRoot(JsonElement root, string line)
     {
-        if (string.IsNullOrWhiteSpace(line)) yield break;
-        JsonElement root;
-        try { using var doc = JsonDocument.Parse(line); root = doc.RootElement.Clone(); }
-        catch { yield break; }
-
         var type = Str(root, "type");
         switch (type)
         {
@@ -231,7 +214,7 @@ public sealed class ClaudeAdapter : IAgentAdapter
 
     /// <summary>control_response per the measured stdio permission protocol (Phase 0 capture):
     /// allow echoes updatedInput + toolUseID; deny carries a message and interrupts.</summary>
-    public string? BuildPermissionResponse(Events.PermissionRequest request, PermissionDecision decision)
+    public override string? BuildPermissionResponse(Events.PermissionRequest request, PermissionDecision decision)
     {
         object inner;
         if (decision.Allow)
@@ -260,12 +243,4 @@ public sealed class ClaudeAdapter : IAgentAdapter
         });
     }
 
-    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
-
-    private static string? Str(JsonElement e, string name)
-        => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
-    private static long Lng(JsonElement e, string name)
-        => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : 0;
-    private static double Dbl(JsonElement e, string name)
-        => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetDouble() : 0;
 }

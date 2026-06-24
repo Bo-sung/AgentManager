@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 using AgentManager.Core.Events;
+using static AgentManager.Core.Agents.AdapterJson;
 
 namespace AgentManager.Core.Agents;
 
@@ -18,13 +18,13 @@ namespace AgentManager.Core.Agents;
 /// approvalPolicy=untrusted가 게이트 역할 (윈도우 샌드박스 spawn 불가 실측 + Claude Stage 1과 동일 정책).
 /// 인스턴스는 턴(프로세스) 1회용 — 상태를 가지므로 재사용 금지.
 /// </summary>
-public sealed class CodexAppServerAdapter : IAgentAdapter
+public sealed class CodexAppServerAdapter : StdioJsonAdapter
 {
-    public string Id => "codex-appserver";
-    public AgentCapabilities Capabilities { get; } = new(
+    public override string Id => "codex-appserver";
+    public override AgentCapabilities Capabilities { get; } = new(
         Permissions: true, Thinking: true, Sessions: true, Images: true, TokenUsage: true, Quota: true);
-    public bool CloseStdinAfterStart => false;
-    public bool KillAfterTurnCompleted => true;
+    public override bool CloseStdinAfterStart => false;
+    public override bool KillAfterTurnCompleted => true;
 
     private const int InitializeId = 1;
     private const int ThreadId = 2;
@@ -36,26 +36,14 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
     private TokenUsage? _lastUsage;
     private bool _turnFailed;
 
-    public ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
+    public override ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
     {
-        var psi = new ProcessStartInfo
-        {
-            FileName = executablePath,
-            WorkingDirectory = options.WorkingDirectory,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            StandardOutputEncoding = Utf8NoBom,
-            StandardErrorEncoding = Utf8NoBom,
-            StandardInputEncoding = Utf8NoBom,
-        };
+        var psi = NewStdioStartInfo(executablePath, options.WorkingDirectory);
         psi.ArgumentList.Add("app-server");
         return psi;
     }
 
-    public IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options)
+    public override IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options)
     {
         _options = options;
         _prompt = prompt;
@@ -70,13 +58,8 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
         ];
     }
 
-    public IEnumerable<NormalizedEvent> ParseLine(string line)
+    protected override IEnumerable<NormalizedEvent> ParseRoot(JsonElement root, string line)
     {
-        if (string.IsNullOrWhiteSpace(line)) yield break;
-        JsonElement root;
-        try { using var doc = JsonDocument.Parse(line); root = doc.RootElement.Clone(); }
-        catch { yield break; }
-
         var method = Str(root, "method");
         var hasId = root.TryGetProperty("id", out var idEl);
 
@@ -192,7 +175,7 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
         }
     }
 
-    public string? BuildPermissionResponse(PermissionRequest request, PermissionDecision decision)
+    public override string? BuildPermissionResponse(PermissionRequest request, PermissionDecision decision)
         => JsonSerializer.Serialize(new
         {
             id = int.TryParse(request.RequestId, out var n) ? (object)n : request.RequestId,
@@ -260,16 +243,16 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
         switch (Str(item, "type"))
         {
             case "commandExecution":
-                yield return new ToolUseStarted(id, "shell", JsonSerializer.Serialize(new { command = Str(item, "command") }));
+                yield return new ToolUseStarted(id, ToolNames.Shell, JsonSerializer.Serialize(new { command = Str(item, "command") }));
                 break;
             case "fileChange":
-                yield return new ToolUseStarted(id, "apply_patch", item.GetRawText());
+                yield return new ToolUseStarted(id, ToolNames.ApplyPatch, item.GetRawText());
                 break;
             case "mcpToolCall":
                 yield return new ToolUseStarted(id, Str(item, "tool") ?? Str(item, "name") ?? "mcp", item.GetRawText());
                 break;
             case "webSearch":
-                yield return new ToolUseStarted(id, "web_search", item.GetRawText());
+                yield return new ToolUseStarted(id, ToolNames.WebSearch, item.GetRawText());
                 break;
         }
     }
@@ -307,8 +290,8 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
 
     private static string ToolNameOf(string method) => method switch
     {
-        "item/commandExecution/requestApproval" or "execCommandApproval" => "shell",
-        "item/fileChange/requestApproval" or "applyPatchApproval" => "apply_patch",
+        "item/commandExecution/requestApproval" or "execCommandApproval" => ToolNames.Shell,
+        "item/fileChange/requestApproval" or "applyPatchApproval" => ToolNames.ApplyPatch,
         "item/permissions/requestApproval" => "permissions",
         _ => method,
     };
@@ -328,10 +311,4 @@ public sealed class CodexAppServerAdapter : IAgentAdapter
         return parts.Count == 0 ? null : string.Join("\n", parts);
     }
 
-    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
-
-    private static string? Str(JsonElement e, string name)
-        => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
-    private static long Lng(JsonElement e, string name)
-        => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : 0;
 }
