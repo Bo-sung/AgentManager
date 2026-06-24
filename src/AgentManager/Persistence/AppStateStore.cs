@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using AgentManager.Core;
 using AgentManager.ViewModels;
 
 namespace AgentManager.Persistence;
@@ -173,26 +174,10 @@ public static class AppStateStore
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "state.json");
 
     public static AppStateDto? Load()
-    {
-        try
-        {
-            if (!File.Exists(StatePath)) return null;
-            var json = File.ReadAllText(StatePath);
-            return JsonSerializer.Deserialize<AppStateDto>(json, Options);
-        }
-        catch
-        {
-            return null;
-        }
-    }
+        => JsonFile.ReadOrDefault<AppStateDto?>(StatePath, () => null, Options);
 
     public static void Save(AppStateDto state)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(StatePath)!);
-        var temp = StatePath + ".tmp";
-        File.WriteAllText(temp, JsonSerializer.Serialize(state, Options));
-        File.Move(temp, StatePath, overwrite: true);
-    }
+        => JsonFile.WriteAtomic(StatePath, state, Options);
 
     public static TranscriptDto ToDto(TranscriptItem item) => item switch
     {

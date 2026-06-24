@@ -20,28 +20,8 @@ public static class ScheduleStore
     }
 
     public static List<ScheduledJob> Load()
-    {
-        try
-        {
-            if (!File.Exists(StorePath)) return [];
-            var json = File.ReadAllText(StorePath);
-            return JsonSerializer.Deserialize<List<ScheduledJob>>(json, Options) ?? [];
-        }
-        catch
-        {
-            return [];
-        }
-    }
+        => JsonFile.ReadOrDefault(StorePath, () => new List<ScheduledJob>(), Options);
 
     public static void Save(List<ScheduledJob> jobs)
-    {
-        var dir = Path.GetDirectoryName(StorePath);
-        if (dir != null)
-        {
-            Directory.CreateDirectory(dir);
-        }
-        var temp = StorePath + ".tmp";
-        File.WriteAllText(temp, JsonSerializer.Serialize(jobs, Options));
-        File.Move(temp, StorePath, overwrite: true);
-    }
+        => JsonFile.WriteAtomic(StorePath, jobs, Options);
 }

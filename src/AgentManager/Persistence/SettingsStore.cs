@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using AgentManager.Core;
 
 namespace AgentManager.Persistence;
 
@@ -40,13 +41,7 @@ public static class SettingsStore
 
     public static void Save(AppSettingsDto settings)
     {
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-            var temp = SettingsPath + ".tmp";
-            File.WriteAllText(temp, JsonSerializer.Serialize(settings, Options));
-            File.Move(temp, SettingsPath, overwrite: true);
-        }
+        try { JsonFile.WriteAtomic(SettingsPath, settings, Options); }
         catch { /* 영속화 실패가 UI/실행을 막지 않게 */ }
     }
 }
