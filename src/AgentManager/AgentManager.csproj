@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.7.1: 공식 엔진 아이콘(Claude/Codex/Antigravity) · README 변경 이력 섹션 -->
-    <Version>1.7.1</Version>
+    <!-- 1.7.2: 설정 카드 엔진 아이콘 · 아이콘 색 강조색/테마 독립(고정 브랜드색) · Antigravity 무지개 -->
+    <Version>1.7.2</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.7.1
+`WPF · .NET 10 · Windows` · v1.7.2
 
 ---
 
@@ -202,6 +202,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.7.2** — 설정 카드 엔진 아이콘 · 아이콘 색 강조색/테마 독립 · Antigravity 무지개
 - **1.7.1** — 공식 엔진 아이콘(Claude/Codex/Antigravity) · README 변경 이력 섹션
 - **1.7.0** — 엔진 가용성 게이팅(미설치 회색·설치 가이드 모달) · 한도→API 자동전환 · 번역 Ollama 게이팅+상태/실행 · CLI 삭제 영속
 - **1.6.0** — 사용량 엔진별 표시 + 퍼센트 막대(세션/주간) + 비공식 추정치 안내
