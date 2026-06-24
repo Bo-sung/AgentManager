@@ -16,8 +16,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.5.0: 브랜드 테마 3종+커스텀 강조색 · 엔진 경로 수동+탐지(독립설치 우선) · 번역/언어 통합+모델 조회 · 창 복원 fix -->
-    <Version>1.5.0</Version>
+    <!-- 1.5.1: 사용량 체크 크래시 가드 — 전역 예외 핸들러 + 자식 CLI 오류 대화상자(WER) 억제 -->
+    <Version>1.5.1</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
