@@ -483,8 +483,13 @@
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </ToggleButton.Template>
-                            <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="0"/>
+                            <ContentPresenter x:Name="cp" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="0"/>
                         </ToggleButton>
+                        <!-- IsEditable=True 일 때만 보이는 편집 텍스트박스(WPF 필수 파트). 위에 올려 타이핑/선택 표시 처리 -->
+                        <TextBox x:Name="PART_EditableTextBox" Visibility="Collapsed" Background="Transparent"
+                                 Foreground="{DynamicResource Txt0}" CaretBrush="{DynamicResource Txt0}" BorderThickness="0"
+                                 Padding="0" Margin="10,0,26,0" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                 IsReadOnly="{TemplateBinding IsReadOnly}"/>
                         <Path Data="M0,0 L4,4 L8,0" Stroke="{DynamicResource Txt2}" StrokeThickness="1.4"
                               HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1,10,0" IsHitTestVisible="False"/>
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" StaysOpen="False"
@@ -500,6 +505,12 @@
                             </Border>
                         </Popup>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="cp" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
