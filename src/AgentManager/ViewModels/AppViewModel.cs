@@ -627,7 +627,15 @@ public sealed partial class AppViewModel : ObservableObject
     public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
     /// <summary>New Agent 폼의 번역 선택(생성 시 세션에 고정). 폼 열 때 전역값+Ollama 가용성으로 초기화.</summary>
     private bool _newAgentTranslation = true;
-    public bool NewAgentTranslation { get => _newAgentTranslation; set { if (Set(ref _newAgentTranslation, value)) OnChanged(nameof(NewAgentTranslationLabel)); } }
+    public bool NewAgentTranslation
+    {
+        get => _newAgentTranslation;
+        set
+        {
+            if (value && !OllamaRunning) value = false; // Ollama 꺼짐이면 켤 수 없음 — OFF 유지(⚠ 안내)
+            if (Set(ref _newAgentTranslation, value)) OnChanged(nameof(NewAgentTranslationLabel));
+        }
+    }
     public string NewAgentTranslationLabel => _newAgentTranslation ? L("L.TranslationOn") : L("L.TranslationOff");
     /// <summary>현재 task 기준 생성될 worktree 브랜치 미리보기.</summary>
     public string NewAgentBranchPreview =>
@@ -756,6 +764,12 @@ public sealed partial class AppViewModel : ObservableObject
         }
         else if (e.PropertyName == nameof(SessionViewModel.TranslationEnabled))
         {
+            // Ollama 꺼짐이면 번역을 켤 수 없음 — 다시 OFF로 되돌린다(⚠ 아이콘이 사유 안내).
+            if (sender is SessionViewModel ses && ses.TranslationEnabled && !OllamaRunning)
+            {
+                ses.TranslationEnabled = false;
+                return;
+            }
             SaveState();
         }
     }
