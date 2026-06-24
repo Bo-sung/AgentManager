@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.5.1
+`WPF · .NET 10 · Windows` · v1.6.0
 
 ---
 
@@ -65,7 +65,7 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 ### 관측 & 대시보드
 - **Orchestrator 대시보드** — KPI(Active/Awaiting/Completed/Failed/Fleet) + Live/Recent 카드, spark 이퀄라이저, diff 바
 - **Native worker 관측** — Claude 서브에이전트를 hook으로 실시간 표시(Running→Completed/Failed), `claude agents --json` 백그라운드 세션 폴러, 실패/rate-limit subagent transcript 추론
-- **사용량(Usage)** — 세션/주간 % · 리셋까지 시간 · 신선도 라벨, Settings의 *Usage check* 카드에서 on-demand 확인
+- **사용량(Usage)** — Settings의 *사용량 체크* 카드에서 on-demand 확인. **엔진별 퍼센트 막대**(Claude 세션+주간 / Codex 사용% · 색=Ok/Warn/Err) · 리셋까지 시간 · 신선도 라벨. Antigravity는 무료 프리뷰(N/A). *공식 수치가 아닌 대략치* 안내 포함
 - **Activity History** — 저장된 app state를 직접 읽는 세션 횡단 이력(타임라인·일별 그룹·검색·필터, 토큰/비용/블록 수)
 - **데스크톱 알림** — 비활성 창 작업표시줄 깜빡임 + 승인 요청 사운드
 

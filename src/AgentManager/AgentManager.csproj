@@ -16,8 +16,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.5.1: 사용량 체크 크래시 가드 — 전역 예외 핸들러 + 자식 CLI 오류 대화상자(WER) 억제 -->
-    <Version>1.5.1</Version>
+    <!-- 1.6.0: 사용량 엔진별 표시 + 퍼센트 막대(세션/주간) + 비공식 추정치 안내 · agy 무료 프리뷰 -->
+    <Version>1.6.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
