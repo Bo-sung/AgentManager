@@ -278,7 +278,7 @@
                                                     <Setter Property="BorderBrush" Value="{DynamicResource GxLine}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource AgyLine}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AgyGradient}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -325,13 +325,16 @@
                                                                     <Setter Property="Foreground" Value="{DynamicResource Txt1}"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                                            <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                                                                            <Setter Property="Foreground" Value="{DynamicResource CcBrand}"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                            <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
+                                                                            <Setter Property="Foreground" Value="{DynamicResource GxBrand}"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                            <Setter Property="Foreground" Value="{DynamicResource Agy}"/>
+                                                                            <Setter Property="Foreground" Value="{DynamicResource AgyBrand}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding AgentId}" Value="pi">
+                                                                            <Setter Property="Foreground" Value="{DynamicResource PiBrand}"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -360,13 +363,16 @@
                                                                        Text="{Binding Model}" FontWeight="SemiBold">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource CcBrand}"/>
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                                <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
+                                                                                <Setter Property="Foreground" Value="{DynamicResource GxBrand}"/>
                                                                             </DataTrigger>
                                                                             <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                                <Setter Property="Foreground" Value="{DynamicResource Agy}"/>
+                                                                                <Setter Property="Foreground" Value="{DynamicResource AgyBrand}"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding AgentId}" Value="pi">
+                                                                                <Setter Property="Foreground" Value="{DynamicResource PiBrand}"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
@@ -426,10 +432,13 @@
                                                                        Text="{Binding ReasoningEffort}" FontWeight="SemiBold">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource CcBrand}"/>
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                                <Setter Property="Foreground" Value="{DynamicResource Gx}"/>
+                                                                                <Setter Property="Foreground" Value="{DynamicResource GxBrand}"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding AgentId}" Value="pi">
+                                                                                <Setter Property="Foreground" Value="{DynamicResource PiBrand}"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>

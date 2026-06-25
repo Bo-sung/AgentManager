@@ -14,6 +14,8 @@
     </LinearGradientBrush>
     <!-- pi(pi.dev)는 모노크롬 마크(흰색 on #09090b) → 강조색과 무관한 고정 zinc 라이트 -->
     <SolidColorBrush x:Key="PiBrand" Color="#FFE4E4E7"/>
+    <!-- Antigravity 솔리드(고정 틸) — 작은 텍스트용. 아이콘/컴포저 하이라이트는 AgyGradient(무지개) 사용. -->
+    <SolidColorBrush x:Key="AgyBrand" Color="#FF2BC5B4"/>
 
     <Style TargetType="{x:Type c:IconView}">
         <Setter Property="Template">

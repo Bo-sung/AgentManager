@@ -303,10 +303,7 @@
         </Grid.RowDefinitions>
 
         <!-- ===================== Titlebar ===================== -->
-        <Border Grid.Row="0" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1">
-            <Border.Background>
-                <StaticResource ResourceKey="Bg2"/>
-            </Border.Background>
+        <Border Grid.Row="0" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
