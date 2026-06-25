@@ -75,16 +75,19 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
                 continue;
             }
 
-            if (line.TrimStart().StartsWith("```", StringComparison.Ordinal))
+            var fence = LeadingBacktickRun(line);
+            if (fence >= 3)
             {
+                // Variable-length fence: close only on a fence of equal-or-greater length, so a
+                // prompt that itself contains ``` code blocks stays one (copyable) block.
                 var codeLines = new List<string>();
                 i++;
-                while (i < lines.Length && !lines[i].TrimStart().StartsWith("```", StringComparison.Ordinal))
+                while (i < lines.Length && LeadingBacktickRun(lines[i]) < fence)
                 {
                     codeLines.Add(lines[i]);
                     i++;
                 }
-                if (i < lines.Length) i++;
+                if (i < lines.Length) i++; // skip the closing fence
                 document.Blocks.Add(CodeBlock(string.Join(Environment.NewLine, codeLines)));
                 continue;
             }
@@ -177,23 +180,62 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
 
     private static BlockUIContainer CodeBlock(string code)
     {
+        var text = new TextBlock
+        {
+            Text = code,
+            FontFamily = Mono,
+            FontSize = 12,
+            Foreground = MutedBrush,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 18,
+        };
+
+        // FlowDocument text selection can't reach inside a BlockUIContainer, so a one-click
+        // copy button is the only reliable way to grab a code block (e.g. a worker prompt).
+        var copyLabel = AgentManager.App.L("L.Copy");
+        var copy = new Button
+        {
+            Content = copyLabel,
+            FontFamily = Sans,
+            FontSize = 10,
+            Foreground = MutedBrush,
+            Background = CodeBackground,
+            BorderBrush = CodeBorder,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(7, 1, 7, 2),
+            Cursor = System.Windows.Input.Cursors.Hand,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(0, 0, 0, 6),
+            Focusable = false,
+            ToolTip = copyLabel,
+        };
+        copy.Click += (_, _) =>
+        {
+            try { System.Windows.Clipboard.SetText(code); } catch { }
+            copy.Content = "✓"; // ✓
+            var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.4) };
+            timer.Tick += (_, _) => { copy.Content = copyLabel; timer.Stop(); };
+            timer.Start();
+        };
+
+        var grid = new Grid();
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        Grid.SetRow(copy, 0);
+        Grid.SetRow(text, 1);
+        grid.Children.Add(copy);
+        grid.Children.Add(text);
+
         var box = new Border
         {
             Background = CodeBackground,
             BorderBrush = CodeBorder,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
-            Padding = new Thickness(11, 9, 11, 9),
+            Padding = new Thickness(11, 8, 11, 9),
             Margin = new Thickness(0, 3, 0, 10),
-            Child = new TextBlock
-            {
-                Text = code,
-                FontFamily = Mono,
-                FontSize = 12,
-                Foreground = MutedBrush,
-                TextWrapping = TextWrapping.Wrap,
-                LineHeight = 18,
-            }
+            Child = grid,
         };
         return new BlockUIContainer(box) { Margin = new Thickness(0) };
     }
@@ -441,6 +483,15 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
         }
 
         return new BlockUIContainer(grid) { Margin = new Thickness(0, 0, 0, 8) };
+    }
+
+    /// <summary>Leading backtick count of a (trimmed) line — used for variable-length code fences.</summary>
+    private static int LeadingBacktickRun(string line)
+    {
+        var s = line.TrimStart();
+        int n = 0;
+        while (n < s.Length && s[n] == '`') n++;
+        return n;
     }
 
     private static SolidColorBrush Brush(string hex) =>
