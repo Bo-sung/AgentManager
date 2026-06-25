@@ -1412,20 +1412,42 @@
                     </Border>
 
                     <StackPanel Margin="18">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                            <Border Width="40" Height="40" CornerRadius="7" Background="{DynamicResource Bg1}"
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="7" Background="{DynamicResource Bg1}"
                                     BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,13,0">
                                 <controls:IconView Icon="{StaticResource IconLayers}" Width="22" Height="22"
                                                    Foreground="{DynamicResource Accent}" HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"/>
                             </Border>
-                            <StackPanel VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock FontFamily="{StaticResource Mono}" FontSize="13" Foreground="{DynamicResource Txt0}">
                                     <Run Text="Agent"/><Run Text="Manager" Foreground="{DynamicResource Accent}"/><Run Text=" "/><Run Text="{Binding AppVersion, Mode=OneWay}"/>
                                 </TextBlock>
                                 <TextBlock Text="{Binding AboutBuildLabel, Mode=OneWay}" Style="{StaticResource Lbl}" FontSize="9"/>
                             </StackPanel>
-                        </StackPanel>
+
+                            <!-- update check / apply -->
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding UpdateStatusText}" FontSize="10.5" VerticalAlignment="Center"
+                                               Margin="0,0,8,0" Foreground="{DynamicResource Txt2}"/>
+                                    <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.CheckUpdate}"
+                                            Command="{Binding CheckUpdateCommand}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,7,0,0"
+                                            Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolVis}}">
+                                    <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.ViewChangelog}"
+                                            Command="{Binding OpenChangelogCommand}" Margin="0,0,6,0"/>
+                                    <Button Style="{StaticResource AccentButton}" Content="{StaticResource L.UpdateNow}"
+                                            Command="{Binding ApplyUpdateCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
 
                         <TextBlock Text="{StaticResource L.AboutDescription}" FontSize="12.5"
                                    Foreground="{DynamicResource Txt1}" TextWrapping="Wrap" LineHeight="20"

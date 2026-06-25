@@ -420,6 +420,13 @@
     <sys:String x:Key="L.AboutTitle">About</sys:String>
     <sys:String x:Key="L.AboutBuildPattern">build {0} · {1} runtimes registered</sys:String>
     <sys:String x:Key="L.AboutDescription">Run Claude Code, Codex, and Antigravity side by side, each in its own isolated git worktree, orchestrated from a single client.</sys:String>
+    <sys:String x:Key="L.CheckUpdate">Check for updates</sys:String>
+    <sys:String x:Key="L.UpdateChecking">Checking…</sys:String>
+    <sys:String x:Key="L.UpToDate">Up to date</sys:String>
+    <sys:String x:Key="L.UpdateAvailable">v{0} available</sys:String>
+    <sys:String x:Key="L.UpdateNow">Update</sys:String>
+    <sys:String x:Key="L.UpdateError">Check failed</sys:String>
+    <sys:String x:Key="L.ViewChangelog">Changelog</sys:String>
     <sys:String x:Key="L.ShortcutSpawn">Spawn a new agent</sys:String>
     <sys:String x:Key="L.ShortcutViews">Orchestrator · History · Scheduled</sys:String>
     <sys:String x:Key="L.ShortcutDiff">Toggle diff review panel</sys:String>
