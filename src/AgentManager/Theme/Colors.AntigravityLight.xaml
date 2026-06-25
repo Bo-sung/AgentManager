@@ -13,9 +13,9 @@
     <SolidColorBrush x:Key="LineSoft" Color="#FFE6ECF4"/>
     <SolidColorBrush x:Key="LineBright" Color="#FFB6C4DA"/>
     <SolidColorBrush x:Key="Txt0" Color="#FF15202E"/>
-    <SolidColorBrush x:Key="Txt1" Color="#FF42505F"/>
-    <SolidColorBrush x:Key="Txt2" Color="#FF6A7889"/>
-    <SolidColorBrush x:Key="Txt3" Color="#FF98A6B6"/>
+    <SolidColorBrush x:Key="Txt1" Color="#FF35414C"/>
+    <SolidColorBrush x:Key="Txt2" Color="#FF54616C"/>
+    <SolidColorBrush x:Key="Txt3" Color="#FF5E6A76"/>
     <SolidColorBrush x:Key="Accent" Color="#FF1A73E8"/>
     <SolidColorBrush x:Key="AccentBright" Color="#FF4285F4"/>
     <SolidColorBrush x:Key="AccentDim" Color="#1A4285F4"/>
