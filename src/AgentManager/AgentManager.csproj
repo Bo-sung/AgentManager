@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.7.2: 설정 카드 엔진 아이콘 · 아이콘 색 강조색/테마 독립(고정 브랜드색) · Antigravity 무지개 -->
-    <Version>1.7.2</Version>
+    <!-- 1.8.0: Pi 엔진(pi.dev RPC) · 엔진별 모델 체크리스트 · 테마 3종 추가 + 엔진색 전테마 고정 · 어댑터 공통화 -->
+    <Version>1.8.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

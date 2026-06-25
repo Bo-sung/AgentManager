@@ -1,8 +1,8 @@
 # AgentManager
 
-**여러 코딩 에이전트(Claude Code · Codex · Antigravity)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
+**여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.7.2
+`WPF · .NET 10 · Windows` · v1.8.0
 
 ---
 
@@ -19,8 +19,9 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 | `cc` | **Claude Code** | `claude` | stream-json (단발 + `--resume`) | claude-sonnet-4-6 · claude-opus-4-8 · claude-haiku-4-5 · sonnet[1m] |
 | `gx` | **Codex** | `codex` | `exec --json` / 승인 시 app-server | gpt-5.5 · gpt-5.4 · gpt-5.4-mini |
 | `agy` | **Antigravity** (badge `AG`) | `agy` | TTY 전용 → ConPTY 구동 (텍스트 v1) | default · gemini-3.5-flash · gemini-3.1-pro · claude-* · gpt-oss-120b |
+| `pi` | **Pi** (pi.dev) | `pi` (node) | `--mode rpc` (JSONL, thin-proxy) | `pi --list-models`로 동적 조회 (멀티 provider: Anthropic·OpenAI·Google·zai 등) |
 
-> Google 계열은 `agy` 엔진으로 일원화되었습니다(구형 standalone Gemini CLI 어댑터는 제거). 각 엔진은 사이드바·New Agent에서 식별색으로 구분됩니다.
+> Google 계열은 `agy` 엔진으로 일원화되었습니다(구형 standalone Gemini CLI 어댑터는 제거). **Pi**는 여러 provider를 하나로 묶는 멀티 provider 에이전트 — provider 추가·인증은 pi가 자체 관리(`~/.pi`)하고 앱은 호출·표시만 합니다. 각 엔진은 사이드바·New Agent에서 식별색으로 구분됩니다.
 
 ---
 
@@ -85,11 +86,11 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 
 ### 설정 (중앙 Settings 페인 · VS Code식 settings.json)
 - 설정은 별도 **`settings.json`** 으로 저장 — "Open settings.json"으로 손편집 + 외부 편집 **라이브 리로드**(앱 내 변경과 양방향 동기화). API key는 DPAPI 암호화로 보관(평문 금지)
-- **Runtimes** — 엔진 3종 모두 **수동 CLI 경로 + 탐지(Detect) 버튼** · enable/disable · **인증(구독/API key)** · CLI Sign in. 탐지 우선순위는 **독립 설치 우선**(Claude `~/.local/bin`, Codex npm 전역) → 확장 번들 폴백. **미설치 엔진은 New Agent에서 회색+선택 불가**, **"가이드"**(설치·세팅 Markdown 모달), **한도 도달 시 API 자동전환**(opt-in) 토글
+- **Runtimes** — 엔진 4종 모두 **수동 CLI 경로 + 탐지(Detect) 버튼** · enable/disable · **인증(구독/API key)** · CLI Sign in. 탐지 우선순위는 **독립 설치 우선**(Claude `~/.local/bin`, Codex npm 전역) → 확장 번들 폴백. **미설치 엔진은 New Agent에서 회색+선택 불가**, **"가이드"**(설치·세팅 Markdown 모달), **한도 도달 시 API 자동전환**(opt-in) 토글
 - **번역 · 언어** — UI 언어 + **번역 전/후 언어**(11개 언어쌍) + Ollama. **번역 모델 드롭다운 + "설치 모델 조회"**. **Ollama 상태(실행/꺼짐/미설치) + [실행]**(`ollama serve`); 번역 ON은 Ollama 실행 시에만 적용, 꺼짐 시 토글 옆 ⚠ · 새 세션 번역 기본값
 - **Orchestration** — worktree base · auto-start · stream-logs · 동시 실행 cap
 - **Permissions** — 승인 정책(ask / safe / yolo) · **익명 텔레메트리**(opt-in, 로컬 전용·외부 전송 없음)
-- **Appearance** — **테마 프리셋 10종**(Dark · Light · Gray · Visual Studio · VS Code · Monokai · Nord + 브랜드 **Claude · Codex · Antigravity**) **실시간 전환** · accent 8색 프리셋 **+ 커스텀 hex**(라이브) · density 스케일
+- **Appearance** — **테마 프리셋 13종**(Dark · Light · Gray · Visual Studio · VS Code · Monokai · Nord + 브랜드 **Claude · Claude Dark · Codex · Codex Light · Antigravity · Antigravity Light**) **실시간 전환** · accent 8색 프리셋 **+ 커스텀 hex**(라이브) · density 스케일
 - **Project** — 현재 **활성 프로젝트 전용** 설정: EXTRA FOLDERS · MCP config 경로
 
 ### 편의 / 디테일
@@ -111,7 +112,7 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 
 3계층 클린룸 설계 + WPF MVVM:
 
-- **`AgentManager.Core`** — 엔진 어댑터(Claude/Codex/Antigravity), 정규화 이벤트, 번역기, 세션 실행, GitWorktree, 스케줄링, 관측(observation). UI 비의존.
+- **`AgentManager.Core`** — 엔진 어댑터(Claude/Codex/Antigravity/Pi), 정규화 이벤트, 번역기, 세션 실행, GitWorktree, 스케줄링, 관측(observation). UI 비의존.
 - **`AgentManager`** (WPF) — MVVM. `AppViewModel`(partial 분할) + 컴포넌트 VM + Views/UserControls + Controls(behaviors·컨트롤). 클릭은 커맨드/attached behavior로 바인딩, VM은 View 타입 비의존.
 - **`AgentManager.Smoke`** — 헤드리스 스모크(어댑터 파싱·인자 매트릭스·승인·GitWorktree e2e·관측), 토큰 0.
 
@@ -202,6 +203,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.8.0** — Pi 엔진(pi.dev, 멀티 provider) · 엔진별 "주로 쓰는 모델" 체크리스트 · 테마 3종(Claude Dark·Codex Light·Antigravity Light) + 엔진색 전테마 고정
 - **1.7.2** — 설정 카드 엔진 아이콘 · 아이콘 색 강조색/테마 독립 · Antigravity 무지개
 - **1.7.1** — 공식 엔진 아이콘(Claude/Codex/Antigravity) · README 변경 이력 섹션
 - **1.7.0** — 엔진 가용성 게이팅(미설치 회색·설치 가이드 모달) · 한도→API 자동전환 · 번역 Ollama 게이팅+상태/실행 · CLI 삭제 영속

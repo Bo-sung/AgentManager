@@ -2,6 +2,14 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.8.0
+4번째 엔진 **Pi(pi.dev)** 추가 + 엔진별 모델 큐레이션 + 테마 확장.
+- **Pi 엔진**: pi.dev를 thin-proxy(RPC 모드)로 통합 — 멀티 provider(Anthropic/OpenAI/Google/zai 등) 하나의 엔진으로 사용. 공식 로고/색, RPC 이벤트→정규화 매핑(thinking/text/tool/usage), resume. provider·인증은 pi가 자체 관리(`~/.pi`), 앱은 호출+표시만.
+- **동적 모델 카탈로그**: `pi --list-models`로 실모델 목록 조회(설정 "조회") + 연동 provider 표시. (실측: docs/PHASE0_PI_RPC_KO.md)
+- **"주로 쓰는 모델" 체크리스트**(전 엔진, 접이식): 체크한 모델만 New Agent 피커·설정 드롭다운에 노출. 선택은 settings.json에 영속.
+- **테마**: Claude Dark · Codex Light · Antigravity Light 추가(총 13종). 엔진 식별색을 **테마·강조색과 완전 독립**으로 고정(아이콘·텍스트·컴포저 외곽·알약). 타이틀바/메뉴바가 테마를 추종(라이트에서 안 보이던 문제 fix). agy 컴포저 입력 하이라이트 무지개(Google 4색). 라이트 3종 텍스트 대비 강화.
+- 내부 리팩터: 엔진 어댑터 공통화(StdioJsonAdapter·AdapterJson), Shell.Open, JsonFile 스토어 IO(동작무변, Smoke 검증).
+
 ## 1.7.2
 - **설정 런타임 카드**에도 공식 엔진 아이콘 적용(CC/GX/AG 텍스트 배지 → 로고).
 - **엔진 아이콘 색 고정**: 강조색/테마를 바꿔도 각 모델 아이콘 색 유지(Claude 주황·Codex 보라). 이전엔 Claude가 강조색에 묶여 같이 변하던 버그 수정.
