@@ -932,6 +932,8 @@ string[] piLines =
     """{"type":"response","command":"prompt","success":true}""",
     """{"type":"agent_start"}""",
     """{"type":"turn_start"}""",
+    """{"type":"message_update","assistantMessageEvent":{"type":"thinking_delta","contentIndex":0,"delta":"hmm"}}""",
+    """{"type":"message_update","assistantMessageEvent":{"type":"thinking_end","contentIndex":0,"content":"Let me think."}}""",
     """{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}""",
     """{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":" world"}}""",
     """{"type":"tool_execution_start","toolCallId":"call_1","toolName":"bash","args":{"command":"ls"}}""",

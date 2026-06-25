@@ -43,7 +43,10 @@ public static class EngineRegistry
             ["default", "gemini-3.5-flash", "gemini-3.1-pro", "claude-sonnet-4-6", "claude-opus-4-6", "gpt-oss-120b"],
             "google · pty", true, "https://antigravity.google"),
         // pi(pi.dev): 멀티 provider harness. node dist/cli.js --mode rpc(RPC). 모델="provider/id"(~/.pi 기본값이면 "default").
-        new("pi", "PI", "Pi", "pi", ["default"], "pi.dev · multi-provider", true, "https://pi.dev"),
+        // 모델 목록은 사용자 ~/.pi provider 설정에 따라 달라짐(`pi --list-models`가 정답). 아래는 흔한 후보 — default는 ~/.pi 기본값 사용.
+        new("pi", "PI", "Pi", "pi",
+            ["default", "zai/glm-4.7", "zai/glm-5.1", "zai/glm-5-turbo", "anthropic/claude-opus-4-7", "google/gemini-3.1-pro"],
+            "pi.dev · multi-provider", true, "https://pi.dev"),
     ];
 
     public static EngineDef Get(string id) => Array.Find(All, e => e.Id == id) ?? All[0];

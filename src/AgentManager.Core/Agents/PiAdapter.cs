@@ -100,10 +100,12 @@ public sealed class PiAdapter : StdioJsonAdapter
                 if (root.TryGetProperty("assistantMessageEvent", out var ev))
                     switch (Str(ev, "type"))
                     {
+                        // 텍스트는 스트리밍 델타(UI가 누적). thinking은 델타 누적용 이벤트가 없어
+                        // thinking_end에서 전체를 한 번만 내보낸다(cc/gx와 동일 — 줄 폭주 방지).
                         case "text_delta" when Str(ev, "delta") is { Length: > 0 } d:
                             yield return new AssistantDelta(d); break;
-                        case "thinking_delta" when Str(ev, "delta") is { Length: > 0 } td:
-                            yield return new Thinking(td); break;
+                        case "thinking_end" when Str(ev, "content") is { Length: > 0 } tk:
+                            yield return new Thinking(tk.Trim()); break;
                     }
                 break;
 
