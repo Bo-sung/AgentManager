@@ -127,6 +127,16 @@
         <PathGeometry Figures="M20 20v-4h-4"/>
     </GeometryGroup>
 
+    <!-- 번역(재번역) — Lucide 'languages' 마크 (소스/타깃 글자 + 화살표 느낌) -->
+    <GeometryGroup x:Key="IconTranslate">
+        <PathGeometry Figures="M5 8l6 6"/>
+        <PathGeometry Figures="M4 14l6-6 2-3"/>
+        <PathGeometry Figures="M2 5h12"/>
+        <PathGeometry Figures="M7 2h1"/>
+        <PathGeometry Figures="M22 22l-5-10-5 10"/>
+        <PathGeometry Figures="M14 18h6"/>
+    </GeometryGroup>
+
     <GeometryGroup x:Key="IconThumbUp">
         <PathGeometry Figures="M7 10v9H4.5A.5.5 0 0 1 4 18.5V10.5a.5.5 0 0 1 .5-.5z"/>
         <PathGeometry Figures="M7 10l3.5-6.2a1.6 1.6 0 0 1 2.9 1.2L12.5 9H18a1.6 1.6 0 0 1 1.55 2l-1.7 6.2A2 2 0 0 1 15.9 19H7"/>
