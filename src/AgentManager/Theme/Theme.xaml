@@ -204,6 +204,33 @@
         </Setter>
     </Style>
 
+    <!-- 접이식 섹션 헤더(쉐브론 회전). 체크리스트 등 펼침/접힘 토글용. -->
+    <Style x:Key="ExpanderHeaderToggle" TargetType="ToggleButton">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Path x:Name="chev" Data="M5 4 L9 8 L5 12" Stroke="{DynamicResource Txt2}" StrokeThickness="1.5"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                              VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5"/>
+                        <ContentPresenter VerticalAlignment="Center" Margin="6,0,0,0"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="chev" Property="Stroke" Value="{DynamicResource Txt1}"/>
+                            <Setter TargetName="chev" Property="RenderTransform">
+                                <Setter.Value><RotateTransform Angle="90"/></Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="ChipButton" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource Bg3}"/>
         <Setter Property="Foreground" Value="{DynamicResource Txt1}"/>

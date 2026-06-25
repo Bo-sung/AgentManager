@@ -10,21 +10,30 @@
         <!-- "주로 쓰는 모델" 체크리스트 — 엔진 공통(cc/gx/agy/pi). 카드에서 ContentControl로 바인딩. -->
         <DataTemplate DataType="{x:Type vm:ModelChecklistVm}">
             <StackPanel Margin="0,10,0,0">
-                <TextBlock Text="{StaticResource L.PrimaryModels}" Style="{StaticResource Lbl}" Margin="0,0,0,5"/>
-                <TextBox Style="{StaticResource SettingsInput}" Margin="0,0,0,5"
-                         Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
-                         Visibility="{Binding ShowFilter, Converter={StaticResource BoolVis}}"/>
-                <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" MaxHeight="150" Padding="8,6">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Choices}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Style="{StaticResource ModelCheck}" Content="{Binding Model}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </Border>
+                <!-- 헤더(클릭하면 펼침/접힘) + 선택 개수 -->
+                <ToggleButton Style="{StaticResource ExpanderHeaderToggle}" IsChecked="{Binding IsExpanded, Mode=TwoWay}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{StaticResource L.PrimaryModels}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding CheckedCount, StringFormat=· {0}}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Accent}" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </ToggleButton>
+                <!-- 펼침 시 내용: 필터(pi) + 체크리스트 -->
+                <StackPanel Margin="0,6,0,0" Visibility="{Binding IsExpanded, Converter={StaticResource BoolVis}}">
+                    <TextBox Style="{StaticResource SettingsInput}" Margin="0,0,0,5"
+                             Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding ShowFilter, Converter={StaticResource BoolVis}}"/>
+                    <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" MaxHeight="150" Padding="8,6">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Choices}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Style="{StaticResource ModelCheck}" Content="{Binding Model}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </StackPanel>
             </StackPanel>
         </DataTemplate>
     </UserControl.Resources>

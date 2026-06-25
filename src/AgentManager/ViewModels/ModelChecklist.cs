@@ -46,6 +46,11 @@ public sealed class ModelChecklistVm : ObservableObject
     public bool ShowFilter { get; }
     public ObservableCollection<ModelChoice> Choices { get; } = [];
 
+    // 접이식 UI 상태(영속 안 함) + 선택 개수(헤더 표시용).
+    private bool _isExpanded;
+    public bool IsExpanded { get => _isExpanded; set => Set(ref _isExpanded, value); }
+    public int CheckedCount => _preferred.Count;
+
     private string _filter = "";
     public string Filter { get => _filter; set { if (Set(ref _filter, value)) ApplyFilter(); } }
 
@@ -56,6 +61,7 @@ public sealed class ModelChecklistVm : ObservableObject
         foreach (var m in models)
             _all.Add(new ModelChoice(m, _preferred.Contains(m), Toggle));
         ApplyFilter();
+        OnChanged(nameof(CheckedCount));
     }
 
     private void ApplyFilter()
@@ -70,6 +76,7 @@ public sealed class ModelChecklistVm : ObservableObject
     private void Toggle(ModelChoice c)
     {
         if (c.IsChecked) _preferred.Add(c.Model); else _preferred.Remove(c.Model);
+        OnChanged(nameof(CheckedCount));
         _onChanged();
     }
 }
