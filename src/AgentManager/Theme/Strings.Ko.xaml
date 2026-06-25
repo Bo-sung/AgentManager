@@ -232,7 +232,7 @@
     <sys:String x:Key="L.StopTip">중지</sys:String>
     <sys:String x:Key="L.SendTip">보내기 (Enter)</sys:String>
     <sys:String x:Key="L.DictateTip">음성 입력 - Windows 받아쓰기(Win+H)를 입력창에 연결</sys:String>
-    <sys:String x:Key="L.AttachImageTip">이미지 첨부 (또는 입력창에 Ctrl+V 붙여넣기)</sys:String>
+    <sys:String x:Key="L.AttachImageTip">파일 첨부 — 이미지·문서 (또는 입력창에 Ctrl+V로 이미지 붙여넣기)</sys:String>
     <sys:String x:Key="L.Remove">제거</sys:String>
     <sys:String x:Key="L.MessagePrefix">Message </sys:String>
     <sys:String x:Key="L.MessageSuffix">...  @ to mention, / for actions</sys:String>
@@ -437,6 +437,7 @@
     <sys:String x:Key="L.AddExtraFolderDialogTitle">추가 루트 폴더 선택</sys:String>
     <sys:String x:Key="L.ProjectFolderDialogTitle">프로젝트 폴더 선택 (새 폴더 버튼으로 생성 가능)</sys:String>
     <sys:String x:Key="L.ImagesFilter">Images|*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp</sys:String>
+    <sys:String x:Key="L.AttachFilter">이미지·문서|*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp;*.md;*.markdown;*.txt;*.log;*.json;*.xml;*.yaml;*.yml;*.csv;*.cs;*.js;*.ts;*.py;*.html;*.css;*.sql;*.sh;*.ps1|모든 파일|*.*</sys:String>
     <sys:String x:Key="L.MarkdownFilter">Markdown (*.md)|*.md</sys:String>
     <sys:String x:Key="L.ActivityHistoryTitle">Activity History</sys:String>
     <sys:String x:Key="L.ActivityHistoryHeader">ACTIVITY HISTORY</sys:String>

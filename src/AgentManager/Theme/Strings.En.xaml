@@ -232,7 +232,7 @@
     <sys:String x:Key="L.StopTip">Stop</sys:String>
     <sys:String x:Key="L.SendTip">Send (Enter)</sys:String>
     <sys:String x:Key="L.DictateTip">Voice input - connect Windows dictation (Win+H) to the composer</sys:String>
-    <sys:String x:Key="L.AttachImageTip">Attach image (or Ctrl+V into the composer)</sys:String>
+    <sys:String x:Key="L.AttachImageTip">Attach files — images or documents (or Ctrl+V an image into the composer)</sys:String>
     <sys:String x:Key="L.Remove">Remove</sys:String>
     <sys:String x:Key="L.MessagePrefix">Message </sys:String>
     <sys:String x:Key="L.MessageSuffix">...  @ to mention, / for actions</sys:String>
@@ -437,6 +437,7 @@
     <sys:String x:Key="L.AddExtraFolderDialogTitle">Choose additional root folder</sys:String>
     <sys:String x:Key="L.ProjectFolderDialogTitle">Choose project folder (new folders can be created in the dialog)</sys:String>
     <sys:String x:Key="L.ImagesFilter">Images|*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp</sys:String>
+    <sys:String x:Key="L.AttachFilter">Images &amp; documents|*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp;*.md;*.markdown;*.txt;*.log;*.json;*.xml;*.yaml;*.yml;*.csv;*.cs;*.js;*.ts;*.py;*.html;*.css;*.sql;*.sh;*.ps1|All files|*.*</sys:String>
     <sys:String x:Key="L.MarkdownFilter">Markdown (*.md)|*.md</sys:String>
     <sys:String x:Key="L.ActivityHistoryTitle">Activity History</sys:String>
     <sys:String x:Key="L.ActivityHistoryHeader">ACTIVITY HISTORY</sys:String>

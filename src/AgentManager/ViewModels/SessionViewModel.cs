@@ -19,8 +19,9 @@ public sealed class SessionViewModel : ObservableObject
     public ObservableCollection<ArtifactViewModel> Artifacts { get; } = [];
     public ObservableCollection<NativeWorkItemViewModel> NativeWorkItems { get; } = [];
 
-    /// <summary>Images queued for the next turn (paste/⊞). Cleared on send; not persisted.</summary>
-    public ObservableCollection<string> PendingImages { get; } = [];
+    /// <summary>Files queued for the next turn (paste/picker): images → base64 blocks, docs →
+    /// inlined prompt text. Cleared on send; not persisted.</summary>
+    public ObservableCollection<PendingAttachment> PendingAttachments { get; } = [];
 
     /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
     private string? _worktreePath;

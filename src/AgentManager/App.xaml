@@ -19,6 +19,7 @@
                  (UserControl 로드 시점엔 Window.Resources가 아직 트리에 없어 못 봄). -->
             <BooleanToVisibilityConverter x:Key="BoolVis"/>
             <controls:SelectedBrushConverter x:Key="SelBrush"/>
+            <controls:PathToThumbnailConverter x:Key="PathThumb"/>
             <ObjectDataProvider x:Key="SandboxModes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="agents:SandboxMode"/>

@@ -193,7 +193,7 @@ public partial class SessionView : UserControl
         if (Vm?.ActiveSession is not { } s) return;
         var img = Clipboard.GetImage();
         if (img is not null && ImageAttachmentStore.SavePng(img) is { } path)
-            s.PendingImages.Add(path);
+            s.PendingAttachments.Add(new PendingAttachment(path, IsImage: true));
     }
 
     private void AttachImage_Click(object sender, RoutedEventArgs e)
@@ -202,16 +202,17 @@ public partial class SessionView : UserControl
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
             Multiselect = true,
-            Filter = AgentManager.App.L("L.ImagesFilter"),
+            Filter = AgentManager.App.L("L.AttachFilter"),
         };
         if (dlg.ShowDialog() != true) return;
-        foreach (var f in dlg.FileNames) s.PendingImages.Add(f);
+        foreach (var f in dlg.FileNames)
+            s.PendingAttachments.Add(new PendingAttachment(f, AgentManager.Attachments.IsImage(f)));
     }
 
     private void RemovePendingImage_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.DataContext is string path && Vm?.ActiveSession is { } s)
-            s.PendingImages.Remove(path);
+        if ((sender as FrameworkElement)?.DataContext is PendingAttachment a && Vm?.ActiveSession is { } s)
+            s.PendingAttachments.Remove(a);
     }
 
     private void ModelOption_Click(object sender, RoutedEventArgs e)

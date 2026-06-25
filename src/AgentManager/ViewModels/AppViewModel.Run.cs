@@ -41,13 +41,14 @@ public sealed partial class AppViewModel
         if (s is null || !s.CanSend) return;
         var prompt = s.Draft.Trim();
         s.Draft = "";
-        var images = s.PendingImages.ToArray();
-        s.PendingImages.Clear();
-        await RunTurnAsync(s, prompt, images);
+        var images = s.PendingAttachments.Where(a => a.IsImage).Select(a => a.Path).ToArray();
+        var docs = s.PendingAttachments.Where(a => !a.IsImage).Select(a => a.Path).ToArray();
+        s.PendingAttachments.Clear();
+        await RunTurnAsync(s, prompt, images, docs);
     }
 
     /// <summary>Run one engine turn for a session and stream normalized events into its transcript.</summary>
-    private async Task RunTurnAsync(SessionViewModel s, string prompt, string[]? images = null)
+    private async Task RunTurnAsync(SessionViewModel s, string prompt, string[]? images = null, string[]? docs = null)
     {
         // concurrency cap: 워커와 일반 세션은 별도 cap을 소비(워커 위임이 메인 슬롯을 굶기지 않도록)
         var cap = s.IsWorker ? MaxConcurrentWorkers : MaxConcurrentSessions;
@@ -60,7 +61,8 @@ public sealed partial class AppViewModel
         }
 
         var dispatcher = Application.Current.Dispatcher;
-        s.Transcript.Add(new UserBlock(prompt));
+        var attachmentPaths = (images ?? []).Concat(docs ?? []).ToArray();
+        s.Transcript.Add(new UserBlock(attachmentPaths.Length > 0 ? Attachments.DisplayNote(prompt, attachmentPaths) : prompt));
         s.Status = "running";
         s.MarkRunStarted(s.TranslationEnabled ? L("L.TranslatingPreparingRun") : L("L.PreparingRun"));
 
@@ -107,6 +109,7 @@ public sealed partial class AppViewModel
             Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
             McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
             Images = images ?? [],
+            AttachedDocsText = Attachments.BuildDocsText(docs),
             AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
             ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
             ExtraEnvironment = ApiEnvFor(s.AgentId),

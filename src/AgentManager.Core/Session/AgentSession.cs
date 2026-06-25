@@ -37,6 +37,11 @@ public sealed class AgentSession(
                 Emit(new PromptTranslated(prompt)); // 검수용: 실제 전송된 영문
         }
 
+        // Attached documents are prepended AFTER translation: their content stays verbatim
+        // (never mangled by the translator) and is delivered as plain prompt text to any engine.
+        if (!string.IsNullOrEmpty(options.AttachedDocsText))
+            prompt = options.AttachedDocsText + "\n\n" + prompt;
+
         // TTY 전용 엔진(agy): 어댑터가 ConPTY로 턴을 직접 구동 (stdio 파이프 경로 미사용)
         if (adapter is IPtyTurnRunner pty)
         {

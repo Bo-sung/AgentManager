@@ -34,6 +34,10 @@ public sealed record SessionOptions
     public string? McpConfigPath { get; init; }
     /// <summary>Image file paths to attach to this turn (Claude: base64 blocks; Codex: -i args).</summary>
     public IReadOnlyList<string> Images { get; init; } = [];
+    /// <summary>Pre-rendered text for attached documents (fenced blocks), prepended to the prompt
+    /// AFTER translation so the verbatim file content is never sent through the translator.
+    /// Empty = none. Works for every engine (it's just prompt text).</summary>
+    public string AttachedDocsText { get; init; } = "";
     /// <summary>멀티폴더 project: 주 폴더(WorkingDirectory) 외에 에이전트가 접근할 루트들.
     /// Claude: --add-dir 반복; Codex: workspace-write 샌드박스의 writable_roots 오버라이드.</summary>
     public IReadOnlyList<string> AdditionalDirectories { get; init; } = [];
