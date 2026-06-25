@@ -291,6 +291,8 @@
     <sys:String x:Key="L.ClaudeCliPath">CLAUDE CLI PATH</sys:String>
     <sys:String x:Key="L.CodexCliPath">CODEX CLI PATH</sys:String>
     <sys:String x:Key="L.AgyCliPath">ANTIGRAVITY CLI PATH</sys:String>
+    <sys:String x:Key="L.PiCliPath">PI CLI PATH (cli.js)</sys:String>
+    <sys:String x:Key="L.PiProviderNote">provider·인증은 pi가 자체 관리 (~/.pi). AgentManager는 호출만.</sys:String>
     <sys:String x:Key="L.NotInstalled">미설치</sys:String>
     <sys:String x:Key="L.InstallGuide">설치 가이드 ↗</sys:String>
     <sys:String x:Key="L.GuideBtn">가이드</sys:String>

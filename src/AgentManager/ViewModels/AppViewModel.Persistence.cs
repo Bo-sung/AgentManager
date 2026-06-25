@@ -24,6 +24,7 @@ public sealed partial class AppViewModel
         _claudePath = s.ClaudePath;
         _codexPath = s.CodexPath;
         _agyPath = s.AgyPath;
+        _piPath = s.PiPath;
         _ollamaEndpoint = string.IsNullOrWhiteSpace(s.OllamaEndpoint) ? _ollamaEndpoint : s.OllamaEndpoint;
         _ollamaModel = string.IsNullOrWhiteSpace(s.OllamaModel) ? _ollamaModel : s.OllamaModel;
         TranslationEnabled = s.TranslationEnabled;
@@ -73,6 +74,7 @@ public sealed partial class AppViewModel
         ClaudePath = _claudePath,
         CodexPath = _codexPath,
         AgyPath = _agyPath,
+        PiPath = _piPath,
         OllamaEndpoint = _ollamaEndpoint,
         OllamaModel = _ollamaModel,
         TranslationEnabled = TranslationEnabled,

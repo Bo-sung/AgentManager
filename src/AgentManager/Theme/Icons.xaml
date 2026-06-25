@@ -12,6 +12,8 @@
         <GradientStop Color="#FFEA4335" Offset="0.72"/>
         <GradientStop Color="#FFFB8C00" Offset="1"/>
     </LinearGradientBrush>
+    <!-- pi(pi.dev)는 모노크롬 마크(흰색 on #09090b) → 강조색과 무관한 고정 zinc 라이트 -->
+    <SolidColorBrush x:Key="PiBrand" Color="#FFE4E4E7"/>
 
     <Style TargetType="{x:Type c:IconView}">
         <Setter Property="Template">
@@ -195,6 +197,11 @@
     <!-- Antigravity: 공식 그라데이션 "A 아치" 마크의 단색 벡터 재현(viewBox 24) — 공식은 raster(gradient)뿐 -->
     <PathGeometry x:Key="IconEngineAgy" Figures="M12 4 C9 4 7.4 6.2 6 10.2 L3.1 18.9 C2.7 20 3.5 21 4.6 21 C5.4 21 6.1 20.5 6.4 19.7 L9.1 12.4 C9.8 10.5 10.6 9.6 12 9.6 C13.4 9.6 14.2 10.5 14.9 12.4 L17.6 19.7 C17.9 20.5 18.6 21 19.4 21 C20.5 21 21.3 20 20.9 18.9 L18 10.2 C16.6 6.2 15 4 12 4 Z"/>
 
+    <!-- pi(pi.dev) 공식 마크: 블록형 "P"(가운데 구멍) + i 닷. viewBox 800 → 24 스케일(0.03), EvenOdd로 구멍 처리 -->
+    <PathGeometry x:Key="IconEnginePi" FillRule="EvenOdd" Figures="M165.29 165.29 H517.36 V400 H400 V517.36 H282.65 V634.72 H165.29 Z M282.65 282.65 V400 H400 V282.65 Z M517.36 400 H634.72 V634.72 H517.36 Z">
+        <PathGeometry.Transform><ScaleTransform ScaleX="0.03" ScaleY="0.03"/></PathGeometry.Transform>
+    </PathGeometry>
+
     <!-- 엔진별 아이콘+색 자동 선택 (DataContext에 AgentId 필요: SessionViewModel/CliHistoryItemViewModel) -->
     <Style x:Key="EngineIcon" TargetType="{x:Type c:IconView}" BasedOn="{StaticResource {x:Type c:IconView}}">
         <Setter Property="Width" Value="15"/>
@@ -212,6 +219,10 @@
             <DataTrigger Binding="{Binding AgentId}" Value="agy">
                 <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
                 <Setter Property="Foreground" Value="{DynamicResource AgyGradient}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding AgentId}" Value="pi">
+                <Setter Property="Icon" Value="{StaticResource IconEnginePi}"/>
+                <Setter Property="Foreground" Value="{DynamicResource PiBrand}"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -233,6 +244,10 @@
             <DataTrigger Binding="{Binding Id}" Value="agy">
                 <Setter Property="Icon" Value="{StaticResource IconEngineAgy}"/>
                 <Setter Property="Foreground" Value="{DynamicResource AgyGradient}"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Id}" Value="pi">
+                <Setter Property="Icon" Value="{StaticResource IconEnginePi}"/>
+                <Setter Property="Foreground" Value="{DynamicResource PiBrand}"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>

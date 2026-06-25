@@ -28,6 +28,8 @@ public sealed partial class AppViewModel
     public string SettingsCodexPath { get => _settingsCodexPath; set => Set(ref _settingsCodexPath, value); }
     private string _settingsAgyPath = "";
     public string SettingsAgyPath { get => _settingsAgyPath; set => Set(ref _settingsAgyPath, value); }
+    private string _settingsPiPath = "";
+    public string SettingsPiPath { get => _settingsPiPath; set => Set(ref _settingsPiPath, value); }
     private string _settingsOllamaEndpoint = "";
     public string SettingsOllamaEndpoint { get => _settingsOllamaEndpoint; set => Set(ref _settingsOllamaEndpoint, value); }
     private string _settingsOllamaModel = "";
@@ -183,6 +185,7 @@ public sealed partial class AppViewModel
     public string[] CcModels => EngineModels("cc");
     public string[] GxModels => EngineModels("gx");
     public string[] AgyModels => EngineModels("agy");
+    public string[] PiModels => EngineModels("pi");
     private string[] EngineModels(string id) => Array.Find(AllEngines, e => e.Id == id)?.Models ?? [];
     /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
     private string DefaultModelFor(string id) =>
@@ -201,6 +204,8 @@ public sealed partial class AppViewModel
     private string _settingsModelGx = "";
     public string SettingsModelAgy { get => _settingsModelAgy; set => Set(ref _settingsModelAgy, value); }
     private string _settingsModelAgy = "";
+    public string SettingsModelPi { get => _settingsModelPi; set => Set(ref _settingsModelPi, value); }
+    private string _settingsModelPi = "";
 
     // ----- per-engine enable/disable -----
     public bool SettingsEngineCc { get => _settingsEngineCc; set => Set(ref _settingsEngineCc, value); }
@@ -209,6 +214,8 @@ public sealed partial class AppViewModel
     private bool _settingsEngineGx = true;
     public bool SettingsEngineAgy { get => _settingsEngineAgy; set => Set(ref _settingsEngineAgy, value); }
     private bool _settingsEngineAgy = true;
+    public bool SettingsEnginePi { get => _settingsEnginePi; set => Set(ref _settingsEnginePi, value); }
+    private bool _settingsEnginePi = true;
 
     // ----- per-engine auth (subscription / api key) -----
     private readonly Dictionary<string, string> _engineAuthMode = new();   // id → "subscription" | "api"
@@ -396,12 +403,14 @@ public sealed partial class AppViewModel
     public string ClaudeDetectLabel => DetectLabel("cc", _claudePath);
     public string CodexDetectLabel => DetectLabel("gx", _codexPath);
     public string AgyDetectLabel => DetectLabel("agy", _agyPath);
+    public string PiDetectLabel => DetectLabel("pi", _piPath);
     private static string DetectLabel(string id, string? overridePath)
     {
         var exe = EngineRegistry.ResolveExe(id,
             id == "cc" ? overridePath : null,
             id == "gx" ? overridePath : null,
-            id == "agy" ? overridePath : null);
+            id == "agy" ? overridePath : null,
+            id == "pi" ? overridePath : null);
         if (exe is null) return AgentManager.App.L("L.DetectMissing");
         if (File.Exists(exe)) return AgentManager.App.L("L.DetectPathPrefix", exe);
         return AgentManager.App.L("L.DetectPathDependent", exe); // bare command name — resolved at spawn time
@@ -417,13 +426,14 @@ public sealed partial class AppViewModel
             case "cc": SettingsClaudePath = found; break;
             case "gx": SettingsCodexPath = found; break;
             case "agy": SettingsAgyPath = found; break;
+            case "pi": SettingsPiPath = found; break;
         }
         SettingsStatus = AgentManager.App.L("L.DetectFound", found);
     }
     private void RefreshDetectLabels()
     {
         OnChanged(nameof(ClaudeDetectLabel)); OnChanged(nameof(CodexDetectLabel));
-        OnChanged(nameof(AgyDetectLabel));
+        OnChanged(nameof(AgyDetectLabel)); OnChanged(nameof(PiDetectLabel));
         OnChanged(nameof(CcAccount)); OnChanged(nameof(GxAccount));
         OnChanged(nameof(AgyAccount));
     }
@@ -441,6 +451,7 @@ public sealed partial class AppViewModel
         SettingsClaudePath = _claudePath;
         SettingsCodexPath = _codexPath;
         SettingsAgyPath = _agyPath;
+        SettingsPiPath = _piPath;
         SettingsOllamaEndpoint = _ollamaEndpoint;
         SettingsOllamaModel = _ollamaModel;
         SettingsDefaultTranslationEnabled = TranslationEnabled;
@@ -456,12 +467,14 @@ public sealed partial class AppViewModel
         SettingsModelCc = DefaultModelFor("cc");
         SettingsModelGx = DefaultModelFor("gx");
         SettingsModelAgy = DefaultModelFor("agy");
+        SettingsModelPi = DefaultModelFor("pi");
         SettingsAccent = _accent;
         SettingsAccentCustom = Theme.AccentPalette.IsHex(_accent) ? _accent : "";
         SettingsTelemetry = _telemetry;
         SettingsEngineCc = !_disabledEngines.Contains("cc");
         SettingsEngineGx = !_disabledEngines.Contains("gx");
         SettingsEngineAgy = !_disabledEngines.Contains("agy");
+        SettingsEnginePi = !_disabledEngines.Contains("pi");
         SettingsAuthCc = _engineAuthMode.GetValueOrDefault("cc", "subscription");
         SettingsAuthGx = _engineAuthMode.GetValueOrDefault("gx", "subscription");
         SettingsAutoApiCc = _engineAutoApi.GetValueOrDefault("cc");
@@ -506,6 +519,7 @@ public sealed partial class AppViewModel
         _claudePath = Clean(SettingsClaudePath);
         _codexPath = Clean(SettingsCodexPath);
         _agyPath = Clean(SettingsAgyPath);
+        _piPath = Clean(SettingsPiPath);
         RefreshDetectLabels();
         _ollamaEndpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint.Trim();
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();
@@ -518,6 +532,7 @@ public sealed partial class AppViewModel
         SetDefaultModel("cc", SettingsModelCc);
         SetDefaultModel("gx", SettingsModelGx);
         SetDefaultModel("agy", SettingsModelAgy);
+        SetDefaultModel("pi", SettingsModelPi);
         _accent = Theme.AccentPalette.Normalize(SettingsAccent);
         _telemetry = SettingsTelemetry;
         // 엔진 비활성 집합 재구성 — 단, 최소 1개는 활성으로 유지
@@ -525,6 +540,7 @@ public sealed partial class AppViewModel
         if (!SettingsEngineCc) disabled.Add("cc");
         if (!SettingsEngineGx) disabled.Add("gx");
         if (!SettingsEngineAgy) disabled.Add("agy");
+        if (!SettingsEnginePi) disabled.Add("pi");
         if (disabled.Count < AllEngines.Length)
         {
             _disabledEngines.Clear();

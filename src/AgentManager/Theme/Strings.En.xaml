@@ -291,6 +291,8 @@
     <sys:String x:Key="L.ClaudeCliPath">CLAUDE CLI PATH</sys:String>
     <sys:String x:Key="L.CodexCliPath">CODEX CLI PATH</sys:String>
     <sys:String x:Key="L.AgyCliPath">ANTIGRAVITY CLI PATH</sys:String>
+    <sys:String x:Key="L.PiCliPath">PI CLI PATH (cli.js)</sys:String>
+    <sys:String x:Key="L.PiProviderNote">Provider &amp; auth are managed by pi itself (~/.pi). AgentManager just calls it.</sys:String>
     <sys:String x:Key="L.NotInstalled">not installed</sys:String>
     <sys:String x:Key="L.InstallGuide">Install guide ↗</sys:String>
     <sys:String x:Key="L.GuideBtn">Guide</sys:String>

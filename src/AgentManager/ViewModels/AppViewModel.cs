@@ -36,6 +36,7 @@ public sealed partial class AppViewModel : ObservableObject
     private string _claudePath = "";
     private string _codexPath = "";
     private string _agyPath = "";
+    private string _piPath = "";
     private string _ollamaEndpoint = "http://localhost:11434";
     private string _ollamaModel = "exaone3.5:7.8b";
 
@@ -582,7 +583,7 @@ public sealed partial class AppViewModel : ObservableObject
     /// <summary>New Agent 엔진 피커용 — 각 엔진 + 설치 여부(수동 경로/PATH 반영). 폼 열 때 새로 계산.</summary>
     public IReadOnlyList<EngineOptionVm> NewAgentEngineOptions =>
         Engines.Select(d => new EngineOptionVm(d,
-            EngineRegistry.IsInstalled(d.Id, _claudePath, _codexPath, _agyPath),
+            EngineRegistry.IsInstalled(d.Id, _claudePath, _codexPath, _agyPath, _piPath),
             IsEngineLimited(d.Id),
             WillUseApiOnLimit(d.Id))).ToList();
 
