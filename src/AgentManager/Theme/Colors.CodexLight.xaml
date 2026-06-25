@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== Codex Light 팔레트 (ChatGPT 라이트 그레이 + OpenAI 그린) ===== -->
+    <Color x:Key="Bg0Color">#FFF7F7F8</Color>
+    <SolidColorBrush x:Key="Bg0" Color="#FFF7F7F8"/>
+    <SolidColorBrush x:Key="Bg1" Color="#FFFCFCFD"/>
+    <SolidColorBrush x:Key="Bg2" Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="Bg3" Color="#FFECECF1"/>
+    <SolidColorBrush x:Key="Bg4" Color="#FFE0E0E6"/>
+    <SolidColorBrush x:Key="Bg5" Color="#FFD2D2DA"/>
+    <SolidColorBrush x:Key="Line" Color="#FFE3E3E8"/>
+    <SolidColorBrush x:Key="LineSoft" Color="#FFEDEDF1"/>
+    <SolidColorBrush x:Key="LineBright" Color="#FFC5C5CE"/>
+    <SolidColorBrush x:Key="Txt0" Color="#FF202123"/>
+    <SolidColorBrush x:Key="Txt1" Color="#FF4D4F56"/>
+    <SolidColorBrush x:Key="Txt2" Color="#FF74767E"/>
+    <SolidColorBrush x:Key="Txt3" Color="#FFA0A2AB"/>
+    <SolidColorBrush x:Key="Accent" Color="#FF0E8E6E"/>
+    <SolidColorBrush x:Key="AccentBright" Color="#FF10A37F"/>
+    <SolidColorBrush x:Key="AccentDim" Color="#1A10A37F"/>
+    <SolidColorBrush x:Key="AccentLine" Color="#6610A37F"/>
+    <SolidColorBrush x:Key="Warn" Color="#FFB5810C"/>
+    <SolidColorBrush x:Key="Ok" Color="#FF14916C"/>
+    <SolidColorBrush x:Key="Err" Color="#FFD93A4C"/>
+    <SolidColorBrush x:Key="Info" Color="#FF2F6FD6"/>
+    <SolidColorBrush x:Key="Add" Color="#FF14916C"/>
+    <SolidColorBrush x:Key="AddBg" Color="#1A19C37D"/>
+    <SolidColorBrush x:Key="Del" Color="#FFD93A4C"/>
+    <SolidColorBrush x:Key="DelBg" Color="#17EF4146"/>
+    <SolidColorBrush x:Key="Run" Color="#FF0E8E6E"/>
+    <SolidColorBrush x:Key="AccentText" Color="#FFFFFFFF"/>
+
+    <SolidColorBrush x:Key="Gx" Color="#FF10A37F"/>
+    <SolidColorBrush x:Key="GxLine" Color="#6610A37F"/>
+    <SolidColorBrush x:Key="GxDim" Color="#1A10A37F"/>
+    <SolidColorBrush x:Key="InfoLine" Color="#662F6FD6"/>
+    <SolidColorBrush x:Key="InfoDim" Color="#1A2F6FD6"/>
+    <SolidColorBrush x:Key="Agy" Color="#FF128F81"/>
+    <SolidColorBrush x:Key="AgyLine" Color="#662BC5B4"/>
+    <SolidColorBrush x:Key="AgyDim" Color="#1A2BC5B4"/>
+</ResourceDictionary>
