@@ -1468,24 +1468,24 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{StaticResource L.ShortcutSpawn}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8"/>
-                            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Ctrl+N"/></Border>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{StaticResource L.ShortcutSpawn}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" VerticalAlignment="Center"/>
+                            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KbdChip}" VerticalAlignment="Center"><TextBlock Text="Ctrl+N"/></Border>
 
-                            <Border Grid.Row="1" Grid.ColumnSpan="2" Height="1" Background="{DynamicResource LineSoft}"/>
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{StaticResource L.ShortcutViews}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" Margin="0,1,0,0"/>
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Ctrl+1 / Ctrl+2 / Ctrl+3"/></Border>
+                            <Border Grid.Row="1" Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{DynamicResource LineSoft}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{StaticResource L.ShortcutViews}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" VerticalAlignment="Center"/>
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource KbdChip}" VerticalAlignment="Center"><TextBlock Text="Ctrl+1 / Ctrl+2 / Ctrl+3"/></Border>
 
-                            <Border Grid.Row="2" Grid.ColumnSpan="2" Height="1" Background="{DynamicResource LineSoft}"/>
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="{StaticResource L.ShortcutDiff}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" Margin="0,1,0,0"/>
-                            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Ctrl+R"/></Border>
+                            <Border Grid.Row="2" Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{DynamicResource LineSoft}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="{StaticResource L.ShortcutDiff}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" VerticalAlignment="Center"/>
+                            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource KbdChip}" VerticalAlignment="Center"><TextBlock Text="Ctrl+R"/></Border>
 
-                            <Border Grid.Row="3" Grid.ColumnSpan="2" Height="1" Background="{DynamicResource LineSoft}"/>
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="{StaticResource L.ShortcutSettings}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" Margin="0,1,0,0"/>
-                            <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Ctrl+,"/></Border>
+                            <Border Grid.Row="3" Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{DynamicResource LineSoft}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="{StaticResource L.ShortcutSettings}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" VerticalAlignment="Center"/>
+                            <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource KbdChip}" VerticalAlignment="Center"><TextBlock Text="Ctrl+,"/></Border>
 
-                            <Border Grid.Row="4" Grid.ColumnSpan="2" Height="1" Background="{DynamicResource LineSoft}"/>
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="{StaticResource L.ShortcutSend}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" Margin="0,1,0,0"/>
-                            <Border Grid.Row="4" Grid.Column="1" Style="{StaticResource KbdChip}"><TextBlock Text="Enter"/></Border>
+                            <Border Grid.Row="4" Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{DynamicResource LineSoft}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="{StaticResource L.ShortcutSend}" Foreground="{DynamicResource Txt1}" FontSize="12.5" Padding="0,8" VerticalAlignment="Center"/>
+                            <Border Grid.Row="4" Grid.Column="1" Style="{StaticResource KbdChip}" VerticalAlignment="Center"><TextBlock Text="Enter"/></Border>
                         </Grid>
                     </StackPanel>
 
