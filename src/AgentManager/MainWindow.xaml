@@ -1434,8 +1434,8 @@
                             <!-- update check / apply -->
                             <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <TextBlock Text="{Binding UpdateStatusText}" FontSize="10.5" VerticalAlignment="Center"
-                                               Margin="0,0,8,0" Foreground="{DynamicResource Txt2}"/>
+                                    <TextBlock Text="{Binding UpdateStatusText}" FontSize="11.5" VerticalAlignment="Center"
+                                               Margin="0,0,8,0" Foreground="{DynamicResource Txt1}"/>
                                     <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.CheckUpdate}"
                                             Command="{Binding CheckUpdateCommand}"/>
                                 </StackPanel>
