@@ -545,6 +545,53 @@ public sealed partial class AppViewModel
     private string _settingsStatus = "";
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
 
+    // ----- 스킬 주입: Save 시 각 엔진 스킬 폴더에 SKILL.md 기록 -----
+    private string _skillContent = AgentManager.Core.SkillInjector.WorkerPromptDefault;
+    private Dictionary<string, string> _skillDirs = AgentManager.Core.SkillInjector.DefaultDirs();
+
+    private string _settingsSkillContent = "";
+    public string SettingsSkillContent { get => _settingsSkillContent; set => Set(ref _settingsSkillContent, value); }
+    private string _settingsSkillDirCc = "";
+    public string SettingsSkillDirCc { get => _settingsSkillDirCc; set => Set(ref _settingsSkillDirCc, value); }
+    private string _settingsSkillDirGx = "";
+    public string SettingsSkillDirGx { get => _settingsSkillDirGx; set => Set(ref _settingsSkillDirGx, value); }
+    private string _settingsSkillDirAgy = "";
+    public string SettingsSkillDirAgy { get => _settingsSkillDirAgy; set => Set(ref _settingsSkillDirAgy, value); }
+    private string _settingsSkillDirPi = "";
+    public string SettingsSkillDirPi { get => _settingsSkillDirPi; set => Set(ref _settingsSkillDirPi, value); }
+
+    private string _skillInjectStatus = "";
+    /// <summary>마지막 Save 시 엔진별 스킬 주입 결과 요약 (스킬 카드에 표시).</summary>
+    public string SkillInjectStatus { get => _skillInjectStatus; set => Set(ref _skillInjectStatus, value); }
+
+    private static Dictionary<string, string> MergeSkillDirs(IReadOnlyDictionary<string, string>? saved)
+    {
+        var dirs = AgentManager.Core.SkillInjector.DefaultDirs();
+        if (saved != null)
+            foreach (var kv in saved)
+                if (!string.IsNullOrWhiteSpace(kv.Value)) dirs[kv.Key] = kv.Value;
+        return dirs;
+    }
+
+    /// <summary>편집기 버퍼 → 필드로 반영하고 각 엔진 스킬 폴더에 SKILL.md를 기록. 결과를 상태로 요약.</summary>
+    private void ApplyAndInjectSkill()
+    {
+        _skillContent = string.IsNullOrWhiteSpace(SettingsSkillContent)
+            ? AgentManager.Core.SkillInjector.WorkerPromptDefault
+            : SettingsSkillContent;
+        _skillDirs = new Dictionary<string, string>
+        {
+            ["cc"] = (SettingsSkillDirCc ?? "").Trim(),
+            ["gx"] = (SettingsSkillDirGx ?? "").Trim(),
+            ["agy"] = (SettingsSkillDirAgy ?? "").Trim(),
+            ["pi"] = (SettingsSkillDirPi ?? "").Trim(),
+        };
+        var results = AgentManager.Core.SkillInjector.Inject(_skillContent, _skillDirs);
+        var parts = results.Select(kv => $"{kv.Key} {(kv.Value is null ? "✓" : "✗")}");
+        var firstError = results.Where(kv => kv.Value is not null).Select(kv => $"{kv.Key}: {kv.Value}").FirstOrDefault();
+        SkillInjectStatus = string.Join("   ", parts) + (firstError is null ? "" : $"   — {firstError}");
+    }
+
     /// <summary>VM 필드 → 설정 에디터(Settings* 미러) 프로퍼티로 끌어온다. OpenSettings + 외부 리로드에서 공용.</summary>
     private void PullSettingsToEditor()
     {
@@ -564,6 +611,11 @@ public sealed partial class AppViewModel
         SettingsWorktreeBase = _worktreeBase;
         SettingsAutoStart = _autoStartLastSession;
         SettingsStreamLogs = _streamLogs;
+        SettingsSkillContent = _skillContent;
+        SettingsSkillDirCc = _skillDirs.GetValueOrDefault("cc", "");
+        SettingsSkillDirGx = _skillDirs.GetValueOrDefault("gx", "");
+        SettingsSkillDirAgy = _skillDirs.GetValueOrDefault("agy", "");
+        SettingsSkillDirPi = _skillDirs.GetValueOrDefault("pi", "");
         SettingsModelCc = DefaultModelFor("cc");
         SettingsModelGx = DefaultModelFor("gx");
         SettingsModelAgy = DefaultModelFor("agy");
@@ -660,6 +712,7 @@ public sealed partial class AppViewModel
         _translateSource = NormalizeTranslationLang(SettingsTranslateSource, "Korean");
         _translateTarget = NormalizeTranslationLang(SettingsTranslateTarget, "English");
         _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel, _translateSource, _translateTarget);
+        ApplyAndInjectSkill(); // 각 엔진 스킬 폴더에 SKILL.md 기록
         SettingsStatus = languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
         SaveState();
     }

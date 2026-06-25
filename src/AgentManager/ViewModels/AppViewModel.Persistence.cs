@@ -33,6 +33,8 @@ public sealed partial class AppViewModel
         MaxConcurrentSessions = s.MaxConcurrentSessions;
         MaxConcurrentWorkers = s.MaxConcurrentWorkers < 1 ? AgentManager.Core.Workers.WorkerDefaults.DefaultMaxConcurrentWorkers : s.MaxConcurrentWorkers;
         WorkerBehaviorPreamble = string.IsNullOrWhiteSpace(s.WorkerBehaviorPreamble) ? AgentManager.Core.Workers.WorkerDefaults.BehaviorPreamble : s.WorkerBehaviorPreamble;
+        _skillContent = string.IsNullOrWhiteSpace(s.SkillContent) ? AgentManager.Core.SkillInjector.WorkerPromptDefault : s.SkillContent;
+        _skillDirs = MergeSkillDirs(s.SkillDirs);
         _isReviewOpen = s.ReviewPaneOpen;
         _warnNoWorktree = s.WarnNoWorktree;
         _approvalPolicy = s.ApprovalPolicy is "ask" or "safe" ? s.ApprovalPolicy : "yolo";
@@ -84,6 +86,8 @@ public sealed partial class AppViewModel
         MaxConcurrentSessions = MaxConcurrentSessions,
         MaxConcurrentWorkers = MaxConcurrentWorkers,
         WorkerBehaviorPreamble = WorkerBehaviorPreamble,
+        SkillContent = _skillContent,
+        SkillDirs = new Dictionary<string, string>(_skillDirs),
         ReviewPaneOpen = IsReviewOpen,
         WarnNoWorktree = _warnNoWorktree,
         Theme = _theme,

@@ -132,6 +132,11 @@
     <sys:String x:Key="L.OpenSettingsJson">Open settings.json</sys:String>
     <sys:String x:Key="L.OpenSettingsJsonTip">Edit settings as JSON; external changes apply live.</sys:String>
     <sys:String x:Key="L.SecProject">Project</sys:String>
+    <sys:String x:Key="L.SecSkills">Skills</sys:String>
+    <sys:String x:Key="L.SkillInjectDesc">A shared SKILL.md (Agent Skills open standard) written into each engine's skill folder, so cc · gx · agy · pi all pick up the same skill. Injected on Save settings.</sys:String>
+    <sys:String x:Key="L.SkillContent">Skill (SKILL.md)</sys:String>
+    <sys:String x:Key="L.SkillDirs">Install folder per engine (clear one to skip that engine)</sys:String>
+    <sys:String x:Key="L.SkillInjectNote">Pressing “Save settings” writes &lt;folder&gt;/&lt;name&gt;/SKILL.md to each engine (name = the SKILL.md “name:” field). Folders are pre-filled with defaults — adjust if your install differs.</sys:String>
     <sys:String x:Key="L.AuthCliManaged">Authentication · managed by the runtime's own CLI login</sys:String>
     <sys:String x:Key="L.PlannedBadge">PLANNED</sys:String>
     <sys:String x:Key="L.OrchPlanned">Auto-start on launch · stream activity logs · worktree base directory — backend pending.</sys:String>

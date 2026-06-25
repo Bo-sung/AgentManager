@@ -30,6 +30,10 @@ public sealed record AppSettingsDto
     public int MaxConcurrentWorkers { get; init; } = 2;
     /// <summary>새 워커 생성 시 기본으로 채워지는 전역 행동 규칙 preamble 템플릿.</summary>
     public string WorkerBehaviorPreamble { get; init; } = "";
+    /// <summary>각 엔진 스킬 폴더에 주입할 SKILL.md 내용(빈 값 = 기본 워커-프롬프트 템플릿).</summary>
+    public string SkillContent { get; init; } = "";
+    /// <summary>엔진별 스킬 설치 폴더(engineId → 경로). 비어있으면 SkillInjector 기본 경로.</summary>
+    public Dictionary<string, string> SkillDirs { get; init; } = new();
     public bool ReviewPaneOpen { get; init; } = true;
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내 표시 여부 (기본 끔).</summary>
     public bool WarnNoWorktree { get; init; }

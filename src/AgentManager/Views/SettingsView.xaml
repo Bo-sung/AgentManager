@@ -75,6 +75,7 @@
                                 <TextBlock Text="{StaticResource L.SecPermissions}" Tag="SecPermissions" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
                                 <TextBlock Text="{StaticResource L.SecAppearance}" Tag="SecAppearance" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
                                 <TextBlock Text="{StaticResource L.SecProject}" Tag="SecProject" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
+                                <TextBlock Text="{StaticResource L.SecSkills}" Tag="SecSkills" MouseLeftButtonUp="SettingsToc_Click" Foreground="{DynamicResource Txt1}" Cursor="Hand" Padding="6" Margin="0,0,0,2"/>
                             </StackPanel>
 
                             <ScrollViewer Grid.Column="1" x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" Padding="6,0,0,0">
@@ -688,6 +689,60 @@
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 07 Skills (engine skill injection) -->
+                                    <StackPanel x:Name="SecSkills" Margin="0,14,0,0">
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock DockPanel.Dock="Left" Text="07" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.SecSkills}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
+                                            <Border Height="1" Background="{DynamicResource LineSoft}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </DockPanel>
+                                        <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.SkillInjectDesc}" FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+
+                                                <TextBlock Text="{StaticResource L.SkillContent}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" AcceptsReturn="True" TextWrapping="NoWrap"
+                                                         MinHeight="180" MaxHeight="340" FontFamily="{StaticResource Mono}" FontSize="11"
+                                                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                                                         Text="{Binding SettingsSkillContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <TextBlock Text="{StaticResource L.SkillDirs}" Style="{StaticResource Lbl}" Margin="0,14,0,6"/>
+                                                <Grid Margin="0,0,0,5">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="cc" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource CcBrand}" VerticalAlignment="Center"/>
+                                                    <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding SettingsSkillDirCc, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                </Grid>
+                                                <Grid Margin="0,0,0,5">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="gx" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource GxBrand}" VerticalAlignment="Center"/>
+                                                    <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding SettingsSkillDirGx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                </Grid>
+                                                <Grid Margin="0,0,0,5">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="agy" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource AgyBrand}" VerticalAlignment="Center"/>
+                                                    <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding SettingsSkillDirAgy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                </Grid>
+                                                <Grid Margin="0,0,0,5">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="pi" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource PiBrand}" VerticalAlignment="Center"/>
+                                                    <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding SettingsSkillDirPi, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                </Grid>
+
+                                                <TextBlock Text="{StaticResource L.SkillInjectNote}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,8,0,0" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding SkillInjectStatus}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Ok}" Margin="0,8,0,0" TextWrapping="Wrap">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SkillInjectStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>
