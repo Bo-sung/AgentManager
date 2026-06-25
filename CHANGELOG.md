@@ -2,6 +2,11 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.9.0
+인앱 업데이트.
+- **업데이트 확인**: About 모달 버전 옆 `업데이트 확인` 버튼이 GitHub 태그(`Bo-sung/AgentManager`)에서 최신 버전을 조회해 실행 버전과 비교. 최신이면 "최신 버전입니다", 새 버전이면 "vX.Y.Z 사용 가능" + [변경 내역]·[업데이트] 버튼.
+- **별도 업데이터 프로세스**(`scripts/update.ps1`): `업데이트` 클릭 시 앱을 종료(exe 잠금 해제)하고, 업데이터가 PID 종료를 기다린 뒤 현재 브랜치 FF `git pull` → 변경 시 재빌드(publish.ps1) → 재실행. **소스 체크아웃에서 실행할 때만** 활성화. dist/·bin/은 gitignore라 실행 중 바이너리와 pull 충돌 없음.
+
 ## 1.8.0
 4번째 엔진 **Pi(pi.dev)** 추가 + 엔진별 모델 큐레이션 + 테마 확장.
 - **Pi 엔진**: pi.dev를 thin-proxy(RPC 모드)로 통합 — 멀티 provider(Anthropic/OpenAI/Google/zai 등) 하나의 엔진으로 사용. 공식 로고/색, RPC 이벤트→정규화 매핑(thinking/text/tool/usage), resume. provider·인증은 pi가 자체 관리(`~/.pi`), 앱은 호출+표시만.
