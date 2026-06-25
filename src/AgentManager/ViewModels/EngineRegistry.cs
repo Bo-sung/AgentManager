@@ -1,9 +1,14 @@
+using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using AgentManager.Core.Agents;
 
 namespace AgentManager.ViewModels;
 
 public sealed record EngineDef(string Id, string Badge, string Name, string Cli, string[] Models, string Desc, bool Enabled, string InstallUrl = "");
+
+/// <summary>`pi --list-models` 결과 — provider/id 모델 목록 + 인증된(=모델이 보이는) provider 집합.</summary>
+public sealed record PiCatalog(IReadOnlyList<string> Models, IReadOnlyList<string> Providers);
 
 /// <summary>New Agent 피커 항목: 엔진 정의 + 설치 여부. Id/Name/Desc/Badge/InstallUrl을 위임 노출해
 /// 기존 템플릿·아이콘(EngineIconByDef는 {Binding Id}) 바인딩과 그대로 호환된다.</summary>
@@ -129,6 +134,45 @@ public static class EngineRegistry
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), // %APPDATA%
             "npm", "node_modules", "@earendil-works", "pi-coding-agent", "dist", "cli.js");
         return File.Exists(p) ? p : null;
+    }
+
+    /// <summary>`pi --list-models`로 사용 가능한 모델/인증 provider를 조회한다.
+    /// pi는 인증된 provider의 모델만 보여주므로, 나오는 provider 집합 = 연동된 계정.
+    /// (표는 stderr로 출력됨 — 실측. 컬럼: provider model context max-out thinking images.)</summary>
+    public static async Task<PiCatalog> QueryPiCatalogAsync(string? piPath = null)
+    {
+        var cli = ResolveOverride(piPath) ?? ResolvePi();
+        if (cli is null) return new PiCatalog([], []);
+        var psi = new ProcessStartInfo
+        {
+            FileName = "node",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        psi.ArgumentList.Add(cli);
+        psi.ArgumentList.Add("--list-models");
+        var models = new List<string>();
+        var providers = new List<string>();
+        try
+        {
+            using var p = Process.Start(psi)!;
+            var so = p.StandardOutput.ReadToEndAsync();
+            var se = p.StandardError.ReadToEndAsync();
+            await Task.WhenAll(so, se);
+            await p.WaitForExitAsync();
+            var text = (se.Result?.Length ?? 0) >= (so.Result?.Length ?? 0) ? se.Result : so.Result;
+            foreach (var raw in (text ?? "").Split('\n'))
+            {
+                var parts = raw.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 2 || parts[0] == "provider") continue; // 헤더/빈 줄 스킵
+                models.Add(parts[0] + "/" + parts[1]);
+                if (!providers.Contains(parts[0])) providers.Add(parts[0]);
+            }
+        }
+        catch { /* 미설치/실패 → 빈 카탈로그 */ }
+        return new PiCatalog(models, providers);
     }
 
     private static string? ResolveOverride(string? path)

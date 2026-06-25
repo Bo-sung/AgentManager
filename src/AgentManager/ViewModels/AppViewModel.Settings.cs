@@ -185,14 +185,50 @@ public sealed partial class AppViewModel
     public string[] CcModels => EngineModels("cc");
     public string[] GxModels => EngineModels("gx");
     public string[] AgyModels => EngineModels("agy");
-    public string[] PiModels => EngineModels("pi");
     private string[] EngineModels(string id) => Array.Find(AllEngines, e => e.Id == id)?.Models ?? [];
+
+    // pi: 동적 모델 카탈로그(`pi --list-models`). 정적 EngineDef 목록은 폴백. 연동 provider 집합도 함께.
+    private readonly List<string> _piCatalog = [];
+    private IReadOnlyList<string> _piProviders = [];
+    private bool _piCatalogLoaded;
+    public string[] PiModels => _piCatalog.Count > 0 ? [.. _piCatalog] : EngineModels("pi");
+    public string PiConnectedProviders => _piProviders.Count > 0
+        ? App.L("L.PiConnected", string.Join(" · ", _piProviders))
+        : App.L("L.PiConnectedNone");
+    private string _piModelsStatus = "";
+    public string PiModelsStatus { get => _piModelsStatus; private set => Set(ref _piModelsStatus, value); }
+    /// <summary>`pi --list-models`로 모델/연동 provider를 조회(첫 호출만; force로 강제 새로고침).</summary>
+    public async Task QueryPiModelsAsync(bool force = false)
+    {
+        if (_piCatalogLoaded && !force) return;
+        _piCatalogLoaded = true;
+        PiModelsStatus = App.L("L.Querying");
+        try
+        {
+            var cat = await EngineRegistry.QueryPiCatalogAsync(_piPath);
+            _piCatalog.Clear();
+            _piCatalog.AddRange(cat.Models);
+            _piProviders = cat.Providers;
+            PiModelsStatus = cat.Models.Count > 0 ? App.L("L.ModelsFound", cat.Models.Count) : App.L("L.NoModels");
+        }
+        catch { _piCatalogLoaded = false; PiModelsStatus = App.L("L.QueryFailed"); }
+        OnChanged(nameof(PiModels));
+        OnChanged(nameof(PiConnectedProviders));
+        OnChanged(nameof(NewAgentModels));
+    }
     /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
     private string DefaultModelFor(string id) =>
         _defaultModels.TryGetValue(id, out var m) && !string.IsNullOrWhiteSpace(m) ? m : (EngineModels(id).FirstOrDefault() ?? "");
     /// <summary>유효한 모델만 저장 (엔진 모델 목록에 있을 때).</summary>
     private void SetDefaultModel(string id, string model)
     {
+        // pi는 멀티 provider — "provider/id" 자유형식 허용("default"/빈값은 ~/.pi 기본값 사용).
+        if (id == "pi")
+        {
+            if (!string.IsNullOrWhiteSpace(model) && model != "default") _defaultModels[id] = model;
+            else _defaultModels.Remove(id);
+            return;
+        }
         if (!string.IsNullOrWhiteSpace(model) && Array.IndexOf(EngineModels(id), model) >= 0)
             _defaultModels[id] = model;
         else
@@ -489,6 +525,7 @@ public sealed partial class AppViewModel
         PullSettingsToEditor();
         SettingsStatus = "";
         _ = RefreshOllamaStatusAsync();   // 설정 열 때 Ollama 상태 최신화
+        _ = QueryPiModelsAsync();         // pi 모델/연동 provider 조회(첫 호출만 캐시)
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
     }

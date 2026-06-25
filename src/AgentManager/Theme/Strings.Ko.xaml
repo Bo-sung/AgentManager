@@ -293,6 +293,8 @@
     <sys:String x:Key="L.AgyCliPath">ANTIGRAVITY CLI PATH</sys:String>
     <sys:String x:Key="L.PiCliPath">PI CLI PATH (cli.js)</sys:String>
     <sys:String x:Key="L.PiProviderNote">provider·인증은 pi가 자체 관리 (~/.pi). AgentManager는 호출만.</sys:String>
+    <sys:String x:Key="L.PiConnected">연동된 provider: {0}</sys:String>
+    <sys:String x:Key="L.PiConnectedNone">연동된 provider 없음 — 모델 조회 또는 pi에서 /login 하세요.</sys:String>
     <sys:String x:Key="L.NotInstalled">미설치</sys:String>
     <sys:String x:Key="L.InstallGuide">설치 가이드 ↗</sys:String>
     <sys:String x:Key="L.GuideBtn">가이드</sys:String>

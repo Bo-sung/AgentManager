@@ -620,10 +620,11 @@ public sealed partial class AppViewModel : ObservableObject
                 OnChanged(nameof(NewAgentModels));
                 OnChanged(nameof(NewAgentBranchPreview));
                 NewAgentModel = value is { } e ? DefaultModelFor(e.Id) : "";
+                if (value?.Id == "pi") _ = QueryPiModelsAsync();   // pi 모델 목록 동적 조회(드롭다운 채움)
             }
         }
     }
-    public string[] NewAgentModels => _newEngine?.Models ?? [];
+    public string[] NewAgentModels => _newEngine?.Id == "pi" && _piCatalog.Count > 0 ? [.. _piCatalog] : (_newEngine?.Models ?? []);
     private string _newAgentModel = "";
     public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
     /// <summary>New Agent 폼의 번역 선택(생성 시 세션에 고정). 폼 열 때 전역값+Ollama 가용성으로 초기화.</summary>
@@ -671,7 +672,8 @@ public sealed partial class AppViewModel : ObservableObject
         var branch = "agent/" + Slug(title);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
         // 모달에서 고른 모델 우선 (유효할 때), 없으면 엔진 기본
-        var model = !string.IsNullOrWhiteSpace(NewAgentModel) && Array.IndexOf(engine.Models, NewAgentModel) >= 0
+        // pi는 멀티 provider라 동적 모델("provider/id")을 자유 허용; 그 외는 엔진 정적 목록으로 검증.
+        var model = !string.IsNullOrWhiteSpace(NewAgentModel) && (engine.Id == "pi" || Array.IndexOf(engine.Models, NewAgentModel) >= 0)
             ? NewAgentModel
             : (DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0]);
         var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, model)
