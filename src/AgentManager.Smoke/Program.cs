@@ -925,6 +925,21 @@ string[] codexLines =
     """{"type":"turn.completed","usage":{"input_tokens":27644,"cached_input_tokens":18688,"output_tokens":47,"reasoning_output_tokens":0}}""",
 ];
 
+// pi RPC 모드 (실측 envelope + happy-path) — docs/PHASE0_PI_RPC_KO.md
+string[] piLines =
+[
+    """{"type":"response","command":"get_state","success":true,"data":{"sessionId":"sess-pi-1","model":{"id":"anthropic/claude-opus-4-7"},"thinkingLevel":"medium","isStreaming":false}}""",
+    """{"type":"response","command":"prompt","success":true}""",
+    """{"type":"agent_start"}""",
+    """{"type":"turn_start"}""",
+    """{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}""",
+    """{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":" world"}}""",
+    """{"type":"tool_execution_start","toolCallId":"call_1","toolName":"bash","args":{"command":"ls"}}""",
+    """{"type":"tool_execution_end","toolCallId":"call_1","toolName":"bash","result":{"content":[{"type":"text","text":"file.txt"}]},"isError":false}""",
+    """{"type":"message_end","message":{"role":"assistant","content":[{"type":"text","text":"Hello world"}],"usage":{"input":10,"output":5,"cacheRead":0,"cacheWrite":0},"stopReason":"stop"}}""",
+    """{"type":"agent_end","messages":[]}""",
+];
+
 void Run(string title, IAgentAdapter adapter, string[] lines)
 {
     Console.WriteLine($"=== {title} ({adapter.Id}) ===");
@@ -954,6 +969,7 @@ static string Trunc(string s) => s.Length > 40 ? s[..40] + "…" : s;
 
 Run("Claude stream-json", new ClaudeAdapter(), claudeLines);
 Run("Codex exec --json", new CodexAdapter(), codexLines);
+Run("Pi RPC", new PiAdapter(), piLines);
 AssertResumeArgs();
 AssertSandboxAndModelArgs();
 AssertPermissionResponse();

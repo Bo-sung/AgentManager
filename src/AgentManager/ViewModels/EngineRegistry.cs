@@ -42,6 +42,8 @@ public static class EngineRegistry
         new("agy", "AG", "Antigravity",    "agy",
             ["default", "gemini-3.5-flash", "gemini-3.1-pro", "claude-sonnet-4-6", "claude-opus-4-6", "gpt-oss-120b"],
             "google · pty", true, "https://antigravity.google"),
+        // pi(pi.dev): 멀티 provider harness. node dist/cli.js --mode rpc(RPC). 모델="provider/id"(~/.pi 기본값이면 "default").
+        new("pi", "PI", "Pi", "pi", ["default"], "pi.dev · multi-provider", true, "https://pi.dev"),
     ];
 
     public static EngineDef Get(string id) => Array.Find(All, e => e.Id == id) ?? All[0];
@@ -52,23 +54,25 @@ public static class EngineRegistry
         "cc" => new ClaudeAdapter(),
         "gx" => requireApproval ? new CodexAppServerAdapter() : new CodexAdapter(),
         "agy" => new AgyAdapter(),
+        "pi" => new PiAdapter(),
         _ => null,
     };
 
     private static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-    public static string? ResolveExe(string id, string? claudePath = null, string? codexPath = null, string? agyPath = null) => id switch
+    public static string? ResolveExe(string id, string? claudePath = null, string? codexPath = null, string? agyPath = null, string? piPath = null) => id switch
     {
         "cc" => ResolveOverride(claudePath) ?? ResolveClaude(),
         "gx" => ResolveOverride(codexPath) ?? ResolveCodex(),
         "agy" => ResolveOverride(agyPath) ?? ResolveAgy(),
+        "pi" => ResolveOverride(piPath) ?? ResolvePi(),
         _ => null,
     };
 
     /// <summary>엔진이 실제 사용 가능한가 — 수동 경로/오토 탐지로 실파일이 잡히거나, bare 명령(cc 폴백 "claude")이 PATH에 있으면 true.</summary>
-    public static bool IsInstalled(string id, string? claudePath = null, string? codexPath = null, string? agyPath = null)
+    public static bool IsInstalled(string id, string? claudePath = null, string? codexPath = null, string? agyPath = null, string? piPath = null)
     {
-        var exe = ResolveExe(id, claudePath, codexPath, agyPath);
+        var exe = ResolveExe(id, claudePath, codexPath, agyPath, piPath);
         if (exe is null) return false;
         if (File.Exists(exe)) return true;
         return OnPath(exe); // bare 명령(예: cc의 "claude") → PATH 탐색
@@ -103,6 +107,7 @@ public static class EngineRegistry
         "cc" => RealFile(ResolveClaude()),   // ResolveClaude는 미발견 시 "claude"(PATH 폴백)를 주므로 실제 파일만 거른다
         "gx" => ResolveCodex(),
         "agy" => ResolveAgy(),
+        "pi" => ResolvePi(),
         _ => null,
     };
     private static string? RealFile(string? p) => p is not null && File.Exists(p) ? p : null;
@@ -110,6 +115,16 @@ public static class EngineRegistry
     private static string? ResolveAgy()
     {
         var p = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "agy", "bin", "agy.exe");
+        return File.Exists(p) ? p : null;
+    }
+
+    /// <summary>pi(pi.dev)의 dist/cli.js — npm 전역 설치 경로. pi는 node 스크립트라 PiAdapter가 node로 구동한다.
+    /// (별도로 node가 PATH에 있어야 함 — pi 설치 전제.)</summary>
+    private static string? ResolvePi()
+    {
+        var p = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), // %APPDATA%
+            "npm", "node_modules", "@earendil-works", "pi-coding-agent", "dist", "cli.js");
         return File.Exists(p) ? p : null;
     }
 
