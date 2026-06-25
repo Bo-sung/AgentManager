@@ -182,21 +182,84 @@ public sealed partial class AppViewModel
 
     // ----- per-engine default model -----
     private Dictionary<string, string> _defaultModels = new();
-    public string[] CcModels => EngineModels("cc");
-    public string[] GxModels => EngineModels("gx");
-    public string[] AgyModels => EngineModels("agy");
+    public string[] CcModels => DropdownModelsFor("cc");
+    public string[] GxModels => DropdownModelsFor("gx");
+    public string[] AgyModels => DropdownModelsFor("agy");
+    public string[] PiModels => DropdownModelsFor("pi");
     private string[] EngineModels(string id) => Array.Find(AllEngines, e => e.Id == id)?.Models ?? [];
 
-    // pi: 동적 모델 카탈로그(`pi --list-models`). 정적 EngineDef 목록은 폴백. 연동 provider 집합도 함께.
+    // ----- "주로 쓰는 모델" — 엔진별 선호 집합(설정 영속) + 체크리스트(cc/gx/agy/pi 공통) -----
+    private readonly Dictionary<string, HashSet<string>> _preferred = new()
+    {
+        ["cc"] = new(StringComparer.OrdinalIgnoreCase),
+        ["gx"] = new(StringComparer.OrdinalIgnoreCase),
+        ["agy"] = new(StringComparer.OrdinalIgnoreCase),
+        ["pi"] = new(StringComparer.OrdinalIgnoreCase),
+    };
+    public ModelChecklistVm CcChecklist { get; private set; } = null!;
+    public ModelChecklistVm GxChecklist { get; private set; } = null!;
+    public ModelChecklistVm AgyChecklist { get; private set; } = null!;
+    public ModelChecklistVm PiChecklist { get; private set; } = null!;
+
+    /// <summary>체크리스트 인스턴스 생성(생성자에서 1회). 모델 목록은 설정 열 때 SetModels로 채운다.</summary>
+    private void InitModelChecklists()
+    {
+        CcChecklist = new("cc", _preferred["cc"], showFilter: false, () => RefreshEngineModels("cc"));
+        GxChecklist = new("gx", _preferred["gx"], showFilter: false, () => RefreshEngineModels("gx"));
+        AgyChecklist = new("agy", _preferred["agy"], showFilter: false, () => RefreshEngineModels("agy"));
+        PiChecklist = new("pi", _preferred["pi"], showFilter: true, () => RefreshEngineModels("pi"));
+    }
+    /// <summary>cc/gx/agy 체크리스트를 정적 모델로 채운다(설정 열 때). pi는 카탈로그 조회 후 채워짐.</summary>
+    private void SeedStaticChecklists()
+    {
+        CcChecklist.SetModels(EngineModels("cc"));
+        GxChecklist.SetModels(EngineModels("gx"));
+        AgyChecklist.SetModels(EngineModels("agy"));
+    }
+    private void RefreshEngineModels(string id)
+    {
+        var list = DropdownModelsFor(id);
+        // 현재 선택한 기본 모델이 좁혀진 목록에 없으면 첫 항목으로 보정(드롭다운 공백 방지).
+        void Coerce(string cur, Action<string> set) { if (!string.IsNullOrEmpty(cur) && list.Length > 0 && Array.IndexOf(list, cur) < 0) set(list[0]); }
+        switch (id)
+        {
+            case "cc": Coerce(SettingsModelCc, v => SettingsModelCc = v); OnChanged(nameof(CcModels)); break;
+            case "gx": Coerce(SettingsModelGx, v => SettingsModelGx = v); OnChanged(nameof(GxModels)); break;
+            case "agy": Coerce(SettingsModelAgy, v => SettingsModelAgy = v); OnChanged(nameof(AgyModels)); break;
+            default: Coerce(SettingsModelPi, v => SettingsModelPi = v); OnChanged(nameof(PiModels)); break;
+        }
+        OnChanged(nameof(NewAgentModels));
+    }
+
+    /// <summary>드롭다운(피커/설정)에 노출할 엔진 모델 — 체크된 게 있으면 그 부분집합, 없으면 전체.
+    /// pi는 동적 카탈로그를 쓰고 "default"(=~/.pi 기본값)를 항상 앞에 둔다.</summary>
+    public string[] DropdownModelsFor(string id)
+    {
+        var pref = _preferred.GetValueOrDefault(id);
+        if (id == "pi")
+        {
+            if (pref is { Count: > 0 }) return ["default", .. pref.OrderBy(m => m, StringComparer.OrdinalIgnoreCase)];
+            return _piCatalog.Count > 0 ? [.. _piCatalog] : EngineModels("pi");
+        }
+        var all = EngineModels(id);
+        if (pref is { Count: > 0 })
+        {
+            var picked = all.Where(pref.Contains).ToArray();   // 정적 목록 순서 보존
+            if (picked.Length > 0) return picked;
+        }
+        return all;
+    }
+
+    // pi: 동적 모델 카탈로그(`pi --list-models`) + 연동 provider.
     private readonly List<string> _piCatalog = [];
     private IReadOnlyList<string> _piProviders = [];
     private bool _piCatalogLoaded;
-    public string[] PiModels => _piCatalog.Count > 0 ? [.. _piCatalog] : EngineModels("pi");
     public string PiConnectedProviders => _piProviders.Count > 0
         ? App.L("L.PiConnected", string.Join(" · ", _piProviders))
         : App.L("L.PiConnectedNone");
     private string _piModelsStatus = "";
     public string PiModelsStatus { get => _piModelsStatus; private set => Set(ref _piModelsStatus, value); }
+
     /// <summary>`pi --list-models`로 모델/연동 provider를 조회(첫 호출만; force로 강제 새로고침).</summary>
     public async Task QueryPiModelsAsync(bool force = false)
     {
@@ -209,6 +272,7 @@ public sealed partial class AppViewModel
             _piCatalog.Clear();
             _piCatalog.AddRange(cat.Models);
             _piProviders = cat.Providers;
+            PiChecklist.SetModels(_piCatalog);
             PiModelsStatus = cat.Models.Count > 0 ? App.L("L.ModelsFound", cat.Models.Count) : App.L("L.NoModels");
         }
         catch { _piCatalogLoaded = false; PiModelsStatus = App.L("L.QueryFailed"); }
@@ -504,6 +568,7 @@ public sealed partial class AppViewModel
         SettingsModelGx = DefaultModelFor("gx");
         SettingsModelAgy = DefaultModelFor("agy");
         SettingsModelPi = DefaultModelFor("pi");
+        SeedStaticChecklists();   // cc/gx/agy 체크리스트를 정적 모델로 채움(pi는 조회 후); 선호 체크 반영
         SettingsAccent = _accent;
         SettingsAccentCustom = Theme.AccentPalette.IsHex(_accent) ? _accent : "";
         SettingsTelemetry = _telemetry;

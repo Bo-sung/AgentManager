@@ -175,6 +175,35 @@
         <Setter Property="Cursor" Value="IBeam"/>
     </Style>
 
+    <!-- 다크 테마 체크박스(키 지정 — 전역 영향 없음). pi 모델 체크리스트용. -->
+    <Style x:Key="ModelCheck" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource Txt1}"/>
+        <Setter Property="FontSize" Value="10.5"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Margin" Value="0,2"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="box" Width="14" Height="14" CornerRadius="3" VerticalAlignment="Center" Margin="0,0,7,0"
+                                Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1">
+                            <Path x:Name="chk" Data="M3 7 L6 10 L11 4" Stroke="White" StrokeThickness="1.7"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Visibility="Collapsed"/>
+                        </Border>
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="box" Property="Background" Value="{DynamicResource Accent}"/>
+                            <Setter TargetName="box" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                            <Setter TargetName="chk" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="ChipButton" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource Bg3}"/>
         <Setter Property="Foreground" Value="{DynamicResource Txt1}"/>

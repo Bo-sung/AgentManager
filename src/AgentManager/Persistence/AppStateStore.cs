@@ -21,6 +21,7 @@ public sealed record AppSettingsDto
     public string CodexPath { get; init; } = "";
     public string AgyPath { get; init; } = "";
     public string PiPath { get; init; } = "";
+    public Dictionary<string, string[]> PreferredModels { get; init; } = new();   // 엔진별 "주로 쓰는 모델" 체크 집합(cc/gx/agy/pi)
     public string OllamaEndpoint { get; init; } = "http://localhost:11434";
     public string OllamaModel { get; init; } = "exaone3.5:7.8b";
     public bool TranslationEnabled { get; init; } = true;

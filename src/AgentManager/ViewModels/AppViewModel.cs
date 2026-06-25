@@ -61,6 +61,7 @@ public sealed partial class AppViewModel : ObservableObject
 
     public AppViewModel()
     {
+        InitModelChecklists();
         NewAgentSelectedEngine = AllEngines[0];
         RestoreState();
         Theme.AccentPalette.Apply(_accent);
@@ -624,7 +625,7 @@ public sealed partial class AppViewModel : ObservableObject
             }
         }
     }
-    public string[] NewAgentModels => _newEngine?.Id == "pi" && _piCatalog.Count > 0 ? [.. _piCatalog] : (_newEngine?.Models ?? []);
+    public string[] NewAgentModels => _newEngine is { } e ? DropdownModelsFor(e.Id) : [];
     private string _newAgentModel = "";
     public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
     /// <summary>New Agent 폼의 번역 선택(생성 시 세션에 고정). 폼 열 때 전역값+Ollama 가용성으로 초기화.</summary>

@@ -6,6 +6,28 @@
              xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              x:Name="SettingsRoot"
              Background="{DynamicResource Bg0}">
+    <UserControl.Resources>
+        <!-- "주로 쓰는 모델" 체크리스트 — 엔진 공통(cc/gx/agy/pi). 카드에서 ContentControl로 바인딩. -->
+        <DataTemplate DataType="{x:Type vm:ModelChecklistVm}">
+            <StackPanel Margin="0,10,0,0">
+                <TextBlock Text="{StaticResource L.PrimaryModels}" Style="{StaticResource Lbl}" Margin="0,0,0,5"/>
+                <TextBox Style="{StaticResource SettingsInput}" Margin="0,0,0,5"
+                         Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
+                         Visibility="{Binding ShowFilter, Converter={StaticResource BoolVis}}"/>
+                <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" MaxHeight="150" Padding="8,6">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Choices}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Style="{StaticResource ModelCheck}" Content="{Binding Model}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
                     <DockPanel LastChildFill="True">
                         <!-- header -->
                         <Border DockPanel.Dock="Top" Height="44" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="14,0">
@@ -75,6 +97,7 @@
                                                 </DockPanel>
                                                 <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <ComboBox ItemsSource="{Binding CcModels}" SelectedItem="{Binding SettingsModelCc, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="240"/>
+                                                <ContentControl Content="{Binding CcChecklist}"/>
                                                 <TextBlock Text="{StaticResource L.Authentication}" Style="{StaticResource Lbl}" Margin="0,12,0,6"/>
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                                     <Border controls:MouseClick.Command="{Binding AuthModeCommand}" controls:MouseClick.CommandParameter="cc:subscription" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6" Margin="0,0,8,0">
@@ -144,6 +167,7 @@
                                                 </DockPanel>
                                                 <TextBlock Text="{StaticResource L.DefaultModel}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <ComboBox ItemsSource="{Binding GxModels}" SelectedItem="{Binding SettingsModelGx, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="240"/>
+                                                <ContentControl Content="{Binding GxChecklist}"/>
                                                 <TextBlock Text="{StaticResource L.Authentication}" Style="{StaticResource Lbl}" Margin="0,12,0,6"/>
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                                     <Border controls:MouseClick.Command="{Binding AuthModeCommand}" controls:MouseClick.CommandParameter="gx:subscription" Cursor="Hand" BorderThickness="1" CornerRadius="6" Padding="11,6" Margin="0,0,8,0">
@@ -209,6 +233,7 @@
                                                         <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsAgyPath, UpdateSourceTrigger=PropertyChanged}"/>
                                                     </DockPanel>
                                                     <ComboBox ItemsSource="{Binding AgyModels}" SelectedItem="{Binding SettingsModelAgy, Mode=TwoWay}" Margin="0,10,0,0" HorizontalAlignment="Stretch"/>
+                                                    <ContentControl Content="{Binding AgyChecklist}"/>
                                                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                                         <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding AgyAccount}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
                                                         <controls:IconView Icon="{StaticResource IconCheck}" Width="12" Height="12" Foreground="{DynamicResource Ok}" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -240,6 +265,7 @@
                                                     <TextBlock Text="{Binding PiModelsStatus}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0"/>
                                                     <TextBlock Text="{Binding PiConnectedProviders}" FontSize="10.5" Foreground="{DynamicResource Txt2}" Margin="2,6,0,0" TextWrapping="Wrap"/>
                                                     <TextBlock Text="{StaticResource L.PiProviderNote}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,8,0,0" TextWrapping="Wrap"/>
+                                                    <ContentControl Content="{Binding PiChecklist}"/>
                                                 </StackPanel>
                                         </Border>
                                         <!-- Usage check -->
