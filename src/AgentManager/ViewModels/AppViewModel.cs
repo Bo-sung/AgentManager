@@ -79,7 +79,9 @@ public sealed partial class AppViewModel : ObservableObject
         NewAgentCommand = new RelayCommand(_ => ShowNewAgent = true);
         CancelNewAgentCommand = new RelayCommand(_ => ShowNewAgent = false);
         CreateSessionCommand = new RelayCommand(_ => CreateSession(), _ => NewAgentSelectedEngine is not null);
-        SelectSessionCommand = new RelayCommand(s => { if (s is SessionViewModel vm) ActiveSession = vm; });
+        // Always surface the session view — ActiveSession's setter only switches CurrentView when
+        // the value changes, so re-selecting the already-active session must force it here.
+        SelectSessionCommand = new RelayCommand(s => { if (s is SessionViewModel vm) { ActiveSession = vm; CurrentView = MainViewKind.Session; } });
         ShowViewCommand = new RelayCommand(p => CurrentView = (p as string) switch
         {
             "history" => MainViewKind.History,
