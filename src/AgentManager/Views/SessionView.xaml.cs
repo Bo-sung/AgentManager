@@ -108,15 +108,7 @@ public partial class SessionView : UserControl
     }
 
     // ----- 컴포저: 전송 / 받아쓰기 / @·/ 서제스천 / 이미지 -----
-
-    private void Composer_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == 0)
-        {
-            e.Handled = true;
-            if (Vm is { } vm && vm.SendCommand.CanExecute(null)) vm.SendCommand.Execute(null);
-        }
-    }
+    // (엔터 전송은 Composer_PreviewKeyDown에서 처리 — AcceptsReturn TextBox가 KeyDown을 먼저 가로채기 때문)
 
     /// <summary>마이크: 입력창에 포커스를 주고 Windows 받아쓰기(Win+H)를 연다 — OS STT를 그대로 활용.</summary>
     [System.Runtime.InteropServices.DllImport("user32.dll")]
@@ -141,6 +133,16 @@ public partial class SessionView : UserControl
             if (e.Key == Key.Down) { MoveSuggestionSelection(1); e.Handled = true; return; }
             if (e.Key == Key.Enter || e.Key == Key.Tab) { ApplySuggestionToComposer(); e.Handled = true; return; }
             if (e.Key == Key.Escape) { vm.CloseComposerSuggestion(); e.Handled = true; return; }
+        }
+
+        // Enter sends; Shift+Enter inserts a newline. Must be in PreviewKeyDown: the
+        // AcceptsReturn TextBox marks Enter handled in its own KeyDown, so a bubbling
+        // handler would never see it (and a newline would be inserted instead of sending).
+        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == 0)
+        {
+            e.Handled = true;
+            if (Vm is { } v && v.SendCommand.CanExecute(null)) v.SendCommand.Execute(null);
+            return;
         }
 
         if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) != 0 && Clipboard.ContainsImage())

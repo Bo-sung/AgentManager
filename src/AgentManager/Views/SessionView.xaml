@@ -601,7 +601,6 @@
                                                      Padding="15,12,15,2"
                                                      VerticalContentAlignment="Top"
                                                      Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}"
-                                                     KeyDown="Composer_KeyDown"
                                                      PreviewKeyDown="Composer_PreviewKeyDown"
                                                      TextChanged="ComposerBox_TextChanged"/>
                                             <TextBlock Margin="15,12,15,0" Foreground="{DynamicResource Txt2}" IsHitTestVisible="False"
