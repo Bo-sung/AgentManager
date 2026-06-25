@@ -35,6 +35,29 @@ public sealed partial class AppViewModel
         }
     }
 
+    private RelayCommand? _quickReplyCommand;
+    /// <summary>Send a detected quick-reply choice as the next user message.</summary>
+    public RelayCommand QuickReplyCommand => _quickReplyCommand ??=
+        new RelayCommand(p => { if (p is Core.QuickReplyOption o) SendQuickReply(o); });
+
+    public void SendQuickReply(Core.QuickReplyOption option)
+    {
+        var s = ActiveSession;
+        if (s is null || !s.CanSend) return;
+        _ = RunTurnAsync(s, option.Text);   // RunTurnAsync clears QuickReplies at start
+    }
+
+    /// <summary>Parse the last assistant message for A/B/1/2 choices and surface them as buttons.</summary>
+    private void PopulateQuickReplies(SessionViewModel s)
+    {
+        s.QuickReplies.Clear();
+        if (s.Status == "error") return;
+        var last = s.Transcript.OfType<AgentTextBlock>().LastOrDefault();
+        if (last is null) return;
+        foreach (var o in Core.QuickReplyParser.Parse(last.Text))
+            s.QuickReplies.Add(o);
+    }
+
     private async Task SendAsync()
     {
         var s = ActiveSession;
@@ -61,6 +84,7 @@ public sealed partial class AppViewModel
         }
 
         var dispatcher = Application.Current.Dispatcher;
+        s.QuickReplies.Clear(); // a new turn supersedes any pending quick-reply choices
         var attachmentPaths = (images ?? []).Concat(docs ?? []).ToArray();
         s.Transcript.Add(new UserBlock(attachmentPaths.Length > 0 ? Attachments.DisplayNote(prompt, attachmentPaths) : prompt));
         s.Status = "running";
@@ -519,6 +543,7 @@ public sealed partial class AppViewModel
                 AttentionRequested?.Invoke(c.IsError ? "error" : "done", s);
                 s.Status = c.IsError ? "error" : "done";
                 s.MarkRunEnded(c.IsError ? L("L.Failed") : L("L.Completed"));
+                PopulateQuickReplies(s);
                 RefreshTotals();
                 break;
         }

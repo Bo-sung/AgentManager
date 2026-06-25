@@ -23,6 +23,10 @@ public sealed class SessionViewModel : ObservableObject
     /// inlined prompt text. Cleared on send; not persisted.</summary>
     public ObservableCollection<PendingAttachment> PendingAttachments { get; } = [];
 
+    /// <summary>One-click replies detected in the last assistant message (A/B/1/2 choices).
+    /// Populated on turn completion, cleared when a new turn starts. Not persisted.</summary>
+    public ObservableCollection<Core.QuickReplyOption> QuickReplies { get; } = [];
+
     /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
     private string? _worktreePath;
     public string? WorktreePath

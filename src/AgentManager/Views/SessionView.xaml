@@ -266,6 +266,36 @@
                                         </StackPanel>
                                     </DockPanel>
                                 </Border>
+                                <!-- 빠른 응답 — 어시스턴트 선택지(A/B · 1/2) 자동 감지 → 클릭 시 전송 -->
+                                <ItemsControl Margin="4,0,4,8" ItemsSource="{Binding QuickReplies}">
+                                    <ItemsControl.Style>
+                                        <Style TargetType="ItemsControl">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding QuickReplies.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ItemsControl.Style>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource ChipButton}" Margin="0,0,6,6" Padding="8,5"
+                                                    Command="{Binding DataContext.QuickReplyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" ToolTip="{Binding Text}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Background="{DynamicResource AccentDim}" CornerRadius="4" Padding="5,1" Margin="0,0,7,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Marker}" FontFamily="{StaticResource Mono}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Accent}"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Label}" FontSize="11.5" VerticalAlignment="Center" MaxWidth="340" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                                 <Border Background="{DynamicResource Bg3}" BorderThickness="1.5" CornerRadius="10">
                                     <Border.Style>
                                         <Style TargetType="Border">

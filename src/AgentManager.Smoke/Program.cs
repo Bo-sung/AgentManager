@@ -976,6 +976,33 @@ AssertResumeArgs();
 AssertSandboxAndModelArgs();
 AssertPermissionResponse();
 AssertAppServerAdapter();
+AssertQuickReplyParser();
+
+static void AssertQuickReplyParser()
+{
+    static int N(string t) => AgentManager.Core.QuickReplyParser.Parse(t).Count;
+
+    // letter choices trailing the message → A, B
+    var r = AgentManager.Core.QuickReplyParser.Parse(
+        "Ready for the next step.\n\n- **A)** Start feature/phase1 and build, or\n- **B)** Hold and confirm first?\n\nJust say go.");
+    if (r.Count != 2 || r[0].Marker != "A" || r[1].Marker != "B")
+        throw new Exception("quickreply: A/B choices not detected");
+
+    // numbered choice with a cue word → 2
+    if (N("Which would you prefer?\n1. Rebuild from scratch\n2. Patch in place") != 2)
+        throw new Exception("quickreply: numbered choice missed");
+    // numbered list of questions → not a pick-one
+    if (N("A few questions:\n1. What is it?\n2. What shape?\n3. Which stack?") != 0)
+        throw new Exception("quickreply: questions falsely detected");
+    // plain numbered plan (no choice cue) → ignored
+    if (N("Plan:\n1. Create the solution\n2. Add projects\n3. Wire CI") != 0)
+        throw new Exception("quickreply: plain numbered list falsely detected");
+    // prose, no options → none
+    if (N("All done. Everything builds and tests pass.") != 0)
+        throw new Exception("quickreply: false positive on prose");
+
+    Console.WriteLine("quick-reply parser asserts OK");
+}
 
 static void AssertAppServerAdapter()
 {
