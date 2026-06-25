@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.10.0
+`WPF · .NET 10 · Windows` · v1.11.0
 
 ---
 
@@ -206,6 +206,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.11.0** — 크래시 시 오류 로그 팝업 + 종료(전역 예외 핸들러)
 - **1.10.0** — 문서 첨부(이미지 외) + 실제 썸네일 · 빠른-응답 버튼(A/B·1/2 선택지 자동 감지) · 메시지 재번역(↻) · Enter 전송/Shift+Enter 줄바꿈 · 번역 스킵·세션 열기 버그 수정
 - **1.9.0** — 인앱 업데이트 확인(GitHub 태그) + 별도 업데이터 프로세스(git pull → 빌드 → 재실행) · About 단축키 구분선 정리
 - **1.8.0** — Pi 엔진(pi.dev, 멀티 provider) · 엔진별 "주로 쓰는 모델" 체크리스트 · 테마 3종(Claude Dark·Codex Light·Antigravity Light) + 엔진색 전테마 고정

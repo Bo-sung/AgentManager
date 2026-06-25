@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.10.0: 문서 첨부 · 빠른-응답 버튼 · 메시지 재번역 · Enter 전송 · 번역 스킵/열기 버그 수정 -->
-    <Version>1.10.0</Version>
+    <!-- 1.11.0: 크래시 시 오류 로그 팝업 + 종료(전역 예외 핸들러) -->
+    <Version>1.11.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
