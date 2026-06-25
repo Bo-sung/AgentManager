@@ -91,6 +91,26 @@
                                 Click="CopyAgentText_Click">
                             <controls:IconView Icon="{StaticResource IconCopy}" Width="13" Height="13"/>
                         </Button>
+                        <!-- 재번역: 이 메시지의 원문(영어)을 다시 번역 -->
+                        <Button Margin="6,0,0,0" Padding="4,0"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                Foreground="{DynamicResource Txt3}" ToolTip="{StaticResource L.Retranslate}"
+                                Command="{Binding DataContext.RetranslateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}">
+                            <controls:IconView Width="13" Height="13">
+                                <controls:IconView.Style>
+                                    <Style TargetType="controls:IconView">
+                                        <Setter Property="Icon" Value="{StaticResource IconRefresh}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource Txt3}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRetranslating}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </controls:IconView.Style>
+                            </controls:IconView>
+                        </Button>
                         <Button Margin="6,0,0,0" Padding="4,0"
                                 Background="Transparent" BorderThickness="0" Cursor="Hand"
                                 Foreground="{DynamicResource Txt3}" ToolTip="{StaticResource L.DelegateToWorker}"

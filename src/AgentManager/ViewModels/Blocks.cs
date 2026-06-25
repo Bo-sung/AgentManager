@@ -70,6 +70,14 @@ public sealed class AgentTextBlock : TranscriptItem
 
     public bool HasOriginal => !string.IsNullOrWhiteSpace(_originalText);
     public string DisplayText => ShowOriginal && HasOriginal ? _originalText! : _text;
+
+    private bool _isRetranslating;
+    /// <summary>True while an on-demand re-translation of this message is in flight.</summary>
+    public bool IsRetranslating { get => _isRetranslating; set => Set(ref _isRetranslating, value); }
+
+    /// <summary>Text to re-translate on demand: the engine's original (English) when we kept it,
+    /// otherwise the current text (covers translations that were skipped or failed).</summary>
+    public string TranslationSource => string.IsNullOrWhiteSpace(_originalText) ? _text : _originalText!;
 }
 
 public sealed class ToolBlock : TranscriptItem

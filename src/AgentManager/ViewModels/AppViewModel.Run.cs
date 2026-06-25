@@ -58,6 +58,42 @@ public sealed partial class AppViewModel
             s.QuickReplies.Add(o);
     }
 
+    private RelayCommand? _retranslateCommand;
+    /// <summary>Re-translate a single assistant message on demand (translation off/odd/missing).</summary>
+    public RelayCommand RetranslateCommand => _retranslateCommand ??=
+        new RelayCommand(p => { if (p is AgentTextBlock b) _ = RetranslateAsync(b); },
+                         p => p is AgentTextBlock { IsRetranslating: false });
+
+    private async Task RetranslateAsync(AgentTextBlock block)
+    {
+        var s = ActiveSession;
+        if (s is null || block.IsRetranslating) return;
+        var source = block.TranslationSource;
+        if (string.IsNullOrWhiteSpace(source)) return;
+
+        // Use the session's language pair (workers pin their own) or the global translator.
+        var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
+            ? CreateTranslator(_ollamaEndpoint, _ollamaModel, src, tgt)
+            : _translator;
+        if (translator is null) return;
+        if (!await OllamaTranslator.PingAsync(_ollamaEndpoint, 1500)) return; // Ollama down — composer ⚠ already flags it
+
+        block.IsRetranslating = true;
+        try
+        {
+            var translated = await translator.TranslateAsync(source, TranslationDirection.TargetToSource);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                block.OriginalText = string.Equals(translated, source, StringComparison.Ordinal) ? null : source;
+                block.Text = translated;
+                block.ShowOriginal = false;
+            });
+            SaveState();
+        }
+        catch { /* leave the message unchanged on failure */ }
+        finally { block.IsRetranslating = false; }
+    }
+
     private async Task SendAsync()
     {
         var s = ActiveSession;

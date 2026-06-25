@@ -248,6 +248,7 @@
     <sys:String x:Key="L.You">YOU</sys:String>
     <sys:String x:Key="L.Original">원문</sys:String>
     <sys:String x:Key="L.OriginalResponseTip">원본 응답 보기</sys:String>
+    <sys:String x:Key="L.Retranslate">이 메시지 재번역</sys:String>
     <sys:String x:Key="L.OriginalOutputTip">원본 출력 보기</sys:String>
     <sys:String x:Key="L.Copy">복사</sys:String>
     <sys:String x:Key="L.Thinking">◌ thinking</sys:String>
