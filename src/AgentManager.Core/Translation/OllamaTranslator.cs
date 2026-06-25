@@ -69,6 +69,16 @@ public sealed partial class OllamaTranslator(OllamaOptions options, HttpClient? 
     /// <summary>번역 전 언어의 고유 문자(스크립트)가 텍스트에 있는지. 라틴 계열은 식별 불가 → null.</summary>
     private Regex? SourceScript => ScriptFor(_opt.SourceLanguage);
 
+    /// <summary>전체 글자 중 번역 전 언어 스크립트가 차지하는 비율(0~1). 글자가 없으면 0.
+    /// "이미 그 언어로 쓰임" 판정을 단일 문자 존재가 아닌 다수결로 하기 위한 것.</summary>
+    private static double SourceScriptShare(string text, Regex script)
+    {
+        int src = script.Matches(text).Count;
+        int letters = 0;
+        foreach (var ch in text) if (char.IsLetter(ch)) letters++;
+        return letters == 0 ? 0 : (double)src / letters;
+    }
+
     public async Task<string> TranslateAsync(string text, TranslationDirection direction, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(text)) return text;
@@ -78,8 +88,9 @@ public sealed partial class OllamaTranslator(OllamaOptions options, HttpClient? 
         {
             // 입력→엔진: 번역 전 언어 문자가 전혀 없으면 이미 대상 언어 → 불필요.
             if (direction == TranslationDirection.SourceToTarget && !script.IsMatch(text)) return text;
-            // 엔진→사용자: 엔진이 이미 번역 전 언어로 답했으면 번역 불필요 (변형 위험만 있음).
-            if (direction == TranslationDirection.TargetToSource && script.IsMatch(text)) return text;
+            // 엔진→사용자: 응답이 *대부분* 번역 전 언어일 때만 스킵. 영어 응답에 섞인 소수의
+            // 한글(이름·인용·경로 등)이 메시지 전체 번역을 막지 않도록 글자 비율로 판정한다.
+            if (direction == TranslationDirection.TargetToSource && SourceScriptShare(text, script) >= 0.5) return text;
         }
 
         var (masked, tokens) = Mask(text);
