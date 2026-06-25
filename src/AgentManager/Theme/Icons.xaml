@@ -16,6 +16,13 @@
     <SolidColorBrush x:Key="PiBrand" Color="#FFE4E4E7"/>
     <!-- Antigravity 솔리드(고정 틸) — 작은 텍스트용. 아이콘/컴포저 하이라이트는 AgyGradient(무지개) 사용. -->
     <SolidColorBrush x:Key="AgyBrand" Color="#FF2BC5B4"/>
+    <!-- 엔진 테두리/딤 고정 변형(강조색·테마 무관). 컴포저 외곽·엔진 알약용. -->
+    <SolidColorBrush x:Key="CcBrandLine" Color="#66FF5A2C"/>
+    <SolidColorBrush x:Key="CcBrandDim"  Color="#24FF5A2C"/>
+    <SolidColorBrush x:Key="GxBrandLine" Color="#668B5CF6"/>
+    <SolidColorBrush x:Key="GxBrandDim"  Color="#248B5CF6"/>
+    <SolidColorBrush x:Key="AgyBrandLine" Color="#662BC5B4"/>
+    <SolidColorBrush x:Key="AgyBrandDim"  Color="#242BC5B4"/>
 
     <Style TargetType="{x:Type c:IconView}">
         <Setter Property="Template">

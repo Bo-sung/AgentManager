@@ -272,10 +272,10 @@
                                             <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource CcBrandLine}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource GxLine}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource GxBrandLine}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="agy">
                                                     <Setter Property="BorderBrush" Value="{DynamicResource AgyGradient}"/>
@@ -301,16 +301,16 @@
                                                             <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="cc">
-                                                                    <Setter Property="Background" Value="{DynamicResource AccentDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+                                                                    <Setter Property="Background" Value="{DynamicResource CcBrandDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource CcBrandLine}"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="gx">
-                                                                    <Setter Property="Background" Value="{DynamicResource GxDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource GxLine}"/>
+                                                                    <Setter Property="Background" Value="{DynamicResource GxBrandDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource GxBrandLine}"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding AgentId}" Value="agy">
-                                                                    <Setter Property="Background" Value="{DynamicResource AgyDim}"/>
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource AgyLine}"/>
+                                                                    <Setter Property="Background" Value="{DynamicResource AgyBrandDim}"/>
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource AgyBrandLine}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
