@@ -84,19 +84,33 @@ public sealed partial class AppViewModel
     }
 
     public RelayCommand AssignTaskCommand { get; private set; } = null!;
+    public RelayCommand AssignToWorkerCommand { get; private set; } = null!;
     public RelayCommand UnassignTaskCommand { get; private set; } = null!;
     public RelayCommand DeleteTaskCommand { get; private set; } = null!;
     public RelayCommand RunTaskCommand { get; private set; } = null!;
 
+    private WorkerTaskViewModel? _pendingAssign;
+    public WorkerTaskViewModel? PendingAssign { get => _pendingAssign; private set => Set(ref _pendingAssign, value); }
+    private bool _showAssignPicker;
+    public bool ShowAssignPicker { get => _showAssignPicker; set => Set(ref _showAssignPicker, value); }
+
     private void InitWorkerTaskCommands()
     {
+        // 할당 버튼 → 워커 선택 팝업 열기 (테마된 워커 목록).
         AssignTaskCommand = new RelayCommand(p =>
         {
-            if (p is WorkerTaskViewModel t && t.SelectedWorker is { } w)
+            if (p is WorkerTaskViewModel t) { PendingAssign = t; RefreshWorkerPool(); ShowAssignPicker = true; }
+        });
+        // 팝업에서 워커 클릭 → 대기 중인 작업을 그 워커에 할당.
+        AssignToWorkerCommand = new RelayCommand(p =>
+        {
+            if (p is SessionViewModel w && PendingAssign is { } t)
             {
                 t.AssignedWorkerId = w.Id;
                 t.AssignedWorkerName = w.Title;
                 t.Status = "assigned";
+                ShowAssignPicker = false;
+                PendingAssign = null;
                 RefreshTaskViews();
                 SaveState();
             }
@@ -173,15 +187,24 @@ public sealed partial class AppViewModel
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
                 EnableRaisingEvents = true,
             };
-            FileSystemEventHandler onChange = (_, e) => Application.Current?.Dispatcher.InvokeAsync(() => IngestSpoolFile(e.FullPath));
-            _taskSpoolWatcher.Created += onChange;
-            _taskSpoolWatcher.Changed += onChange;
+            // Created/Changed for direct writes, Renamed for atomic temp→.json writes.
+            _taskSpoolWatcher.Created += (_, e) => ScheduleIngest(e.FullPath);
+            _taskSpoolWatcher.Changed += (_, e) => ScheduleIngest(e.FullPath);
+            _taskSpoolWatcher.Renamed += (_, e) => ScheduleIngest(e.FullPath);
             // ingest anything already sitting in the spool from a previous run
             foreach (var f in Directory.EnumerateFiles(TaskSpool.Root, "*.json", SearchOption.AllDirectories))
-                IngestSpoolFile(f);
+                ScheduleIngest(f);
         }
         catch { /* spool optional — never block startup */ }
     }
+
+    /// <summary>FS events can fire mid-write; ingest after a short delay on the UI thread.</summary>
+    private void ScheduleIngest(string path) =>
+        Application.Current?.Dispatcher.InvokeAsync(async () =>
+        {
+            await Task.Delay(150);
+            IngestSpoolFile(path);
+        });
 
     private void IngestSpoolFile(string path)
     {
@@ -190,14 +213,12 @@ public sealed partial class AppViewModel
             if (!File.Exists(path)) return;
             // project id = the immediate parent folder name under the spool root
             var projectId = Path.GetFileName(Path.GetDirectoryName(path) ?? "");
-            var added = false;
-            foreach (var dto in TaskSpool.ReadFile(path, projectId))
-            {
-                AllWorkerTasks.Add(new WorkerTaskViewModel(dto));
-                added = true;
-            }
+            var dtos = TaskSpool.ReadFile(path, projectId);
+            if (dtos.Count == 0) return; // empty/partial write — leave the file; a later event retries
+            foreach (var dto in dtos) AllWorkerTasks.Add(new WorkerTaskViewModel(dto));
             try { File.Delete(path); } catch { }
-            if (added) { RefreshTaskViews(); SaveState(); }
+            RefreshTaskViews();
+            SaveState();
         }
         catch { }
     }

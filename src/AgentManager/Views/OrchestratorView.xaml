@@ -297,10 +297,7 @@
                                                 <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="11,8" Margin="0,0,0,6">
                                                     <DockPanel>
                                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                                                            <ComboBox Width="130" VerticalAlignment="Center" DisplayMemberPath="Title"
-                                                                      ItemsSource="{Binding DataContext.WorkerPool, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                      SelectedItem="{Binding SelectedWorker, Mode=TwoWay}"/>
-                                                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.AssignToWorker}" Margin="6,0,0,0"
+                                                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.AssignToWorker}"
                                                                     Command="{Binding DataContext.AssignTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                                                             <Button Style="{StaticResource MenuButton}" Width="28" Margin="4,0,0,0" ToolTip="{StaticResource L.Remove}"
                                                                     Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
@@ -351,6 +348,31 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+
+                                    <!-- worker picker popup (opened by 할당) -->
+                                    <Popup IsOpen="{Binding ShowAssignPicker, Mode=TwoWay}" StaysOpen="False" Placement="Mouse" AllowsTransparency="True" PopupAnimation="Fade">
+                                        <Border x:Name="AssignPickerRoot" Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="7" Padding="5" MinWidth="170" Margin="6">
+                                            <Border.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.45" Color="#000000"/></Border.Effect>
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.AssignToWorker}" FontSize="10" Foreground="{DynamicResource Txt3}" Margin="6,3,6,5"/>
+                                                <ItemsControl ItemsSource="{Binding WorkerPool}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Button Style="{StaticResource MenuButton}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="8,5" Margin="0,1"
+                                                                    Command="{Binding DataContext.AssignToWorkerCommand, ElementName=AssignPickerRoot}" CommandParameter="{Binding}">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Border Background="{DynamicResource AccentDim}" CornerRadius="3" Padding="4,0" Margin="0,0,7,0" VerticalAlignment="Center">
+                                                                        <TextBlock Text="{Binding AgentId}" FontFamily="{StaticResource Mono}" FontSize="8.5" Foreground="{DynamicResource Accent}"/>
+                                                                    </Border>
+                                                                    <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Txt0}" FontSize="12" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </Popup>
                                 </StackPanel>
 
                                 <!-- Live workers -->
