@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 
 # Release packaging
 dist/
+
+# AgentManager worker-prompt skill task spool (in-cwd fallback)
+.am/

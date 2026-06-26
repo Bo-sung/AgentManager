@@ -53,10 +53,17 @@ public sealed class WorkerTaskStore
     /// backlog. The project id is the file's immediate parent folder name. Returns the tasks added
     /// (empty on a partial/garbage read — the caller should leave the file for a later retry).</summary>
     public IReadOnlyList<WorkerTaskDto> IngestFile(string path)
+        => IngestFile(path, Path.GetFileName(Path.GetDirectoryName(path) ?? ""), "");
+
+    /// <summary>Ingest with an explicit project id (and optional origin session) — used when the file
+    /// lives in a session's <c>.am/worker-tasks/</c> (the skill's fallback) where the parent folder
+    /// isn't a project id. <paramref name="originSessionId"/> = the session that wrote it (report target).</summary>
+    public IReadOnlyList<WorkerTaskDto> IngestFile(string path, string projectId, string originSessionId = "")
     {
-        var projectId = Path.GetFileName(Path.GetDirectoryName(path) ?? "");
         var added = TaskSpool.ReadFile(path, projectId);
         if (added.Count == 0) return added;
+        if (!string.IsNullOrEmpty(originSessionId))
+            added = added.Select(t => t with { OriginSessionId = originSessionId }).ToList();
         _tasks.AddRange(added);
         Changed?.Invoke();
         return added;
@@ -134,6 +141,23 @@ public sealed class WorkerTaskStore
         _tasks[i] = _tasks[i] with { Status = status };
         Changed?.Invoke();
     }
+
+    /// <summary>Store the worker's result text on a task (its report back to the origin session).</summary>
+    public void SetReport(string taskId, string report)
+    {
+        var i = IndexOf(taskId);
+        if (i < 0) return;
+        _tasks[i] = _tasks[i] with { Report = report ?? "" };
+        Changed?.Invoke();
+    }
+
+    /// <summary>Finished tasks that carry a report for a given origin session — the report inbox feed,
+    /// oldest first (so combined reports keep the dispatch order).</summary>
+    public IEnumerable<WorkerTaskDto> ReportsForOrigin(string originSessionId) =>
+        _tasks.Where(t => t.OriginSessionId == originSessionId
+                          && WorkerTaskStatus.IsFinished(t.Status)
+                          && !string.IsNullOrEmpty(t.Report))
+              .OrderBy(t => t.Order).ThenBy(t => t.CreatedUtc, StringComparer.Ordinal);
 
     public void Delete(string taskId)
     {

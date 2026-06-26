@@ -140,6 +140,7 @@ public sealed partial class AppViewModel
         s.Activity = L("L.PreparingWorktree");
         await EnsureWorktreeAsync(s);
         var cwd = s.WorktreePath ?? s.ProjectPath;
+        WatchSessionTaskSpool(cwd, s.ProjectId, s.Id); // skill fallback (.am/worker-tasks/) → backlog; report back to s
 
         var tools = new Dictionary<string, ToolBlock>();
         // 워커는 생성 시 고정된 번역 언어쌍을 사용(일반 세션은 전역 번역기).
@@ -287,8 +288,17 @@ public sealed partial class AppViewModel
         await observer.DisposeAsync();
     }
 
-    private static void UpsertNativeWorkItem(SessionViewModel s, ObservedWorkItem item)
+    private void UpsertNativeWorkItem(SessionViewModel s, ObservedWorkItem item)
     {
+        // Don't surface AgentManager's OWN managed sessions (peer workers / orchestrator running in the
+        // same project tree) as this session's native background work — they're peers, not subagents of s.
+        // The poller (Core) only knows to skip its own session id; the live managed-session list is UI state,
+        // safely read here on the UI thread.
+        if (item.Kind == WorkItemKind.NativeBackgroundSession
+            && item.VendorWorkId is { Length: > 0 } vid
+            && _allSessions.Any(x => string.Equals(x.EngineSessionId, vid, StringComparison.OrdinalIgnoreCase)))
+            return;
+
         var existing = s.NativeWorkItems.FirstOrDefault(x => x.Id == item.Id);
         if (existing is null)
             s.NativeWorkItems.Insert(0, new NativeWorkItemViewModel(item));

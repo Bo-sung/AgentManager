@@ -293,11 +293,31 @@ static void WorkerTaskStoreCheck()
         && rstore.Find("r3")!.Status == WorkerTaskStatus.Done       // done untouched
         && rstore.NextRunnable("W9")?.Id == "r1";                   // worker no longer stuck
 
+    // report capture + per-origin inbox feed (only finished tasks with a report; dispatch order)
+    var rs = new WorkerTaskStore();
+    rs.Load(
+    [
+        new WorkerTaskDto { Id = "p1", ProjectId = proj, Prompt = "a", OriginSessionId = "orchX", Status = WorkerTaskStatus.Done, Order = 1 },
+        new WorkerTaskDto { Id = "p2", ProjectId = proj, Prompt = "b", OriginSessionId = "orchX", Status = WorkerTaskStatus.Assigned, Order = 2 },
+        new WorkerTaskDto { Id = "p3", ProjectId = proj, Prompt = "c", OriginSessionId = "other", Status = WorkerTaskStatus.Done, Order = 1 },
+    ]);
+    rs.SetReport("p1", "REPORT-1");
+    rs.SetReport("p2", "REPORT-2");  // stored, but not finished → excluded from feed
+    rs.SetReport("p3", "REPORT-3");
+    var feed = rs.ReportsForOrigin("orchX").ToList();
+    var okReport = feed.Count == 1 && feed[0].Id == "p1" && feed[0].Report == "REPORT-1"
+        && rs.Find("p2")!.Report == "REPORT-2"
+        && rs.ReportsForOrigin("other").Single().Id == "p3";
+    rs.SetStatus("p2", WorkerTaskStatus.Done);  // now finished → joins the feed in order
+    var okReportOrder = rs.ReportsForOrigin("orchX").Select(t => t.Id).SequenceEqual(["p1", "p2"]);
+
     var ok = okIngest && okBad && okAssign && okNext1 && okRunning && okNext2 && okAssignedTo
-        && okThird && okMove && okUnassign && okIso && okClear && okDelete && okReconcile && changes > 0;
+        && okThird && okMove && okUnassign && okIso && okClear && okDelete && okReconcile
+        && okReport && okReportOrder && changes > 0;
     Console.WriteLine($"[worker-task-store] ingest={okIngest} bad={okBad} assign={okAssign} next1={okNext1} "
         + $"running={okRunning} next2={okNext2} assignedTo={okAssignedTo} reorder={okThird && okMove} "
-        + $"unassign={okUnassign} isolation={okIso} clear={okClear} delete={okDelete} reconcile={okReconcile} changes={changes}");
+        + $"unassign={okUnassign} isolation={okIso} clear={okClear} delete={okDelete} reconcile={okReconcile} "
+        + $"report={okReport && okReportOrder} changes={changes}");
     Console.WriteLine($"[worker-task-store] {(ok ? "PASS" : "FAIL")}");
     try { Directory.Delete(tmp, true); } catch { }
     Environment.Exit(ok ? 0 : 1);

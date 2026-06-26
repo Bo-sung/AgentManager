@@ -211,7 +211,8 @@ public sealed partial class AppViewModel
                 try
                 {
                     await RunTurnAsync(worker, WorkerDefaults.ComposePrompt(worker.BehaviorPreamble, next.Prompt));
-                    var produced = worker.Transcript.OfType<AgentTextBlock>().Count() > before;
+                    var fresh = worker.Transcript.OfType<AgentTextBlock>().Skip(before).ToList();
+                    var produced = fresh.Count > 0;
                     // only record if the user hasn't unassigned/deleted it mid-run
                     if (_taskStore.Find(next.Id)?.Status == WorkerTaskStatus.Running)
                     {
@@ -222,8 +223,15 @@ public sealed partial class AppViewModel
                             _taskStore.SetStatus(next.Id, WorkerTaskStatus.Assigned);
                             stop = true;
                         }
+                        else if (worker.Status == "done" && produced)
+                        {
+                            // capture the worker's final reply as this task's report (back to the origin session)
+                            var last = fresh[^1];
+                            _taskStore.SetReport(next.Id, last.OriginalText ?? last.Text ?? "");
+                            _taskStore.SetStatus(next.Id, WorkerTaskStatus.Done);
+                        }
                         else
-                            _taskStore.SetStatus(next.Id, worker.Status == "done" && produced ? WorkerTaskStatus.Done : WorkerTaskStatus.Failed);
+                            _taskStore.SetStatus(next.Id, WorkerTaskStatus.Failed);
                     }
                 }
                 catch
@@ -300,23 +308,52 @@ public sealed partial class AppViewModel
         catch { /* spool optional — never block startup */ }
     }
 
-    /// <summary>FS events can fire mid-write; ingest after a short delay on the UI thread.</summary>
-    private void ScheduleIngest(string path) =>
+    /// <summary>FS events can fire mid-write; ingest after a short delay on the UI thread.
+    /// <paramref name="projectId"/> non-null = file came from a session's .am/worker-tasks/.</summary>
+    private void ScheduleIngest(string path, string? projectId = null, string originSessionId = "") =>
         Application.Current?.Dispatcher.InvokeAsync(async () =>
         {
             await Task.Delay(150);
-            IngestSpoolFile(path);
+            IngestSpoolFile(path, projectId, originSessionId);
         });
 
-    private void IngestSpoolFile(string path)
+    private void IngestSpoolFile(string path, string? projectId = null, string originSessionId = "")
     {
         try
         {
             if (!File.Exists(path)) return;
-            var added = _taskStore.IngestFile(path); // raises Changed → rebuild + save
-            if (added.Count > 0) { try { File.Delete(path); } catch { } }
+            var added = projectId is null ? _taskStore.IngestFile(path) : _taskStore.IngestFile(path, projectId, originSessionId);
+            if (added.Count > 0) { try { File.Delete(path); } catch { } } // raises Changed → rebuild + save
             // 0 added = empty/partial write — leave the file; a later event retries
         }
         catch { }
+    }
+
+    private readonly HashSet<string> _watchedTaskDirs = [];
+    private readonly System.Collections.Generic.List<FileSystemWatcher> _sessionTaskWatchers = [];
+
+    /// <summary>Also watch a running session's <c>&lt;cwd&gt;/.am/worker-tasks/</c> — the worker-prompt
+    /// skill's fallback when AGENTMANAGER_TASK_SPOOL isn't visible to the agent's shell. Ingests those
+    /// files into the backlog under the session's project. Idempotent per directory.</summary>
+    private void WatchSessionTaskSpool(string cwd, string projectId, string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(cwd)) return;
+        try
+        {
+            var dir = Path.Combine(cwd, ".am", "worker-tasks");
+            Directory.CreateDirectory(dir);
+            if (!_watchedTaskDirs.Add(dir)) return; // already watching
+            foreach (var f in Directory.EnumerateFiles(dir, "*.json")) ScheduleIngest(f, projectId, sessionId);
+            var w = new FileSystemWatcher(dir, "*.json")
+            {
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+                EnableRaisingEvents = true,
+            };
+            w.Created += (_, e) => ScheduleIngest(e.FullPath, projectId, sessionId);
+            w.Changed += (_, e) => ScheduleIngest(e.FullPath, projectId, sessionId);
+            w.Renamed += (_, e) => ScheduleIngest(e.FullPath, projectId, sessionId);
+            _sessionTaskWatchers.Add(w); // keep alive for the app's lifetime
+        }
+        catch { /* best-effort — never block a turn */ }
     }
 }

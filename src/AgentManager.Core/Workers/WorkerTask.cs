@@ -22,6 +22,10 @@ public sealed record WorkerTaskDto
     public string AssignedWorkerId { get; init; } = "";
     /// <summary>Position in the assigned worker's queue (ascending; 0 while in backlog).</summary>
     public int Order { get; init; }
+    /// <summary>Session that originated this task (whose skill wrote it); the worker reports back here.</summary>
+    public string OriginSessionId { get; init; } = "";
+    /// <summary>The worker's result text, captured when the task finishes (empty until done).</summary>
+    public string Report { get; init; } = "";
     public string CreatedUtc { get; init; } = DateTime.UtcNow.ToString("o");
 }
 
