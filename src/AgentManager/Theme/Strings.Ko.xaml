@@ -54,6 +54,8 @@
     <sys:String x:Key="L.KpiFleetSub">전체 세션</sys:String>
     <sys:String x:Key="L.LiveWorkers">실행 중인 작업자</sys:String>
     <sys:String x:Key="L.NativeWorkers">네이티브 작업자</sys:String>
+    <sys:String x:Key="L.NoNativeWorkers">이 세션에서 관측된 네이티브 서브에이전트가 없습니다.</sys:String>
+    <sys:String x:Key="L.NoReports">이 세션의 워커 보고가 아직 없습니다.</sys:String>
     <sys:String x:Key="L.RecentCompleted">최근 · 완료</sys:String>
     <sys:String x:Key="L.OrchEmptyLive">실행 중인 작업자 없음</sys:String>
     <sys:String x:Key="L.OrchEmptyRecent">완료된 작업 없음</sys:String>

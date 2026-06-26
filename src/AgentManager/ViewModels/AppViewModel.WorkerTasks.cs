@@ -20,6 +20,7 @@ public sealed class WorkerTaskViewModel : ObservableObject
     public string AssignedWorkerId { get; }
     public string AssignedWorkerName { get; }
     public int Order { get; }
+    public string Report { get; }
 
     public WorkerTaskViewModel(WorkerTaskDto dto, string assignedWorkerName = "")
     {
@@ -28,8 +29,10 @@ public sealed class WorkerTaskViewModel : ObservableObject
         AssignedWorkerId = dto.AssignedWorkerId ?? "";
         AssignedWorkerName = assignedWorkerName;
         Order = dto.Order;
+        Report = dto.Report ?? "";
     }
 
+    public string ReportPreview => Report.Length <= 600 ? Report : Report[..599] + "…";
     public string PromptPreview => Prompt.Length <= 200 ? Prompt : Prompt[..199] + "…";
     public string EngineLabel => string.IsNullOrEmpty(Engine) ? "" : Engine.ToUpperInvariant();
     public bool HasEngine => !string.IsNullOrEmpty(Engine);
@@ -79,6 +82,19 @@ public sealed partial class AppViewModel
     public ObservableCollection<WorkerTaskViewModel> BacklogTasks { get; } = [];
     /// <summary>Active-project per-worker queues — each worker's own ordered task list.</summary>
     public ObservableCollection<WorkerQueueViewModel> WorkerQueues { get; } = [];
+    /// <summary>Completed-task reports addressed to the active session — the side "reports" tab feed.</summary>
+    public ObservableCollection<WorkerTaskViewModel> ActiveTaskReports { get; } = [];
+    public bool HasActiveTaskReports => ActiveTaskReports.Count > 0;
+
+    /// <summary>Rebuild the active session's report feed (call on session change + store change).</summary>
+    public void RebuildTaskReports()
+    {
+        ActiveTaskReports.Clear();
+        if (ActiveSession is { } a)
+            foreach (var d in _taskStore.ReportsForOrigin(a.Id))
+                ActiveTaskReports.Add(new WorkerTaskViewModel(d));
+        OnChanged(nameof(HasActiveTaskReports));
+    }
 
     public bool HasBacklog => BacklogTasks.Count > 0;
     public bool HasWorkerQueues => WorkerQueues.Count > 0;
@@ -272,6 +288,7 @@ public sealed partial class AppViewModel
         OnChanged(nameof(HasWorkerQueues));
         OnChanged(nameof(HasWorkerTasks));
         OnChanged(nameof(BacklogCount));
+        RebuildTaskReports();
     }
 
     private void LoadWorkerTasks(IEnumerable<WorkerTaskDto> dtos)

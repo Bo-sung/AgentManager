@@ -150,9 +150,9 @@
                             </DockPanel>
                         </Border>
 
-                        <!-- native workers / subagents -->
+                        <!-- native workers / subagents — moved to the side-pane "Native" tab (MainWindow) -->
                         <Border DockPanel.Dock="Top" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="16,8"
-                                Visibility="{Binding HasNativeWorkItems, Converter={StaticResource BoolVis}}">
+                                Visibility="Collapsed">
                             <DockPanel>
                                 <StackPanel DockPanel.Dock="Left" Width="128" VerticalAlignment="Center">
                                     <TextBlock Text="{StaticResource L.NativeWorkers}" Style="{StaticResource Lbl}" Foreground="{DynamicResource Txt2}"/>
@@ -224,9 +224,9 @@
                         <!-- composer (bottom) -->
                         <Border DockPanel.Dock="Bottom" Margin="14,0,14,14" MinWidth="520" HorizontalAlignment="Stretch">
                             <StackPanel>
-                                <!-- 보고 수신함 (워커 위임 ready 보고) -->
+                                <!-- 보고 수신함 — moved to the side-pane "Reports" tab (MainWindow) -->
                                 <Border Margin="4,0,4,8" Background="{DynamicResource InfoDim}" BorderBrush="{DynamicResource InfoLine}" BorderThickness="1" CornerRadius="8" Padding="11,8"
-                                        Visibility="{Binding DataContext.HasReadyReportsActive, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}">
+                                        Visibility="Collapsed">
                                     <DockPanel>
                                         <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconLayers}" Width="15" Height="15" Foreground="{DynamicResource Info}" Margin="0,0,9,0" VerticalAlignment="Center"/>
                                         <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" VerticalAlignment="Center"

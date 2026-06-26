@@ -1074,6 +1074,8 @@
             <!-- Review pane -->
             <Border Grid.Column="2" DataContext="{Binding ActiveSession}" Background="{DynamicResource Bg2}"
                     BorderBrush="{DynamicResource LineSoft}" BorderThickness="1,0,0,0">
+                <TabControl Style="{StaticResource SidePaneTabControl}">
+                <TabItem Header="{StaticResource L.DiffReview}">
                 <DockPanel>
                     <Border DockPanel.Dock="Top" Height="44" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1">
                         <DockPanel Margin="14,0">
@@ -1258,6 +1260,91 @@
                         </ScrollViewer>
                     </DockPanel>
                 </DockPanel>
+                </TabItem>
+
+                <TabItem Header="{StaticResource L.NativeWorkers}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="12">
+                            <TextBlock Text="{StaticResource L.NoNativeWorkers}" FontFamily="{StaticResource Mono}" FontSize="10.5"
+                                       Foreground="{DynamicResource Txt3}" Margin="2,6" TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding NativeWorkItems.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding NativeWorkItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,6" Padding="9,7" CornerRadius="6" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1">
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Status}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" VerticalAlignment="Top" Margin="8,0,0,0"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Txt0}" FontSize="11.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Source}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Detail}" Foreground="{DynamicResource Txt2}" FontSize="10" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="{StaticResource L.ReportInbox}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="12">
+                            <Button Style="{StaticResource ChipButton}" HorizontalAlignment="Left" Margin="0,0,0,10"
+                                    Visibility="{Binding DataContext.CanMergeReports, ElementName=Root, Converter={StaticResource BoolVis}}"
+                                    Command="{Binding DataContext.MergeReportsCommand, ElementName=Root}">
+                                <TextBlock><Run Text="{StaticResource L.MergePaste}"/><Run Text=" ("/><Run Text="{Binding DataContext.ReadyReportsActiveCount, ElementName=Root, Mode=OneWay}"/><Run Text=")"/></TextBlock>
+                            </Button>
+                            <TextBlock Text="{StaticResource L.NoReports}" FontFamily="{StaticResource Mono}" FontSize="10.5"
+                                       Foreground="{DynamicResource Txt3}" Margin="2,6" TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.HasActiveTaskReports, ElementName=Root}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding DataContext.ActiveTaskReports, ElementName=Root}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,8" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="7">
+                                            <StackPanel>
+                                                <DockPanel Margin="9,7,9,5">
+                                                    <Border DockPanel.Dock="Left" Background="{DynamicResource AccentDim}" CornerRadius="3" Padding="5,1" Margin="0,0,7,0" VerticalAlignment="Center"
+                                                            Visibility="{Binding HasEngine, Converter={StaticResource BoolVis}}">
+                                                        <TextBlock Text="{Binding EngineLabel}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Accent}"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                                </DockPanel>
+                                                <Border BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,1,0,0" Padding="9,7" MaxHeight="160">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                                        <TextBlock Text="{Binding ReportPreview}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt1}" TextWrapping="Wrap"/>
+                                                    </ScrollViewer>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                </TabControl>
             </Border>
         </Grid>
 

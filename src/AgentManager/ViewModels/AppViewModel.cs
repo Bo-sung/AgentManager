@@ -565,6 +565,7 @@ public sealed partial class AppViewModel : ObservableObject
                 OnChanged(nameof(ShowSessionPane));
                 OnChanged(nameof(ShowSessionEmpty));
                 RefreshQuotaText(); // footer를 선택된 엔진의 잔여량으로 갱신
+                RebuildTaskReports();  // "보고" 탭: 활성 세션의 워커 작업 보고 피드
                 if (value is not null)
                     CurrentView = MainViewKind.Session;
                 _ = RefreshReviewAsync(value);
