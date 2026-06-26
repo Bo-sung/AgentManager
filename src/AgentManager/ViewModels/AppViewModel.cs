@@ -142,7 +142,9 @@ public sealed partial class AppViewModel : ObservableObject
         _scheduler.Start();
         InitNavCommands();
         InitDelegationCommands();
+        InitWorkerTaskCommands();
         StartSettingsWatcher();
+        StartTaskSpoolWatcher();          // 스킬이 스풀로 등록한 워커 작업을 백로그로 수신
         _ = RefreshOllamaStatusAsync();   // 시작 시 Ollama 상태 1회 확인(번역 ON 토글 활성 판단)
     }
 
@@ -573,6 +575,7 @@ public sealed partial class AppViewModel : ObservableObject
                 OnChanged(nameof(Project));
                 OnChanged(nameof(WorkingDirectory));
                 RefreshProjectSessions();
+                RefreshTaskViews();   // 백로그/할당 뷰를 활성 프로젝트로 필터
                 _ = LoadCliHistoryAsync(value);
                 SaveState();
             }

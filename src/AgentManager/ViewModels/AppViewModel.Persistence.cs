@@ -192,6 +192,7 @@ public sealed partial class AppViewModel
             _allSessions.Add(s);
         }
 
+        LoadWorkerTasks(state.WorkerTasks ?? []);
         ActiveProject = Projects.FirstOrDefault(p => p.Id == state.ActiveProjectId) ?? Projects[0];
         RefreshProjectSessions();
         RefreshQuotaText(); // 복원된 사용량 스냅샷을 footer에 즉시 표시(신선도 라벨 포함)
@@ -207,6 +208,7 @@ public sealed partial class AppViewModel
             {
                 ActiveProjectId = ActiveProject?.Id,
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
+                WorkerTasks = AllWorkerTasks.Select(t => t.ToDto()).ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
                 {
                     Id = s.Id,

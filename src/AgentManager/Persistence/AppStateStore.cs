@@ -13,6 +13,8 @@ public sealed record AppStateDto
     public AppSettingsDto Settings { get; init; } = new();
     public List<ProjectDto> Projects { get; init; } = [];
     public List<SessionDto> Sessions { get; init; } = [];
+    /// <summary>워커 작업 백로그/큐(프로젝트 단위). 스킬이 스풀로 등록 → 유저가 워커에 할당.</summary>
+    public List<AgentManager.Core.Workers.WorkerTaskDto> WorkerTasks { get; init; } = [];
 }
 
 public sealed record AppSettingsDto

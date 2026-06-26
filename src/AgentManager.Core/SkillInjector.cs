@@ -73,40 +73,47 @@ public static partial class SkillInjector
     [GeneratedRegex(@"(?m)^name:\s*(.+)$")]
     private static partial Regex NameRx();
 
-    /// <summary>Default skill content — worker-prompt authoring (editable in settings).</summary>
+    /// <summary>Default skill content — worker task authoring (editable in settings).
+    /// Registers tasks into the AgentManager backlog via a spool dir instead of pasting
+    /// copyable blocks, so there are no fenced-block / copy issues.</summary>
     public const string WorkerPromptDefault =
 """
 ---
 name: worker-prompt
-description: Use when drafting a prompt to hand to a worker / sub-agent (e.g. "write a worker prompt", "split this into parallel worker tasks", "give me prompts for the workers"). Produces a complete, self-contained, copyable delegation prompt.
+description: Use when planning or drafting prompts to hand to worker sub-agents (e.g. "write worker prompts", "split this into parallel worker tasks", "give me prompts for the workers"). Registers each task into the AgentManager worker backlog.
 ---
 
-# Worker prompt authoring
+# Worker task authoring
 
-When asked to draft a prompt for a worker/sub-agent, output the ENTIRE prompt
-verbatim inside ONE fenced code block so the user can copy it as-is. Never a summary.
+When asked to plan work for worker sub-agents, DO NOT paste prompts into the chat.
+Instead REGISTER each task as a file in the spool directory, then reply with only a
+short confirmation. This avoids copy/paste and lets the user review + assign in the UI.
 
-## Format
-- Wrap the whole prompt in a single fenced block. If the prompt itself contains
-  ``` fences, use a LONGER outer fence (````text ... ````) so it stays one block.
-- One block per worker. For multiple workers, a short "**-> Worker A (...)**" heading
-  above each block.
-- Never truncate or "...". The reader copies it directly into the worker.
+## Where to write
+- The spool directory is in the env var `AGENTMANAGER_TASK_SPOOL`. If it is set, write there.
+- If it is NOT set (running outside AgentManager), create and write to `./.am/worker-tasks/`.
 
-## Each prompt MUST contain
+## How to write
+For each task, write ONE JSON file to the spool dir (e.g. `1.json`, `2.json`). Shape:
+{ "title": "<short label>", "prompt": "<the FULL, self-contained delegation prompt>", "engine": "<cc|gx|agy|pi, or omit>" }
+- `prompt` is a single JSON string — escape newlines as \n. Put the ENTIRE prompt there, never a summary.
+- One file per worker task. Do not give overlapping file ownership to parallel tasks.
+
+## Each task's "prompt" MUST contain
 1. Role / phase - what this worker builds, and the repo path.
-2. Read first - exact context files (paths) + the source files whose public APIs it
-   must read (instruct it to read, not guess).
+2. Read first - exact context files (paths) + the source files whose public APIs it must read.
 3. Task - concrete deliverables: exact file paths, signatures, behavior, naming.
 4. Constraints - what NOT to touch, code style, allowed libraries.
-5. Verify before finishing - exact build/test command + expected result
-   (e.g. "0 warnings, 0 errors"), and what to run.
-6. Report contract - "reply with a TERSE summary (<=8 lines): confirm build,
-   note key decisions/assumptions; DO NOT paste full file contents."
+5. Verify before finishing - exact build/test command + expected result, and what to run.
+6. Report contract - "reply with a TERSE summary (<=8 lines); do NOT paste full file contents."
+
+## After writing
+Reply with ONLY a short confirmation: how many tasks you registered, and their titles
+(one per line). Do NOT paste the task prompts back into the chat.
 
 ## Don'ts
-- Don't paste full file contents back into the report.
-- Don't assume APIs - make the worker read them.
-- Don't give overlapping file ownership to parallel workers.
+- Don't paste task prompts into chat — they go to the spool.
+- Don't assume APIs - make each worker read them.
+- Don't give two parallel tasks ownership of the same file.
 """;
 }

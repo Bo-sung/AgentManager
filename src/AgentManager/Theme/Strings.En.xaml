@@ -137,6 +137,16 @@
     <sys:String x:Key="L.SkillContent">Skill (SKILL.md)</sys:String>
     <sys:String x:Key="L.SkillDirs">Install folder per engine (clear one to skip that engine)</sys:String>
     <sys:String x:Key="L.SkillInjectNote">Pressing “Save settings” writes &lt;folder&gt;/&lt;name&gt;/SKILL.md to each engine (name = the SKILL.md “name:” field). Folders are pre-filled with defaults — adjust if your install differs.</sys:String>
+    <sys:String x:Key="L.TaskBacklog">backlog</sys:String>
+    <sys:String x:Key="L.TaskAssigned">assigned</sys:String>
+    <sys:String x:Key="L.TaskRunning">running</sys:String>
+    <sys:String x:Key="L.TaskDone">done</sys:String>
+    <sys:String x:Key="L.TaskFailed">failed</sys:String>
+    <sys:String x:Key="L.WorkerBacklog">Worker backlog</sys:String>
+    <sys:String x:Key="L.WorkerQueues">Assigned to workers</sys:String>
+    <sys:String x:Key="L.AssignToWorker">Assign</sys:String>
+    <sys:String x:Key="L.RunTask">Run</sys:String>
+    <sys:String x:Key="L.NoBacklog">No worker tasks. The worker-prompt skill drops tasks here for you to review and assign.</sys:String>
     <sys:String x:Key="L.AuthCliManaged">Authentication · managed by the runtime's own CLI login</sys:String>
     <sys:String x:Key="L.PlannedBadge">PLANNED</sys:String>
     <sys:String x:Key="L.OrchPlanned">Auto-start on launch · stream activity logs · worktree base directory — backend pending.</sys:String>
