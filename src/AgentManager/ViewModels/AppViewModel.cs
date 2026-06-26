@@ -59,6 +59,17 @@ public sealed partial class AppViewModel : ObservableObject
     public string Project => ActiveProject?.Name ?? "workspace";
     public string WorkingDirectory => ActiveProject?.Path ?? FindRepoRoot();
 
+    private long _idSeq;
+    /// <summary>Collision-safe session id: ticks alone can repeat for rapid creates, so append a
+    /// monotonic sequence and verify against live sessions.</summary>
+    private string NewSessionId(string prefix)
+    {
+        string id;
+        do { id = prefix + DateTime.Now.Ticks + "-" + (++_idSeq); }
+        while (_allSessions.Any(s => s.Id == id));
+        return id;
+    }
+
     public AppViewModel()
     {
         InitModelChecklists();
@@ -359,7 +370,7 @@ public sealed partial class AppViewModel : ObservableObject
         if (src is null) return;
         var engine = EngineRegistry.Get(src.AgentId);
         var title = src.Title + " (fork)";
-        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, "agent/" + Slug(title),
+        var s = new SessionViewModel(NewSessionId("s"), engine, title, "agent/" + Slug(title),
             src.ProjectId, src.Project, src.ProjectPath, src.Model)
         {
             TranslationEnabled = src.TranslationEnabled,
@@ -575,7 +586,7 @@ public sealed partial class AppViewModel : ObservableObject
                 OnChanged(nameof(Project));
                 OnChanged(nameof(WorkingDirectory));
                 RefreshProjectSessions();
-                RefreshTaskViews();   // 백로그/할당 뷰를 활성 프로젝트로 필터
+                RebuildTaskViews();   // 백로그/워커 큐 뷰를 활성 프로젝트로 필터
                 _ = LoadCliHistoryAsync(value);
                 SaveState();
             }
@@ -682,7 +693,7 @@ public sealed partial class AppViewModel : ObservableObject
         var model = !string.IsNullOrWhiteSpace(NewAgentModel) && (engine.Id == "pi" || Array.IndexOf(engine.Models, NewAgentModel) >= 0)
             ? NewAgentModel
             : (DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0]);
-        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, model)
+        var s = new SessionViewModel(NewSessionId("s"), engine, title, branch, project.Id, project.Name, project.Path, model)
         {
             TranslationEnabled = NewAgentTranslation,
             RequireApproval = reqAppr,

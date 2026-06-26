@@ -146,7 +146,17 @@
     <sys:String x:Key="L.WorkerQueues">Assigned to workers</sys:String>
     <sys:String x:Key="L.AssignToWorker">Assign</sys:String>
     <sys:String x:Key="L.RunTask">Run</sys:String>
+    <sys:String x:Key="L.RunQueue">Run queue</sys:String>
+    <sys:String x:Key="L.ClearFinished">Clear finished</sys:String>
+    <sys:String x:Key="L.MoveUp">Move up</sys:String>
+    <sys:String x:Key="L.MoveDown">Move down</sys:String>
+    <sys:String x:Key="L.Unassign">Return to backlog</sys:String>
     <sys:String x:Key="L.NoBacklog">No worker tasks. The worker-prompt skill drops tasks here for you to review and assign.</sys:String>
+    <sys:String x:Key="L.DelegPending">Pending</sys:String>
+    <sys:String x:Key="L.DelegRunning">Running</sys:String>
+    <sys:String x:Key="L.DelegReady">Ready</sys:String>
+    <sys:String x:Key="L.DelegFailed">Failed</sys:String>
+    <sys:String x:Key="L.DelegConsumed">Injected</sys:String>
     <sys:String x:Key="L.AuthCliManaged">Authentication · managed by the runtime's own CLI login</sys:String>
     <sys:String x:Key="L.PlannedBadge">PLANNED</sys:String>
     <sys:String x:Key="L.OrchPlanned">Auto-start on launch · stream activity logs · worktree base directory — backend pending.</sys:String>

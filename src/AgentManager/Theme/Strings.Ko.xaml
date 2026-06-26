@@ -146,7 +146,17 @@
     <sys:String x:Key="L.WorkerQueues">워커별 할당</sys:String>
     <sys:String x:Key="L.AssignToWorker">할당</sys:String>
     <sys:String x:Key="L.RunTask">실행</sys:String>
+    <sys:String x:Key="L.RunQueue">큐 실행</sys:String>
+    <sys:String x:Key="L.ClearFinished">완료 정리</sys:String>
+    <sys:String x:Key="L.MoveUp">위로</sys:String>
+    <sys:String x:Key="L.MoveDown">아래로</sys:String>
+    <sys:String x:Key="L.Unassign">백로그로</sys:String>
     <sys:String x:Key="L.NoBacklog">워커 작업이 없습니다. 워커-프롬프트 스킬이 여기에 작업을 등록하면 검토 후 워커에 할당합니다.</sys:String>
+    <sys:String x:Key="L.DelegPending">대기</sys:String>
+    <sys:String x:Key="L.DelegRunning">실행 중</sys:String>
+    <sys:String x:Key="L.DelegReady">준비됨</sys:String>
+    <sys:String x:Key="L.DelegFailed">실패</sys:String>
+    <sys:String x:Key="L.DelegConsumed">주입됨</sys:String>
     <sys:String x:Key="L.AuthCliManaged">인증 · 각 런타임의 자체 CLI 로그인으로 관리됩니다</sys:String>
     <sys:String x:Key="L.PlannedBadge">예정</sys:String>
     <sys:String x:Key="L.OrchPlanned">시작 시 자동 실행 · 활동 로그 스트리밍 · worktree 기준 경로 — 백엔드 준비 중.</sys:String>

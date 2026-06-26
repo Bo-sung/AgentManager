@@ -26,7 +26,7 @@ public sealed partial class AppViewModel
         var title = string.IsNullOrWhiteSpace(name) ? $"{engine.Name} worker" : name.Trim();
         var branch = "worker/" + Slug(title);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
-        var s = new SessionViewModel("w" + DateTime.Now.Ticks, engine, title, branch, project.Id, project.Name, project.Path, model)
+        var s = new SessionViewModel(NewSessionId("w"), engine, title, branch, project.Id, project.Name, project.Path, model)
         {
             Role = SessionRole.Worker,
             TranslationEnabled = translationEnabled,
@@ -78,14 +78,18 @@ public sealed partial class AppViewModel
 
         var composed = WorkerDefaults.ComposePrompt(worker.BehaviorPreamble, prompt);
         var costBefore = worker.CostUsd;
+        var before = worker.Transcript.OfType<AgentTextBlock>().Count();
         await RunTurnAsync(worker, composed);
 
         d.CostUsd = Math.Max(0, worker.CostUsd - costBefore);
+        // Success = this turn completed and produced a fresh reply (mirrors the task-queue runner).
+        // Guards against capturing a stale prior reply when the turn never ran (e.g. concurrency cap).
+        var produced = worker.Transcript.OfType<AgentTextBlock>().Count() > before;
         var last = worker.Transcript.OfType<AgentTextBlock>().LastOrDefault();
-        if (worker.Status == "error" || last is null)
+        if (worker.Status != "done" || !produced || last is null)
         {
             d.Error = worker.Transcript.OfType<ErrorBlock>().LastOrDefault()?.Body
-                ?? (last is null ? "워커가 응답을 반환하지 않았습니다." : "워커 실행 실패.");
+                ?? "워커가 응답을 반환하지 않았습니다.";
             d.State = DelegationState.Failed;
         }
         else

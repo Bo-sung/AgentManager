@@ -138,7 +138,7 @@ public sealed partial class AppViewModel
         }
 
         var engine = EngineRegistry.Get(item.Entry.EngineId);
-        var s = new SessionViewModel("s" + DateTime.Now.Ticks, engine, item.Title, "(project dir)",
+        var s = new SessionViewModel(NewSessionId("s"), engine, item.Title, "(project dir)",
             project.Id, project.Name, project.Path, engine.Models[0])
         {
             TranslationEnabled = TranslationEnabled,

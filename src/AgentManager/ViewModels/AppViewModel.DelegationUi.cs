@@ -186,11 +186,12 @@ public sealed partial class AppViewModel
         var main = _delegateMain;
         var prompt = _delegatePrompt;
         var shared = _delegateWorktreeShared;
-        var auto = _delegateAutoInject;
         var idle = WorkerPool.Where(w => !IsWorkerBusy(w)).ToList();
         ShowWorkerAssign = false;
+        // fan-out collects every report in the inbox for the user to merge-inject — no per-report
+        // auto-inject (that would interleave N reports into the draft one by one).
         foreach (var w in idle)
-            _ = RunDelegationAsync(main, w, prompt, shared, auto);
+            _ = RunDelegationAsync(main, w, prompt, shared, auto: false);
     }
 
     private async Task RunDelegationAsync(SessionViewModel main, SessionViewModel worker, string prompt, bool shared, bool auto)

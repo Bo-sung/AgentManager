@@ -208,7 +208,7 @@ public sealed partial class AppViewModel
             {
                 ActiveProjectId = ActiveProject?.Id,
                 Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
-                WorkerTasks = AllWorkerTasks.Select(t => t.ToDto()).ToList(),
+                WorkerTasks = WorkerTasksSnapshot().ToList(),
                 Sessions = _allSessions.Select(s => new SessionDto
                 {
                     Id = s.Id,

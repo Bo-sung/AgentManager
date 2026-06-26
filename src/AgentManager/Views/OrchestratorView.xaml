@@ -320,30 +320,69 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
 
-                                    <!-- assigned to workers -->
-                                    <DockPanel Margin="0,8,0,8" Visibility="{Binding HasAssignedTasks, Converter={StaticResource BoolVis}}">
+                                    <!-- per-worker queues -->
+                                    <DockPanel Margin="0,8,0,8" Visibility="{Binding HasWorkerQueues, Converter={StaticResource BoolVis}}">
                                         <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.WorkerQueues}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Txt2}"/>
                                         <Border Height="1" Background="{DynamicResource LineSoft}" VerticalAlignment="Center" Margin="10,0"/>
                                     </DockPanel>
-                                    <ItemsControl ItemsSource="{Binding AssignedTasks}" Visibility="{Binding HasAssignedTasks, Converter={StaticResource BoolVis}}">
+                                    <ItemsControl ItemsSource="{Binding WorkerQueues}" Visibility="{Binding HasWorkerQueues, Converter={StaticResource BoolVis}}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="11,7" Margin="0,0,0,5">
-                                                    <DockPanel>
-                                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                                                            <TextBlock Text="{Binding StatusLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.RunTask}"
-                                                                    Command="{Binding DataContext.RunTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                                            <Button Style="{StaticResource MenuButton}" Width="28" Margin="4,0,0,0" ToolTip="{StaticResource L.Remove}"
-                                                                    Command="{Binding DataContext.UnassignTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                                                <controls:IconView Icon="{StaticResource IconChevUp}" Width="11" Height="11"/>
-                                                            </Button>
-                                                        </StackPanel>
-                                                        <StackPanel VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                                            <TextBlock FontSize="10" Foreground="{DynamicResource Txt2}" Margin="0,2,0,0"><Run Text="→ "/><Run Text="{Binding AssignedWorkerName, Mode=OneWay}"/></TextBlock>
-                                                        </StackPanel>
-                                                    </DockPanel>
+                                                <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="7" Padding="9,8" Margin="0,0,0,7">
+                                                    <StackPanel>
+                                                        <!-- queue header: worker + run-all -->
+                                                        <DockPanel Margin="0,0,0,6">
+                                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                                <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.RunQueue}"
+                                                                        Command="{Binding DataContext.RunQueueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                                                <Button Style="{StaticResource MenuButton}" Width="28" Margin="4,0,0,0" ToolTip="{StaticResource L.ClearFinished}"
+                                                                        Visibility="{Binding HasFinished, Converter={StaticResource BoolVis}}"
+                                                                        Command="{Binding DataContext.ClearFinishedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                                                    <controls:IconView Icon="{StaticResource IconCheck}" Width="11" Height="11"/>
+                                                                </Button>
+                                                            </StackPanel>
+                                                            <Border DockPanel.Dock="Left" Background="{DynamicResource AccentDim}" CornerRadius="3" Padding="5,0" Margin="0,0,7,0"
+                                                                    VerticalAlignment="Center" Visibility="{Binding HasEngine, Converter={StaticResource BoolVis}}">
+                                                                <TextBlock Text="{Binding EngineLabel}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Accent}"/>
+                                                            </Border>
+                                                            <TextBlock DockPanel.Dock="Left" Text="{Binding WorkerName}" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" FontSize="12.5" VerticalAlignment="Center"/>
+                                                            <TextBlock DockPanel.Dock="Left" Text="{Binding CountLabel}" Style="{StaticResource CodeChip}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                                            <Border/>
+                                                        </DockPanel>
+                                                        <!-- the worker's ordered tasks -->
+                                                        <ItemsControl ItemsSource="{Binding Tasks}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="1" CornerRadius="5" Padding="9,5" Margin="0,0,0,4">
+                                                                        <DockPanel>
+                                                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                                                <TextBlock Text="{Binding StatusLabel}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                                                <Button Style="{StaticResource MenuButton}" Width="24" ToolTip="{StaticResource L.MoveUp}"
+                                                                                        Command="{Binding DataContext.MoveTaskUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                                                                    <controls:IconView Icon="{StaticResource IconChevUp}" Width="10" Height="10"/>
+                                                                                </Button>
+                                                                                <Button Style="{StaticResource MenuButton}" Width="24" Margin="2,0,0,0" ToolTip="{StaticResource L.MoveDown}"
+                                                                                        Command="{Binding DataContext.MoveTaskDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                                                                    <controls:IconView Icon="{StaticResource IconChevDown}" Width="10" Height="10"/>
+                                                                                </Button>
+                                                                                <Button Style="{StaticResource ChipButton}" Margin="4,0,0,0" Content="{StaticResource L.RunTask}"
+                                                                                        Command="{Binding DataContext.RunTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                                                                <Button Style="{StaticResource MenuButton}" Width="24" Margin="4,0,0,0" ToolTip="{StaticResource L.Unassign}"
+                                                                                        Command="{Binding DataContext.UnassignTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                                                                    <controls:IconView Icon="{StaticResource IconChevUp}" Width="10" Height="10"/>
+                                                                                </Button>
+                                                                                <Button Style="{StaticResource MenuButton}" Width="24" Margin="2,0,0,0" ToolTip="{StaticResource L.Remove}"
+                                                                                        Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                                                                    <controls:IconView Icon="{StaticResource IconX}" Width="10" Height="10"/>
+                                                                                </Button>
+                                                                            </StackPanel>
+                                                                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Txt0}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                        </DockPanel>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

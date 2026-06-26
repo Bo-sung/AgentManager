@@ -121,7 +121,7 @@ public sealed partial class AppViewModel
         var branch = string.IsNullOrWhiteSpace(job.TargetBranch) ? "agent/" + Slug(title) : job.TargetBranch.Trim();
         var prompt = string.IsNullOrWhiteSpace(job.Prompt) ? title : job.Prompt.Trim();
 
-        var session = new SessionViewModel("s" + DateTime.Now.Ticks, engine, title, branch,
+        var session = new SessionViewModel(NewSessionId("s"), engine, title, branch,
             project.Id, project.Name, project.Path, engine.Models[0])
         {
             TranslationEnabled = TranslationEnabled,

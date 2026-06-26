@@ -22,6 +22,20 @@ if (args.Contains("--worker-prompt-check"))
     return;
 }
 
+if (args.Contains("--worker-task-store-check"))
+{
+    WorkerTaskStoreCheck();
+    return;
+}
+
+// Live headless E2E of the task queue (real engine, no GUI). Run in YOUR terminal — costs a few tokens:
+// dotnet run --project src/AgentManager.Smoke -- --worker-task-run
+if (args.Contains("--worker-task-run"))
+{
+    await WorkerTaskRunCheckAsync();
+    return;
+}
+
 if (args.Contains("--sched-create-check"))
 {
     RunSchedCreateCheck();
@@ -198,6 +212,164 @@ static void WorkerPromptCheck()
     var ok6 = merged == "## Worker 1 (Alpha)\na-result\n\n## Worker 2 (Beta)\nb-result";
     var ok = ok1 && ok2 && ok3 && ok4 && ok5 && ok6;
     Console.WriteLine($"[worker-prompt] compose={ok1} emptyPreamble={ok2} trim={ok3} defaults={ok4} mergeOne={ok5} mergeMany={ok6} -> {(ok ? "PASS" : "FAIL")}");
+}
+
+// WorkerTaskStore: backlog/per-worker-queue domain logic (ingest, assign, run-order, reorder, isolation).
+static void WorkerTaskStoreCheck()
+{
+    var tmp = Directory.CreateTempSubdirectory("am_wts_").FullName;
+    const string proj = "projA";
+    var dir = Path.Combine(tmp, proj);
+    Directory.CreateDirectory(dir);
+    var store = new WorkerTaskStore();
+    var changes = 0; store.Changed += () => changes++;
+
+    // ingest: a 2-item array (one with explicit title, one title-from-first-line)
+    File.WriteAllText(Path.Combine(dir, "a.json"),
+        "[{\"title\":\"T1\",\"prompt\":\"do one\",\"engine\":\"cc\"},{\"prompt\":\"do two\"}]");
+    var added = store.IngestFile(Path.Combine(dir, "a.json"));
+    var t1 = added.Count > 0 ? added[0] : null;
+    var t2 = added.Count > 1 ? added[1] : null;
+    var okIngest = added.Count == 2 && store.Backlog(proj).Count() == 2
+        && t1!.Title == "T1" && t1.Engine == "cc" && t1.ProjectId == proj && t1.Status == WorkerTaskStatus.Backlog
+        && t2!.Title == "do two";
+
+    // partial/garbage read → nothing added, file left for the caller
+    File.WriteAllText(Path.Combine(dir, "bad.json"), "{ not json");
+    var okBad = store.IngestFile(Path.Combine(dir, "bad.json")).Count == 0 && store.Backlog(proj).Count() == 2;
+
+    // assign both to W1 → queue order 1,2; backlog empties
+    store.Assign(t1!.Id, "W1");
+    store.Assign(t2!.Id, "W1");
+    var q = store.QueueFor("W1").ToList();
+    var okAssign = !store.Backlog(proj).Any() && q.Count == 2
+        && q[0].Id == t1.Id && q[0].Order == 1 && q[1].Order == 2
+        && store.WorkerIdsWithTasks(proj).SequenceEqual(["W1"]);
+
+    var okNext1 = store.NextRunnable("W1")?.Id == t1.Id;
+
+    // run t1: while running, nothing else is runnable; when done it leaves the queue → next is t2
+    store.SetStatus(t1.Id, WorkerTaskStatus.Running);
+    var okRunning = store.NextRunnable("W1") is null && store.QueueFor("W1").Count() == 2;
+    store.SetStatus(t1.Id, WorkerTaskStatus.Done);
+    var okNext2 = store.NextRunnable("W1")?.Id == t2.Id && store.QueueFor("W1").Count() == 1;
+    var okAssignedTo = store.AssignedTo("W1").Select(t => t.Id).SequenceEqual([t1.Id, t2.Id]);
+
+    // add a 3rd, queued after t2, then reorder it above t2
+    var t3 = store.IngestFile(WriteSpool(dir, "c.json", "{\"title\":\"T3\",\"prompt\":\"three\"}"))[0];
+    store.Assign(t3.Id, "W1");
+    var okThird = store.QueueFor("W1").Select(t => t.Id).SequenceEqual([t2.Id, t3.Id]);
+    store.Move(t3.Id, -1);
+    var okMove = store.QueueFor("W1").Select(t => t.Id).SequenceEqual([t3.Id, t2.Id]);
+
+    // unassign t2 → back to backlog, off W1's queue
+    store.Unassign(t2.Id);
+    var okUnassign = store.Backlog(proj).Any(t => t.Id == t2.Id)
+        && store.QueueFor("W1").Select(t => t.Id).SequenceEqual([t3.Id]);
+
+    // second worker is isolated
+    store.Assign(t2.Id, "W2");
+    var okIso = store.QueueFor("W2").Single().Id == t2.Id && store.QueueFor("W1").Single().Id == t3.Id
+        && store.WorkerIdsWithTasks(proj).OrderBy(x => x).SequenceEqual(["W1", "W2"]);
+
+    // clear finished (t1 done + t3 failed) off W1; delete t2
+    store.SetStatus(t3.Id, WorkerTaskStatus.Failed);
+    store.ClearFinished("W1");
+    var okClear = !store.AssignedTo("W1").Any();
+    store.Delete(t2.Id);
+    var okDelete = store.Find(t2.Id) is null;
+
+    // crash reconciliation: a running task → re-queued as assigned so its worker isn't stuck
+    var rstore = new WorkerTaskStore();
+    rstore.Load(
+    [
+        new WorkerTaskDto { Id = "r1", ProjectId = proj, Prompt = "x", AssignedWorkerId = "W9", Status = WorkerTaskStatus.Running, Order = 1 },
+        new WorkerTaskDto { Id = "r2", ProjectId = proj, Prompt = "y", AssignedWorkerId = "W9", Status = WorkerTaskStatus.Assigned, Order = 2 },
+        new WorkerTaskDto { Id = "r3", ProjectId = proj, Prompt = "z", AssignedWorkerId = "W9", Status = WorkerTaskStatus.Done, Order = 3 },
+    ]);
+    var reconciled = rstore.ReconcileInterrupted();
+    var okReconcile = reconciled == 1
+        && rstore.Find("r1")!.Status == WorkerTaskStatus.Assigned   // running → assigned
+        && rstore.Find("r3")!.Status == WorkerTaskStatus.Done       // done untouched
+        && rstore.NextRunnable("W9")?.Id == "r1";                   // worker no longer stuck
+
+    var ok = okIngest && okBad && okAssign && okNext1 && okRunning && okNext2 && okAssignedTo
+        && okThird && okMove && okUnassign && okIso && okClear && okDelete && okReconcile && changes > 0;
+    Console.WriteLine($"[worker-task-store] ingest={okIngest} bad={okBad} assign={okAssign} next1={okNext1} "
+        + $"running={okRunning} next2={okNext2} assignedTo={okAssignedTo} reorder={okThird && okMove} "
+        + $"unassign={okUnassign} isolation={okIso} clear={okClear} delete={okDelete} reconcile={okReconcile} changes={changes}");
+    Console.WriteLine($"[worker-task-store] {(ok ? "PASS" : "FAIL")}");
+    try { Directory.Delete(tmp, true); } catch { }
+    Environment.Exit(ok ? 0 : 1);
+
+    static string WriteSpool(string dir, string name, string json)
+    {
+        var path = Path.Combine(dir, name);
+        File.WriteAllText(path, json);
+        return path;
+    }
+}
+
+// Live end-to-end of the task queue without the GUI: spool file → store ingest → assign →
+// REAL engine turn (mirrors AppViewModel.DriveWorkerAsync) → verify the worker did the work + status.
+static async Task WorkerTaskRunCheckAsync()
+{
+    var tmp = Path.Combine(Path.GetTempPath(), "am_wtrun_" + Guid.NewGuid().ToString("N")[..8]);
+    const string projId = "proj-live";
+    var spoolDir = Path.Combine(tmp, "spool", projId);
+    var work = Path.Combine(tmp, "work");
+    Directory.CreateDirectory(spoolDir);
+    Directory.CreateDirectory(work);
+    Console.WriteLine($"[wt-run] tmp={tmp}");
+
+    // 1. the skill writes a task to the spool (atomic temp→.json, like an agent would)
+    const string taskPrompt = "Create a file named task-done.txt containing exactly TASK-OK using a shell command, then stop.";
+    var json = System.Text.Json.JsonSerializer.Serialize(new { title = "make marker file", prompt = taskPrompt, engine = "cc" });
+    var stage = Path.Combine(spoolDir, "t.tmp");
+    File.WriteAllText(stage, json);
+    var spoolFile = Path.Combine(spoolDir, "t.json");
+    File.Move(stage, spoolFile);
+
+    // 2. store ingests the file → backlog (file consumed)
+    var store = new WorkerTaskStore();
+    var added = store.IngestFile(spoolFile);
+    if (added.Count > 0) try { File.Delete(spoolFile); } catch { } // host deletes after a successful ingest
+    var okIngest = added.Count == 1 && store.Backlog(projId).Count() == 1 && !File.Exists(spoolFile);
+    var task = added[0];
+    Console.WriteLine($"[wt-run] 1) ingest ok={okIngest} title=\"{task.Title}\" engine={task.Engine}");
+
+    // 3. assign to a worker queue
+    store.Assign(task.Id, "w-live");
+    var okAssign = store.Find(task.Id)!.Status == WorkerTaskStatus.Assigned && store.NextRunnable("w-live")?.Id == task.Id;
+    Console.WriteLine($"[wt-run] 2) assign ok={okAssign} status={store.Find(task.Id)!.Status}");
+
+    // 4. run it on a REAL engine, headless — same status logic as DriveWorkerAsync
+    var exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin", "claude.exe");
+    if (!File.Exists(exe)) exe = FindOnPath("claude") ?? "claude";
+    store.SetStatus(task.Id, WorkerTaskStatus.Running);
+    var composed = WorkerDefaults.ComposePrompt(WorkerDefaults.BehaviorPreamble, store.Find(task.Id)!.Prompt);
+    var produced = false; var turnDone = false; var err = false;
+    var session = new AgentSession(new ClaudeAdapter(), exe);
+    session.EventReceived += ev =>
+    {
+        if (ev is AssistantText) produced = true;
+        if (ev is TurnCompleted tc) { turnDone = true; err = tc.IsError; }
+    };
+    using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(4));
+    try { await session.RunAsync(new SessionOptions { WorkingDirectory = work, BypassPermissions = true }, composed, cts.Token); }
+    catch (Exception ex) { Console.WriteLine("[wt-run] EXCEPTION " + ex.Message); err = true; }
+
+    // 5. record result: done only if the turn completed cleanly AND produced a reply (mirrors the runner)
+    store.SetStatus(task.Id, turnDone && !err && produced ? WorkerTaskStatus.Done : WorkerTaskStatus.Failed);
+    var fileOk = File.Exists(Path.Combine(work, "task-done.txt"));
+    var finalStatus = store.Find(task.Id)!.Status;
+    var okRun = finalStatus == WorkerTaskStatus.Done && fileOk && store.NextRunnable("w-live") is null;
+    Console.WriteLine($"[wt-run] 3) run turnDone={turnDone} err={err} produced={produced} fileCreated={fileOk} status={finalStatus} queueEmpty={store.NextRunnable("w-live") is null}");
+
+    var ok = okIngest && okAssign && okRun;
+    Console.WriteLine($"[wt-run] {(ok ? "PASS — task queue works end-to-end via CLI" : "FAIL")}");
+    try { Directory.Delete(tmp, true); } catch { }
+    Environment.Exit(ok ? 0 : 1);
 }
 
 static void SubagentFailureCheck()
