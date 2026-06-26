@@ -51,23 +51,31 @@ public sealed class WorkerTaskViewModel : ObservableObject
     };
 }
 
-/// <summary>One worker's task queue (the per-worker list) — header + its ordered tasks.</summary>
+/// <summary>One worker's task queue (the per-worker list) — active tasks shown; finished tasks live
+/// under a collapsible history so the queue stays focused on what's pending/running.</summary>
 public sealed class WorkerQueueViewModel : ObservableObject
 {
     public string WorkerId { get; }
     public string WorkerName { get; }
     public string EngineLabel { get; }
+    /// <summary>Active tasks only (assigned + running) — what the queue shows by default.</summary>
     public ObservableCollection<WorkerTaskViewModel> Tasks { get; } = [];
+    /// <summary>Finished tasks (done/failed) — revealed via the history toggle.</summary>
+    public ObservableCollection<WorkerTaskViewModel> FinishedTasks { get; } = [];
 
-    public WorkerQueueViewModel(string workerId, string workerName, string engineLabel, IEnumerable<WorkerTaskViewModel> tasks)
+    public WorkerQueueViewModel(string workerId, string workerName, string engineLabel,
+        IEnumerable<WorkerTaskViewModel> active, IEnumerable<WorkerTaskViewModel> finished, bool showHistory)
     {
-        WorkerId = workerId; WorkerName = workerName; EngineLabel = engineLabel;
-        foreach (var t in tasks) Tasks.Add(t);
+        WorkerId = workerId; WorkerName = workerName; EngineLabel = engineLabel; ShowHistory = showHistory;
+        foreach (var t in active) Tasks.Add(t);
+        foreach (var t in finished) FinishedTasks.Add(t);
     }
 
-    public int PendingCount => Tasks.Count(t => t.Status is WorkerTaskStatus.Assigned or WorkerTaskStatus.Running);
+    public int PendingCount => Tasks.Count;
     public bool CanRunQueue => Tasks.Any(t => t.Status == WorkerTaskStatus.Assigned);
-    public bool HasFinished => Tasks.Any(t => t.IsFinished);
+    public int FinishedCount => FinishedTasks.Count;
+    public bool HasFinished => FinishedTasks.Count > 0;
+    public bool ShowHistory { get; }
     public string CountLabel => PendingCount.ToString();
     public bool HasEngine => !string.IsNullOrEmpty(EngineLabel);
 }
@@ -123,6 +131,10 @@ public sealed partial class AppViewModel
     public RelayCommand MoveTaskUpCommand { get; private set; } = null!;
     public RelayCommand MoveTaskDownCommand { get; private set; } = null!;
     public RelayCommand ClearFinishedCommand { get; private set; } = null!;
+    public RelayCommand ToggleQueueHistoryCommand { get; private set; } = null!;
+
+    /// <summary>Per-worker: whether the finished-task history is expanded (survives view rebuilds).</summary>
+    private readonly HashSet<string> _expandedQueueHistory = [];
 
     private WorkerTaskViewModel? _pendingAssign;
     public WorkerTaskViewModel? PendingAssign { get => _pendingAssign; private set => Set(ref _pendingAssign, value); }
@@ -171,6 +183,14 @@ public sealed partial class AppViewModel
         MoveTaskUpCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) _taskStore.Move(t.Id, -1); });
         MoveTaskDownCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) _taskStore.Move(t.Id, +1); });
         ClearFinishedCommand = new RelayCommand(p => { if (p is WorkerQueueViewModel q) _taskStore.ClearFinished(q.WorkerId); });
+        ToggleQueueHistoryCommand = new RelayCommand(p =>
+        {
+            if (p is WorkerQueueViewModel q)
+            {
+                if (!_expandedQueueHistory.Remove(q.WorkerId)) _expandedQueueHistory.Add(q.WorkerId);
+                RebuildTaskViews();
+            }
+        });
 
         RunTaskCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) _ = RunOneAsync(t.Id); },
             p => p is WorkerTaskViewModel { CanRun: true });
@@ -280,8 +300,10 @@ public sealed partial class AppViewModel
             var w = _allSessions.FirstOrDefault(s => s.Id == wid);
             var name = w?.Title ?? "worker";
             var engine = w is null ? "" : w.AgentId.ToUpperInvariant();
-            var tasks = _taskStore.AssignedTo(wid).Select(d => new WorkerTaskViewModel(d, name));
-            WorkerQueues.Add(new WorkerQueueViewModel(wid, name, engine, tasks));
+            var all = _taskStore.AssignedTo(wid).Select(d => new WorkerTaskViewModel(d, name)).ToList();
+            var active = all.Where(t => !t.IsFinished);   // assigned + running — shown in the queue
+            var finished = all.Where(t => t.IsFinished);  // done/failed — under the history toggle
+            WorkerQueues.Add(new WorkerQueueViewModel(wid, name, engine, active, finished, _expandedQueueHistory.Contains(wid)));
         }
 
         OnChanged(nameof(HasBacklog));

@@ -150,6 +150,7 @@
     <sys:String x:Key="L.RunTask">Run</sys:String>
     <sys:String x:Key="L.RunQueue">Run queue</sys:String>
     <sys:String x:Key="L.ClearFinished">Clear finished</sys:String>
+    <sys:String x:Key="L.FinishedHistory">＋ Finished</sys:String>
     <sys:String x:Key="L.MoveUp">Move up</sys:String>
     <sys:String x:Key="L.MoveDown">Move down</sys:String>
     <sys:String x:Key="L.Unassign">Return to backlog</sys:String>
