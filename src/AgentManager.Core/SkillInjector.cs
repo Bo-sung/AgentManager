@@ -21,7 +21,7 @@ public static partial class SkillInjector
         {
             ["cc"]  = Path.Combine(home, ".claude", "skills"),
             ["gx"]  = Path.Combine(home, ".codex", "skills"),
-            ["agy"] = Path.Combine(home, ".gemini", "antigravity-cli", "builtin", "skills"),
+            ["agy"] = Path.Combine(home, ".gemini", "antigravity-cli", "skills"),
             ["pi"]  = Path.Combine(home, ".pi", "agent", "skills"),
         };
     }
