@@ -99,6 +99,7 @@ public sealed partial class AppViewModel
 
     public RelayCommand AssignTaskCommand { get; private set; } = null!;
     public RelayCommand AssignToWorkerCommand { get; private set; } = null!;
+    public RelayCommand AssignToNewWorkerCommand { get; private set; } = null!;
     public RelayCommand UnassignTaskCommand { get; private set; } = null!;
     public RelayCommand DeleteTaskCommand { get; private set; } = null!;
     public RelayCommand RunTaskCommand { get; private set; } = null!;
@@ -127,6 +128,23 @@ public sealed partial class AppViewModel
         {
             if (p is SessionViewModel w && PendingAssign is { } t)
             {
+                _taskStore.Assign(t.Id, w.Id);
+                ShowAssignPicker = false;
+                PendingAssign = null;
+            }
+        });
+        // "+ 새 워커": create an IDLE worker (no dummy creation turn), then assign the pending task
+        // as its first — clean — turn. Keeps engine-session resume for later queue tasks (warm context,
+        // no project re-scan) without inheriting a polluting creation turn.
+        AssignToNewWorkerCommand = new RelayCommand(p =>
+        {
+            if (p is string engineId && PendingAssign is { } t && ActiveProject is { } proj)
+            {
+                var eng = EngineRegistry.Get(engineId);
+                var model = DefaultModelFor(eng.Id) is { Length: > 0 } dm ? dm : (eng.Models.Length > 0 ? eng.Models[0] : "");
+                var w = CreateWorkerSession(eng, model, proj, $"{eng.Name} worker",
+                    translationEnabled: false, "Korean", "English", WorkerBehaviorPreamble);
+                RefreshWorkerPool();
                 _taskStore.Assign(t.Id, w.Id);
                 ShowAssignPicker = false;
                 PendingAssign = null;

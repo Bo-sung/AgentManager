@@ -409,6 +409,18 @@
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
+                                                <Border Height="1" Background="{DynamicResource LineSoft}" Margin="4,5"/>
+                                                <TextBlock Text="{StaticResource L.AddNewWorker}" FontSize="10" Foreground="{DynamicResource Txt3}" Margin="6,1,6,4"/>
+                                                <UniformGrid Columns="4">
+                                                    <Button Style="{StaticResource MenuButton}" Content="CC" Margin="2" FontFamily="{StaticResource Mono}" FontSize="10"
+                                                            Command="{Binding DataContext.AssignToNewWorkerCommand, ElementName=AssignPickerRoot}" CommandParameter="cc"/>
+                                                    <Button Style="{StaticResource MenuButton}" Content="GX" Margin="2" FontFamily="{StaticResource Mono}" FontSize="10"
+                                                            Command="{Binding DataContext.AssignToNewWorkerCommand, ElementName=AssignPickerRoot}" CommandParameter="gx"/>
+                                                    <Button Style="{StaticResource MenuButton}" Content="AGY" Margin="2" FontFamily="{StaticResource Mono}" FontSize="10"
+                                                            Command="{Binding DataContext.AssignToNewWorkerCommand, ElementName=AssignPickerRoot}" CommandParameter="agy"/>
+                                                    <Button Style="{StaticResource MenuButton}" Content="PI" Margin="2" FontFamily="{StaticResource Mono}" FontSize="10"
+                                                            Command="{Binding DataContext.AssignToNewWorkerCommand, ElementName=AssignPickerRoot}" CommandParameter="pi"/>
+                                                </UniformGrid>
                                             </StackPanel>
                                         </Border>
                                     </Popup>
