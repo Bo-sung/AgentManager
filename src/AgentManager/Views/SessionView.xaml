@@ -75,7 +75,7 @@
                                     </Button.Style>
                                 </Button>
                                 <Border DockPanel.Dock="Right" Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="20" Padding="8,3" VerticalAlignment="Center" Margin="0,0,8,0">
-                                    <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt1}"/>
+                                    <TextBlock Text="{Binding BranchDisplay}" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt1}"/>
                                 </Border>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
                                         ToolTip="{StaticResource L.OpenIdeTip}"
@@ -480,14 +480,12 @@
                                                     </StackPanel>
                                                 </Border>
                                                 <Border DockPanel.Dock="Left" Style="{StaticResource ComposerPill}" Margin="0,0,8,0"
-                                                        VerticalAlignment="Center" ToolTip="{Binding Branch}">
+                                                        VerticalAlignment="Center" ToolTip="{Binding WorktreePill}">
                                                     <StackPanel Orientation="Horizontal">
                                                         <controls:IconView Icon="{StaticResource IconBranch}" Width="13" Height="13"
                                                                            Foreground="{DynamicResource Txt2}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="11.5" Foreground="{DynamicResource Txt1}"
-                                                                   VerticalAlignment="Center">
-                                                            <Run Text="{StaticResource L.WorktreePrefix}" Foreground="{DynamicResource Txt2}"/><Run Text="{Binding BranchTail, Mode=OneWay}"/>
-                                                        </TextBlock>
+                                                        <TextBlock Text="{Binding WorktreePill}" FontFamily="{StaticResource Mono}" FontSize="11.5"
+                                                                   Foreground="{DynamicResource Txt1}" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Border>
                                                 <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
@@ -929,7 +927,7 @@
                                 <DockPanel Margin="4,6,4,0" TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="9.5">
                                     <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.EnterHint}" Foreground="{DynamicResource Txt3}"/>
                                     <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource Txt3}">
-                                        <Run Text="{Binding Cli, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Branch, Mode=OneWay}"/>
+                                        <Run Text="{Binding Cli, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding BranchDisplay, Mode=OneWay}"/>
                                     </TextBlock>
                                 </DockPanel>
                             </StackPanel>
