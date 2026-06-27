@@ -1964,15 +1964,43 @@
                                     <DataTemplate>
                                         <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="7" Padding="10">
                                             <DockPanel>
-                                                <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Background="{DynamicResource Bg2}"
-                                                        BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,10,0">
-                                                    <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="4" Background="{DynamicResource Bg2}"
+                                                        BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                    <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
-                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <Border Background="{DynamicResource Bg2}" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
-                                                        <TextBlock Text="{Binding DelegationTrLabel}" FontSize="9.5" Foreground="{DynamicResource Txt2}"/>
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="9,0,0,0">
+                                                    <!-- translation chip: info-tinted when ON -->
+                                                    <Border CornerRadius="20" Padding="7,2" Margin="0,0,6,0" BorderThickness="1">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{DynamicResource Bg2}"/>
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding TranslationEnabled}" Value="True">
+                                                                        <Setter Property="Background" Value="{DynamicResource InfoDim}"/>
+                                                                        <Setter Property="BorderBrush" Value="{DynamicResource InfoLine}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{Binding DelegationTrLabel}" FontFamily="{StaticResource Mono}" FontSize="9">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Txt2}"/>
+                                                                    <Style.Triggers><DataTrigger Binding="{Binding TranslationEnabled}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Info}"/></DataTrigger></Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
                                                     </Border>
-                                                    <TextBlock Text="{Binding StatusLabel}" FontSize="9.5" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                                                    <!-- status: Idle (ok) / busy (accent) -->
+                                                    <TextBlock Text="{Binding StatusLabel}" FontFamily="{StaticResource Mono}" FontSize="9" VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="{DynamicResource Ok}"/>
+                                                                <Style.Triggers><DataTrigger Binding="{Binding IsBusy}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Accent}"/></DataTrigger></Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
