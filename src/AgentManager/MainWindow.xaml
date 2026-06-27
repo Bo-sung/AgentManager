@@ -1864,7 +1864,7 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="{StaticResource L.ModelPick}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
                                 <ComboBox ItemsSource="{Binding NewAgentModels}" SelectedItem="{Binding NewAgentModel, Mode=TwoWay}"/>
-                                <!-- 추론 수준 (cc/gx만 노출) -->
+                                <!-- 추론 수준 (cc/gx/pi 노출, agy 제외) -->
                                 <StackPanel Margin="0,10,0,0" Visibility="{Binding NewAgentHasEffort, Converter={StaticResource BoolVis}}">
                                     <TextBlock Text="{StaticResource L.ReasoningEffort}" Style="{StaticResource Lbl}" Margin="0,0,0,6" ToolTip="{StaticResource L.EffortTip}"/>
                                     <ComboBox ItemsSource="{Binding NewAgentEffortOptions}" SelectedItem="{Binding NewAgentReasoning, Mode=TwoWay}" ToolTip="{StaticResource L.EffortTip}"/>

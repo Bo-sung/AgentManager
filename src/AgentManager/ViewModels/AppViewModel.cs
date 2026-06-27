@@ -644,7 +644,7 @@ public sealed partial class AppViewModel : ObservableObject
                 OnChanged(nameof(NewAgentBranchPreview));
                 NewAgentModel = value is { } e ? DefaultModelFor(e.Id) : "";
                 if (value?.Id == "pi") _ = QueryPiModelsAsync();   // pi 모델 목록 동적 조회(드롭다운 채움)
-                // 추론 수준 옵션/기본값 엔진별 재계산 (cc/gx만 노출)
+                // 추론 수준 옵션/기본값 엔진별 재계산 (cc/gx/pi 노출, agy 제외)
                 OnChanged(nameof(NewAgentHasEffort));
                 OnChanged(nameof(NewAgentEffortOptions));
                 NewAgentReasoning = DefaultEffortFor(value?.Id);
@@ -655,13 +655,14 @@ public sealed partial class AppViewModel : ObservableObject
     private string _newAgentModel = "";
     public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
 
-    /// <summary>추론 수준을 실제로 소비하는 엔진(cc: --effort, gx: model_reasoning_effort)만 노출.</summary>
-    public bool NewAgentHasEffort => _newEngine?.Id is "cc" or "gx";
-    /// <summary>엔진별 추론 옵션 — codex 4단계 / claude 6단계 (SessionViewModel.EffortOptions와 일치).</summary>
+    /// <summary>추론 수준을 소비하는 엔진(cc: --effort, gx: model_reasoning_effort, pi: --thinking)만 노출.
+    /// agy만 추론 플래그가 없음. SessionViewModel.HasEffort(= not agy)와 일치.</summary>
+    public bool NewAgentHasEffort => _newEngine?.Id is "cc" or "gx" or "pi";
+    /// <summary>엔진별 추론 옵션 — codex 4단계 / 그 외(claude·pi) 6단계 (SessionViewModel.EffortOptions와 일치).</summary>
     public string[] NewAgentEffortOptions => _newEngine?.Id == "gx"
         ? ["low", "medium", "high", "xhigh"]
         : ["default", "low", "medium", "high", "xhigh", "max"];
-    private static string DefaultEffortFor(string? id) => id switch { "gx" => "medium", "cc" => "default", _ => "" };
+    private static string DefaultEffortFor(string? id) => id switch { "gx" => "medium", "cc" or "pi" => "default", _ => "" };
     private string _newAgentReasoning = "default";
     public string NewAgentReasoning { get => _newAgentReasoning; set => Set(ref _newAgentReasoning, value); }
 
