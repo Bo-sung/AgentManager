@@ -2,6 +2,12 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.14.2
+워커 보고 라우팅 — 멀티 엔진 수정.
+- **agy 스풀 미수신**: agy(ConPTY 경로)가 `AGENTMANAGER_TASK_SPOOL`을 못 봐서 워커-프롬프트 스킬이 agy 자체 스크래치(`~/.gemini/antigravity-cli/scratch`)에 써 백로그로 유입 안 되던 문제 — ConPTY 프로세스에 `ExtraEnvironment` 주입(`CREATE_UNICODE_ENVIRONMENT`).
+- **보고 origin 붕괴**: worktree 없는 세션들이 cwd(`<project>/.am/worker-tasks/`)를 공유 → 워처가 dir 단위 dedup이라 origin이 첫 세션으로 몰려 **모든 워커 보고가 한 세션으로만** 가던 문제 — 스풀을 세션별 `<cwd>/.am/worker-tasks/<sessionId>/`로 분리(env + watch 일치). cc/agy/pi/gx 전 엔진 라이브 검증.
+- **pi libuv assertion**: pi(node)를 턴 종료 후 강제 kill할 때 나오는 `UV_HANDLE_CLOSING` teardown assertion(출력은 이미 생성됨, 작업은 성공)을 benign stderr로 처리 — 빨간 에러로 안 뜨게.
+
 ## 1.14.1
 - **gitignore**: Claude Code 에이전트 런타임 무시 — 서브에이전트 worktree(`.claude/worktrees/`)와 머신 로컬 설정(`.claude/settings.local.json`)이 repo에 커밋되지 않도록.
 

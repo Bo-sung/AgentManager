@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.14.1: Claude Code 에이전트 런타임(.claude/worktrees · settings.local.json) gitignore -->
-    <Version>1.14.1</Version>
+    <!-- 1.14.2: 워커 보고 라우팅 멀티엔진 수정(agy 스풀 env 주입 · 세션별 스풀 origin · pi libuv assertion) -->
+    <Version>1.14.2</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
