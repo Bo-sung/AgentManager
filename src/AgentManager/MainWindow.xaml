@@ -258,7 +258,7 @@
                         <TextBlock Text="{StaticResource L.StaleSessionHint}" FontSize="11" Foreground="{DynamicResource Txt2}"
                                    TextWrapping="Wrap" Margin="0,0,0,8"/>
                         <Button Style="{StaticResource ChipButton}" HorizontalAlignment="Left"
-                                Command="{Binding DataContext.DeleteSessionCommand, ElementName=Root}">
+                                Command="{Binding DataContext.DeleteSessionCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                             <TextBlock Text="{StaticResource L.DeleteDeadSession}"/>
                         </Button>
                     </StackPanel>
@@ -334,7 +334,7 @@
                                 Visibility="{Binding IsPending, Converter={StaticResource BoolVis}}">
                         <Button Content="{StaticResource L.ApproveRun}" Cursor="Hand" Padding="15,7" Margin="0,0,8,0"
                                 FontWeight="SemiBold" FontSize="12" Foreground="#FF06160F"
-                                Command="{Binding DataContext.ApproveCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                Command="{Binding DataContext.ApproveCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="ab" Background="{DynamicResource Ok}" CornerRadius="7" Padding="{TemplateBinding Padding}">
@@ -351,9 +351,9 @@
                         <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.ApproveForSession}" Margin="0,0,8,0"
                                 ToolTip="{StaticResource L.ApproveForSessionTip}"
                                 Visibility="{Binding SupportsSessionApproval, Converter={StaticResource BoolVis}}"
-                                Command="{Binding DataContext.ApproveForSessionCommand, ElementName=Root}" CommandParameter="{Binding}"/>
+                                Command="{Binding DataContext.ApproveForSessionCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
                         <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Reject}"
-                                Command="{Binding DataContext.DenyCommand, ElementName=Root}" CommandParameter="{Binding}"/>
+                                Command="{Binding DataContext.DenyCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
