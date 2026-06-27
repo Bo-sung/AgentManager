@@ -169,8 +169,11 @@
                                     </DockPanel>
                                 </Border>
                                 <!-- 빠른 응답 — 어시스턴트 선택지(A/B · 1/2) 자동 감지 → 클릭 시 전송 -->
-                                <!-- 컨테이너 + "선택" 헤더 + 엔진색 배지 wrap 카드 (가시성 강화). 옵션 0개면 collapse -->
-                                <Border Margin="4,0,4,9" CornerRadius="10" BorderThickness="1"
+                                <!-- 컨테이너 + "선택" 헤더 + 엔진색 배지 카드. 옵션 0개면 collapse.
+                                     키보드: 등장 시 포커스 → A/B/C·숫자 키로 선택, Esc로 직접입력(Claude 데스크톱식) -->
+                                <Border x:Name="QuickReplyPanel" Margin="4,0,4,9" CornerRadius="10" BorderThickness="1"
+                                        Focusable="True" FocusVisualStyle="{x:Null}"
+                                        KeyDown="QuickReply_KeyDown" IsVisibleChanged="QuickReplyPanel_IsVisibleChanged"
                                         Background="{Binding AgentId, Converter={StaticResource EngineBrush}, ConverterParameter=dim}"
                                         BorderBrush="{Binding AgentId, Converter={StaticResource EngineBrush}, ConverterParameter=line}">
                                     <Border.Style>

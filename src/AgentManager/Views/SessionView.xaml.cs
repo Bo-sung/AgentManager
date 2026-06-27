@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using AgentManager.Persistence;
 using AgentManager.ViewModels;
 
@@ -237,4 +238,31 @@ public partial class SessionView : UserControl
             s.PermissionMode = opt.Id;
         if (PermMenuBtn is { } t) t.IsChecked = false;
     }
+
+    // ----- quick-reply 키보드 선택 (Claude 데스크톱식) -----
+    private void QuickReplyPanel_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        // 선택지가 떠 입력창이 내려가면 컨테이너에 포커스 → 키보드로 바로 선택
+        if (e.NewValue is true && sender is UIElement el)
+            el.Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => el.Focus()));
+    }
+
+    private void QuickReply_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (Vm?.ActiveSession is not { } s || s.QuickReplies.Count == 0) return;
+        if (e.Key == Key.Escape) { s.QuickReplies.Clear(); e.Handled = true; return; } // Esc → 직접 입력 복귀
+        if (MarkerForKey(e.Key) is not { } marker) return;
+        foreach (var o in s.QuickReplies)
+            if (string.Equals(o.Marker, marker, StringComparison.OrdinalIgnoreCase))
+            { Vm.SendQuickReply(o); e.Handled = true; return; }
+    }
+
+    /// <summary>키 → 선택지 마커 문자(A–Z / 1–9). 매칭 없으면 null.</summary>
+    private static string? MarkerForKey(Key k) => k switch
+    {
+        >= Key.A and <= Key.Z => ((char)('A' + (k - Key.A))).ToString(),
+        >= Key.D1 and <= Key.D9 => ((char)('1' + (k - Key.D1))).ToString(),
+        >= Key.NumPad1 and <= Key.NumPad9 => ((char)('1' + (k - Key.NumPad1))).ToString(),
+        _ => null,
+    };
 }
