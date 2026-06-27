@@ -1339,10 +1339,13 @@
                                                 <DockPanel Margin="9,7,9,5">
                                                     <ToggleButton DockPanel.Dock="Left" Style="{StaticResource SelectCheck}" Margin="0,0,8,0"
                                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
-                                                    <Button DockPanel.Dock="Right" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4,0"
-                                                            VerticalAlignment="Center" Foreground="{DynamicResource Txt3}" ToolTip="{StaticResource L.Copy}"
+                                                    <Button DockPanel.Dock="Right" Style="{StaticResource CardCopyButton}" Margin="6,0,0,0"
+                                                            ToolTip="{StaticResource L.Copy}"
                                                             Command="{Binding DataContext.CopyReportCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                        <controls:IconView Icon="{StaticResource IconCopy}" Width="13" Height="13"/>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <controls:IconView Icon="{StaticResource IconCopy}" Width="12" Height="12" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{StaticResource L.Copy}" FontSize="10.5" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                                        </StackPanel>
                                                     </Button>
                                                     <Border DockPanel.Dock="Left" Background="{DynamicResource AccentDim}" CornerRadius="3" Padding="5,1" Margin="0,0,7,0" VerticalAlignment="Center"
                                                             Visibility="{Binding HasEngine, Converter={StaticResource BoolVis}}">

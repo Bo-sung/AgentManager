@@ -318,6 +318,31 @@
         </Setter>
     </Style>
 
+    <!-- ===== Compact copy chip (report cards) — icon + label, accent on hover ===== -->
+    <Style x:Key="CardCopyButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="{DynamicResource Bg3}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Txt1}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Line}"
+                            BorderThickness="1" CornerRadius="6" Padding="7,3">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentDim}"/>
+                            <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ===== Titlebar menu button ===== -->
     <Style x:Key="MenuButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
