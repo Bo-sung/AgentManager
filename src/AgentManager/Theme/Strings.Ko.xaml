@@ -186,6 +186,7 @@
     <sys:String x:Key="L.Isolated">격리</sys:String>
     <sys:String x:Key="L.WorktreeShared">공유 (메인 트리) — 브랜치 생성 안 함</sys:String>
     <sys:String x:Key="L.PermissionMode">권한 / 안전 모드</sys:String>
+    <sys:String x:Key="L.PickOne">선택 · Pick one</sys:String>
     <sys:String x:Key="L.CreateAsWorker">워커로 생성</sys:String>
     <sys:String x:Key="L.Authentication">인증</sys:String>
     <sys:String x:Key="L.AuthSubscription">구독</sys:String>

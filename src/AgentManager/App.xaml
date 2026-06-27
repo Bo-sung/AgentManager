@@ -21,6 +21,7 @@
             <controls:SelectedBrushConverter x:Key="SelBrush"/>
             <controls:PathToThumbnailConverter x:Key="PathThumb"/>
             <controls:RiskBrushConverter x:Key="RiskBrush"/>
+            <controls:EngineBrushConverter x:Key="EngineBrush"/>
             <ObjectDataProvider x:Key="SandboxModes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="agents:SandboxMode"/>
