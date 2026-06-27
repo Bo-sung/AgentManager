@@ -43,9 +43,16 @@ public static class EngineRegistry
         new("gx", "GX", "Codex",           "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true, "https://github.com/openai/codex"),
         // Google 계열은 agy(Antigravity)로 일원화 — 구형 Gemini CLI는 제거됨.
         // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략.
-        // 슬러그 형식 실측 확인: `agy -p "Say OK" --model gemini-3.5-flash` → OK (2026-06-13)
+        // 추론 강도가 모델 label에 내장 — `--model`은 `agy models`의 정확한 label만 인식한다(슬러그
+        // 접미사는 무효 → 폴백). 실측(2026-06-27 cli.log): `--model "Gemini 3.5 Flash (High)"` → 해석
+        // 성공(label 그대로 backend 전달); `gemini-3.5-flash-high`/엉터리값 → "not recognized" → 기본
+        // (Flash Medium) 폴백. 그래서 목록 = `agy models` 출력 label 그대로(= 모델 선택이 곧 추론 선택).
         new("agy", "AG", "Antigravity",    "agy",
-            ["default", "gemini-3.5-flash", "gemini-3.1-pro", "claude-sonnet-4-6", "claude-opus-4-6", "gpt-oss-120b"],
+            ["default",
+             "Gemini 3.5 Flash (Low)", "Gemini 3.5 Flash (Medium)", "Gemini 3.5 Flash (High)",
+             "Gemini 3.1 Pro (Low)", "Gemini 3.1 Pro (High)",
+             "Claude Sonnet 4.6 (Thinking)", "Claude Opus 4.6 (Thinking)",
+             "GPT-OSS 120B (Medium)"],
             "google · pty", true, "https://antigravity.google"),
         // pi(pi.dev): 멀티 provider harness. node dist/cli.js --mode rpc(RPC). 모델="provider/id"(~/.pi 기본값이면 "default").
         // 모델 목록은 사용자 ~/.pi provider 설정에 따라 달라짐(`pi --list-models`가 정답). 아래는 흔한 후보 — default는 ~/.pi 기본값 사용.
