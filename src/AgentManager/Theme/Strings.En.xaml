@@ -440,6 +440,8 @@
     <sys:String x:Key="L.ThinkingActivity">thinking...</sys:String>
     <sys:String x:Key="L.ToolRunning">{0}...</sys:String>
     <sys:String x:Key="L.Stderr">stderr</sys:String>
+    <sys:String x:Key="L.StaleSessionHint">This conversation no longer exists in the engine and can't be resumed.</sys:String>
+    <sys:String x:Key="L.DeleteDeadSession">Delete this session</sys:String>
     <sys:String x:Key="L.ToolDone">done</sys:String>
     <sys:String x:Key="L.ToolError">error</sys:String>
     <sys:String x:Key="L.Result">result</sys:String>

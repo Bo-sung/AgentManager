@@ -440,6 +440,8 @@
     <sys:String x:Key="L.ThinkingActivity">thinking...</sys:String>
     <sys:String x:Key="L.ToolRunning">{0}...</sys:String>
     <sys:String x:Key="L.Stderr">stderr</sys:String>
+    <sys:String x:Key="L.StaleSessionHint">이 대화는 엔진에서 사라져 더 이상 이어갈 수 없습니다.</sys:String>
+    <sys:String x:Key="L.DeleteDeadSession">이 세션 삭제</sys:String>
     <sys:String x:Key="L.ToolDone">done</sys:String>
     <sys:String x:Key="L.ToolError">error</sys:String>
     <sys:String x:Key="L.Result">result</sys:String>

@@ -574,7 +574,13 @@ public sealed partial class AppViewModel
                 RecordUsage(s.AgentId, q);
                 break;
             case EngineError e when !SuppressStderr(s, e.Message):
-                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), e.Message));
+                // claude can't --resume a conversation that no longer exists → the session is dead.
+                // Flag it (cc only for now; other engines have different signatures) so the error
+                // block can offer a delete action. Don't stack the prompt on repeated stderr lines.
+                var staleSession = s.AgentId == "cc"
+                    && e.Message.Contains("No conversation found with session ID", StringComparison.OrdinalIgnoreCase);
+                if (staleSession && s.Transcript.LastOrDefault() is ErrorBlock { IsStaleSession: true }) break;
+                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), e.Message) { IsStaleSession = staleSession });
                 break;
             case TurnCompleted c:
                 _liveText.Remove(s.Id); // 스트리밍 잔여 해제 (최종 텍스트 미도착 시 라이브 내용 그대로 유지)

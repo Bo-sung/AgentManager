@@ -216,6 +216,15 @@
                                Foreground="{DynamicResource Err}" Margin="0,0,0,6"/>
                     <TextBox Style="{StaticResource SelectableText}" Text="{Binding Body, Mode=OneWay}"
                              FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Txt1}"/>
+                    <!-- Dead session (claude resume target gone): offer to delete it -->
+                    <StackPanel Margin="0,10,0,0" Visibility="{Binding IsStaleSession, Converter={StaticResource BoolVis}}">
+                        <TextBlock Text="{StaticResource L.StaleSessionHint}" FontSize="11" Foreground="{DynamicResource Txt2}"
+                                   TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <Button Style="{StaticResource ChipButton}" HorizontalAlignment="Left"
+                                Command="{Binding DataContext.DeleteSessionCommand, ElementName=Root}">
+                            <TextBlock Text="{StaticResource L.DeleteDeadSession}"/>
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </DataTemplate>

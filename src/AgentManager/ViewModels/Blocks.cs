@@ -137,6 +137,9 @@ public sealed class ErrorBlock(string title, string body) : TranscriptItem
 {
     public string Title { get; } = title;
     public string Body { get; } = body;
+    /// <summary>True when this is claude's "no conversation found" resume failure — the engine
+    /// conversation is gone so the session can't continue; the template surfaces a delete action.</summary>
+    public bool IsStaleSession { get; init; }
 }
 
 /// <summary>Model reasoning (Claude thinking block) — collapsed by default.</summary>
