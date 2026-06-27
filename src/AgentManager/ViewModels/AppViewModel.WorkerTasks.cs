@@ -34,6 +34,13 @@ public sealed class WorkerTaskViewModel : ObservableObject
 
     public string ReportPreview => Report.Length <= 600 ? Report : Report[..599] + "…";
     public string PromptPreview => Prompt.Length <= 200 ? Prompt : Prompt[..199] + "…";
+
+    /// <summary>Report-inbox multi-select state (UI-only; copy actions read it, no domain meaning).</summary>
+    private bool _isSelected;
+    public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
+
+    /// <summary>Plain-text form placed on the clipboard: title header + the full report body.</summary>
+    public string ClipboardText => string.IsNullOrWhiteSpace(Title) ? Report : $"## {Title}\n\n{Report}";
     public string EngineLabel => string.IsNullOrEmpty(Engine) ? "" : Engine.ToUpperInvariant();
     public bool HasEngine => !string.IsNullOrEmpty(Engine);
     public bool IsRunning => Status == WorkerTaskStatus.Running;
@@ -93,6 +100,9 @@ public sealed partial class AppViewModel
     /// <summary>Completed-task reports addressed to the active session — the side "reports" tab feed.</summary>
     public ObservableCollection<WorkerTaskViewModel> ActiveTaskReports { get; } = [];
     public bool HasActiveTaskReports => ActiveTaskReports.Count > 0;
+    /// <summary>How many report cards are checked — drives the "선택 복사 (N)" button label/visibility.</summary>
+    public int SelectedReportCount => ActiveTaskReports.Count(r => r.IsSelected);
+    public bool HasSelectedReports => SelectedReportCount > 0;
 
     /// <summary>Rebuild the active session's report feed (call on session change + store change).</summary>
     public void RebuildTaskReports()
@@ -100,8 +110,26 @@ public sealed partial class AppViewModel
         ActiveTaskReports.Clear();
         if (ActiveSession is { } a)
             foreach (var d in _taskStore.ReportsForOrigin(a.Id))
-                ActiveTaskReports.Add(new WorkerTaskViewModel(d));
+            {
+                var vm = new WorkerTaskViewModel(d);
+                vm.PropertyChanged += OnReportSelectionChanged;
+                ActiveTaskReports.Add(vm);
+            }
         OnChanged(nameof(HasActiveTaskReports));
+        OnChanged(nameof(SelectedReportCount));
+        OnChanged(nameof(HasSelectedReports));
+    }
+
+    private void OnReportSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(WorkerTaskViewModel.IsSelected)) return;
+        OnChanged(nameof(SelectedReportCount));
+        OnChanged(nameof(HasSelectedReports));
+    }
+
+    private static void CopyToClipboard(string text)
+    {
+        try { System.Windows.Clipboard.SetText(text ?? ""); } catch { /* clipboard busy — ignore */ }
     }
 
     public bool HasBacklog => BacklogTasks.Count > 0;
@@ -132,6 +160,9 @@ public sealed partial class AppViewModel
     public RelayCommand MoveTaskDownCommand { get; private set; } = null!;
     public RelayCommand ClearFinishedCommand { get; private set; } = null!;
     public RelayCommand ToggleQueueHistoryCommand { get; private set; } = null!;
+    public RelayCommand CopyReportCommand { get; private set; } = null!;
+    public RelayCommand CopyAllReportsCommand { get; private set; } = null!;
+    public RelayCommand CopySelectedReportsCommand { get; private set; } = null!;
 
     /// <summary>Per-worker: whether the finished-task history is expanded (survives view rebuilds).</summary>
     private readonly HashSet<string> _expandedQueueHistory = [];
@@ -196,6 +227,20 @@ public sealed partial class AppViewModel
             p => p is WorkerTaskViewModel { CanRun: true });
         RunQueueCommand = new RelayCommand(p => { if (p is WorkerQueueViewModel q) _ = RunQueueAsync(q.WorkerId); },
             p => p is WorkerQueueViewModel { CanRunQueue: true });
+
+        // Report inbox copy: one card, all cards, or the checked subset → clipboard (manual hand-off to the session).
+        CopyReportCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) CopyToClipboard(t.ClipboardText); });
+        CopyAllReportsCommand = new RelayCommand(_ =>
+        {
+            if (ActiveTaskReports.Count == 0) return;
+            CopyToClipboard(string.Join("\n\n---\n\n", ActiveTaskReports.Select(r => r.ClipboardText)));
+        });
+        CopySelectedReportsCommand = new RelayCommand(_ =>
+        {
+            var picked = ActiveTaskReports.Where(r => r.IsSelected).ToList();
+            if (picked.Count == 0) return;
+            CopyToClipboard(string.Join("\n\n---\n\n", picked.Select(r => r.ClipboardText)));
+        });
     }
 
     private void OnTaskStoreChanged() { RebuildTaskViews(); SaveState(); }

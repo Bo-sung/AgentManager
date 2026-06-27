@@ -288,6 +288,36 @@
         </Setter>
     </Style>
 
+    <!-- ===== Multi-select check (report inbox cards) — small box, accent fill + check when selected ===== -->
+    <Style x:Key="SelectCheck" TargetType="ToggleButton">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="bx" Width="16" Height="16" CornerRadius="4"
+                            Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1.2">
+                        <Path x:Name="ck" Data="M 1 5 L 4 8 L 9 2" Stretch="Uniform" Width="9" Height="7"
+                              Stroke="{DynamicResource AccentText}" StrokeThickness="1.8"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                              Visibility="Collapsed"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="bx" Property="Background" Value="{DynamicResource Accent}"/>
+                            <Setter TargetName="bx" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                            <Setter TargetName="ck" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bx" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ===== Titlebar menu button ===== -->
     <Style x:Key="MenuButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>

@@ -1301,11 +1301,23 @@
                 <TabItem Header="{StaticResource L.ReportInbox}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="12">
-                            <Button Style="{StaticResource ChipButton}" HorizontalAlignment="Left" Margin="0,0,0,10"
-                                    Visibility="{Binding DataContext.CanMergeReports, ElementName=Root, Converter={StaticResource BoolVis}}"
-                                    Command="{Binding DataContext.MergeReportsCommand, ElementName=Root}">
-                                <TextBlock><Run Text="{StaticResource L.MergePaste}"/><Run Text=" ("/><Run Text="{Binding DataContext.ReadyReportsActiveCount, ElementName=Root, Mode=OneWay}"/><Run Text=")"/></TextBlock>
-                            </Button>
+                            <WrapPanel Margin="0,0,0,10">
+                                <Button Style="{StaticResource ChipButton}" Margin="0,0,6,6"
+                                        Visibility="{Binding DataContext.CanMergeReports, ElementName=Root, Converter={StaticResource BoolVis}}"
+                                        Command="{Binding DataContext.MergeReportsCommand, ElementName=Root}">
+                                    <TextBlock><Run Text="{StaticResource L.MergePaste}"/><Run Text=" ("/><Run Text="{Binding DataContext.ReadyReportsActiveCount, ElementName=Root, Mode=OneWay}"/><Run Text=")"/></TextBlock>
+                                </Button>
+                                <Button Style="{StaticResource ChipButton}" Margin="0,0,6,6"
+                                        Visibility="{Binding DataContext.HasActiveTaskReports, ElementName=Root, Converter={StaticResource BoolVis}}"
+                                        Command="{Binding DataContext.CopyAllReportsCommand, ElementName=Root}">
+                                    <TextBlock Text="{StaticResource L.CopyAll}"/>
+                                </Button>
+                                <Button Style="{StaticResource ChipButton}" Margin="0,0,0,6"
+                                        Visibility="{Binding DataContext.HasSelectedReports, ElementName=Root, Converter={StaticResource BoolVis}}"
+                                        Command="{Binding DataContext.CopySelectedReportsCommand, ElementName=Root}">
+                                    <TextBlock><Run Text="{StaticResource L.CopySelected}"/><Run Text=" ("/><Run Text="{Binding DataContext.SelectedReportCount, ElementName=Root, Mode=OneWay}"/><Run Text=")"/></TextBlock>
+                                </Button>
+                            </WrapPanel>
                             <TextBlock Text="{StaticResource L.NoReports}" FontFamily="{StaticResource Mono}" FontSize="10.5"
                                        Foreground="{DynamicResource Txt3}" Margin="2,6" TextWrapping="Wrap">
                                 <TextBlock.Style>
@@ -1325,11 +1337,18 @@
                                         <Border Margin="0,0,0,8" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="7">
                                             <StackPanel>
                                                 <DockPanel Margin="9,7,9,5">
+                                                    <ToggleButton DockPanel.Dock="Left" Style="{StaticResource SelectCheck}" Margin="0,0,8,0"
+                                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+                                                    <Button DockPanel.Dock="Right" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4,0"
+                                                            VerticalAlignment="Center" Foreground="{DynamicResource Txt3}" ToolTip="{StaticResource L.Copy}"
+                                                            Command="{Binding DataContext.CopyReportCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                        <controls:IconView Icon="{StaticResource IconCopy}" Width="13" Height="13"/>
+                                                    </Button>
                                                     <Border DockPanel.Dock="Left" Background="{DynamicResource AccentDim}" CornerRadius="3" Padding="5,1" Margin="0,0,7,0" VerticalAlignment="Center"
                                                             Visibility="{Binding HasEngine, Converter={StaticResource BoolVis}}">
                                                         <TextBlock Text="{Binding EngineLabel}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Accent}"/>
                                                     </Border>
-                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                                 </DockPanel>
                                                 <Border BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,1,0,0" Padding="9,7" MaxHeight="160">
                                                     <ScrollViewer VerticalScrollBarVisibility="Auto">
