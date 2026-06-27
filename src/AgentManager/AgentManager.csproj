@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.13.0: 워커 태스크 큐(스킬→백로그 · Core WorkerTaskStore · 워커별 큐) · 탭형 사이드 패인 · 작업 보고 수신함+복사 -->
-    <Version>1.13.0</Version>
+    <!-- 1.13.1: 세션 삭제 시 에이전트 브랜치 정리(머지된 것만 삭제, 미머지 보존) — 브랜치 누적 버그 수정 -->
+    <Version>1.13.1</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
