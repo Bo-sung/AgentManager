@@ -190,6 +190,22 @@ public sealed class WorkerTaskStore
         if (removed > 0) Changed?.Invoke();
     }
 
+    /// <summary>A worker was deleted: drop its finished (done/failed) history and return its still-pending
+    /// tasks to the project backlog (work isn't lost — it can be reassigned). Without this, a deleted
+    /// worker's tasks linger and render a ghost queue card.</summary>
+    public void RemoveWorker(string workerId)
+    {
+        if (string.IsNullOrEmpty(workerId)) return;
+        var changed = _tasks.RemoveAll(t => t.AssignedWorkerId == workerId && WorkerTaskStatus.IsFinished(t.Status)) > 0;
+        for (int i = 0; i < _tasks.Count; i++)
+        {
+            if (_tasks[i].AssignedWorkerId != workerId) continue;
+            _tasks[i] = _tasks[i] with { AssignedWorkerId = "", Status = WorkerTaskStatus.Backlog, Order = 0 };
+            changed = true;
+        }
+        if (changed) Changed?.Invoke();
+    }
+
     private int IndexOf(string taskId) => _tasks.FindIndex(t => t.Id == taskId);
 
     private void Replace(string taskId, WorkerTaskDto dto)

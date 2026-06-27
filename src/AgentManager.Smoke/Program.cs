@@ -311,13 +311,28 @@ static void WorkerTaskStoreCheck()
     rs.SetStatus("p2", WorkerTaskStatus.Done);  // now finished → joins the feed in order
     var okReportOrder = rs.ReportsForOrigin("orchX").Select(t => t.Id).SequenceEqual(["p1", "p2"]);
 
+    // worker removed: pending tasks return to backlog, finished history dropped, other workers untouched
+    var ws = new WorkerTaskStore();
+    ws.Load(
+    [
+        new WorkerTaskDto { Id = "k1", ProjectId = proj, Prompt = "a", AssignedWorkerId = "WX", Status = WorkerTaskStatus.Assigned, Order = 1 },
+        new WorkerTaskDto { Id = "k2", ProjectId = proj, Prompt = "b", AssignedWorkerId = "WX", Status = WorkerTaskStatus.Done, Order = 2 },
+        new WorkerTaskDto { Id = "k3", ProjectId = proj, Prompt = "c", AssignedWorkerId = "WY", Status = WorkerTaskStatus.Assigned, Order = 1 },
+    ]);
+    ws.RemoveWorker("WX");
+    var okRemoveWorker = ws.Find("k1") is { Status: WorkerTaskStatus.Backlog, AssignedWorkerId: "" }  // pending → backlog
+        && ws.Find("k2") is null                                       // finished → dropped
+        && ws.Backlog(proj).Any(t => t.Id == "k1")                     // shows in backlog
+        && !ws.WorkerIdsWithTasks(proj).Contains("WX")                 // no ghost queue
+        && ws.QueueFor("WY").Single().Id == "k3";                      // other worker untouched
+
     var ok = okIngest && okBad && okAssign && okNext1 && okRunning && okNext2 && okAssignedTo
         && okThird && okMove && okUnassign && okIso && okClear && okDelete && okReconcile
-        && okReport && okReportOrder && changes > 0;
+        && okReport && okReportOrder && okRemoveWorker && changes > 0;
     Console.WriteLine($"[worker-task-store] ingest={okIngest} bad={okBad} assign={okAssign} next1={okNext1} "
         + $"running={okRunning} next2={okNext2} assignedTo={okAssignedTo} reorder={okThird && okMove} "
         + $"unassign={okUnassign} isolation={okIso} clear={okClear} delete={okDelete} reconcile={okReconcile} "
-        + $"report={okReport && okReportOrder} changes={changes}");
+        + $"report={okReport && okReportOrder} removeWorker={okRemoveWorker} changes={changes}");
     Console.WriteLine($"[worker-task-store] {(ok ? "PASS" : "FAIL")}");
     try { Directory.Delete(tmp, true); } catch { }
     Environment.Exit(ok ? 0 : 1);

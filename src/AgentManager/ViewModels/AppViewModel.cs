@@ -430,6 +430,8 @@ public sealed partial class AppViewModel : ObservableObject
         }
         s.PropertyChanged -= SessionStatusWatch;
         _allSessions.Remove(s);
+        // Worker gone → release its tasks (pending back to backlog, finished dropped) so no ghost queue lingers.
+        if (s.IsWorker) _taskStore.RemoveWorker(s.Id);
         // 가져온 CLI 세션을 지우면 재발견으로 되살아나지 않게 dismiss로 기록.
         if (!string.IsNullOrEmpty(s.EngineSessionId)) _dismissedCliSessions.Add(s.EngineSessionId!);
         if (ReferenceEquals(ActiveSession, s)) ActiveSession = null;
