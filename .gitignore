@@ -486,3 +486,6 @@ dist/
 
 # AgentManager worker-prompt skill task spool (in-cwd fallback)
 .am/
+
+# Stray npm lockfile (this is a .NET repo — no package.json)
+package-lock.json
