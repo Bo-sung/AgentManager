@@ -192,6 +192,7 @@
     <sys:String x:Key="L.SelectedSuffix"> selected</sys:String>
     <sys:String x:Key="L.MultiHint">↑↓ move · Space select · Ctrl+Enter submit · Esc type</sys:String>
     <sys:String x:Key="L.PrevQuestion">Previous question</sys:String>
+    <sys:String x:Key="L.BranchShared">⊟ main tree (shared)</sys:String>
     <sys:String x:Key="L.PermissionMode">Permission / safety mode</sys:String>
     <sys:String x:Key="L.PickOne">Pick one</sys:String>
     <sys:String x:Key="L.CustomInput">Type instead</sys:String>

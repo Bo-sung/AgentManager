@@ -48,8 +48,9 @@ public sealed class SessionViewModel : ObservableObject
     public bool WorktreeAttempted { get; set; }
 
     /// <summary>True면 worktree 격리를 건너뛰고 프로젝트 루트에서 작업(EnsureWorktreeAsync가 생성 생략).
-    /// New Agent 모달의 "격리" 토글을 끄면 설정됨. 영속됨.</summary>
-    public bool WorktreeOptOut { get; set; }
+    /// New Agent 모달의 "워크트리 미사용"을 켜면 설정됨. 영속됨.</summary>
+    private bool _worktreeOptOut;
+    public bool WorktreeOptOut { get => _worktreeOptOut; set { if (Set(ref _worktreeOptOut, value)) OnChanged(nameof(BranchDisplay)); } }
 
     public SessionViewModel(
         string id,
@@ -99,6 +100,11 @@ public sealed class SessionViewModel : ObservableObject
 
     /// <summary>Last segment of the branch, e.g. "agent/foo-bar" → "foo-bar" (composer pill).</summary>
     public string BranchTail => Branch.Contains('/') ? Branch[(Branch.LastIndexOf('/') + 1)..] : Branch;
+
+    /// <summary>Branch label for list/header pills. When the user opted out of a worktree, no branch is
+    /// ever created (the agent works in the project's main tree) — so showing the phantom "agent/…"
+    /// name is misleading; show a "shared tree" marker instead.</summary>
+    public string BranchDisplay => WorktreeOptOut ? AgentManager.App.L("L.BranchShared") : Branch;
 
     /// <summary>Archived sessions are hidden from the Active/Project groups (kept in storage).</summary>
     private bool _isArchived;

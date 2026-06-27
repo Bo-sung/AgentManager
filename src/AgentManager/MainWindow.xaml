@@ -738,7 +738,7 @@
                                                 </StackPanel>
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontSize="12.5" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt2}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding BranchDisplay}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt2}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Accent}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
@@ -968,7 +968,7 @@
                                                 </Ellipse>
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontSize="12.5" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt2}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding BranchDisplay}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt2}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding Activity}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Accent}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
@@ -1086,7 +1086,7 @@
                                                 </Border>
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Title}" FontSize="12.5" Foreground="{DynamicResource Txt2}" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt3}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding BranchDisplay}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt3}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
                                             </DockPanel>
                                         </Border>
