@@ -357,13 +357,17 @@
                                                     </Style.Triggers>
                                                 </Style>
                                             </DockPanel.Style>
-                                            <Button DockPanel.Dock="Right" Cursor="Hand" Height="28" Padding="16,0" Margin="8,0,0,0" ToolTip="{StaticResource L.SubmitTip}"
+                                            <Button DockPanel.Dock="Right" Cursor="Hand" Height="32" MinWidth="84" Padding="22,0" Margin="8,0,0,0" ToolTip="{StaticResource L.SubmitTip}"
                                                     Command="{Binding DataContext.ChoiceSubmitCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     IsEnabled="{Binding ActiveChoice.Current.HasSelection}">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
-                                                        <Border x:Name="sb" CornerRadius="14" Background="{Binding AgentId, Converter={StaticResource EngineBrush}, ConverterParameter=main}">
-                                                            <TextBlock Text="{StaticResource L.Submit}" Foreground="#FF0A0E12" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                        <Border x:Name="sb" CornerRadius="16" Padding="{TemplateBinding Padding}"
+                                                                Background="{Binding AgentId, Converter={StaticResource EngineBrush}, ConverterParameter=main}">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <TextBlock Text="{StaticResource L.Submit}" Foreground="#FF0A0E12" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                <controls:IconView Icon="{StaticResource IconSend}" Width="12" Height="12" Foreground="#FF0A0E12" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                                                            </StackPanel>
                                                         </Border>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="sb" Property="Opacity" Value="0.88"/></Trigger>
