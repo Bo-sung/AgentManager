@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.14.0
+`WPF · .NET 10 · Windows` · v1.14.1
 
 ---
 
@@ -215,6 +215,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.14.1** — Claude Code 에이전트 런타임(`.claude/worktrees/` · `settings.local.json`) gitignore
 - **1.14.0** — Claude Design 동기화(오케스트레이터 워커 큐 + 위임 UI 재디자인) · 워커 보고 라우팅 수정(origin 유실) · 영속화 견고화(쓰기 재시도·코얼레싱·세션 격리·저장실패 경고) · 삭제 워커 작업 정리
 - **1.13.3** — 죽은 cc 세션(resume 대상이 엔진에서 사라짐) 에러 블록에 "이 세션 삭제" 버튼 추가
 - **1.13.2** — 보고 수신함: 전체 복사 → 전체 선택 토글, 선택 중엔 카드별 복사 버튼 숨김(일괄 모드 일관성)

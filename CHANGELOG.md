@@ -2,6 +2,9 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.14.1
+- **gitignore**: Claude Code 에이전트 런타임 무시 — 서브에이전트 worktree(`.claude/worktrees/`)와 머신 로컬 설정(`.claude/settings.local.json`)이 repo에 커밋되지 않도록.
+
 ## 1.14.0
 Claude Design 동기화(오케스트레이터·위임) + 워커 보고 라우팅 수정 + 영속화 견고화.
 - **오케스트레이터 워커 큐 재디자인**: 백로그/워커별 큐를 디자인 갱신본에 맞춤 — per-engine 브랜드 배지 · "N 대기" pill · 실행 중 accent 강조 · ⚡큐 실행/▶실행 칩 · ↑↓ 끝에서 비활성 · 완료 기록(실패=err) · 할당 피커 엔진 아이콘.

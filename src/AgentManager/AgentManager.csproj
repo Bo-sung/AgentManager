@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.14.0: Claude Design 동기화(오케스트레이터·위임 재디자인) · 워커 보고 라우팅 수정 · 영속화 견고화(P1~P4) -->
-    <Version>1.14.0</Version>
+    <!-- 1.14.1: Claude Code 에이전트 런타임(.claude/worktrees · settings.local.json) gitignore -->
+    <Version>1.14.1</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
