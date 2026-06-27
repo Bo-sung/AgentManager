@@ -18,6 +18,8 @@ public sealed class WorkerDelegationViewModel : ObservableObject
     public string WorkerAgentId { get; init; } = "cc";
     public string WorkerBadge { get; init; } = "CC";
     public string WorkerModel { get; init; } = "";
+    /// <summary>Lowercase engine id for the brand EngineIcon style (alias of WorkerAgentId).</summary>
+    public string AgentId => WorkerAgentId;
 
     public WorkerDelegationViewModel(string mainSessionId, string workerSessionId, string prompt)
     {
@@ -37,6 +39,7 @@ public sealed class WorkerDelegationViewModel : ObservableObject
                 OnChanged(nameof(IsRunning));
                 OnChanged(nameof(IsReady));
                 OnChanged(nameof(IsFailed));
+                OnChanged(nameof(IsLive));
                 OnChanged(nameof(StatusLabel));
             }
         }
@@ -44,6 +47,8 @@ public sealed class WorkerDelegationViewModel : ObservableObject
     public bool IsRunning => _state == DelegationState.Running;
     public bool IsReady => _state == DelegationState.Ready;
     public bool IsFailed => _state == DelegationState.Failed;
+    /// <summary>In-flight (sent/running) — drives the card's accent "live" border.</summary>
+    public bool IsLive => _state is DelegationState.Running or DelegationState.Pending;
     public string StatusLabel => _state switch
     {
         DelegationState.Running => AgentManager.App.L("L.DelegRunning"),

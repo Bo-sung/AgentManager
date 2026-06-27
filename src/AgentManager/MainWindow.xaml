@@ -123,13 +123,42 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:DelegationBlock}">
-            <Border Margin="40,8,0,8" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="12">
+            <Border Margin="40,8,0,8" Background="{DynamicResource Bg1}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+                        <Style.Triggers>
+                            <!-- in-flight delegation gets an accent border -->
+                            <DataTrigger Binding="{Binding Delegation.IsLive}" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <StackPanel DataContext="{Binding Delegation}">
                     <DockPanel>
-                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="4" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,9,0">
-                            <TextBlock Text="{Binding WorkerBadge}" FontFamily="{StaticResource Mono}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Txt1}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="4" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <controls:IconView Style="{StaticResource EngineIcon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding StatusLabel}" FontSize="10" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                        <!-- status chip: color + icon by state -->
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="9,0,0,0">
+                            <controls:IconView Icon="{StaticResource IconCheck}" Width="11" Height="11" Foreground="{DynamicResource Ok}" Margin="0,0,5,0" VerticalAlignment="Center"
+                                               Visibility="{Binding IsReady, Converter={StaticResource BoolVis}}"/>
+                            <controls:IconView Icon="{StaticResource IconAlert}" Width="11" Height="11" Foreground="{DynamicResource Err}" Margin="0,0,5,0" VerticalAlignment="Center"
+                                               Visibility="{Binding IsFailed, Converter={StaticResource BoolVis}}"/>
+                            <TextBlock Text="{Binding StatusLabel}" FontFamily="{StaticResource Mono}" FontSize="9.5" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource Txt2}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Accent}"/></DataTrigger>
+                                            <DataTrigger Binding="{Binding IsReady}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Ok}"/></DataTrigger>
+                                            <DataTrigger Binding="{Binding IsFailed}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Err}"/></DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="{StaticResource L.Delegation}" Style="{StaticResource Lbl}" Foreground="{DynamicResource Accent}"/>
                             <TextBlock FontSize="12" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis">
@@ -141,9 +170,9 @@
                         <TextBlock Text="{Binding Prompt}" FontSize="11" Foreground="{DynamicResource Txt2}" TextWrapping="Wrap"/>
                     </Border>
                     <StackPanel Visibility="{Binding IsReady, Converter={StaticResource BoolVis}}">
-                        <TextBlock Text="{StaticResource L.Report}" Style="{StaticResource Lbl}" Margin="0,11,0,5"/>
-                        <Border Background="{DynamicResource Bg2}" CornerRadius="6" Padding="9">
-                            <TextBlock Text="{Binding Report}" FontSize="11" Foreground="{DynamicResource Txt1}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{StaticResource L.Report}" Style="{StaticResource Lbl}" Margin="0,11,0,5" Foreground="{DynamicResource Ok}"/>
+                        <Border Background="{DynamicResource AddBg}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="9">
+                            <TextBlock Text="{Binding Report}" FontSize="11" Foreground="{DynamicResource Txt0}" TextWrapping="Wrap"/>
                         </Border>
                     </StackPanel>
                     <StackPanel Visibility="{Binding IsFailed, Converter={StaticResource BoolVis}}">
@@ -163,10 +192,18 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Style="{StaticResource AccentButton}" Visibility="{Binding IsReady, Converter={StaticResource BoolVis}}"
                                     Command="{Binding DataContext.PasteReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
-                                <TextBlock Text="{StaticResource L.PasteReport}" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconCopy}" Width="12" Height="12" Foreground="{DynamicResource AccentText}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{StaticResource L.PasteReport}" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold"/>
+                                </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Redelegate}" Visibility="{Binding IsFailed, Converter={StaticResource BoolVis}}"
-                                    Command="{Binding DataContext.RedelegateCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                            <Button Style="{StaticResource ChipButton}" Visibility="{Binding IsFailed, Converter={StaticResource BoolVis}}"
+                                    Command="{Binding DataContext.RedelegateCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                                <StackPanel Orientation="Horizontal">
+                                    <controls:IconView Icon="{StaticResource IconRefresh}" Width="12" Height="12" Foreground="{DynamicResource Txt1}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{StaticResource L.Redelegate}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </DockPanel>
                 </StackPanel>
