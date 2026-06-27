@@ -44,7 +44,9 @@ public sealed partial class AppViewModel
     public void SendQuickReply(Core.QuickReplyOption option)
     {
         var s = ActiveSession;
-        if (s is null || !s.CanSend) return;
+        // 빠른응답은 자체 텍스트(option.Text)를 보낸다 — CanSend(=draft 비어있지 않음)에 의존하면
+        // 입력창이 빈 정상 케이스에서 조용히 무시된다. 실행 중만 아니면 보낸다.
+        if (s is null || s.IsRunning) return;
         _ = RunTurnAsync(s, option.Text);   // RunTurnAsync clears QuickReplies at start
     }
 
