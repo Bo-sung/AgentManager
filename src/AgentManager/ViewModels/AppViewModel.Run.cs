@@ -58,8 +58,10 @@ public sealed partial class AppViewModel
     /// <summary>Parse the last assistant message for A/B/1/2 choices and surface them as buttons.</summary>
     private void PopulateQuickReplies(SessionViewModel s)
     {
+        // 구조화 ask-user 선택지가 활성이면(스풀 ingest가 채움) 휴리스틱이 덮어쓰지 않는다 —
+        // 에이전트가 턴 중간에 ask.json을 쓰면 ingest가 먼저 띄우고 TurnCompleted가 뒤에 와서 지우던 문제.
+        if (s.ChoiceQuestion is not null) return;
         s.QuickReplies.Clear();
-        s.ChoiceQuestion = null; // heuristic has no question; ask-user ingest sets it afterward if present
         if (s.Status == "error") return;
         var last = s.Transcript.OfType<AgentTextBlock>().LastOrDefault();
         if (last is null) return;
