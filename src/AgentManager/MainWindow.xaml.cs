@@ -42,6 +42,9 @@ public partial class MainWindow : Window
         Closing += (_, _) =>
         {
             SaveWindowPlacement();
+            // 종료 전 마지막 상태를 동기로 강제 저장 — 대기 중인 디바운스 저장을 잃지 않도록(데이터 손실 방지).
+            // Dispose()가 진행 중 세션을 취소하기 전에 호출해 현재 트랜스크립트를 그대로 캡처한다.
+            _vm.FlushStateNow(synchronousWrite: true);
             _vm.Dispose();
         };
     }
