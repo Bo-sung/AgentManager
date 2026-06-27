@@ -493,3 +493,6 @@ dist/
 
 # Stray npm lockfile (this is a .NET repo — no package.json)
 package-lock.json
+
+# Temp design handoffs / scratch prompts (one-off briefs for Claude Design — not project docs)
+docs/DESIGN_HANDOFF_*.md
