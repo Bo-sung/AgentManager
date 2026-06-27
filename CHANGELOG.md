@@ -2,6 +2,14 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.16.0
+구조화 선택지(ask-user) — 빠른응답을 ask_user_input 스타일 패널로 재설계 + 멀티셀렉트·페이지네이션 · 워크트리 미사용 명확화.
+- **ask-user 스킬 (전엔진 구조화 선택지)**: cc/gx/agy/pi의 skills 폴더에 `ask-user` 스킬을 주입(시작 시 자동). 모델이 `$AGENTMANAGER_ASK_SPOOL`에 `{question, options, multi}` JSON을 쓰면 앱이 감시·수집해 클릭형 선택지 패널로 렌더 — 휴리스틱 텍스트 파서로는 불가능한 신뢰성 있는 질문·옵션. 워커 태스크 스풀과 동일 아키텍처(세션별 `<cwd>/.am/ask/<sessionId>/`, agy ConPTY 포함). 휴리스틱 A/B/C 감지는 폴백 유지.
+- **멀티셀렉트 + 페이지네이션 (ChoiceFlow)**: 단일선택 QuickReplies를 통합 `ChoiceFlow`로 교체. `"multi": true` → 체크박스 행 + N개 선택 푸터 + 엔진색 제출(Space 토글·Ctrl+Enter 제출). `"questions": [...]` → 페이저(‹ N/M)로 질문을 차례로 넘기고 모든 답을 한 턴으로 전송. 위저드 중 "기타" 자유입력도 현재 질문 답으로 기록 후 진행(흐름 안 끊김).
+- **빠른응답 패널 재설계 (Claude 데스크톱식)**: 플랫 행 + 엔진 브랜드색 포커스 바·마커·체크박스 · ↑↓ 키보드 네비 + 마커 단축(1-9/A-Z) · Esc 직접입력 · 선택지가 뜨면 입력창을 내리고 인라인 "기타" 입력 노출. 선택지 색은 엔진 테마(cc 주황·gx 보라·agy 청록·pi 회색)를 따름.
+- **New Agent "워크트리 미사용" 명확화**: 의미가 거꾸로 읽히던 "격리" 토글을 "워크트리 미사용" 체크박스로 교체(체크 = 워크트리 안 만들고 메인 트리 공유). opt-out 세션의 모든 표시(리스트 칩·헤더 브레드크럼·컴포저 칩·상태줄)를 유령 `agent/<slug>` 대신 "⊟ 메인 트리 (공유)"로 일관화.
+- 수정: 구조화 선택지가 턴 종료 휴리스틱 패스에 지워지던 문제 · 제출 버튼 패딩(옹졸한 동그라미) · New Agent TASK 필드 멀티라인 입력.
+
 ## 1.15.0
 권한/안전 모드 재설계 · New Agent 옵션 확장 · 추론 단계 전엔진 실측 정렬.
 - **권한/안전 모드 칩 (engine-aware)**: 상단바의 APPROVAL 토글 + 샌드박스 콤보를 컴포저의 단일 색상 칩으로 통합. 엔진 네이티브 모드를 그대로 노출 — cc `Plan/Default/Bypass`(`--permission-mode`), gx `Read-only/Workspace-write/Full access`(`--sandbox`), agy·pi는 잠금 정적 배지(agy 항상 권한 스킵, pi 권한 개념 없음). **색=위험 그라데이션**(r0 청록·r1 초록·r3 빨강·rn 회색)으로 현재 모드를 한눈에. 기존 `Sandbox`+`RequireApproval` 위 뷰라 런 경로 불변.

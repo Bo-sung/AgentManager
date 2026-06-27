@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.15.0: 권한/안전 모드 칩(engine-aware) · New Agent 옵션 확장 · 추론 단계 전엔진 실측 정렬 -->
-    <Version>1.15.0</Version>
+    <!-- 1.16.0: 구조화 선택지(ask-user 스킬+스풀, 전엔진) · 멀티셀렉트 + 페이지네이션 · 워크트리 미사용 명확화 -->
+    <Version>1.16.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
