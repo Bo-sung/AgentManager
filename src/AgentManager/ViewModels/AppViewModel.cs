@@ -658,11 +658,11 @@ public sealed partial class AppViewModel : ObservableObject
     /// <summary>추론 수준을 소비하는 엔진(cc: --effort, gx: model_reasoning_effort, pi: --thinking)만 노출.
     /// agy만 추론 플래그가 없음. SessionViewModel.HasEffort(= not agy)와 일치.</summary>
     public bool NewAgentHasEffort => _newEngine?.Id is "cc" or "gx" or "pi";
-    /// <summary>엔진별 공식 추론 단계 (SessionViewModel.EffortOptions와 일치) —
-    /// gx: low~xhigh / pi: off~xhigh(--thinking) / cc: default~max(--effort).</summary>
+    /// <summary>엔진별 공식 추론 단계 (SessionViewModel.EffortOptions와 일치, 전부 CLI/API 검증) —
+    /// gx: none~xhigh(model_reasoning_effort) / pi: off~xhigh(--thinking) / cc: low~max(--effort).</summary>
     public string[] NewAgentEffortOptions => _newEngine?.Id switch
     {
-        "gx" => ["low", "medium", "high", "xhigh"],
+        "gx" => ["none", "minimal", "low", "medium", "high", "xhigh"],
         "pi" => ["default", "off", "minimal", "low", "medium", "high", "xhigh"],
         _    => ["default", "low", "medium", "high", "xhigh", "max"], // cc
     };

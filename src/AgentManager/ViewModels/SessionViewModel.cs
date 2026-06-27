@@ -78,15 +78,15 @@ public sealed class SessionViewModel : ObservableObject
     public bool IsCodex => AgentId == "gx";
     public bool IsClaude => AgentId == "cc";
 
-    /// <summary>추론 강도 옵션 — 엔진별로 공식 지원 단계가 다름. agy만 추론 플래그 없음 → 피커 비노출.
-    /// claude(--effort): default + low/medium/high/xhigh/max (실측).
-    /// codex(model_reasoning_effort): low/medium/high/xhigh (실측).
-    /// pi(--thinking): off/minimal/low/medium/high/xhigh (pi --help · PHASE0_PI_RPC §RPC).
-    /// "default"는 UI 센티넬(플래그 생략 → ~/.pi 기본 사용); 어댑터가 "default"·빈값이면 --thinking 미전달.</summary>
+    /// <summary>추론 강도 옵션 — 엔진별 공식 단계(전부 CLI/API로 검증). agy만 추론 플래그 없음 → 피커 비노출.
+    /// claude(--effort): low/medium/high/xhigh/max ("claude --effort zzz" 경고의 Valid values).
+    /// codex(model_reasoning_effort): none/minimal/low/medium/high/xhigh (codex API invalid_enum_value).
+    /// pi(--thinking): off/minimal/low/medium/high/xhigh (pi --help · PHASE0_PI_RPC).
+    /// "default"는 UI 센티넬(플래그 생략 → 엔진 기본 사용); 어댑터가 "default"·빈값이면 플래그 미전달.</summary>
     public bool HasEffort => AgentId is not "agy";
     public string[] EffortOptions => AgentId switch
     {
-        "gx" => ["low", "medium", "high", "xhigh"],
+        "gx" => ["none", "minimal", "low", "medium", "high", "xhigh"],
         "pi" => ["default", "off", "minimal", "low", "medium", "high", "xhigh"],
         _    => ["default", "low", "medium", "high", "xhigh", "max"], // cc
     };
