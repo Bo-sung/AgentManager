@@ -53,32 +53,53 @@ public partial class AppViewModel
         try
         {
             if (!File.Exists(path)) return;
-            string? question;
-            var options = new List<string>();
+            List<ChoiceItem> items;
             try
             {
                 using var doc = JsonDocument.Parse(File.ReadAllText(path));
-                var root = doc.RootElement;
-                question = root.TryGetProperty("question", out var q) && q.ValueKind == JsonValueKind.String ? q.GetString() : null;
-                if (root.TryGetProperty("options", out var opts) && opts.ValueKind == JsonValueKind.Array)
-                    foreach (var o in opts.EnumerateArray())
-                        if (o.ValueKind == JsonValueKind.String && o.GetString() is { } str && str.Trim() is { Length: > 0 } t)
-                            options.Add(t);
+                items = ParseChoiceItems(doc.RootElement);
             }
             catch { return; } // partial/invalid write — leave file, a later event retries
 
-            if (options.Count < 1) return;
+            if (items.Count < 1) return;
             var s = _allSessions.FirstOrDefault(x => x.Id == sessionId);
             if (s is not null)
-            {
-                s.QuickReplies.Clear();
-                int n = 1;
-                foreach (var o in options.Take(8))
-                    s.QuickReplies.Add(new Core.QuickReplyOption((n++).ToString(), o, o)); // marker=number, label=text=option
-                s.ChoiceQuestion = string.IsNullOrWhiteSpace(question) ? null : question!.Trim();
-            }
+                s.ActiveChoice = new ChoiceFlow { Items = items, Structured = true };
             try { File.Delete(path); } catch { }
         }
         catch { }
+    }
+
+    /// <summary>Parse the ask spool JSON: a single question ({ question, options, multi }) or a
+    /// multi-page flow ({ questions: [ {…}, … ] }).</summary>
+    private static List<ChoiceItem> ParseChoiceItems(JsonElement root)
+    {
+        var items = new List<ChoiceItem>();
+        if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("questions", out var qs) && qs.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var q in qs.EnumerateArray())
+                if (BuildChoiceItem(q) is { } it) items.Add(it);
+        }
+        else if (BuildChoiceItem(root) is { } single) items.Add(single);
+        return items;
+    }
+
+    private static ChoiceItem? BuildChoiceItem(JsonElement el)
+    {
+        if (el.ValueKind != JsonValueKind.Object) return null;
+        var question = el.TryGetProperty("question", out var q) && q.ValueKind == JsonValueKind.String ? q.GetString() : null;
+        var multi = el.TryGetProperty("multi", out var m) &&
+                    (m.ValueKind == JsonValueKind.True ||
+                     (m.ValueKind == JsonValueKind.String && bool.TryParse(m.GetString(), out var b) && b));
+        var opts = new List<string>();
+        if (el.TryGetProperty("options", out var o) && o.ValueKind == JsonValueKind.Array)
+            foreach (var x in o.EnumerateArray())
+                if (x.ValueKind == JsonValueKind.String && x.GetString() is { } str && str.Trim() is { Length: > 0 } t)
+                    opts.Add(t);
+        if (opts.Count < 1) return null;
+        var item = new ChoiceItem { Question = string.IsNullOrWhiteSpace(question) ? null : question!.Trim(), Multi = multi };
+        int n = 1;
+        foreach (var op in opts.Take(9)) item.Options.Add(new ChoiceOption((n++).ToString(), op, op)); // marker 1..9
+        return item;
     }
 }

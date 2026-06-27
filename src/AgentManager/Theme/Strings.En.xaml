@@ -187,6 +187,11 @@
     <sys:String x:Key="L.WorktreeShared">Shared (main tree) — no branch created</sys:String>
     <sys:String x:Key="L.NoWorktree">No worktree</sys:String>
     <sys:String x:Key="L.NoWorktreeTip">When checked, skip the isolated worktree and work in the project root (main tree)</sys:String>
+    <sys:String x:Key="L.Submit">Submit</sys:String>
+    <sys:String x:Key="L.SubmitTip">Send the selected options</sys:String>
+    <sys:String x:Key="L.SelectedSuffix"> selected</sys:String>
+    <sys:String x:Key="L.MultiHint">↑↓ move · Space select · Ctrl+Enter submit · Esc type</sys:String>
+    <sys:String x:Key="L.PrevQuestion">Previous question</sys:String>
     <sys:String x:Key="L.PermissionMode">Permission / safety mode</sys:String>
     <sys:String x:Key="L.PickOne">Pick one</sys:String>
     <sys:String x:Key="L.CustomInput">Type instead</sys:String>

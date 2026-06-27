@@ -138,10 +138,20 @@ clickable panel and sends the user's choice back as your next message.
 - If it is NOT set (running outside AgentManager), fall back to plain "A) … B) …" text.
 
 ## How to write
-Write ONE JSON file named `ask.json` to the spool dir. Shape:
-{ "question": "<one short question>", "options": ["<option 1>", "<option 2>", ...] }
+Write ONE JSON file named `ask.json` to the spool dir.
+
+Single question:
+{ "question": "<one short question>", "options": ["<option 1>", "<option 2>", ...], "multi": false }
 - `question`: a single short line shown as the panel header.
-- `options`: 2–8 short option labels (the text the user sees and picks).
+- `options`: 2–9 short option labels (the text the user sees and picks).
+- `multi` (optional): true = the user can check several options and submit them together;
+  false/omitted = single pick.
+
+Several questions in a row (a wizard — the panel pages through them, then sends all answers):
+{ "questions": [
+    { "question": "<q1>", "options": ["a", "b"] },
+    { "question": "<q2>", "options": ["x", "y", "z"], "multi": true }
+] }
 
 ## After writing
 Reply with ONLY a one-line note (e.g. "선택지를 띄웠습니다.") and STOP. Wait for the user's

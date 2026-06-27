@@ -247,22 +247,40 @@ public partial class SessionView : UserControl
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => FirstDescendant<Button>(root)?.Focus()));
     }
 
+    // 페이지(질문)가 바뀌어 옵션 목록이 갱신되면 새 페이지 첫 옵션으로 포커스 이동(키보드 흐름 유지).
+    private void Options_TargetUpdated(object? sender, System.Windows.Data.DataTransferEventArgs e)
+    {
+        if (sender is DependencyObject root)
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => FirstDescendant<Button>(root)?.Focus()));
+    }
+
     private void QuickReply_KeyDown(object sender, KeyEventArgs e)
     {
-        if (Vm?.ActiveSession is not { } s || s.QuickReplies.Count == 0) return;
+        if (Vm is not { } vm || vm.ActiveSession?.ActiveChoice is not { } flow) return;
         if (Keyboard.FocusedElement is TextBox) return; // "기타" 입력 중엔 타이핑을 마커키로 가로채지 않음
-        switch (e.Key)
+
+        if (e.Key == Key.Escape) { vm.DismissChoiceCommand.Execute(null); e.Handled = true; return; } // → 직접 입력 복귀
+
+        // Ctrl+Enter → 멀티 제출 (어디서든)
+        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Control) != 0)
+        { if (flow.Multi) { vm.ChoiceSubmitCommand.Execute(null); e.Handled = true; } return; }
+
+        // Space는 포커스된 옵션 Button이 자체 Click으로 활성화 → 중복 방지 위해 통과시킨다.
+        if (e.Key == Key.Space) return;
+
+        // Enter: 포커스된 옵션이면 활성화(Button은 Enter로 클릭하지 않음), 아니면 멀티 제출.
+        if (e.Key == Key.Enter)
         {
-            case Key.Escape: s.QuickReplies.Clear(); e.Handled = true; return;   // → 직접 입력 복귀
-            case Key.Enter:                                                       // 포커스된 행 선택
-                if ((Keyboard.FocusedElement as FrameworkElement)?.DataContext is AgentManager.Core.QuickReplyOption fo)
-                { Vm.SendQuickReply(fo); e.Handled = true; }
-                return;
+            if ((Keyboard.FocusedElement as FrameworkElement)?.DataContext is AgentManager.ViewModels.ChoiceOption fo)
+            { vm.ActivateChoice(fo); e.Handled = true; }
+            else if (flow.Multi) { vm.ChoiceSubmitCommand.Execute(null); e.Handled = true; }
+            return;
         }
-        if (MarkerForKey(e.Key) is not { } marker) return;                        // A/B/C·숫자 단축
-        foreach (var o in s.QuickReplies)
+
+        if (MarkerForKey(e.Key) is not { } marker) return; // 1–9 / A–Z 단축
+        foreach (var o in flow.Current.Options)
             if (string.Equals(o.Marker, marker, StringComparison.OrdinalIgnoreCase))
-            { Vm.SendQuickReply(o); e.Handled = true; return; }
+            { vm.ActivateChoice(o); e.Handled = true; return; }
     }
 
     private static T? FirstDescendant<T>(DependencyObject root) where T : DependencyObject

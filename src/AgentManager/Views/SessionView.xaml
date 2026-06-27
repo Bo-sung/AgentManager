@@ -172,22 +172,13 @@
                                 <!-- ask_user_input 스타일(단일선택) — 플랫 행 + 주황 포커스 바 + 인라인 "기타" 입력. 옵션 0개면 collapse. -->
                                 <Border x:Name="QuickReplyPanel" Margin="4,0,4,9" CornerRadius="10" BorderThickness="1"
                                         Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}"
-                                        KeyDown="QuickReply_KeyDown" IsVisibleChanged="QuickReplyPanel_IsVisibleChanged">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding QuickReplies.Count}" Value="0">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
+                                        KeyDown="QuickReply_KeyDown" IsVisibleChanged="QuickReplyPanel_IsVisibleChanged"
+                                        Visibility="{Binding HasChoice, Converter={StaticResource BoolVis}}">
                                     <StackPanel>
-                                        <!-- 헤더: "선택" + 옵션수 + 닫기(✕)=직접입력 복귀 -->
-                                        <DockPanel Margin="16,12,12,10">
+                                        <!-- 헤더: [‹ 이전] 질문 [N/M] [✕ 직접입력] -->
+                                        <DockPanel Margin="14,12,12,10">
                                             <Button DockPanel.Dock="Right" Width="24" Height="24" Cursor="Hand" ToolTip="{StaticResource L.CustomInputTip}"
-                                                    Command="{Binding DataContext.DismissQuickRepliesCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                    Command="{Binding DataContext.DismissChoiceCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border x:Name="xb" Background="Transparent" CornerRadius="5">
@@ -200,17 +191,33 @@
                                                 </Button.Template>
                                             </Button>
                                             <TextBlock DockPanel.Dock="Right" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}"
-                                                       VerticalAlignment="Center" Margin="0,0,8,0" Text="{Binding QuickReplies.Count, StringFormat={}{0} options}"/>
-                                            <TextBlock Text="{Binding ChoiceHeader}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center" Margin="0,0,8,0" Text="{Binding ActiveChoice.PagerLabel}"
+                                                       Visibility="{Binding ActiveChoice.HasPager, Converter={StaticResource BoolVis}}"/>
+                                            <Button DockPanel.Dock="Left" Width="22" Height="22" Cursor="Hand" Margin="0,0,8,0" ToolTip="{StaticResource L.PrevQuestion}"
+                                                    Visibility="{Binding ActiveChoice.HasPrev, Converter={StaticResource BoolVis}}"
+                                                    Command="{Binding DataContext.ChoicePrevCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="pb" Background="Transparent" CornerRadius="5">
+                                                            <TextBlock Text="‹" FontSize="17" Foreground="{DynamicResource Txt1}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="pb" Property="Background" Value="{DynamicResource Bg3}"/></Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                            <TextBlock Text="{Binding ActiveChoice.Header}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center" Foreground="{DynamicResource Txt0}"/>
                                         </DockPanel>
-                                        <!-- 옵션 행 (플랫, ↑↓ 네비) -->
-                                        <ItemsControl ItemsSource="{Binding QuickReplies}" KeyboardNavigation.DirectionalNavigation="Cycle">
+                                        <!-- 옵션 행 (단일=마커+화살표 / 멀티=체크박스, ↑↓ 네비) -->
+                                        <ItemsControl ItemsSource="{Binding ActiveChoice.Current.Options, NotifyOnTargetUpdated=True}" Binding.TargetUpdated="Options_TargetUpdated"
+                                                      KeyboardNavigation.DirectionalNavigation="Cycle">
                                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Button Cursor="Hand" ToolTip="{Binding Text}" HorizontalContentAlignment="Stretch"
-                                                            Command="{Binding DataContext.QuickReplyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    <Button Cursor="Hand" ToolTip="{Binding Label}" HorizontalContentAlignment="Stretch"
+                                                            Command="{Binding DataContext.ChoiceActivateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}">
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
@@ -219,8 +226,13 @@
                                                                         <Rectangle x:Name="bar" Width="2" HorizontalAlignment="Left" Visibility="Collapsed"
                                                                                    Fill="{Binding DataContext.AgentId, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource EngineBrush}, ConverterParameter=main}"/>
                                                                         <DockPanel Margin="17,12,18,12">
-                                                                            <TextBlock x:Name="num" DockPanel.Dock="Left" Text="{Binding Marker}" FontFamily="{StaticResource Mono}" FontSize="13"
-                                                                                       Width="16" TextAlignment="Center" Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}"/>
+                                                                            <Grid x:Name="lead" DockPanel.Dock="Left" Width="18" Margin="0,0,14,0" VerticalAlignment="Center">
+                                                                                <TextBlock x:Name="num" Text="{Binding Marker}" FontFamily="{StaticResource Mono}" FontSize="13" TextAlignment="Center" Foreground="{DynamicResource Txt2}"/>
+                                                                                <Border x:Name="cbox" Width="16" Height="16" CornerRadius="4" BorderThickness="1.5" HorizontalAlignment="Center"
+                                                                                        BorderBrush="{DynamicResource Txt3}" Background="Transparent" Visibility="Collapsed">
+                                                                                    <controls:IconView x:Name="chk" Icon="{StaticResource IconCheck}" Width="11" Height="11" Foreground="#FF0A0E12" Visibility="Collapsed"/>
+                                                                                </Border>
+                                                                            </Grid>
                                                                             <controls:IconView x:Name="arrow" DockPanel.Dock="Right" Icon="{StaticResource IconChevRight}" Width="15" Height="15"
                                                                                                Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"
                                                                                                Foreground="{Binding DataContext.AgentId, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource EngineBrush}, ConverterParameter=main}"/>
@@ -248,6 +260,23 @@
                                                                         <Setter TargetName="num" Property="FontWeight" Value="SemiBold"/>
                                                                         <Setter TargetName="lbl" Property="Foreground" Value="{DynamicResource Txt0}"/>
                                                                     </Trigger>
+                                                                    <!-- 멀티: 체크박스 노출, 마커/화살표 숨김 (포커스 트리거보다 뒤 → 우선) -->
+                                                                    <DataTrigger Binding="{Binding DataContext.ActiveChoice.Multi, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="True">
+                                                                        <Setter TargetName="cbox" Property="Visibility" Value="Visible"/>
+                                                                        <Setter TargetName="num" Property="Visibility" Value="Collapsed"/>
+                                                                        <Setter TargetName="arrow" Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                    <!-- 선택됨(멀티): 체크 채움(엔진색) -->
+                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                        <Setter TargetName="chk" Property="Visibility" Value="Visible"/>
+                                                                        <Setter TargetName="lbl" Property="Foreground" Value="{DynamicResource Txt0}"/>
+                                                                        <Setter TargetName="cbox" Property="Background">
+                                                                            <Setter.Value><Binding Path="DataContext.AgentId" Converter="{StaticResource EngineBrush}" ConverterParameter="main" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/></Setter.Value>
+                                                                        </Setter>
+                                                                        <Setter TargetName="cbox" Property="BorderBrush">
+                                                                            <Setter.Value><Binding Path="DataContext.AgentId" Converter="{StaticResource EngineBrush}" ConverterParameter="main" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/></Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
                                                                 </ControlTemplate.Triggers>
                                                             </ControlTemplate>
                                                         </Button.Template>
@@ -256,8 +285,16 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                         <Border Height="1" Background="{DynamicResource LineSoft}"/>
-                                        <!-- "기타" 인라인 입력 (Draft 재사용) — 연필 + 입력 + KO→EN 번역 토글 + 전송/건너뛰기 -->
+                                        <!-- 단일선택 푸터: "기타" 인라인 입력 (Draft 재사용) — 연필 + 입력 + KO→EN 번역 토글 + 전송/건너뛰기 -->
                                         <DockPanel Margin="17,9,12,11">
+                                            <DockPanel.Style>
+                                                <Style TargetType="DockPanel">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ActiveChoice.Multi}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DockPanel.Style>
                                             <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconEdit}" Width="15" Height="15" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,14,0"/>
                                             <Button DockPanel.Dock="Right" Width="28" Height="28" Cursor="Hand" Margin="8,0,0,0" ToolTip="{StaticResource L.SendTip}"
                                                     Command="{Binding DataContext.SendCommand, RelativeSource={RelativeSource AncestorType=Window}}">
@@ -284,7 +321,7 @@
                                                 </Button.Style>
                                             </Button>
                                             <Button DockPanel.Dock="Right" Content="{StaticResource L.Skip}" Margin="8,0,0,0"
-                                                    Command="{Binding DataContext.DismissQuickRepliesCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                    Command="{Binding DataContext.DismissChoiceCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                                                 <Button.Style>
                                                     <Style TargetType="Button" BasedOn="{StaticResource ChipButton}">
                                                         <Style.Triggers>
@@ -310,10 +347,51 @@
                                                 </TextBlock>
                                             </Grid>
                                         </DockPanel>
+                                        <!-- 멀티선택 푸터: N 선택됨 + 제출 -->
+                                        <DockPanel Margin="17,9,12,11">
+                                            <DockPanel.Style>
+                                                <Style TargetType="DockPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ActiveChoice.Multi}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DockPanel.Style>
+                                            <Button DockPanel.Dock="Right" Cursor="Hand" Height="28" Padding="16,0" Margin="8,0,0,0" ToolTip="{StaticResource L.SubmitTip}"
+                                                    Command="{Binding DataContext.ChoiceSubmitCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    IsEnabled="{Binding ActiveChoice.Current.HasSelection}">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="sb" CornerRadius="14" Background="{Binding AgentId, Converter={StaticResource EngineBrush}, ConverterParameter=main}">
+                                                            <TextBlock Text="{StaticResource L.Submit}" Foreground="#FF0A0E12" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="sb" Property="Opacity" Value="0.88"/></Trigger>
+                                                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="sb" Property="Opacity" Value="0.3"/></Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                            <Button DockPanel.Dock="Right" Content="{StaticResource L.Skip}" Margin="8,0,0,0" Style="{StaticResource ChipButton}"
+                                                    Command="{Binding DataContext.DismissChoiceCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <controls:IconView Icon="{StaticResource IconCheck}" Width="13" Height="13" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock Text="{Binding ActiveChoice.Current.SelectedCount}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{StaticResource L.SelectedSuffix}" FontSize="13" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="3,0,0,0"/>
+                                            </StackPanel>
+                                        </DockPanel>
                                         <Border Height="1" Background="{DynamicResource LineSoft}"/>
-                                        <!-- 키보드 힌트 바 -->
-                                        <TextBlock Text="{StaticResource L.QuickReplyHint}" FontFamily="{StaticResource Mono}" FontSize="9"
-                                                   Foreground="{DynamicResource Txt3}" HorizontalAlignment="Center" Margin="0,8,0,9"/>
+                                        <!-- 키보드 힌트 바 (단일/멀티에 따라 문구 변경) -->
+                                        <TextBlock FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Txt3}" HorizontalAlignment="Center" Margin="0,8,0,9">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{StaticResource L.QuickReplyHint}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ActiveChoice.Multi}" Value="True"><Setter Property="Text" Value="{StaticResource L.MultiHint}"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </StackPanel>
                                 </Border>
                                 <!-- 선택지가 떠 있으면 입력창을 내린다(클로드 코드 데스크톱식) — 번역 토글/직접입력은 위 푸터에 -->
@@ -321,10 +399,10 @@
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
-                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Setter Property="Visibility" Value="Visible"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding QuickReplies.Count}" Value="0">
-                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                <DataTrigger Binding="{Binding HasChoice}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="cc">
                                                     <Setter Property="BorderBrush" Value="{DynamicResource CcBrandLine}"/>

@@ -36,37 +36,63 @@ public sealed partial class AppViewModel
         }
     }
 
-    private RelayCommand? _quickReplyCommand;
-    /// <summary>Send a detected quick-reply choice as the next user message.</summary>
-    public RelayCommand QuickReplyCommand => _quickReplyCommand ??=
-        new RelayCommand(p => { if (p is Core.QuickReplyOption o) SendQuickReply(o); });
+    private RelayCommand? _choiceActivateCommand;
+    /// <summary>Click/Enter on an option — single-select picks (record + advance/send); multi-select
+    /// toggles the checkbox.</summary>
+    public RelayCommand ChoiceActivateCommand => _choiceActivateCommand ??=
+        new RelayCommand(p => { if (p is ChoiceOption o) ActivateChoice(o); });
 
-    private RelayCommand? _dismissQuickRepliesCommand;
-    /// <summary>"직접 입력" — 감지된 선택지를 지워 입력창을 다시 노출(자유 응답).</summary>
-    public RelayCommand DismissQuickRepliesCommand => _dismissQuickRepliesCommand ??=
-        new RelayCommand(_ => { if (ActiveSession is { } s) { s.QuickReplies.Clear(); s.ChoiceQuestion = null; } });
-
-    public void SendQuickReply(Core.QuickReplyOption option)
+    public void ActivateChoice(ChoiceOption o)
     {
-        var s = ActiveSession;
-        // 빠른응답은 자체 텍스트(option.Text)를 보낸다 — CanSend(=draft 비어있지 않음)에 의존하면
-        // 입력창이 빈 정상 케이스에서 조용히 무시된다. 실행 중만 아니면 보낸다.
-        if (s is null || s.IsRunning) return;
-        _ = RunTurnAsync(s, option.Text);   // RunTurnAsync clears QuickReplies at start
+        if (ActiveSession is not { } s || s.ActiveChoice is not { } flow) return;
+        if (flow.Multi) { o.IsSelected = !o.IsSelected; flow.Current.RaiseSelection(); }
+        else AnswerCurrentChoice(s, flow, o.Text);
     }
 
-    /// <summary>Parse the last assistant message for A/B/1/2 choices and surface them as buttons.</summary>
+    private RelayCommand? _choiceSubmitCommand;
+    /// <summary>Submit a multi-select page — sends the checked options (comma-joined).</summary>
+    public RelayCommand ChoiceSubmitCommand => _choiceSubmitCommand ??=
+        new RelayCommand(_ =>
+        {
+            if (ActiveSession is not { } s || s.ActiveChoice is not { } flow || !flow.Current.HasSelection) return;
+            AnswerCurrentChoice(s, flow, string.Join(", ", flow.Current.Options.Where(o => o.IsSelected).Select(o => o.Text)));
+        });
+
+    private RelayCommand? _choicePrevCommand;
+    /// <summary>Pager: back to the previous question (review/change an answer).</summary>
+    public RelayCommand ChoicePrevCommand => _choicePrevCommand ??=
+        new RelayCommand(_ => { if (ActiveSession?.ActiveChoice is { HasPrev: true } flow) flow.Page--; });
+
+    private RelayCommand? _dismissChoiceCommand;
+    /// <summary>"직접 입력"/건너뛰기 — 선택지를 지워 입력창 복귀(자유 응답).</summary>
+    public RelayCommand DismissChoiceCommand => _dismissChoiceCommand ??=
+        new RelayCommand(_ => { if (ActiveSession is { } s) s.ActiveChoice = null; });
+
+    /// <summary>Record the current page's answer, advance to the next page, or — on the last page —
+    /// send the whole flow as one turn.</summary>
+    private void AnswerCurrentChoice(SessionViewModel s, ChoiceFlow flow, string answer)
+    {
+        flow.Current.Answer = answer;
+        if (!flow.IsLast) { flow.Page++; return; }
+        var msg = flow.BuildMessage();
+        s.ActiveChoice = null;
+        if (!s.IsRunning) _ = RunTurnAsync(s, msg); // RunTurnAsync clears ActiveChoice at start
+    }
+
+    /// <summary>Heuristic fallback: parse the last assistant message for A/B/1/2 choices into a single
+    /// single-select flow. Structured (ask-user skill) choices take precedence and aren't overwritten.</summary>
     private void PopulateQuickReplies(SessionViewModel s)
     {
-        // 구조화 ask-user 선택지가 활성이면(스풀 ingest가 채움) 휴리스틱이 덮어쓰지 않는다 —
-        // 에이전트가 턴 중간에 ask.json을 쓰면 ingest가 먼저 띄우고 TurnCompleted가 뒤에 와서 지우던 문제.
-        if (s.ChoiceQuestion is not null) return;
-        s.QuickReplies.Clear();
+        if (s.ActiveChoice is { Structured: true }) return; // 스킬 선택지가 패널을 소유 — 휴리스틱이 덮지 않음
+        s.ActiveChoice = null;
         if (s.Status == "error") return;
         var last = s.Transcript.OfType<AgentTextBlock>().LastOrDefault();
         if (last is null) return;
-        foreach (var o in Core.QuickReplyParser.Parse(last.Text))
-            s.QuickReplies.Add(o);
+        var parsed = Core.QuickReplyParser.Parse(last.Text).ToList();
+        if (parsed.Count == 0) return;
+        var item = new ChoiceItem { Question = null, Multi = false };
+        foreach (var o in parsed) item.Options.Add(new ChoiceOption(o.Marker, o.Label, o.Text));
+        s.ActiveChoice = new ChoiceFlow { Items = [item], Structured = false };
     }
 
     private RelayCommand? _retranslateCommand;
@@ -131,7 +157,7 @@ public sealed partial class AppViewModel
         }
 
         var dispatcher = Application.Current.Dispatcher;
-        s.QuickReplies.Clear(); s.ChoiceQuestion = null; // a new turn supersedes any pending choices
+        s.ActiveChoice = null; // a new turn supersedes any pending choice
         var attachmentPaths = (images ?? []).Concat(docs ?? []).ToArray();
         s.Transcript.Add(new UserBlock(attachmentPaths.Length > 0 ? Attachments.DisplayNote(prompt, attachmentPaths) : prompt));
         s.Status = "running";

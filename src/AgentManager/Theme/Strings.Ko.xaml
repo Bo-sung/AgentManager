@@ -187,6 +187,11 @@
     <sys:String x:Key="L.WorktreeShared">공유 (메인 트리) — 브랜치 생성 안 함</sys:String>
     <sys:String x:Key="L.NoWorktree">워크트리 미사용</sys:String>
     <sys:String x:Key="L.NoWorktreeTip">체크하면 격리 워크트리를 만들지 않고 프로젝트 루트(메인 트리)에서 작업합니다</sys:String>
+    <sys:String x:Key="L.Submit">제출</sys:String>
+    <sys:String x:Key="L.SubmitTip">선택한 항목들을 전송</sys:String>
+    <sys:String x:Key="L.SelectedSuffix">개 선택됨</sys:String>
+    <sys:String x:Key="L.MultiHint">↑↓ 이동 · Space 선택 · Ctrl+Enter 제출 · Esc 직접입력</sys:String>
+    <sys:String x:Key="L.PrevQuestion">이전 질문</sys:String>
     <sys:String x:Key="L.PermissionMode">권한 / 안전 모드</sys:String>
     <sys:String x:Key="L.PickOne">선택 · Pick one</sys:String>
     <sys:String x:Key="L.CustomInput">직접 입력</sys:String>
