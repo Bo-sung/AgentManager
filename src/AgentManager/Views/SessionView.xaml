@@ -191,20 +191,22 @@
                                             <TextBlock DockPanel.Dock="Right" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}"
                                                        Text="{Binding QuickReplies.Count, StringFormat={}{0} options}"/>
                                         </DockPanel>
+                                        <!-- 세로 리스트 — 라벨이 길어도 wrap되어 잘리지 않음 -->
                                         <ItemsControl ItemsSource="{Binding QuickReplies}" Margin="11,0,11,11">
                                             <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                                <ItemsPanelTemplate><StackPanel/></ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Button Margin="0,0,8,0" Cursor="Hand" ToolTip="{Binding Text}"
+                                                    <Button Margin="0,0,0,6" Cursor="Hand" ToolTip="{Binding Text}"
+                                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                                                             Command="{Binding DataContext.QuickReplyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}">
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
                                                                 <Border x:Name="qc" Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource Line}"
-                                                                        BorderThickness="1" CornerRadius="7" Padding="9,8,13,8">
-                                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                                        BorderThickness="1" CornerRadius="7" Padding="9,9,13,9">
+                                                                    <ContentPresenter/>
                                                                 </Border>
                                                                 <ControlTemplate.Triggers>
                                                                     <Trigger Property="IsMouseOver" Value="True">
@@ -214,15 +216,15 @@
                                                                 </ControlTemplate.Triggers>
                                                             </ControlTemplate>
                                                         </Button.Template>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Border Width="26" Height="26" CornerRadius="4" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                        <DockPanel>
+                                                            <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="4" Margin="0,0,11,0" VerticalAlignment="Center"
                                                                     Background="{Binding DataContext.AgentId, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource EngineBrush}, ConverterParameter=main}">
                                                                 <TextBlock Text="{Binding Marker}" FontFamily="{StaticResource Mono}" FontSize="12.5" FontWeight="SemiBold"
                                                                            Foreground="#FF0A0E12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
                                                             <TextBlock Text="{Binding Label}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Txt0}"
-                                                                       VerticalAlignment="Center" MaxWidth="360" TextTrimming="CharacterEllipsis"/>
-                                                        </StackPanel>
+                                                                       VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                                        </DockPanel>
                                                     </Button>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -565,9 +567,19 @@
                                                         </ControlTemplate>
                                                     </Button.Template>
                                                 </Button>
-                                                <Button DockPanel.Dock="Right" Style="{StaticResource SendButton}"
-                                                        Foreground="{DynamicResource AccentText}" ToolTip="{StaticResource L.SendTip}"
+                                                <Button DockPanel.Dock="Right" ToolTip="{StaticResource L.SendTip}"
                                                         Command="{Binding DataContext.SendCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SendButton}">
+                                                            <Setter Property="Foreground" Value="{DynamicResource AccentText}"/>
+                                                            <Style.Triggers>
+                                                                <!-- 실행 중엔 Send 숨김 → 옆의 빨강 Stop이 단독 주 버튼이 되어 명확 -->
+                                                                <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
                                                     <controls:IconView Icon="{StaticResource IconSend}" Width="15" Height="15"/>
                                                 </Button>
                                                 <Button DockPanel.Dock="Right" Style="{StaticResource ComposerIconButton}"
