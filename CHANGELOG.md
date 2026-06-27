@@ -2,6 +2,15 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.15.0
+권한/안전 모드 재설계 · New Agent 옵션 확장 · 추론 단계 전엔진 실측 정렬.
+- **권한/안전 모드 칩 (engine-aware)**: 상단바의 APPROVAL 토글 + 샌드박스 콤보를 컴포저의 단일 색상 칩으로 통합. 엔진 네이티브 모드를 그대로 노출 — cc `Plan/Default/Bypass`(`--permission-mode`), gx `Read-only/Workspace-write/Full access`(`--sandbox`), agy·pi는 잠금 정적 배지(agy 항상 권한 스킵, pi 권한 개념 없음). **색=위험 그라데이션**(r0 청록·r1 초록·r3 빨강·rn 회색)으로 현재 모드를 한눈에. 기존 `Sandbox`+`RequireApproval` 위 뷰라 런 경로 불변.
+- **New Agent 모달 확장**: 추론 수준 피커(cc/gx/pi), worktree 격리 토글(끄면 프로젝트 루트 공유), "워커로 생성" 토글(작업 없이 워커 풀에 미리 생성).
+- **추론 단계 전엔진 실측 정렬**: cc `--effort`(low~max), gx `model_reasoning_effort`(none~xhigh), pi `--thinking`(off~xhigh) — 각 CLI/API로 공식 enum 검증. agy는 추론이 모델 label에 내장(`agy models`) → 모델 드롭다운에 변형(Flash Low/Medium/High 등) 노출.
+- **승인 버튼 버그 수정**: 트랜스크립트 블록(승인·죽은세션삭제)이 SessionView(UserControl) namescope에서 렌더되는데 `ElementName=Root` 바인딩이 안 풀려 버튼이 먹통이던 문제 — `RelativeSource AncestorType=Window`로 수정 + 동일 클래스 전수 감사·하드닝.
+- **트랜스크립트 간격 균일화**: 블록 종류별 상하 Margin 불일치(WPF는 인접 Margin 합산)로 간격이 12~24px로 들쭉날쭉이던 것을 전부 8/8로 통일(균일 16px).
+- 정리: 레거시 density 문자열 제거(UI Zoom으로 대체됨).
+
 ## 1.14.2
 워커 보고 라우팅 — 멀티 엔진 수정.
 - **agy 스풀 미수신**: agy(ConPTY 경로)가 `AGENTMANAGER_TASK_SPOOL`을 못 봐서 워커-프롬프트 스킬이 agy 자체 스크래치(`~/.gemini/antigravity-cli/scratch`)에 써 백로그로 유입 안 되던 문제 — ConPTY 프로세스에 `ExtraEnvironment` 주입(`CREATE_UNICODE_ENVIRONMENT`).

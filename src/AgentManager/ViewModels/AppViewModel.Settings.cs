@@ -382,7 +382,7 @@ public sealed partial class AppViewModel
     private bool _settingsAutoApiGx;
     public bool SettingsAutoApiGx { get => _settingsAutoApiGx; set => Set(ref _settingsAutoApiGx, value); }
 
-    // ----- appearance: accent / density / telemetry -----
+    // ----- appearance: accent / zoom / telemetry -----
     private string _accent = "ember";
     /// <summary>선택된 강조색 (즉시 라이브 적용). Cancel 시 저장값으로 되돌림.</summary>
     public string SettingsAccent

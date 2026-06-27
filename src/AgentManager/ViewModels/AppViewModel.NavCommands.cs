@@ -23,7 +23,7 @@ public sealed partial class AppViewModel
     public RelayCommand OpenHistoryRowCommand { get; private set; } = null!;
     /// <summary>Orchestrator 카드 diff: 세션 활성화 + 리뷰 패널 + 세션 뷰 전환.</summary>
     public RelayCommand OpenSessionReviewCommand { get; private set; } = null!;
-    /// <summary>Settings 세그먼트 선택. 파라미터 "group:value" (group = policy|accent|density).</summary>
+    /// <summary>Settings 세그먼트 선택. 파라미터 "group:value" (group = policy|accent).</summary>
     public RelayCommand SettingsSegCommand { get; private set; } = null!;
     /// <summary>Runtimes 인증 모드 세그. 파라미터 "engine:mode" (engine = cc|gx).</summary>
     public RelayCommand AuthModeCommand { get; private set; } = null!;

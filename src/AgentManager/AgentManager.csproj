@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.14.2: 워커 보고 라우팅 멀티엔진 수정(agy 스풀 env 주입 · 세션별 스풀 origin · pi libuv assertion) -->
-    <Version>1.14.2</Version>
+    <!-- 1.15.0: 권한/안전 모드 칩(engine-aware) · New Agent 옵션 확장 · 추론 단계 전엔진 실측 정렬 -->
+    <Version>1.15.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

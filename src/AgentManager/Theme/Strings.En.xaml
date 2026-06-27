@@ -165,7 +165,7 @@
     <sys:String x:Key="L.PlannedBadge">PLANNED</sys:String>
     <sys:String x:Key="L.OrchPlanned">Auto-start on launch · stream activity logs · worktree base directory — backend pending.</sys:String>
     <sys:String x:Key="L.PermPlanned">Approval policy (ask / auto-safe / auto-all) · allow destructive ops · network access · sandboxed filesystem — global defaults backend pending; per-session controls already work in the composer.</sys:String>
-    <sys:String x:Key="L.AppearancePlanned">Accent color · density · anonymous telemetry — backend pending.</sys:String>
+    <sys:String x:Key="L.AppearancePlanned">Anonymous telemetry — backend pending.</sys:String>
     <sys:String x:Key="L.ApprovalPolicyTitle">Approval policy</sys:String>
     <sys:String x:Key="L.ApprovalPolicyDesc">Default for new sessions. Each session can override it in the composer.</sys:String>
     <sys:String x:Key="L.PolicyAsk">Always ask</sys:String>
@@ -197,9 +197,6 @@
     <sys:String x:Key="L.AccentColor">Accent color</sys:String>
     <sys:String x:Key="L.AccentColorDesc">Applies live across the whole client.</sys:String>
     <sys:String x:Key="L.AccentCustom">Custom (#RRGGBB)</sys:String>
-    <sys:String x:Key="L.Density">Density</sys:String>
-    <sys:String x:Key="L.DensityComfortable">Comfortable</sys:String>
-    <sys:String x:Key="L.DensityCompact">Compact</sys:String>
     <sys:String x:Key="L.Telemetry">Anonymous telemetry</sys:String>
     <sys:String x:Key="L.TelemetryDesc">Local-only opt-in. AgentManager never sends anything off your machine.</sys:String>
     <sys:String x:Key="L.Local">local</sys:String>

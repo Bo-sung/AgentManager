@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.14.2
+`WPF · .NET 10 · Windows` · v1.15.0
 
 ---
 
@@ -45,10 +45,11 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 - **Diff 피드백** — diff에 인라인 코멘트를 적어 에이전트에게 후속 수정 지시
 - 펼침/접힘 `.22s` 슬라이드 애니메이션
 
-### 승인 broker
-- 에이전트의 도구 권한 요청을 가로채 **Approve / Deny** 제공 — 세션의 `APPROVAL` 토글 하나로 통일
-- Claude = stream-json 승인(Stage 1), Codex = app-server JSON-RPC 승인(Stage 2)
-- 샌드박스 모드(read-only / workspace-write / danger) 선택
+### 권한/안전 모드 (engine-aware) & 승인 broker
+- 컴포저의 **권한/안전 모드 칩** — 엔진 네이티브 모드를 그대로 노출하고 **색=위험도**로 현재 모드를 한눈에:
+  - **cc** `Plan / Default(ask) / Bypass` (`--permission-mode`) · **gx** `Read-only / Workspace-write / Full access` (`--sandbox`)
+  - **agy·pi** = 잠금 정적 배지(agy는 항상 권한 스킵, pi는 권한 개념 없음)
+- `Default(ask)`에서 도구 권한 요청을 가로채 **Approve / Deny** — Claude=stream-json 승인(Stage 1), Codex=app-server JSON-RPC 승인(Stage 2)
 
 ### 로컬 LLM 번역 레이어 (차별점)
 - **번역 언어 쌍 설정** — *번역 전 언어*(내가 입력·표시)와 *번역 후 언어*(엔진에 전달, 토큰 절감)를 각각 드롭다운에서 선택(기본 한국어→English, 11개 언어). 입력은 *전→후*, 출력은 *후→전*으로 자동 변환
