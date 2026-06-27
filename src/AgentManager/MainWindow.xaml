@@ -1440,6 +1440,15 @@
             </Border>
         </Grid>
 
+        <!-- ===================== Save-failure warning (P4) — content top, below modals ===================== -->
+        <Border Grid.Row="1" VerticalAlignment="Top" Background="{DynamicResource Warn}" Padding="14,5"
+                Visibility="{Binding SaveFailing, Converter={StaticResource BoolVis}}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <controls:IconView Icon="{StaticResource IconWarn}" Width="13" Height="13" Foreground="#FF1A0C06" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                <TextBlock Text="{StaticResource L.SaveFailed}" FontSize="11.5" FontWeight="SemiBold" Foreground="#FF1A0C06" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
         <!-- ===================== New-schedule overlay ===================== -->
         <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNewSchedule, Converter={StaticResource BoolVis}}">
             <Grid.Style>

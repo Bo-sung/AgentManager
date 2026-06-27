@@ -260,25 +260,49 @@ public sealed partial class AppViewModel
             // 완성된 DTO(불변 스냅샷)는 VM 컬렉션과 무관하므로 어느 스레드에서 써도 안전하다.
             // 종료 경로(synchronousWrite)에선 프로세스가 백그라운드 Task 완료 전에 죽을 수 있으니 동기로 끝까지 쓴다.
             if (synchronousWrite)
-                WriteSnapshot(settings, state);
+                ReportSaveResult(WriteSnapshot(settings, state));
             else
-                _ = Task.Run(() => WriteSnapshot(settings, state));
+            {
+                var disp = Application.Current?.Dispatcher;
+                _ = Task.Run(() =>
+                {
+                    var ok = WriteSnapshot(settings, state);
+                    // SaveFailing is bound to the UI — flip it back on the UI thread.
+                    if (disp is not null) disp.InvokeAsync(() => ReportSaveResult(ok));
+                    else ReportSaveResult(ok);
+                });
+            }
         }
         catch (Exception ex)
         {
             // DTO 빌드 자체의 예외(드묾) — 기록만 하고 흡수. 저장 실패가 에이전트 런/UI를 끊어선 안 된다.
             LogPersistError("BuildStateDto", ex);
+            ReportSaveResult(false);
         }
     }
 
     /// <summary>완성된 DTO 스냅샷을 디스크에 쓴다. settings/state를 독립적으로 try해 한쪽 실패가 다른 쪽을 막지 않게 한다.
     /// WriteAtomic이 일시적 잠금을 재시도하고도 실패하면 그 예외가 여기서 잡혀 save-errors.log에 남는다.</summary>
-    private static void WriteSnapshot(AppSettingsDto settings, AppStateDto state)
+    /// <summary>Returns whether the state write succeeded (settings failure alone doesn't alarm the user).</summary>
+    private static bool WriteSnapshot(AppSettingsDto settings, AppStateDto state)
     {
         try { SettingsStore.Save(settings); }
         catch (Exception ex) { LogPersistError("settings.json", ex); }
-        try { AppStateStore.Save(state); }
-        catch (Exception ex) { LogPersistError("state.json", ex); }
+        try { AppStateStore.Save(state); return true; }
+        catch (Exception ex) { LogPersistError("state.json", ex); return false; }
+    }
+
+    private int _consecutiveSaveFailures;
+    private bool _saveFailing;
+    /// <summary>Two+ consecutive state-save failures (e.g. a held file lock) → a non-blocking banner warns
+    /// the user that changes may not be persisted. Cleared on the next successful save (P4). The actual
+    /// exceptions are in save-errors.log.</summary>
+    public bool SaveFailing { get => _saveFailing; private set => Set(ref _saveFailing, value); }
+
+    private void ReportSaveResult(bool ok)
+    {
+        if (ok) { _consecutiveSaveFailures = 0; SaveFailing = false; }
+        else if (++_consecutiveSaveFailures >= 2) SaveFailing = true;
     }
 
     /// <summary>현재 앱 상태를 state.json DTO로 직렬화(UI 스레드에서만 호출).
