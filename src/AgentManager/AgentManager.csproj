@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.13.2: 보고 수신함 전체 복사→전체 선택 토글 · 선택 중 카드별 복사 버튼 숨김(일괄 모드 일관성) -->
-    <Version>1.13.2</Version>
+    <!-- 1.13.3: 죽은 cc 세션(resume 대상 소실) 에러 블록에 "이 세션 삭제" 액션 추가 -->
+    <Version>1.13.3</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
