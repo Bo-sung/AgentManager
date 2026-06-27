@@ -239,22 +239,40 @@ public partial class SessionView : UserControl
         if (PermMenuBtn is { } t) t.IsChecked = false;
     }
 
-    // ----- quick-reply 키보드 선택 (Claude 데스크톱식) -----
+    // ----- quick-reply 키보드 선택 (Claude 데스크톱식: ↑↓ 탐색 · Enter 선택 · A/B/C·숫자 · Esc) -----
     private void QuickReplyPanel_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        // 선택지가 떠 입력창이 내려가면 컨테이너에 포커스 → 키보드로 바로 선택
-        if (e.NewValue is true && sender is UIElement el)
-            el.Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => el.Focus()));
+        // 선택지가 떠 입력창이 내려가면 첫 카드에 포커스 → ↑↓ 방향키 네비게이션 시작점
+        if (e.NewValue is true && sender is DependencyObject root)
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => FirstDescendant<Button>(root)?.Focus()));
     }
 
     private void QuickReply_KeyDown(object sender, KeyEventArgs e)
     {
         if (Vm?.ActiveSession is not { } s || s.QuickReplies.Count == 0) return;
-        if (e.Key == Key.Escape) { s.QuickReplies.Clear(); e.Handled = true; return; } // Esc → 직접 입력 복귀
-        if (MarkerForKey(e.Key) is not { } marker) return;
+        switch (e.Key)
+        {
+            case Key.Escape: s.QuickReplies.Clear(); e.Handled = true; return;   // → 직접 입력 복귀
+            case Key.Enter:                                                       // 포커스된 행 선택
+                if ((Keyboard.FocusedElement as FrameworkElement)?.DataContext is AgentManager.Core.QuickReplyOption fo)
+                { Vm.SendQuickReply(fo); e.Handled = true; }
+                return;
+        }
+        if (MarkerForKey(e.Key) is not { } marker) return;                        // A/B/C·숫자 단축
         foreach (var o in s.QuickReplies)
             if (string.Equals(o.Marker, marker, StringComparison.OrdinalIgnoreCase))
             { Vm.SendQuickReply(o); e.Handled = true; return; }
+    }
+
+    private static T? FirstDescendant<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var c = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (c is T t) return t;
+            if (FirstDescendant<T>(c) is { } r) return r;
+        }
+        return null;
     }
 
     /// <summary>키 → 선택지 마커 문자(A–Z / 1–9). 매칭 없으면 null.</summary>

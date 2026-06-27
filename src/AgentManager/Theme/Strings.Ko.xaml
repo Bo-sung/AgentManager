@@ -189,6 +189,7 @@
     <sys:String x:Key="L.PickOne">선택 · Pick one</sys:String>
     <sys:String x:Key="L.CustomInput">직접 입력</sys:String>
     <sys:String x:Key="L.CustomInputTip">선택지 대신 직접 입력 — 입력창을 다시 엽니다</sys:String>
+    <sys:String x:Key="L.QuickReplyHint">↑↓ 탐색 · Enter 선택 · A/B/C·숫자 단축 · Esc 직접 입력</sys:String>
     <sys:String x:Key="L.CreateAsWorker">워커로 생성</sys:String>
     <sys:String x:Key="L.Authentication">인증</sys:String>
     <sys:String x:Key="L.AuthSubscription">구독</sys:String>

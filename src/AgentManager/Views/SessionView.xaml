@@ -172,7 +172,6 @@
                                 <!-- 컨테이너 + "선택" 헤더 + 엔진색 배지 카드. 옵션 0개면 collapse.
                                      키보드: 등장 시 포커스 → A/B/C·숫자 키로 선택, Esc로 직접입력(Claude 데스크톱식) -->
                                 <Border x:Name="QuickReplyPanel" Margin="4,0,4,9" CornerRadius="10" BorderThickness="1"
-                                        Focusable="True" FocusVisualStyle="{x:Null}"
                                         KeyDown="QuickReply_KeyDown" IsVisibleChanged="QuickReplyPanel_IsVisibleChanged"
                                         Background="{Binding AgentId, Converter={StaticResource EngineBrush}, ConverterParameter=dim}"
                                         BorderBrush="{Binding AgentId, Converter={StaticResource EngineBrush}, ConverterParameter=line}">
@@ -194,8 +193,9 @@
                                             <TextBlock DockPanel.Dock="Right" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}"
                                                        Text="{Binding QuickReplies.Count, StringFormat={}{0} options}"/>
                                         </DockPanel>
-                                        <!-- 세로 리스트 — 라벨이 길어도 wrap되어 잘리지 않음 -->
-                                        <ItemsControl ItemsSource="{Binding QuickReplies}" Margin="11,0,11,0">
+                                        <!-- 세로 리스트 — 라벨 wrap + 방향키(↑↓) 네비게이션 -->
+                                        <ItemsControl ItemsSource="{Binding QuickReplies}" Margin="11,0,11,0"
+                                                      KeyboardNavigation.DirectionalNavigation="Cycle">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate><StackPanel/></ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
@@ -216,6 +216,11 @@
                                                                         <Setter TargetName="qc" Property="Background" Value="{DynamicResource Bg4}"/>
                                                                         <Setter TargetName="qc" Property="BorderBrush" Value="{DynamicResource LineBright}"/>
                                                                     </Trigger>
+                                                                    <!-- 키보드 포커스(↑↓로 이동 중인 행) 하이라이트 -->
+                                                                    <Trigger Property="IsKeyboardFocused" Value="True">
+                                                                        <Setter TargetName="qc" Property="Background" Value="{DynamicResource Bg4}"/>
+                                                                        <Setter TargetName="qc" Property="BorderBrush" Value="{DynamicResource LineBright}"/>
+                                                                    </Trigger>
                                                                 </ControlTemplate.Triggers>
                                                             </ControlTemplate>
                                                         </Button.Template>
@@ -225,6 +230,10 @@
                                                                 <TextBlock Text="{Binding Marker}" FontFamily="{StaticResource Mono}" FontSize="12.5" FontWeight="SemiBold"
                                                                            Foreground="#FF0A0E12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
+                                                            <!-- 포커스된 행에만 → 화살표 (Claude 데스크톱식) -->
+                                                            <controls:IconView DockPanel.Dock="Right" Icon="{StaticResource IconChevRight}" Width="13" Height="13" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                                               Visibility="{Binding IsKeyboardFocused, RelativeSource={RelativeSource AncestorType=Button}, Converter={StaticResource BoolVis}}"
+                                                                               Foreground="{Binding DataContext.AgentId, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource EngineBrush}, ConverterParameter=main}"/>
                                                             <TextBlock Text="{Binding Label}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Txt0}"
                                                                        VerticalAlignment="Center" TextWrapping="Wrap"/>
                                                         </DockPanel>
@@ -263,6 +272,9 @@
                                                            Foreground="{DynamicResource Txt1}" VerticalAlignment="Center"/>
                                             </DockPanel>
                                         </Button>
+                                        <!-- 키보드 힌트 바 (Claude 데스크톱식) -->
+                                        <TextBlock Text="{StaticResource L.QuickReplyHint}" FontFamily="{StaticResource Mono}" FontSize="9"
+                                                   Foreground="{DynamicResource Txt3}" HorizontalAlignment="Center" Margin="0,0,0,9"/>
                                     </StackPanel>
                                 </Border>
                                 <!-- 선택지가 떠 있으면 입력창을 내린다(클로드 코드 데스크톱식) — 번역 토글/직접입력은 위 푸터에 -->
