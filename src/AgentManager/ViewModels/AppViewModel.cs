@@ -675,8 +675,10 @@ public sealed partial class AppViewModel : ObservableObject
     public bool NewAgentIsolate
     {
         get => _newAgentIsolate;
-        set { if (Set(ref _newAgentIsolate, value)) OnChanged(nameof(NewAgentBranchPreview)); }
+        set { if (Set(ref _newAgentIsolate, value)) { OnChanged(nameof(NewAgentBranchPreview)); OnChanged(nameof(NewAgentNoWorktree)); } }
     }
+    /// <summary>"워크트리 미사용" 체크박스 — NewAgentIsolate의 반전(체크 = 워크트리 안 만들고 메인 트리 공유).</summary>
+    public bool NewAgentNoWorktree { get => !_newAgentIsolate; set => NewAgentIsolate = !value; }
     /// <summary>true면 일반 세션 대신 워커(작업 대기, 자동 실행 안 함)로 생성.</summary>
     private bool _newAgentAsWorker;
     public bool NewAgentAsWorker

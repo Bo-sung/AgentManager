@@ -1896,8 +1896,9 @@
                         <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="7" Padding="11,9">
                             <DockPanel>
                                 <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconBranch}" Width="13" Height="13" Foreground="{DynamicResource Txt2}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" VerticalAlignment="Center"
-                                              IsChecked="{Binding NewAgentIsolate, Mode=TwoWay}" Content="{StaticResource L.Isolated}"/>
+                                <CheckBox DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{DynamicResource Txt1}"
+                                          IsChecked="{Binding NewAgentNoWorktree, Mode=TwoWay}" Content="{StaticResource L.NoWorktree}"
+                                          ToolTip="{StaticResource L.NoWorktreeTip}"/>
                                 <TextBlock Text="{Binding NewAgentBranchPreview, Mode=OneWay}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Txt1}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                             </DockPanel>
                         </Border>

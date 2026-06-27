@@ -216,12 +216,14 @@
                                                             <ControlTemplate TargetType="Button">
                                                                 <Border x:Name="row" Background="Transparent">
                                                                     <Grid>
-                                                                        <Rectangle x:Name="bar" Width="2" HorizontalAlignment="Left" Fill="{DynamicResource Accent}" Visibility="Collapsed"/>
+                                                                        <Rectangle x:Name="bar" Width="2" HorizontalAlignment="Left" Visibility="Collapsed"
+                                                                                   Fill="{Binding DataContext.AgentId, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource EngineBrush}, ConverterParameter=main}"/>
                                                                         <DockPanel Margin="17,12,18,12">
                                                                             <TextBlock x:Name="num" DockPanel.Dock="Left" Text="{Binding Marker}" FontFamily="{StaticResource Mono}" FontSize="13"
                                                                                        Width="16" TextAlignment="Center" Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}"/>
                                                                             <controls:IconView x:Name="arrow" DockPanel.Dock="Right" Icon="{StaticResource IconChevRight}" Width="15" Height="15"
-                                                                                               Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Accent}" Visibility="Collapsed"/>
+                                                                                               Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"
+                                                                                               Foreground="{Binding DataContext.AgentId, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource EngineBrush}, ConverterParameter=main}"/>
                                                                             <TextBlock x:Name="lbl" Text="{Binding Label}" FontSize="13.5" Foreground="{DynamicResource Txt1}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                                                         </DockPanel>
                                                                     </Grid>
@@ -231,10 +233,18 @@
                                                                         <Setter TargetName="row" Property="Background" Value="{DynamicResource Bg3}"/>
                                                                     </Trigger>
                                                                     <Trigger Property="IsKeyboardFocused" Value="True">
-                                                                        <Setter TargetName="row" Property="Background" Value="{DynamicResource AccentDim}"/>
+                                                                        <Setter TargetName="row" Property="Background">
+                                                                            <Setter.Value>
+                                                                                <Binding Path="DataContext.AgentId" Converter="{StaticResource EngineBrush}" ConverterParameter="dim" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
                                                                         <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
                                                                         <Setter TargetName="arrow" Property="Visibility" Value="Visible"/>
-                                                                        <Setter TargetName="num" Property="Foreground" Value="{DynamicResource Accent}"/>
+                                                                        <Setter TargetName="num" Property="Foreground">
+                                                                            <Setter.Value>
+                                                                                <Binding Path="DataContext.AgentId" Converter="{StaticResource EngineBrush}" ConverterParameter="main" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
                                                                         <Setter TargetName="num" Property="FontWeight" Value="SemiBold"/>
                                                                         <Setter TargetName="lbl" Property="Foreground" Value="{DynamicResource Txt0}"/>
                                                                     </Trigger>
@@ -257,8 +267,9 @@
                                                         <Setter Property="Template">
                                                             <Setter.Value>
                                                                 <ControlTemplate TargetType="Button">
-                                                                    <Border x:Name="gb" Background="{DynamicResource Accent}" CornerRadius="14">
-                                                                        <controls:IconView Icon="{StaticResource IconSend}" Width="13" Height="13" Foreground="{DynamicResource AccentText}"/>
+                                                                    <Border x:Name="gb" CornerRadius="14"
+                                                                            Background="{Binding AgentId, Converter={StaticResource EngineBrush}, ConverterParameter=main}">
+                                                                        <controls:IconView Icon="{StaticResource IconSend}" Width="13" Height="13" Foreground="#FF0A0E12"/>
                                                                     </Border>
                                                                     <ControlTemplate.Triggers>
                                                                         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="gb" Property="Opacity" Value="0.88"/></Trigger>
