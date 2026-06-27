@@ -64,8 +64,12 @@
                     <ColumnDefinition Width="40"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                    <Border Width="28" Height="28" CornerRadius="4" Background="{DynamicResource Bg2}"
+                <Grid Grid.Column="0" HorizontalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Width="28" Height="28" CornerRadius="4" Background="{DynamicResource Bg2}"
                             BorderBrush="{DynamicResource LineBright}" BorderThickness="1"
                             ToolTip="{Binding DataContext.AgentName, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
                         <!-- 엔진별 브랜드 아이콘+색 (DataContext=세션). 이전엔 Badge 텍스트+하드코딩 Accent였다. -->
@@ -73,8 +77,9 @@
                                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <Border Width="1" Height="46" Background="{DynamicResource LineSoft}" Margin="0,6,0,0"/>
-                </StackPanel>
+                    <!-- 세로 액센트 룰: 고정 46px(짧은 메시지에 최소높이 강제 → 빈 공간)이 아니라 콘텐츠 높이에 맞춰 stretch -->
+                    <Border Grid.Row="1" Width="1" Background="{DynamicResource LineSoft}" Margin="0,6,0,0" VerticalAlignment="Stretch"/>
+                </Grid>
                 <StackPanel Grid.Column="1" Margin="0,1,0,0">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,7">
                         <TextBlock Text="{Binding DataContext.AgentName, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
