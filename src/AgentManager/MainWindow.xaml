@@ -742,7 +742,7 @@
                                                                     <MultiDataTrigger>
                                                                         <MultiDataTrigger.Conditions>
                                                                             <Condition Binding="{Binding IsRunning}" Value="True"/>
-                                                                            <Condition Binding="{Binding DataContext.StreamLogs, ElementName=Root}" Value="True"/>
+                                                                            <Condition Binding="{Binding DataContext.StreamLogs, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
                                                                         </MultiDataTrigger.Conditions>
                                                                         <Setter Property="Visibility" Value="Visible"/>
                                                                     </MultiDataTrigger>
@@ -972,7 +972,7 @@
                                                                     <MultiDataTrigger>
                                                                         <MultiDataTrigger.Conditions>
                                                                             <Condition Binding="{Binding IsRunning}" Value="True"/>
-                                                                            <Condition Binding="{Binding DataContext.StreamLogs, ElementName=Root}" Value="True"/>
+                                                                            <Condition Binding="{Binding DataContext.StreamLogs, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
                                                                         </MultiDataTrigger.Conditions>
                                                                         <Setter Property="Visibility" Value="Visible"/>
                                                                     </MultiDataTrigger>
@@ -1401,12 +1401,12 @@
                                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
                                                     <Button DockPanel.Dock="Right" Margin="6,0,0,0"
                                                             ToolTip="{StaticResource L.Copy}"
-                                                            Command="{Binding DataContext.CopyReportCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                            Command="{Binding DataContext.CopyReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
                                                         <Button.Style>
                                                             <!-- hidden in bulk-select mode: per-card copy would be ambiguous next to "선택 복사" -->
                                                             <Style TargetType="Button" BasedOn="{StaticResource CardCopyButton}">
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding DataContext.HasSelectedReports, ElementName=Root}" Value="True">
+                                                                    <DataTrigger Binding="{Binding DataContext.HasSelectedReports, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
