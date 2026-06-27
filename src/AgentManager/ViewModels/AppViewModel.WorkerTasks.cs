@@ -434,15 +434,18 @@ public sealed partial class AppViewModel
     private readonly HashSet<string> _watchedTaskDirs = [];
     private readonly System.Collections.Generic.List<FileSystemWatcher> _sessionTaskWatchers = [];
 
-    /// <summary>Also watch a running session's <c>&lt;cwd&gt;/.am/worker-tasks/</c> — the worker-prompt
-    /// skill's fallback when AGENTMANAGER_TASK_SPOOL isn't visible to the agent's shell. Ingests those
-    /// files into the backlog under the session's project. Idempotent per directory.</summary>
+    /// <summary>Watch this session's <c>&lt;cwd&gt;/.am/worker-tasks/&lt;sessionId&gt;/</c> — where the
+    /// worker-prompt skill writes (via AGENTMANAGER_TASK_SPOOL, set to this same path). The dir is
+    /// session-scoped so that sessions sharing a cwd (e.g. worktree-less sessions, all rooted at the
+    /// project path) get DISTINCT spool dirs — otherwise the per-dir dedup below would attribute every
+    /// session's tasks to whichever session registered the shared dir first, collapsing report origins
+    /// onto one session. Idempotent per directory.</summary>
     private void WatchSessionTaskSpool(string cwd, string projectId, string sessionId)
     {
         if (string.IsNullOrWhiteSpace(cwd)) return;
         try
         {
-            var dir = Path.Combine(cwd, ".am", "worker-tasks");
+            var dir = Path.Combine(cwd, ".am", "worker-tasks", sessionId);
             Directory.CreateDirectory(dir);
             if (!_watchedTaskDirs.Add(dir)) return; // already watching
             foreach (var f in Directory.EnumerateFiles(dir, "*.json")) ScheduleIngest(f, projectId, sessionId);

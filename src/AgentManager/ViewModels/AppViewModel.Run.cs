@@ -173,7 +173,7 @@ public sealed partial class AppViewModel
             AttachedDocsText = Attachments.BuildDocsText(docs),
             AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
             ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
-            ExtraEnvironment = WithTaskSpoolEnv(ApiEnvFor(s.AgentId), Path.Combine(cwd, ".am", "worker-tasks")),
+            ExtraEnvironment = WithTaskSpoolEnv(ApiEnvFor(s.AgentId), Path.Combine(cwd, ".am", "worker-tasks", s.Id)),
             NativeHookSpoolDirectory = nativeHookSpoolDirectory,
             NativeHookCommand = s.AgentId is "gx" or "cc" && nativeHookSpoolDirectory is not null
                 ? NativeHookCommandFactory.WindowsPowerShellSpoolScript(nativeHookSpoolDirectory)
