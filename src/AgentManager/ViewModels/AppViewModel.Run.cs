@@ -68,6 +68,19 @@ public sealed partial class AppViewModel
     public RelayCommand DismissChoiceCommand => _dismissChoiceCommand ??=
         new RelayCommand(_ => { if (ActiveSession is { } s) s.ActiveChoice = null; });
 
+    private RelayCommand? _choiceFreeInputCommand;
+    /// <summary>"기타" 자유입력 — 타이핑한 텍스트를 현재 질문의 답으로 기록하고 다음 질문으로 진행한다.
+    /// 마지막(또는 단일) 질문이면 전체를 한 턴으로 전송. 위저드 도중 자유입력도 흐름을 끊지 않는다.</summary>
+    public RelayCommand ChoiceFreeInputCommand => _choiceFreeInputCommand ??=
+        new RelayCommand(_ =>
+        {
+            if (ActiveSession is not { } s || s.ActiveChoice is not { } flow) return;
+            var text = (s.Draft ?? "").Trim();
+            if (text.Length == 0) return;
+            s.Draft = "";
+            AnswerCurrentChoice(s, flow, text);
+        });
+
     /// <summary>Record the current page's answer, advance to the next page, or — on the last page —
     /// send the whole flow as one turn.</summary>
     private void AnswerCurrentChoice(SessionViewModel s, ChoiceFlow flow, string answer)

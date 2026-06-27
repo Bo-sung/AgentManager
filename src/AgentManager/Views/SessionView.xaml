@@ -297,7 +297,7 @@
                                             </DockPanel.Style>
                                             <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconEdit}" Width="15" Height="15" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,14,0"/>
                                             <Button DockPanel.Dock="Right" Width="28" Height="28" Cursor="Hand" Margin="8,0,0,0" ToolTip="{StaticResource L.SendTip}"
-                                                    Command="{Binding DataContext.SendCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                    Command="{Binding DataContext.ChoiceFreeInputCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -333,7 +333,7 @@
                                             <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Height="24" Padding="9,0" Margin="8,0,0,0"
                                                           IsChecked="{Binding TranslationEnabled, Mode=TwoWay}" Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
                                             <Grid>
-                                                <TextBox Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Composer_PreviewKeyDown"
+                                                <TextBox Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="ChoiceOther_PreviewKeyDown"
                                                          Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Txt0}" FontSize="13.5" VerticalContentAlignment="Center"/>
                                                 <TextBlock Text="{StaticResource L.CustomInput}" Foreground="{DynamicResource Txt2}" FontSize="13.5" VerticalAlignment="Center" IsHitTestVisible="False" Margin="3,0,0,0">
                                                     <TextBlock.Style>

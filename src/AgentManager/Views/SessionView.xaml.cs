@@ -254,6 +254,17 @@ public partial class SessionView : UserControl
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => FirstDescendant<Button>(root)?.Focus()));
     }
 
+    // "기타" 자유입력 박스: Enter는 위저드-인지 전송(현재 질문 답으로 기록 후 진행), Esc는 직접입력 취소.
+    private void ChoiceOther_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape) { Vm?.DismissChoiceCommand.Execute(null); e.Handled = true; return; }
+        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == 0)
+        {
+            e.Handled = true;
+            if (Vm is { } v && v.ChoiceFreeInputCommand.CanExecute(null)) v.ChoiceFreeInputCommand.Execute(null);
+        }
+    }
+
     private void QuickReply_KeyDown(object sender, KeyEventArgs e)
     {
         if (Vm is not { } vm || vm.ActiveSession?.ActiveChoice is not { } flow) return;
