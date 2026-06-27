@@ -34,7 +34,9 @@ public sealed class AgyAdapter : IAgentAdapter, IPtyTurnRunner
         Func<NormalizedEvent, Task> emitAsync, CancellationToken ct)
     {
         var cmd = BuildCommandLine(executablePath, options, prompt);
-        var (raw, exit) = await ConPtyHost.RunAsync(cmd, options.WorkingDirectory, TimeSpan.FromMinutes(10), ct);
+        // PTY 엔진에도 env 주입(AGENTMANAGER_TASK_SPOOL 등) — 안 그러면 워커-프롬프트 스킬이 스풀 경로를
+        // 못 보고 agy 자체 스크래치(./.am/worker-tasks/)에 써서 백로그로 유입되지 않는다.
+        var (raw, exit) = await ConPtyHost.RunAsync(cmd, options.WorkingDirectory, TimeSpan.FromMinutes(10), ct, options.ExtraEnvironment);
         var text = ConPtyHost.StripVt(raw).Trim();
 
         var conversationId = TryReadConversationId(options.WorkingDirectory);
