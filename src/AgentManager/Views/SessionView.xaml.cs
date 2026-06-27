@@ -250,6 +250,7 @@ public partial class SessionView : UserControl
     private void QuickReply_KeyDown(object sender, KeyEventArgs e)
     {
         if (Vm?.ActiveSession is not { } s || s.QuickReplies.Count == 0) return;
+        if (Keyboard.FocusedElement is TextBox) return; // "기타" 입력 중엔 타이핑을 마커키로 가로채지 않음
         switch (e.Key)
         {
             case Key.Escape: s.QuickReplies.Clear(); e.Handled = true; return;   // → 직접 입력 복귀

@@ -190,6 +190,7 @@
     <sys:String x:Key="L.CustomInput">Type instead</sys:String>
     <sys:String x:Key="L.CustomInputTip">Dismiss the choices and type your own reply</sys:String>
     <sys:String x:Key="L.QuickReplyHint">↑↓ navigate · Enter select · A/B/C or number · Esc to type</sys:String>
+    <sys:String x:Key="L.Skip">Skip</sys:String>
     <sys:String x:Key="L.CreateAsWorker">Create as worker</sys:String>
     <sys:String x:Key="L.Authentication">Authentication</sys:String>
     <sys:String x:Key="L.AuthSubscription">Subscription</sys:String>
