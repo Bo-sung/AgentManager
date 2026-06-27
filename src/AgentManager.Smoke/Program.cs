@@ -1214,6 +1214,15 @@ static void AssertQuickReplyParser()
     if (N("All done. Everything builds and tests pass.") != 0)
         throw new Exception("quickreply: false positive on prose");
 
+    // engine glued the first marker to the sentence ("…적절합니다.A) …") → still detect A,B,C (agy)
+    var g = AgentManager.Core.QuickReplyParser.Parse(
+        "다음 작업이 적절합니다.A) 테스트 추가\nB) 리팩터링\nC) 문서 보강");
+    if (g.Count != 3 || g[0].Marker != "A" || g[2].Marker != "C")
+        throw new Exception("quickreply: glued first marker not normalized");
+    // a single glued marker in prose (no sequential run) must not false-positive
+    if (N("It works. A) note: nothing else here.") != 0)
+        throw new Exception("quickreply: glued single marker falsely detected");
+
     Console.WriteLine("quick-reply parser asserts OK");
 }
 

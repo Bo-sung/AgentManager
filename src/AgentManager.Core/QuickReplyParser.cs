@@ -19,6 +19,9 @@ public static partial class QuickReplyParser
     public static IReadOnlyList<QuickReplyOption> Parse(string? assistantText)
     {
         if (string.IsNullOrWhiteSpace(assistantText)) return [];
+        // 일부 엔진(agy 등)은 첫 선택지를 앞 문장에 붙여 낸다("…적절합니다.A) 테스트 …"). 문장부호 뒤에
+        // 바로 붙은 글자 마커 앞에 줄바꿈을 넣어 줄-시작 규칙으로 잡히게 정규화(파서 내부 복사본만, 표시 무관).
+        assistantText = GlueRx().Replace(assistantText, "\n");
         var lines = assistantText.Replace("\r", "").Split('\n');
 
         // Collect option-looking lines: (original index, kind L/N, marker, content).
@@ -109,6 +112,9 @@ public static partial class QuickReplyParser
 
     static string Truncate(string s, int max) => s.Length <= max ? s : s[..(max - 1)].TrimEnd() + "…";
 
+    /// <summary>문장부호([.:!?。．：！？]) 뒤에 바로 붙은 "X) " 글자 마커 앞 — 줄바꿈 삽입 지점.</summary>
+    [GeneratedRegex(@"(?<=[.:!?。．：！？])[ \t]*(?=[A-Za-z]\)[ \t])")]
+    private static partial Regex GlueRx();
     [GeneratedRegex(@"^([A-Za-z])\)\s+(.+)$")]
     private static partial Regex LetterRx();
     [GeneratedRegex(@"^(\d{1,2})[.)]\s+(.+)$")]
