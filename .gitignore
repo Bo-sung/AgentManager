@@ -487,5 +487,9 @@ dist/
 # AgentManager worker-prompt skill task spool (in-cwd fallback)
 .am/
 
+# Claude Code agent runtime — subagent worktrees + machine-local settings (never commit)
+.claude/worktrees/
+.claude/settings.local.json
+
 # Stray npm lockfile (this is a .NET repo — no package.json)
 package-lock.json
