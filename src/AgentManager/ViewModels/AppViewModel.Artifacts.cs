@@ -116,7 +116,10 @@ public sealed partial class AppViewModel
         || m.Contains("node-pty") || m.Contains("conpty_console_list")
         || m.Contains("node:internal/") || m.StartsWith("Node.js v")
         || m.TrimStart().StartsWith("at ") || m.Trim() == "^"
-        || m.Contains("var consoleProcessList");
+        || m.Contains("var consoleProcessList")
+        // pi(node)를 턴 종료 후 강제 kill할 때 libuv가 정리 중 내는 무해한 teardown assertion —
+        // 워커 출력은 이미 그 전에 생성됨(작업은 성공). 빨간 에러로 띄우지 않는다.
+        || m.Contains("UV_HANDLE_CLOSING");
 
     private static string KindOf(string name) => name switch
     {
