@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.12.0
+`WPF · .NET 10 · Windows` · v1.13.0
 
 ---
 
@@ -39,6 +39,7 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 - 세션마다 독립 **git worktree** 생성·마운트로 작업 공간 격리
 
 ### Review pane (우측 변경/Diff)
+- **탭형 사이드 패인** — 우측 영역을 **Diff / 네이티브 작업자 / 보고 수신함** 탭으로 분리(한 뷰가 다른 뷰를 밀어내지 않음)
 - 생성·수정된 파일 목록 + 인라인 **Git Diff**(추가/삭제 색상), 실행 중 라이브 갱신
 - **Merge ▸ main**(커밋+머지) · **Commit only** · **Discard**(`git reset --hard` + `git clean`)
 - **Diff 피드백** — diff에 인라인 코멘트를 적어 에이전트에게 후속 수정 지시
@@ -62,6 +63,12 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 - 완료 시 메인 트랜스크립트의 **DelegationCard**(보고 미리보기) → `보고 붙여넣기`. 다수는 **보고 수신함** + **합쳐 붙여넣기**(위임 순서 병합).
 - **일괄 fan-out** — "유휴 워커 전체에 위임"으로 N개 워커 **동시 실행**(워커 전용 동시성 cap, 메인과 분리).
 - **크로스 엔진** — 메인=Claude, 워커=Codex/Antigravity 등 자유 조합(엔진 무관 어댑터 라우팅).
+
+### 워커 태스크 큐 (Worker Task Queue)
+- **스킬 → 백로그 자동 유입** — 세션이 워커-프롬프트 스킬로 작업을 쪼개면 spool에 기록되어 Orchestrator **백로그**로 자동 수집(중앙 spool + 실행 세션 cwd `.am/worker-tasks/` 동시 감시 — 환경변수가 에이전트 셸에 안 보여 폴백된 경우까지 커버).
+- **Core 소유 도메인** — 백로그·**워커별 큐**·수명주기(backlog→assigned→running→done/failed)를 `WorkerTaskStore`(Core, 토큰0 테스트)가 소유. UI는 관측·시각화만.
+- **할당 → 큐 → 실행** — 백로그에서 워커 선택(또는 **`+ 새 워커`로 유휴 워커 즉시 생성** — 첫 실작업이 첫 깨끗한 턴) → 워커별 큐 → **`큐 실행`**(순차 자동-진행, 워커 동시성 cap 준수) · ↑↓ 재정렬 · 완료 작업은 **`완료 기록`** 토글로 숨김.
+- **작업 보고 + 복사** — 워커 작업의 최종 응답을 보고로 캡처해 **오리진 세션의 "보고 수신함" 탭**으로 라우팅. 카드별 **복사** · **전체 복사** · 체크박스 **선택 복사**로 클립보드에 빼내 세션에 수동 전달.
 
 ### 관측 & 대시보드
 - **Orchestrator 대시보드** — KPI(Active/Awaiting/Completed/Failed/Fleet) + Live/Recent 카드, spark 이퀄라이저, diff 바
@@ -207,6 +214,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.13.0** — 워커 태스크 큐(스킬→백로그 자동 유입 · Core `WorkerTaskStore` · 워커별 큐 · 큐 실행/재정렬/완료 기록) · 탭형 사이드 패인(Diff/네이티브 작업자/보고 수신함) · 작업 보고 수신함 + 복사(카드별/전체/선택) · 네이티브 작업자 형제-세션 오인 필터
 - **1.12.0** — 스킬 주입(설정에서 SKILL.md 편집 → 저장 시 cc·gx·agy·pi 스킬 폴더에 기록) · 마크다운 코드블록 복사 버튼
 - **1.11.0** — 크래시 시 오류 로그 팝업 + 종료(전역 예외 핸들러)
 - **1.10.0** — 문서 첨부(이미지 외) + 실제 썸네일 · 빠른-응답 버튼(A/B·1/2 선택지 자동 감지) · 메시지 재번역(↻) · Enter 전송/Shift+Enter 줄바꿈 · 번역 스킵·세션 열기 버그 수정

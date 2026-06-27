@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.12.0: 스킬 주입(엔진별 SKILL.md) · 마크다운 코드블록 복사 버튼/가변 fence -->
-    <Version>1.12.0</Version>
+    <!-- 1.13.0: 워커 태스크 큐(스킬→백로그 · Core WorkerTaskStore · 워커별 큐) · 탭형 사이드 패인 · 작업 보고 수신함+복사 -->
+    <Version>1.13.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
