@@ -150,99 +150,9 @@
                             </DockPanel>
                         </Border>
 
-                        <!-- native workers / subagents — moved to the side-pane "Native" tab (MainWindow) -->
-                        <Border DockPanel.Dock="Top" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="16,8"
-                                Visibility="Collapsed">
-                            <DockPanel>
-                                <StackPanel DockPanel.Dock="Left" Width="128" VerticalAlignment="Center">
-                                    <TextBlock Text="{StaticResource L.NativeWorkers}" Style="{StaticResource Lbl}" Foreground="{DynamicResource Txt2}"/>
-                                    <TextBlock Text="{Binding NativeWorkItems.Count}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Txt3}" Margin="0,2,0,0"/>
-                                </StackPanel>
-                                <ItemsControl ItemsSource="{Binding NativeWorkItems}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border MinWidth="160" MaxWidth="260" Margin="0,0,8,0" Padding="9,7" CornerRadius="6"
-                                                    Background="{DynamicResource Bg2}" BorderThickness="1">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                                <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                <Setter Property="BorderBrush" Value="{DynamicResource Ok}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsFailed}" Value="True">
-                                                                <Setter Property="BorderBrush" Value="{DynamicResource Err}"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <DockPanel>
-                                                    <Ellipse DockPanel.Dock="Left" Width="7" Height="7" Margin="0,4,8,0">
-                                                        <Ellipse.Style>
-                                                            <Style TargetType="Ellipse">
-                                                                <Setter Property="Fill" Value="{DynamicResource Txt3}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                                        <Setter Property="Fill" Value="{DynamicResource Accent}"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                        <Setter Property="Fill" Value="{DynamicResource Ok}"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding IsFailed}" Value="True">
-                                                                        <Setter Property="Fill" Value="{DynamicResource Err}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Ellipse.Style>
-                                                    </Ellipse>
-                                                    <StackPanel>
-                                                        <DockPanel>
-                                                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Txt0}" FontSize="11.5" FontWeight="SemiBold"
-                                                                       TextTrimming="CharacterEllipsis"/>
-                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Status}" FontFamily="{StaticResource Mono}" FontSize="9.5"
-                                                                       Foreground="{DynamicResource Txt2}" Margin="8,0,0,0"/>
-                                                        </DockPanel>
-                                                        <TextBlock Text="{Binding Source}" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}"
-                                                                   Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
-                                                        <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{DynamicResource Txt2}" Margin="0,3,0,0"
-                                                                   TextTrimming="CharacterEllipsis"/>
-                                                    </StackPanel>
-                                                </DockPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </DockPanel>
-                        </Border>
-
                         <!-- composer (bottom) -->
                         <Border DockPanel.Dock="Bottom" Margin="14,0,14,14" MinWidth="520" HorizontalAlignment="Stretch">
                             <StackPanel>
-                                <!-- 보고 수신함 — moved to the side-pane "Reports" tab (MainWindow) -->
-                                <Border Margin="4,0,4,8" Background="{DynamicResource InfoDim}" BorderBrush="{DynamicResource InfoLine}" BorderThickness="1" CornerRadius="8" Padding="11,8"
-                                        Visibility="Collapsed">
-                                    <DockPanel>
-                                        <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconLayers}" Width="15" Height="15" Foreground="{DynamicResource Info}" Margin="0,0,9,0" VerticalAlignment="Center"/>
-                                        <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" VerticalAlignment="Center"
-                                                Visibility="{Binding DataContext.CanMergeReports, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}"
-                                                Command="{Binding DataContext.MergeReportsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <controls:IconView Icon="{StaticResource IconLayers}" Width="12" Height="12" Foreground="{DynamicResource Txt1}" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                                <TextBlock VerticalAlignment="Center"><Run Text="{StaticResource L.MergePaste}"/><Run Text=" ("/><Run Text="{Binding DataContext.ReadyReportsActiveCount, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"/><Run Text=")"/></TextBlock>
-                                            </StackPanel>
-                                        </Button>
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="{StaticResource L.ReportInbox}" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" FontSize="11.5" Margin="0,0,8,0"/>
-                                            <TextBlock Foreground="{DynamicResource Txt2}" FontSize="11" VerticalAlignment="Center"><Run Text="{Binding DataContext.ReadyReportsActiveCount, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"/><Run Text=" READY"/></TextBlock>
-                                        </StackPanel>
-                                    </DockPanel>
-                                </Border>
                                 <Border Margin="4,0,4,8" Background="{DynamicResource AccentDim}" BorderThickness="1" CornerRadius="8"
                                         Padding="11,8" Visibility="{Binding IsRunning, Converter={StaticResource BoolVis}}">
                                     <Border.Style>
