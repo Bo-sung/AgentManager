@@ -246,6 +246,8 @@
     <sys:String x:Key="L.CopyAll">전체 복사</sys:String>
     <sys:String x:Key="L.CopyAllTip">대화 전체를 Markdown으로 클립보드에 복사</sys:String>
     <sys:String x:Key="L.CopySelected">선택 복사</sys:String>
+    <sys:String x:Key="L.SelectAll">전체 선택</sys:String>
+    <sys:String x:Key="L.DeselectAll">전체 해제</sys:String>
     <sys:String x:Key="L.StatusAgent">AGENT </sys:String>
     <sys:String x:Key="L.StatusModel">MODEL </sys:String>
     <sys:String x:Key="L.AgentEngineTip">이 세션의 엔진</sys:String>

@@ -103,6 +103,8 @@ public sealed partial class AppViewModel
     /// <summary>How many report cards are checked — drives the "선택 복사 (N)" button label/visibility.</summary>
     public int SelectedReportCount => ActiveTaskReports.Count(r => r.IsSelected);
     public bool HasSelectedReports => SelectedReportCount > 0;
+    /// <summary>Every report card checked — drives the select-all toggle's checked state + label.</summary>
+    public bool AllReportsSelected => ActiveTaskReports.Count > 0 && ActiveTaskReports.All(r => r.IsSelected);
 
     /// <summary>Rebuild the active session's report feed (call on session change + store change).</summary>
     public void RebuildTaskReports()
@@ -118,6 +120,7 @@ public sealed partial class AppViewModel
         OnChanged(nameof(HasActiveTaskReports));
         OnChanged(nameof(SelectedReportCount));
         OnChanged(nameof(HasSelectedReports));
+        OnChanged(nameof(AllReportsSelected));
     }
 
     private void OnReportSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -125,6 +128,7 @@ public sealed partial class AppViewModel
         if (e.PropertyName != nameof(WorkerTaskViewModel.IsSelected)) return;
         OnChanged(nameof(SelectedReportCount));
         OnChanged(nameof(HasSelectedReports));
+        OnChanged(nameof(AllReportsSelected));
     }
 
     private static void CopyToClipboard(string text)
@@ -161,7 +165,7 @@ public sealed partial class AppViewModel
     public RelayCommand ClearFinishedCommand { get; private set; } = null!;
     public RelayCommand ToggleQueueHistoryCommand { get; private set; } = null!;
     public RelayCommand CopyReportCommand { get; private set; } = null!;
-    public RelayCommand CopyAllReportsCommand { get; private set; } = null!;
+    public RelayCommand ToggleSelectAllReportsCommand { get; private set; } = null!;
     public RelayCommand CopySelectedReportsCommand { get; private set; } = null!;
 
     /// <summary>Per-worker: whether the finished-task history is expanded (survives view rebuilds).</summary>
@@ -228,12 +232,13 @@ public sealed partial class AppViewModel
         RunQueueCommand = new RelayCommand(p => { if (p is WorkerQueueViewModel q) _ = RunQueueAsync(q.WorkerId); },
             p => p is WorkerQueueViewModel { CanRunQueue: true });
 
-        // Report inbox copy: one card, all cards, or the checked subset → clipboard (manual hand-off to the session).
+        // Report inbox: single-card copy (per card) + select-all toggle + copy the checked subset.
+        // Copy is a manual hand-off to the session (clipboard, not draft injection).
         CopyReportCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) CopyToClipboard(t.ClipboardText); });
-        CopyAllReportsCommand = new RelayCommand(_ =>
+        ToggleSelectAllReportsCommand = new RelayCommand(_ =>
         {
-            if (ActiveTaskReports.Count == 0) return;
-            CopyToClipboard(string.Join("\n\n---\n\n", ActiveTaskReports.Select(r => r.ClipboardText)));
+            var selectAll = !AllReportsSelected;   // none/partial → select all; all → clear
+            foreach (var r in ActiveTaskReports) r.IsSelected = selectAll;
         });
         CopySelectedReportsCommand = new RelayCommand(_ =>
         {

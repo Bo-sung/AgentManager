@@ -1309,8 +1309,22 @@
                                 </Button>
                                 <Button Style="{StaticResource ChipButton}" Margin="0,0,6,6"
                                         Visibility="{Binding DataContext.HasActiveTaskReports, ElementName=Root, Converter={StaticResource BoolVis}}"
-                                        Command="{Binding DataContext.CopyAllReportsCommand, ElementName=Root}">
-                                    <TextBlock Text="{StaticResource L.CopyAll}"/>
+                                        Command="{Binding DataContext.ToggleSelectAllReportsCommand, ElementName=Root}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource SelectCheck}" IsHitTestVisible="False" Margin="0,0,7,0"
+                                                      IsChecked="{Binding DataContext.AllReportsSelected, ElementName=Root, Mode=OneWay}"/>
+                                        <TextBlock Text="{StaticResource L.SelectAll}" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding DataContext.AllReportsSelected, ElementName=Root}" Value="True">
+                                                            <Setter Property="Text" Value="{StaticResource L.DeselectAll}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
                                 </Button>
                                 <Button Style="{StaticResource ChipButton}" Margin="0,0,0,6"
                                         Visibility="{Binding DataContext.HasSelectedReports, ElementName=Root, Converter={StaticResource BoolVis}}"
@@ -1339,9 +1353,19 @@
                                                 <DockPanel Margin="9,7,9,5">
                                                     <ToggleButton DockPanel.Dock="Left" Style="{StaticResource SelectCheck}" Margin="0,0,8,0"
                                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
-                                                    <Button DockPanel.Dock="Right" Style="{StaticResource CardCopyButton}" Margin="6,0,0,0"
+                                                    <Button DockPanel.Dock="Right" Margin="6,0,0,0"
                                                             ToolTip="{StaticResource L.Copy}"
                                                             Command="{Binding DataContext.CopyReportCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                        <Button.Style>
+                                                            <!-- hidden in bulk-select mode: per-card copy would be ambiguous next to "선택 복사" -->
+                                                            <Style TargetType="Button" BasedOn="{StaticResource CardCopyButton}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DataContext.HasSelectedReports, ElementName=Root}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
                                                         <StackPanel Orientation="Horizontal">
                                                             <controls:IconView Icon="{StaticResource IconCopy}" Width="12" Height="12" VerticalAlignment="Center"/>
                                                             <TextBlock Text="{StaticResource L.Copy}" FontSize="10.5" Margin="4,0,0,0" VerticalAlignment="Center"/>

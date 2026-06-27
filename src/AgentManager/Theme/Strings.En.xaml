@@ -246,6 +246,8 @@
     <sys:String x:Key="L.CopyAll">Copy all</sys:String>
     <sys:String x:Key="L.CopyAllTip">Copy the whole conversation as Markdown</sys:String>
     <sys:String x:Key="L.CopySelected">Copy selected</sys:String>
+    <sys:String x:Key="L.SelectAll">Select all</sys:String>
+    <sys:String x:Key="L.DeselectAll">Deselect all</sys:String>
     <sys:String x:Key="L.StatusAgent">AGENT </sys:String>
     <sys:String x:Key="L.StatusModel">MODEL </sys:String>
     <sys:String x:Key="L.AgentEngineTip">This session's engine</sys:String>
