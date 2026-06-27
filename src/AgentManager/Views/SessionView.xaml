@@ -134,15 +134,7 @@
                                     <Run Text="{StaticResource L.StatusAgent}"/><Run Text="{Binding AgentName, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
                                 <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}">
                                     <Run Text="{StaticResource L.StatusModel}"/><Run Text="{Binding Model, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
-                                <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}"
-                                              IsChecked="{Binding RequireApproval, Mode=TwoWay}"
-                                              Content="{StaticResource L.Approval}" ToolTip="{StaticResource L.ApprovalToggleTip}"
-                                              Margin="8,0,0,0"/>
-                                <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding Source={StaticResource SandboxModes}}"
-                                          SelectedItem="{Binding Sandbox, Mode=TwoWay}"
-                                          FontFamily="{StaticResource Mono}" FontSize="10" Width="132" Height="24"
-                                          Background="{DynamicResource Bg1}" Foreground="{DynamicResource Txt1}"
-                                          BorderBrush="{DynamicResource Line}" Margin="8,0,0,0"/>
+                                <!-- 권한/안전 모드는 컴포저 바의 칩으로 이동(engine-aware) -->
                                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}">
                                     <Run Text="{StaticResource L.Tkn}"/><Run Text="{Binding TokensLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
                                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{DynamicResource Txt2}" Margin="0,0,16,0">
@@ -423,6 +415,96 @@
                                                             </StackPanel>
                                                         </Border>
                                                     </Popup>
+                                                </Grid>
+                                                <!-- 권한/안전 모드 칩 (engine-aware: cc/gx 선택, agy/pi 잠금 배지) — 색=위험도 -->
+                                                <Grid DockPanel.Dock="Left" Margin="0,0,8,0">
+                                                    <!-- 선택 가능 (cc/gx) -->
+                                                    <Grid Visibility="{Binding HasPermissionModeChoice, Converter={StaticResource BoolVis}}">
+                                                        <ToggleButton x:Name="PermMenuBtn" Height="30" Cursor="Hand" ToolTip="{StaticResource L.PermissionMode}">
+                                                            <ToggleButton.Template>
+                                                                <ControlTemplate TargetType="ToggleButton">
+                                                                    <Border CornerRadius="15" Padding="11,0" BorderThickness="1"
+                                                                            Background="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=dim}"
+                                                                            BorderBrush="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=line}">
+                                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                            <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                                                     Fill="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=main}"/>
+                                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                                                       Text="{Binding CurrentPermissionModeItem.Name}"
+                                                                                       Foreground="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=text}"/>
+                                                                            <controls:IconView Icon="{StaticResource IconChevDown}" Width="11" Height="11" Margin="6,1,0,0" VerticalAlignment="Center"
+                                                                                               Foreground="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=text}"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </ToggleButton.Template>
+                                                        </ToggleButton>
+                                                        <Popup IsOpen="{Binding IsChecked, ElementName=PermMenuBtn, Mode=TwoWay}"
+                                                               StaysOpen="False" Placement="Top" AllowsTransparency="True" PopupAnimation="Fade">
+                                                            <Border Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1"
+                                                                    CornerRadius="7" Padding="6" Margin="8" MinWidth="290" MaxWidth="330">
+                                                                <Border.Effect>
+                                                                    <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.45" Color="#FF000000"/>
+                                                                </Border.Effect>
+                                                                <StackPanel>
+                                                                    <TextBlock Style="{StaticResource Lbl}" Margin="9,5,9,7" Text="{StaticResource L.PermissionMode}"/>
+                                                                    <ItemsControl ItemsSource="{Binding PermissionModeItems}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate>
+                                                                                <Button Click="PermissionOption_Click" Cursor="Hand" Background="Transparent" BorderThickness="0"
+                                                                                        HorizontalContentAlignment="Stretch" Padding="0">
+                                                                                    <Button.Template>
+                                                                                        <ControlTemplate TargetType="Button">
+                                                                                            <Border x:Name="po" Background="Transparent" CornerRadius="5" Padding="9,7">
+                                                                                                <ContentPresenter/>
+                                                                                            </Border>
+                                                                                            <ControlTemplate.Triggers>
+                                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                                    <Setter TargetName="po" Property="Background" Value="{DynamicResource Bg4}"/>
+                                                                                                </Trigger>
+                                                                                            </ControlTemplate.Triggers>
+                                                                                        </ControlTemplate>
+                                                                                    </Button.Template>
+                                                                                    <DockPanel>
+                                                                                        <Ellipse DockPanel.Dock="Left" Width="10" Height="10" Margin="0,3,10,0" VerticalAlignment="Top"
+                                                                                                 Fill="{Binding Risk, Converter={StaticResource RiskBrush}, ConverterParameter=main}"/>
+                                                                                        <StackPanel>
+                                                                                            <TextBlock FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" Text="{Binding Name}"/>
+                                                                                            <TextBlock FontSize="10.5" Foreground="{DynamicResource Txt2}" TextWrapping="Wrap" Margin="0,2,0,0" Text="{Binding Desc}"/>
+                                                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,4,0,0" Text="{Binding Flag}"/>
+                                                                                        </StackPanel>
+                                                                                    </DockPanel>
+                                                                                </Button>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </Popup>
+                                                    </Grid>
+                                                    <!-- 잠금 (agy/pi): 정적 배지 + 툴팁 -->
+                                                    <Border Height="30" CornerRadius="15" Padding="11,0" BorderThickness="1" Opacity="0.72"
+                                                            ToolTip="{Binding PermissionLockReason}"
+                                                            Background="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=dim}"
+                                                            BorderBrush="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=line}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding HasPermissionModeChoice}" Value="False">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <controls:IconView Icon="{StaticResource IconLock}" Width="11" Height="11" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                                               Foreground="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=text}"/>
+                                                            <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" VerticalAlignment="Center"
+                                                                       Text="{Binding CurrentPermissionModeItem.Name}"
+                                                                       Foreground="{Binding PermissionRisk, Converter={StaticResource RiskBrush}, ConverterParameter=text}"/>
+                                                        </StackPanel>
+                                                    </Border>
                                                 </Grid>
                                                 <!-- 번역 토글 (모델/effort 옆) — Ollama 미실행 시 비활성 -->
                                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}" Height="30" Padding="12,0" Margin="0,0,8,0"

@@ -105,7 +105,7 @@ public sealed class SessionViewModel : ObservableObject
     public Core.Agents.SandboxMode Sandbox
     {
         get => _sandbox;
-        set { if (Set(ref _sandbox, value)) { OnChanged(nameof(PermissionMode)); OnChanged(nameof(PermissionRisk)); } }
+        set { if (Set(ref _sandbox, value)) { OnChanged(nameof(PermissionMode)); OnChanged(nameof(PermissionRisk)); OnChanged(nameof(CurrentPermissionModeItem)); } }
     }
 
     /// <summary>승인 broker Stage 1 (Claude만): true면 툴 실행 전 사용자 승인 요구.</summary>
@@ -113,7 +113,7 @@ public sealed class SessionViewModel : ObservableObject
     public bool RequireApproval
     {
         get => _requireApproval;
-        set { if (Set(ref _requireApproval, value)) { OnChanged(nameof(PermissionMode)); OnChanged(nameof(PermissionRisk)); } }
+        set { if (Set(ref _requireApproval, value)) { OnChanged(nameof(PermissionMode)); OnChanged(nameof(PermissionRisk)); OnChanged(nameof(CurrentPermissionModeItem)); } }
     }
 
     // ----- 권한/안전 모드 (engine-aware) -------------------------------------------------
@@ -125,12 +125,25 @@ public sealed class SessionViewModel : ObservableObject
     /// <summary>cc/gx만 모드 선택 가능. agy/pi는 고정(피커 비노출, 정적 배지).</summary>
     public bool HasPermissionModeChoice => AgentId is "cc" or "gx";
 
-    /// <summary>엔진별 네이티브 모드 목록 (왼→오 = 안전→위험).</summary>
-    public string[] PermissionModeOptions => AgentId switch
+    /// <summary>엔진별 네이티브 모드 목록(메타 포함, 왼→오 = 안전→위험). 컴포저 칩/드롭다운이 바인딩.</summary>
+    public PermissionModeOption[] PermissionModeItems => AgentId switch
     {
-        "cc" => ["plan", "default", "bypass"],
-        "gx" => ["read-only", "workspace-write", "full-access"],
-        _    => [],
+        "cc" => PermissionModes.Cc,
+        "gx" => PermissionModes.Gx,
+        "agy" => PermissionModes.Agy,
+        _ => PermissionModes.Pi,
+    };
+
+    /// <summary>현재 선택된 모드의 메타(칩 표시용).</summary>
+    public PermissionModeOption CurrentPermissionModeItem =>
+        System.Array.Find(PermissionModeItems, m => m.Id == PermissionMode) ?? PermissionModeItems[0];
+
+    /// <summary>agy/pi 잠금 사유(툴팁).</summary>
+    public string PermissionLockReason => AgentId switch
+    {
+        "agy" => "Antigravity는 항상 전체 권한으로 동작합니다. 모드를 변경할 수 없습니다.",
+        "pi" => "Pi에는 권한 모드 개념이 없습니다. 변경할 항목이 없습니다.",
+        _ => "",
     };
 
     /// <summary>현재 모드 — (Sandbox, RequireApproval)에서 파생, set 시 둘을 엔진별로 설정.</summary>
@@ -163,14 +176,35 @@ public sealed class SessionViewModel : ObservableObject
         }
     }
 
-    /// <summary>공통 위험 그라데이션 색 키: read(중립) / write(정상) / full(경고) / none(pi).</summary>
-    public string PermissionRisk => PermissionMode switch
+    /// <summary>공통 위험 그라데이션 색 토큰(r0/r1/r3/rn) — 현재 모드 메타에서. RiskBrush 컨버터가 색으로.</summary>
+    public string PermissionRisk => CurrentPermissionModeItem.Risk;
+
+    /// <summary>컴포저 권한 모드 드롭다운 항목 메타. Risk = r0(안전)/r1(쓰기)/r2(완화)/r3(전체)/rn(없음).</summary>
+    public sealed record PermissionModeOption(string Id, string Name, string Desc, string Flag, string Risk);
+
+    private static class PermissionModes
     {
-        "plan" or "read-only" => "read",
-        "default" or "workspace-write" => "write",
-        "bypass" or "full-access" or "full" => "full",
-        _ => "none",
-    };
+        public static readonly PermissionModeOption[] Cc =
+        [
+            new("plan",    "Plan",          "읽기·계획만. 파일 변경이나 명령 실행을 하지 않음.", "--permission-mode plan", "r0"),
+            new("default", "Default (ask)", "쓰기/실행 전 매번 사용자에게 승인을 요청 (broker).", "broker · ask", "r1"),
+            new("bypass",  "Bypass",        "모든 권한 확인을 건너뜀. 승인 없이 파일·명령 실행.", "--dangerously-skip-permissions", "r3"),
+        ];
+        public static readonly PermissionModeOption[] Gx =
+        [
+            new("read-only",       "Read-only",       "파일 읽기만 허용. 쓰기·네트워크·명령 차단.", "--sandbox read-only", "r0"),
+            new("workspace-write", "Workspace-write", "워크스페이스 내 파일 쓰기 허용. 외부는 차단.", "--sandbox workspace-write", "r1"),
+            new("full-access",     "Full access",     "파일·네트워크·명령 전체 허용. 샌드박스 없음.", "--sandbox danger-full-access", "r3"),
+        ];
+        public static readonly PermissionModeOption[] Agy =
+        [
+            new("full", "Full (auto)", "항상 전체 권한으로 자동 실행. 변경 불가.", "always skip permissions", "r3"),
+        ];
+        public static readonly PermissionModeOption[] Pi =
+        [
+            new("default", "Default", "권한 개념이 없는 엔진. 모드 선택 항목이 없음.", "no permission surface", "rn"),
+        ];
+    }
 
     private string _status = "idle";
     public string Status

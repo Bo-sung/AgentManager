@@ -230,4 +230,11 @@ public partial class SessionView : UserControl
             s.ReasoningEffort = effort;
         if (EffortMenuBtn is { } t) t.IsChecked = false;
     }
+
+    private void PermissionOption_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is SessionViewModel.PermissionModeOption opt && Vm?.ActiveSession is { } s)
+            s.PermissionMode = opt.Id;
+        if (PermMenuBtn is { } t) t.IsChecked = false;
+    }
 }

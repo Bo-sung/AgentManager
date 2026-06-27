@@ -185,6 +185,10 @@
     <PathGeometry x:Key="IconSpark" Figures="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6z"/>
 
     <PathGeometry x:Key="IconBolt" Figures="M13 3L5 13h5l-1 8 8-10h-5z"/>
+    <GeometryGroup x:Key="IconLock">
+        <RectangleGeometry Rect="5,11,14,9" RadiusX="1.5" RadiusY="1.5"/>
+        <PathGeometry Figures="M8 11V8a4 4 0 0 1 8 0v3"/>
+    </GeometryGroup>
     <PathGeometry x:Key="IconPlay" Figures="M7 5l11 7-11 7z"/>
     <GeometryGroup x:Key="IconUndo">
         <PathGeometry Figures="M9 7L4 12l5 5"/>

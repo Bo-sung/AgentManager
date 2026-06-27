@@ -20,6 +20,7 @@
             <BooleanToVisibilityConverter x:Key="BoolVis"/>
             <controls:SelectedBrushConverter x:Key="SelBrush"/>
             <controls:PathToThumbnailConverter x:Key="PathThumb"/>
+            <controls:RiskBrushConverter x:Key="RiskBrush"/>
             <ObjectDataProvider x:Key="SandboxModes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="agents:SandboxMode"/>
