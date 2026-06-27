@@ -244,10 +244,24 @@ public sealed partial class AppViewModel
                 }).ToList(),
             });
         }
-        catch
+        catch (System.Exception ex)
         {
-            // Persistence should never interrupt an agent run or UI interaction.
+            // Persistence must never interrupt a run, but don't swallow silently: a save failure means
+            // unsaved work (sessions/tasks lost on restart), so record the exception instead of hiding it.
+            LogPersistError("SaveState FAILED: " + ex);
         }
+    }
+
+    /// <summary>Append a persistence error to save-errors.log — surfaces otherwise-silent SaveState
+    /// failures (the catch above used to swallow everything, which hid a real data-loss bug).</summary>
+    internal static void LogPersistError(string msg)
+    {
+        try
+        {
+            var dir = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "AgentManager");
+            File.AppendAllText(Path.Combine(dir, "save-errors.log"), $"{System.DateTime.Now:o} {msg}\n");
+        }
+        catch { }
     }
 
     // ----- settings.json 외부 편집 감시 (VS Code식 라이브 리로드) -----
