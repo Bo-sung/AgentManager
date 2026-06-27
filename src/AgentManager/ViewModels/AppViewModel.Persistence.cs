@@ -198,55 +198,155 @@ public sealed partial class AppViewModel
         RefreshQuotaText(); // 복원된 사용량 스냅샷을 footer에 즉시 표시(신선도 라벨 포함)
     }
 
-    private void SaveState()
+    // ----- 영속화: 디바운스(코얼레싱) + 오프-UI 쓰기 + 종료 시 강제 flush -----
+    // 모든 변경마다 전체 상태를 동기 직렬화/쓰기하던 것을, 한 턴의 연속 변경을 한 번의 쓰기로 합치도록 바꾼다.
+    // DTO 빌드는 반드시 UI 스레드(VM 컬렉션은 UI-affine)에서 하고, 완성된 DTO만 백그라운드 Task로 넘겨 파일에 쓴다.
+    private DispatcherTimer? _saveDebounce;
+    private DateTime _firstPendingSaveUtc; // 디바운스가 무한정 밀리지 않도록 첫 변경 시각을 캡처(최대 지연 캡)
+    private static readonly TimeSpan SaveDebounce = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan SaveMaxLatency = TimeSpan.FromSeconds(1); // 활동이 있어도 ~1s 내에는 반드시 저장
+
+    private static readonly string PersistErrorLogPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "save-errors.log");
+
+    /// <summary>영속화 실패를 save-errors.log에 추가 기록(진단용). 절대 throw 안 함 — 저장 실패가 UI/런을 막아선 안 된다.</summary>
+    private static void LogPersistError(string source, Exception ex)
     {
         try
         {
-            // 설정은 settings.json으로 분리 저장(SettingsStore). 자기-쓰기로 인한 리로드는 ReloadSettingsFromDisk가 내용 비교로 무시.
-            SettingsStore.Save(BuildSettingsDto());
-            AppStateStore.Save(new AppStateDto
-            {
-                ActiveProjectId = ActiveProject?.Id,
-                Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
-                WorkerTasks = WorkerTasksSnapshot().ToList(),
-                Sessions = _allSessions.Select(s => new SessionDto
-                {
-                    Id = s.Id,
-                    AgentId = s.AgentId,
-                    Title = s.Title,
-                    Branch = s.Branch,
-                    ProjectId = s.ProjectId,
-                    Project = s.Project,
-                    ProjectPath = s.ProjectPath,
-                    Model = s.Model,
-                    TranslationEnabled = s.TranslationEnabled,
-                    EngineSessionId = s.EngineSessionId,
-                    Role = s.Role.ToString(),
-                    BehaviorPreamble = s.BehaviorPreamble,
-                    TranslateSourceLanguage = s.TranslateSourceLanguage,
-                    TranslateTargetLanguage = s.TranslateTargetLanguage,
-                    LastMainSessionId = s.LastMainSessionId,
-                    Status = s.Status,
-                    Activity = s.Activity,
-                    TokensIn = s.TokensIn,
-                    TokensOut = s.TokensOut,
-                    CostUsd = s.CostUsd,
-                    IsArchived = s.IsArchived,
-                    Sandbox = s.Sandbox.ToString(),
-                    RequireApproval = s.RequireApproval,
-                    ReasoningEffort = s.ReasoningEffort,
-                    Artifacts = s.Artifacts.Select(a => new ArtifactDto { Kind = a.Kind, Title = a.Title, Content = a.Content, IsError = a.IsError }).ToList(),
-                    StartedAt = s.StartedAt,
-                    WorktreePath = s.WorktreePath,
-                    Isolated = s.Isolated,
-                    WorktreeAttempted = s.WorktreeAttempted,
-                    Transcript = s.Transcript.Select(AppStateStore.ToDto).ToList(),
-                }).ToList(),
-            });
+            Directory.CreateDirectory(Path.GetDirectoryName(PersistErrorLogPath)!);
+            File.AppendAllText(PersistErrorLogPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {source}\n{ex}\n\n");
         }
-        catch
+        catch { }
+    }
+
+    /// <summary>코얼레싱 저장 예약 — 한 턴의 연속 변경을 한 번의 쓰기로 합친다.
+    /// 디바운스 타이머를 매 변경마다 재시작하되, 첫 변경으로부터 SaveMaxLatency가 지나면 즉시 발화시켜
+    /// 변경이 계속돼도 저장이 무한정 밀리지 않게 한다.</summary>
+    private void SaveState()
+    {
+        var disp = Application.Current?.Dispatcher;
+        if (disp is null) { FlushStateNow(); return; } // 디스패처 없음(테스트/종료 중) → 동기 저장
+
+        if (_saveDebounce is null)
         {
-            // Persistence should never interrupt an agent run or UI interaction.
+            _saveDebounce = new DispatcherTimer(DispatcherPriority.Background, disp) { Interval = SaveDebounce };
+            _saveDebounce.Tick += (_, _) => { _saveDebounce!.Stop(); FlushStateNow(); };
+        }
+
+        if (!_saveDebounce.IsEnabled) _firstPendingSaveUtc = DateTime.UtcNow;
+        // 최대 지연 캡 도달 시 더 미루지 않고 바로 저장
+        if (DateTime.UtcNow - _firstPendingSaveUtc >= SaveMaxLatency)
+        {
+            _saveDebounce.Stop();
+            FlushStateNow();
+            return;
+        }
+        _saveDebounce.Stop();
+        _saveDebounce.Start(); // 재시작으로 디바운스
+    }
+
+    /// <summary>지금 즉시 저장 — 반드시-잃으면-안-되는 경로(앱 종료 등)에서 호출. 대기 중 디바운스도 취소한다.
+    /// DTO는 UI 스레드에서 빌드하고(컬렉션 접근), 종료 경로에선 백그라운드 Task가 완료 전에 죽을 수 있으므로
+    /// 동기로 파일까지 쓴다.</summary>
+    internal void FlushStateNow(bool synchronousWrite = false)
+    {
+        _saveDebounce?.Stop();
+        try
+        {
+            // 설정은 settings.json으로 분리 저장(SettingsStore). 자기-쓰기로 인한 리로드는 ReloadSettingsFromDisk가 내용 비교로 무시.
+            var settings = BuildSettingsDto();
+            var state = BuildStateDto();
+            // 완성된 DTO(불변 스냅샷)는 VM 컬렉션과 무관하므로 어느 스레드에서 써도 안전하다.
+            // 종료 경로(synchronousWrite)에선 프로세스가 백그라운드 Task 완료 전에 죽을 수 있으니 동기로 끝까지 쓴다.
+            if (synchronousWrite)
+                WriteSnapshot(settings, state);
+            else
+                _ = Task.Run(() => WriteSnapshot(settings, state));
+        }
+        catch (Exception ex)
+        {
+            // DTO 빌드 자체의 예외(드묾) — 기록만 하고 흡수. 저장 실패가 에이전트 런/UI를 끊어선 안 된다.
+            LogPersistError("BuildStateDto", ex);
+        }
+    }
+
+    /// <summary>완성된 DTO 스냅샷을 디스크에 쓴다. settings/state를 독립적으로 try해 한쪽 실패가 다른 쪽을 막지 않게 한다.
+    /// WriteAtomic이 일시적 잠금을 재시도하고도 실패하면 그 예외가 여기서 잡혀 save-errors.log에 남는다.</summary>
+    private static void WriteSnapshot(AppSettingsDto settings, AppStateDto state)
+    {
+        try { SettingsStore.Save(settings); }
+        catch (Exception ex) { LogPersistError("settings.json", ex); }
+        try { AppStateStore.Save(state); }
+        catch (Exception ex) { LogPersistError("state.json", ex); }
+    }
+
+    /// <summary>현재 앱 상태를 state.json DTO로 직렬화(UI 스레드에서만 호출).
+    /// 세션별 매핑(특히 Transcript)을 각각 try로 격리해, 한 세션이 깨져도 나머지 세션 저장을 막지 않는다(P3).</summary>
+    private AppStateDto BuildStateDto() => new()
+    {
+        ActiveProjectId = ActiveProject?.Id,
+        Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
+        WorkerTasks = WorkerTasksSnapshot().ToList(),
+        Sessions = _allSessions.Select(BuildSessionDto).ToList(),
+    };
+
+    /// <summary>한 세션을 SessionDto로 매핑. 매핑 중 예외가 나면(예: 손상된 transcript 블록) 식별 필드만 담은
+    /// 최소 DTO로 대체하고 기록한다 — 한 세션의 실패가 전체 저장을 막지 않도록(per-session fault isolation).</summary>
+    private static SessionDto BuildSessionDto(SessionViewModel s)
+    {
+        try
+        {
+            return new SessionDto
+            {
+                Id = s.Id,
+                AgentId = s.AgentId,
+                Title = s.Title,
+                Branch = s.Branch,
+                ProjectId = s.ProjectId,
+                Project = s.Project,
+                ProjectPath = s.ProjectPath,
+                Model = s.Model,
+                TranslationEnabled = s.TranslationEnabled,
+                EngineSessionId = s.EngineSessionId,
+                Role = s.Role.ToString(),
+                BehaviorPreamble = s.BehaviorPreamble,
+                TranslateSourceLanguage = s.TranslateSourceLanguage,
+                TranslateTargetLanguage = s.TranslateTargetLanguage,
+                LastMainSessionId = s.LastMainSessionId,
+                Status = s.Status,
+                Activity = s.Activity,
+                TokensIn = s.TokensIn,
+                TokensOut = s.TokensOut,
+                CostUsd = s.CostUsd,
+                IsArchived = s.IsArchived,
+                Sandbox = s.Sandbox.ToString(),
+                RequireApproval = s.RequireApproval,
+                ReasoningEffort = s.ReasoningEffort,
+                Artifacts = s.Artifacts.Select(a => new ArtifactDto { Kind = a.Kind, Title = a.Title, Content = a.Content, IsError = a.IsError }).ToList(),
+                StartedAt = s.StartedAt,
+                WorktreePath = s.WorktreePath,
+                Isolated = s.Isolated,
+                WorktreeAttempted = s.WorktreeAttempted,
+                Transcript = s.Transcript.Select(AppStateStore.ToDto).ToList(),
+            };
+        }
+        catch (Exception ex)
+        {
+            // 식별/필수 필드만 보존(빈 transcript) — 이 세션의 본문은 손실되지만 나머지 세션은 정상 저장된다.
+            LogPersistError($"session {s.Id}", ex);
+            return new SessionDto
+            {
+                Id = s.Id,
+                AgentId = s.AgentId,
+                Title = s.Title,
+                ProjectId = s.ProjectId,
+                Branch = s.Branch,
+                Project = s.Project,
+                ProjectPath = s.ProjectPath,
+                Model = s.Model,
+                Status = s.Status,
+            };
         }
     }
 
