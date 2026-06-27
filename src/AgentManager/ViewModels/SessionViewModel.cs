@@ -61,7 +61,7 @@ public sealed class SessionViewModel : ObservableObject
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
         _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
         AvailableModels = engine.Models;
-        _reasoningEffort = engine.Id switch { "gx" => "medium", "cc" => "default", _ => "" };
+        _reasoningEffort = engine.Id switch { "gx" => "medium", "cc" or "pi" => "default", _ => "" };
         StartedAt = startedAt ?? DateTime.Now;
         NativeWorkItems.CollectionChanged += (_, _) => OnChanged(nameof(HasNativeWorkItems));
     }
@@ -78,12 +78,18 @@ public sealed class SessionViewModel : ObservableObject
     public bool IsCodex => AgentId == "gx";
     public bool IsClaude => AgentId == "cc";
 
-    /// <summary>추론 강도 옵션 — 엔진별 가짓수가 다름 (실측: claude --effort 5단계 + default, codex 4단계,
-    /// antigravity는 플래그 없음 → 피커 비노출).</summary>
+    /// <summary>추론 강도 옵션 — 엔진별로 공식 지원 단계가 다름. agy만 추론 플래그 없음 → 피커 비노출.
+    /// claude(--effort): default + low/medium/high/xhigh/max (실측).
+    /// codex(model_reasoning_effort): low/medium/high/xhigh (실측).
+    /// pi(--thinking): off/minimal/low/medium/high/xhigh (pi --help · PHASE0_PI_RPC §RPC).
+    /// "default"는 UI 센티넬(플래그 생략 → ~/.pi 기본 사용); 어댑터가 "default"·빈값이면 --thinking 미전달.</summary>
     public bool HasEffort => AgentId is not "agy";
-    public string[] EffortOptions => IsCodex
-        ? ["low", "medium", "high", "xhigh"]
-        : ["default", "low", "medium", "high", "xhigh", "max"];
+    public string[] EffortOptions => AgentId switch
+    {
+        "gx" => ["low", "medium", "high", "xhigh"],
+        "pi" => ["default", "off", "minimal", "low", "medium", "high", "xhigh"],
+        _    => ["default", "low", "medium", "high", "xhigh", "max"], // cc
+    };
     private string _reasoningEffort = "";
     public string ReasoningEffort { get => _reasoningEffort; set => Set(ref _reasoningEffort, value); }
 
