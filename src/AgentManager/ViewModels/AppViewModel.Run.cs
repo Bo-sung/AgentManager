@@ -41,6 +41,11 @@ public sealed partial class AppViewModel
     public RelayCommand QuickReplyCommand => _quickReplyCommand ??=
         new RelayCommand(p => { if (p is Core.QuickReplyOption o) SendQuickReply(o); });
 
+    private RelayCommand? _dismissQuickRepliesCommand;
+    /// <summary>"직접 입력" — 감지된 선택지를 지워 입력창을 다시 노출(자유 응답).</summary>
+    public RelayCommand DismissQuickRepliesCommand => _dismissQuickRepliesCommand ??=
+        new RelayCommand(_ => ActiveSession?.QuickReplies.Clear());
+
     public void SendQuickReply(Core.QuickReplyOption option)
     {
         var s = ActiveSession;

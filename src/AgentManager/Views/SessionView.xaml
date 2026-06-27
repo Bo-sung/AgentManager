@@ -229,13 +229,27 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                        <!-- 입력창은 내려가도 번역 토글은 유지(클릭 전송도 번역 상태를 따름) + 직접 입력 복귀 -->
+                                        <DockPanel Margin="11,0,11,9" LastChildFill="False">
+                                            <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}" Height="26" Padding="11,0"
+                                                          IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
+                                                          Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.CustomInput}"
+                                                    ToolTip="{StaticResource L.CustomInputTip}"
+                                                    Command="{Binding DataContext.DismissQuickRepliesCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                        </DockPanel>
                                     </StackPanel>
                                 </Border>
+                                <!-- 선택지가 떠 있으면 입력창을 내린다(클로드 코드 데스크톱식) — 번역 토글/직접입력은 위 푸터에 -->
                                 <Border Background="{DynamicResource Bg3}" BorderThickness="1.5" CornerRadius="10">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+                                            <Setter Property="Visibility" Value="Collapsed"/>
                                             <Style.Triggers>
+                                                <DataTrigger Binding="{Binding QuickReplies.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding AgentId}" Value="cc">
                                                     <Setter Property="BorderBrush" Value="{DynamicResource CcBrandLine}"/>
                                                 </DataTrigger>
