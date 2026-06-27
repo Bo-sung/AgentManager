@@ -166,6 +166,7 @@ public sealed partial class AppViewModel
                 WorktreePath = Directory.Exists(dto.WorktreePath) ? dto.WorktreePath : null,
                 Isolated = dto.Isolated && Directory.Exists(dto.WorktreePath),
                 WorktreeAttempted = dto.WorktreeAttempted,
+                WorktreeOptOut = dto.WorktreeOptOut,
                 Status = dto.Status is "running" or "waiting" ? "idle" : dto.Status,
                 Activity = dto.Status is "running" or "waiting" ? L("L.RestoredAfterRestart") : dto.Activity,
                 TokensIn = dto.TokensIn,
@@ -352,6 +353,7 @@ public sealed partial class AppViewModel
                 WorktreePath = s.WorktreePath,
                 Isolated = s.Isolated,
                 WorktreeAttempted = s.WorktreeAttempted,
+                WorktreeOptOut = s.WorktreeOptOut,
                 Transcript = s.Transcript.Select(AppStateStore.ToDto).ToList(),
             };
         }

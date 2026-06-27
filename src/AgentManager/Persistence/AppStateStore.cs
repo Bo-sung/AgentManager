@@ -151,6 +151,7 @@ public sealed record SessionDto
     public string? WorktreePath { get; init; }
     public bool Isolated { get; init; }
     public bool WorktreeAttempted { get; init; }
+    public bool WorktreeOptOut { get; init; }
     public List<TranscriptDto> Transcript { get; init; } = [];
 }
 

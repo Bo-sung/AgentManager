@@ -43,6 +43,10 @@ public sealed class SessionViewModel : ObservableObject
     }
     public bool WorktreeAttempted { get; set; }
 
+    /// <summary>True면 worktree 격리를 건너뛰고 프로젝트 루트에서 작업(EnsureWorktreeAsync가 생성 생략).
+    /// New Agent 모달의 "격리" 토글을 끄면 설정됨. 영속됨.</summary>
+    public bool WorktreeOptOut { get; set; }
+
     public SessionViewModel(
         string id,
         EngineDef engine,

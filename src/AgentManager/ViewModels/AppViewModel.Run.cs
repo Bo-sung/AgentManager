@@ -20,6 +20,7 @@ public sealed partial class AppViewModel
     {
         if (s.WorktreeAttempted) return;
         s.WorktreeAttempted = true;
+        if (s.WorktreeOptOut) return; // 사용자가 격리 끔 — 프로젝트 루트 공유(cwd = ProjectPath)
         try
         {
             var projectWorktreesRoot = Path.Combine(WorktreesRoot, s.ProjectId);

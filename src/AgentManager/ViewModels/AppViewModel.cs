@@ -601,7 +601,7 @@ public sealed partial class AppViewModel : ObservableObject
 
     // ----- new-agent overlay state -----
     private bool _showNew;
-    public bool ShowNewAgent { get => _showNew; set { if (Set(ref _showNew, value) && value) { OnChanged(nameof(NewAgentEngineOptions)); NewAgentTranslation = TranslationEnabled; } } }
+    public bool ShowNewAgent { get => _showNew; set { if (Set(ref _showNew, value) && value) { OnChanged(nameof(NewAgentEngineOptions)); NewAgentTranslation = TranslationEnabled; NewAgentIsolate = true; NewAgentAsWorker = false; } } }
 
     /// <summary>New Agent 엔진 피커용 — 각 엔진 + 설치 여부(수동 경로/PATH 반영). 폼 열 때 새로 계산.</summary>
     public IReadOnlyList<EngineOptionVm> NewAgentEngineOptions =>
@@ -644,12 +644,41 @@ public sealed partial class AppViewModel : ObservableObject
                 OnChanged(nameof(NewAgentBranchPreview));
                 NewAgentModel = value is { } e ? DefaultModelFor(e.Id) : "";
                 if (value?.Id == "pi") _ = QueryPiModelsAsync();   // pi 모델 목록 동적 조회(드롭다운 채움)
+                // 추론 수준 옵션/기본값 엔진별 재계산 (cc/gx만 노출)
+                OnChanged(nameof(NewAgentHasEffort));
+                OnChanged(nameof(NewAgentEffortOptions));
+                NewAgentReasoning = DefaultEffortFor(value?.Id);
             }
         }
     }
     public string[] NewAgentModels => _newEngine is { } e ? DropdownModelsFor(e.Id) : [];
     private string _newAgentModel = "";
     public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
+
+    /// <summary>추론 수준을 실제로 소비하는 엔진(cc: --effort, gx: model_reasoning_effort)만 노출.</summary>
+    public bool NewAgentHasEffort => _newEngine?.Id is "cc" or "gx";
+    /// <summary>엔진별 추론 옵션 — codex 4단계 / claude 6단계 (SessionViewModel.EffortOptions와 일치).</summary>
+    public string[] NewAgentEffortOptions => _newEngine?.Id == "gx"
+        ? ["low", "medium", "high", "xhigh"]
+        : ["default", "low", "medium", "high", "xhigh", "max"];
+    private static string DefaultEffortFor(string? id) => id switch { "gx" => "medium", "cc" => "default", _ => "" };
+    private string _newAgentReasoning = "default";
+    public string NewAgentReasoning { get => _newAgentReasoning; set => Set(ref _newAgentReasoning, value); }
+
+    /// <summary>worktree 격리 여부(기본 ON). 끄면 프로젝트 루트 공유(WorktreeOptOut).</summary>
+    private bool _newAgentIsolate = true;
+    public bool NewAgentIsolate
+    {
+        get => _newAgentIsolate;
+        set { if (Set(ref _newAgentIsolate, value)) OnChanged(nameof(NewAgentBranchPreview)); }
+    }
+    /// <summary>true면 일반 세션 대신 워커(작업 대기, 자동 실행 안 함)로 생성.</summary>
+    private bool _newAgentAsWorker;
+    public bool NewAgentAsWorker
+    {
+        get => _newAgentAsWorker;
+        set { if (Set(ref _newAgentAsWorker, value)) OnChanged(nameof(NewAgentBranchPreview)); }
+    }
     /// <summary>New Agent 폼의 번역 선택(생성 시 세션에 고정). 폼 열 때 전역값+Ollama 가용성으로 초기화.</summary>
     private bool _newAgentTranslation = true;
     public bool NewAgentTranslation
@@ -662,9 +691,10 @@ public sealed partial class AppViewModel : ObservableObject
         }
     }
     public string NewAgentTranslationLabel => _newAgentTranslation ? L("L.TranslationOn") : L("L.TranslationOff");
-    /// <summary>현재 task 기준 생성될 worktree 브랜치 미리보기.</summary>
+    /// <summary>생성될 worktree 브랜치 미리보기 — 격리 OFF면 공유 안내, 워커면 worker/ 접두.</summary>
     public string NewAgentBranchPreview =>
-        "agent/" + Slug(string.IsNullOrWhiteSpace(_newTitle) ? "task" : _newTitle);
+        !_newAgentIsolate ? L("L.WorktreeShared")
+        : (_newAgentAsWorker ? "worker/" : "agent/") + Slug(string.IsNullOrWhiteSpace(_newTitle) ? "task" : _newTitle);
     private string _newTitle = "";
     public string NewAgentTitle
     {
@@ -691,20 +721,38 @@ public sealed partial class AppViewModel : ObservableObject
         var project = ActiveProject ?? Projects.FirstOrDefault();
         if (project is null) return;
         var engine = NewAgentSelectedEngine ?? Engines.FirstOrDefault() ?? AllEngines[0];
-        var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
-        var branch = "agent/" + Slug(title);
-        var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
         // 모달에서 고른 모델 우선 (유효할 때), 없으면 엔진 기본
         // pi는 멀티 provider라 동적 모델("provider/id")을 자유 허용; 그 외는 엔진 정적 목록으로 검증.
         var model = !string.IsNullOrWhiteSpace(NewAgentModel) && (engine.Id == "pi" || Array.IndexOf(engine.Models, NewAgentModel) >= 0)
             ? NewAgentModel
             : (DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0]);
+
+        // 워커로 생성: 작업 대기 풀에 추가만 하고 자동 실행하지 않음(작업 할당 시 구동).
+        if (NewAgentAsWorker)
+        {
+            var w = CreateWorkerSession(engine, model, project,
+                string.IsNullOrWhiteSpace(NewAgentTitle) ? null : NewAgentTitle.Trim(),
+                NewAgentTranslation, "", "", null);
+            if (NewAgentHasEffort && !string.IsNullOrWhiteSpace(NewAgentReasoning)) w.ReasoningEffort = NewAgentReasoning;
+            w.WorktreeOptOut = !NewAgentIsolate;
+            ActiveSession = w;
+            ShowNewAgent = false;
+            NewAgentTitle = "";
+            SaveState();
+            return;
+        }
+
+        var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
+        var branch = "agent/" + Slug(title);
+        var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
         var s = new SessionViewModel(NewSessionId("s"), engine, title, branch, project.Id, project.Name, project.Path, model)
         {
             TranslationEnabled = NewAgentTranslation,
             RequireApproval = reqAppr,
             Sandbox = sandbox,
+            WorktreeOptOut = !NewAgentIsolate,
         };
+        if (NewAgentHasEffort && !string.IsNullOrWhiteSpace(NewAgentReasoning)) s.ReasoningEffort = NewAgentReasoning;
         s.PropertyChanged += SessionStatusWatch;
         _allSessions.Insert(0, s);
         ActiveSession = s;

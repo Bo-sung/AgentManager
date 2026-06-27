@@ -184,6 +184,8 @@
     <sys:String x:Key="L.ModelPick">Model</sys:String>
     <sys:String x:Key="L.WorktreeLabel">Worktree</sys:String>
     <sys:String x:Key="L.Isolated">isolated</sys:String>
+    <sys:String x:Key="L.WorktreeShared">Shared (main tree) — no branch created</sys:String>
+    <sys:String x:Key="L.CreateAsWorker">Create as worker</sys:String>
     <sys:String x:Key="L.Authentication">Authentication</sys:String>
     <sys:String x:Key="L.AuthSubscription">Subscription</sys:String>
     <sys:String x:Key="L.AuthApiKey">API key</sys:String>
