@@ -201,8 +201,8 @@
                                             </Button>
                                             <TextBlock DockPanel.Dock="Right" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}"
                                                        VerticalAlignment="Center" Margin="0,0,8,0" Text="{Binding QuickReplies.Count, StringFormat={}{0} options}"/>
-                                            <TextBlock Text="{StaticResource L.PickOne}" FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold"
-                                                       VerticalAlignment="Center" Foreground="{DynamicResource Accent}"/>
+                                            <TextBlock Text="{Binding ChoiceHeader}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center" Foreground="{DynamicResource Txt0}"/>
                                         </DockPanel>
                                         <!-- 옵션 행 (플랫, ↑↓ 네비) -->
                                         <ItemsControl ItemsSource="{Binding QuickReplies}" KeyboardNavigation.DirectionalNavigation="Cycle">

@@ -587,6 +587,8 @@ public sealed partial class AppViewModel
             ["pi"] = (SettingsSkillDirPi ?? "").Trim(),
         };
         var results = AgentManager.Core.SkillInjector.Inject(_skillContent, _skillDirs);
+        // 구조화 ask-user 스킬도 함께 주입(별도 폴더 <dir>/ask-user/ — worker-prompt와 충돌 없음)
+        AgentManager.Core.SkillInjector.Inject(AgentManager.Core.SkillInjector.AskUserDefault, _skillDirs);
         var parts = results.Select(kv => $"{kv.Key} {(kv.Value is null ? "✓" : "✗")}");
         var firstError = results.Where(kv => kv.Value is not null).Select(kv => $"{kv.Key}: {kv.Value}").FirstOrDefault();
         SkillInjectStatus = string.Join("   ", parts) + (firstError is null ? "" : $"   — {firstError}");

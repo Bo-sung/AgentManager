@@ -116,4 +116,35 @@ Reply with ONLY a short confirmation: how many tasks you registered, and their t
 - Don't assume APIs - make each worker read them.
 - Don't give two parallel tasks ownership of the same file.
 """;
+
+    /// <summary>Second skill — structured "ask the user to choose". Writes a JSON file to a spool
+    /// dir that AgentManager renders as a clickable choice panel (so models other than the host
+    /// get the same structured choice UI). Injected alongside <see cref="WorkerPromptDefault"/>.</summary>
+    public const string AskUserDefault =
+"""
+---
+name: ask-user
+description: Use whenever you would otherwise ask the user to pick between options (e.g. "which approach?", "A or B?", "what should I do next?"). Renders a clickable choice panel in AgentManager instead of listing options as plain text.
+---
+
+# Ask the user to choose
+
+When you want the user to choose between options, DO NOT list "A) … B) …" in the chat.
+Instead WRITE ONE JSON file to the spool dir and STOP your turn — AgentManager shows a
+clickable panel and sends the user's choice back as your next message.
+
+## Where to write
+- The spool dir is in the env var `AGENTMANAGER_ASK_SPOOL`. If it is set, write there.
+- If it is NOT set (running outside AgentManager), fall back to plain "A) … B) …" text.
+
+## How to write
+Write ONE JSON file named `ask.json` to the spool dir. Shape:
+{ "question": "<one short question>", "options": ["<option 1>", "<option 2>", ...] }
+- `question`: a single short line shown as the panel header.
+- `options`: 2–8 short option labels (the text the user sees and picks).
+
+## After writing
+Reply with ONLY a one-line note (e.g. "선택지를 띄웠습니다.") and STOP. Wait for the user's
+choice — it arrives as your next message. Do NOT also paste the options as text.
+""";
 }

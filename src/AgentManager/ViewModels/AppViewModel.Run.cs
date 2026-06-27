@@ -44,7 +44,7 @@ public sealed partial class AppViewModel
     private RelayCommand? _dismissQuickRepliesCommand;
     /// <summary>"직접 입력" — 감지된 선택지를 지워 입력창을 다시 노출(자유 응답).</summary>
     public RelayCommand DismissQuickRepliesCommand => _dismissQuickRepliesCommand ??=
-        new RelayCommand(_ => ActiveSession?.QuickReplies.Clear());
+        new RelayCommand(_ => { if (ActiveSession is { } s) { s.QuickReplies.Clear(); s.ChoiceQuestion = null; } });
 
     public void SendQuickReply(Core.QuickReplyOption option)
     {
@@ -59,6 +59,7 @@ public sealed partial class AppViewModel
     private void PopulateQuickReplies(SessionViewModel s)
     {
         s.QuickReplies.Clear();
+        s.ChoiceQuestion = null; // heuristic has no question; ask-user ingest sets it afterward if present
         if (s.Status == "error") return;
         var last = s.Transcript.OfType<AgentTextBlock>().LastOrDefault();
         if (last is null) return;
@@ -128,7 +129,7 @@ public sealed partial class AppViewModel
         }
 
         var dispatcher = Application.Current.Dispatcher;
-        s.QuickReplies.Clear(); // a new turn supersedes any pending quick-reply choices
+        s.QuickReplies.Clear(); s.ChoiceQuestion = null; // a new turn supersedes any pending choices
         var attachmentPaths = (images ?? []).Concat(docs ?? []).ToArray();
         s.Transcript.Add(new UserBlock(attachmentPaths.Length > 0 ? Attachments.DisplayNote(prompt, attachmentPaths) : prompt));
         s.Status = "running";
@@ -149,6 +150,7 @@ public sealed partial class AppViewModel
         await EnsureWorktreeAsync(s);
         var cwd = s.WorktreePath ?? s.ProjectPath;
         WatchSessionTaskSpool(cwd, s.ProjectId, s.Id); // skill fallback (.am/worker-tasks/) → backlog; report back to s
+        WatchSessionAskSpool(cwd, s.Id);               // ask-user skill (.am/ask/) → structured choice panel
 
         var tools = new Dictionary<string, ToolBlock>();
         // 워커는 생성 시 고정된 번역 언어쌍을 사용(일반 세션은 전역 번역기).
@@ -181,7 +183,7 @@ public sealed partial class AppViewModel
             AttachedDocsText = Attachments.BuildDocsText(docs),
             AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
             ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
-            ExtraEnvironment = WithTaskSpoolEnv(ApiEnvFor(s.AgentId), Path.Combine(cwd, ".am", "worker-tasks", s.Id)),
+            ExtraEnvironment = WithTaskSpoolEnv(ApiEnvFor(s.AgentId), Path.Combine(cwd, ".am", "worker-tasks", s.Id), Path.Combine(cwd, ".am", "ask", s.Id)),
             NativeHookSpoolDirectory = nativeHookSpoolDirectory,
             NativeHookCommand = s.AgentId is "gx" or "cc" && nativeHookSpoolDirectory is not null
                 ? NativeHookCommandFactory.WindowsPowerShellSpoolScript(nativeHookSpoolDirectory)

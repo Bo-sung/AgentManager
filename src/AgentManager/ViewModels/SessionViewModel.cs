@@ -23,9 +23,16 @@ public sealed class SessionViewModel : ObservableObject
     /// inlined prompt text. Cleared on send; not persisted.</summary>
     public ObservableCollection<PendingAttachment> PendingAttachments { get; } = [];
 
-    /// <summary>One-click replies detected in the last assistant message (A/B/1/2 choices).
-    /// Populated on turn completion, cleared when a new turn starts. Not persisted.</summary>
+    /// <summary>One-click replies — detected heuristically in the last assistant message (A/B/1/2)
+    /// OR pushed structurally by the ask-user skill. Populated on turn completion / ask ingest,
+    /// cleared when a new turn starts. Not persisted.</summary>
     public ObservableCollection<Core.QuickReplyOption> QuickReplies { get; } = [];
+
+    /// <summary>Structured question for the choice panel header (ask-user skill). Null = heuristic
+    /// choices → header shows the generic "Pick one".</summary>
+    private string? _choiceQuestion;
+    public string? ChoiceQuestion { get => _choiceQuestion; set { if (Set(ref _choiceQuestion, value)) OnChanged(nameof(ChoiceHeader)); } }
+    public string ChoiceHeader => string.IsNullOrWhiteSpace(_choiceQuestion) ? AgentManager.App.L("L.PickOne") : _choiceQuestion!;
 
     /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
     private string? _worktreePath;

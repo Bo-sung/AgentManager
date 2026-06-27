@@ -35,6 +35,8 @@ public sealed partial class AppViewModel
         WorkerBehaviorPreamble = string.IsNullOrWhiteSpace(s.WorkerBehaviorPreamble) ? AgentManager.Core.Workers.WorkerDefaults.BehaviorPreamble : s.WorkerBehaviorPreamble;
         _skillContent = string.IsNullOrWhiteSpace(s.SkillContent) ? AgentManager.Core.SkillInjector.WorkerPromptDefault : s.SkillContent;
         _skillDirs = MergeSkillDirs(s.SkillDirs);
+        // 구조화 ask-user 스킬은 고정 콘텐츠 → 시작 시 자동 주입(설정 저장을 기다리지 않게). 멱등.
+        try { AgentManager.Core.SkillInjector.Inject(AgentManager.Core.SkillInjector.AskUserDefault, _skillDirs); } catch { }
         _isReviewOpen = s.ReviewPaneOpen;
         _warnNoWorktree = s.WarnNoWorktree;
         _approvalPolicy = s.ApprovalPolicy is "ask" or "safe" ? s.ApprovalPolicy : "yolo";
