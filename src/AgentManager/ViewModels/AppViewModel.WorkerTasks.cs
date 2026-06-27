@@ -42,9 +42,17 @@ public sealed class WorkerTaskViewModel : ObservableObject
     /// <summary>Plain-text form placed on the clipboard: title header + the full report body.</summary>
     public string ClipboardText => string.IsNullOrWhiteSpace(Title) ? Report : $"## {Title}\n\n{Report}";
     public string EngineLabel => string.IsNullOrEmpty(Engine) ? "" : Engine.ToUpperInvariant();
+    /// <summary>Lowercase engine id (cc/gx/agy/pi) — drives the brand EngineIcon style.</summary>
+    public string AgentId => Engine;
     public bool HasEngine => !string.IsNullOrEmpty(Engine);
     public bool IsRunning => Status == WorkerTaskStatus.Running;
+    public bool IsFailed => Status == WorkerTaskStatus.Failed;
     public bool IsFinished => WorkerTaskStatus.IsFinished(Status);
+    /// <summary>Queue position flags (set during rebuild) — disable ↑ on the first row, ↓ on the last.</summary>
+    public bool IsFirst { get; set; }
+    public bool IsLast { get; set; }
+    public bool CanMoveUp => !IsFirst;
+    public bool CanMoveDown => !IsLast;
     /// <summary>A single task can be run when queued (assigned) or retried (failed).</summary>
     public bool CanRun => Status is WorkerTaskStatus.Assigned or WorkerTaskStatus.Failed;
 
@@ -65,15 +73,17 @@ public sealed class WorkerQueueViewModel : ObservableObject
     public string WorkerId { get; }
     public string WorkerName { get; }
     public string EngineLabel { get; }
+    /// <summary>Lowercase engine id (cc/gx/agy/pi) — drives the brand EngineIcon style on the card badge.</summary>
+    public string AgentId { get; }
     /// <summary>Active tasks only (assigned + running) — what the queue shows by default.</summary>
     public ObservableCollection<WorkerTaskViewModel> Tasks { get; } = [];
     /// <summary>Finished tasks (done/failed) — revealed via the history toggle.</summary>
     public ObservableCollection<WorkerTaskViewModel> FinishedTasks { get; } = [];
 
-    public WorkerQueueViewModel(string workerId, string workerName, string engineLabel,
+    public WorkerQueueViewModel(string workerId, string workerName, string engineLabel, string agentId,
         IEnumerable<WorkerTaskViewModel> active, IEnumerable<WorkerTaskViewModel> finished, bool showHistory)
     {
-        WorkerId = workerId; WorkerName = workerName; EngineLabel = engineLabel; ShowHistory = showHistory;
+        WorkerId = workerId; WorkerName = workerName; EngineLabel = engineLabel; AgentId = agentId; ShowHistory = showHistory;
         foreach (var t in active) Tasks.Add(t);
         foreach (var t in finished) FinishedTasks.Add(t);
     }
@@ -349,11 +359,13 @@ public sealed partial class AppViewModel
         {
             var w = _allSessions.FirstOrDefault(s => s.Id == wid);
             var name = w?.Title ?? "worker";
-            var engine = w is null ? "" : w.AgentId.ToUpperInvariant();
+            var engineId = w?.AgentId ?? "";
+            var engine = engineId.ToUpperInvariant();
             var all = _taskStore.AssignedTo(wid).Select(d => new WorkerTaskViewModel(d, name)).ToList();
-            var active = all.Where(t => !t.IsFinished);   // assigned + running — shown in the queue
-            var finished = all.Where(t => t.IsFinished);  // done/failed — under the history toggle
-            WorkerQueues.Add(new WorkerQueueViewModel(wid, name, engine, active, finished, _expandedQueueHistory.Contains(wid)));
+            var active = all.Where(t => !t.IsFinished).ToList();   // assigned + running — shown in the queue
+            var finished = all.Where(t => t.IsFinished);           // done/failed — under the history toggle
+            for (int i = 0; i < active.Count; i++) { active[i].IsFirst = i == 0; active[i].IsLast = i == active.Count - 1; }
+            WorkerQueues.Add(new WorkerQueueViewModel(wid, name, engine, engineId, active, finished, _expandedQueueHistory.Contains(wid)));
         }
 
         OnChanged(nameof(HasBacklog));
