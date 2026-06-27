@@ -2138,7 +2138,23 @@
                             <TextBlock Text="{StaticResource L.NoIdleWorker}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
                         </DockPanel>
                     </Border>
-                    <TextBlock Margin="18" Text="{StaticResource L.NoIdleWorkerBody}" FontSize="12.5" Foreground="{DynamicResource Txt2}" TextWrapping="Wrap"/>
+                    <TextBlock Margin="18,18,18,10" Text="{StaticResource L.NoIdleWorkerBody}" FontSize="12.5" Foreground="{DynamicResource Txt2}" TextWrapping="Wrap"/>
+                    <!-- busy workers — what's blocking the delegation -->
+                    <ItemsControl ItemsSource="{Binding BusyWorkers}" Margin="18,0,18,8">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="9,7" Margin="0,0,0,6">
+                                    <DockPanel>
+                                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="4" Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" Margin="0,0,9,0" VerticalAlignment="Center">
+                                            <controls:IconView Style="{StaticResource EngineIcon}" Width="13" Height="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding StatusLabel}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="9,0,0,0"/>
+                                        <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <Border BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,1,0,0" Background="{DynamicResource Bg1}" Padding="18,14">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Close}" Margin="0,0,9,0" Command="{Binding CancelDelegateCommand}"/>

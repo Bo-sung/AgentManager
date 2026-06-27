@@ -10,7 +10,10 @@ public sealed partial class AppViewModel
     private bool _showWorkerAssign;
     public bool ShowWorkerAssign { get => _showWorkerAssign; set => Set(ref _showWorkerAssign, value); }
     private bool _showNoIdleWorker;
-    public bool ShowNoIdleWorker { get => _showNoIdleWorker; set => Set(ref _showNoIdleWorker, value); }
+    public bool ShowNoIdleWorker { get => _showNoIdleWorker; set { if (Set(ref _showNoIdleWorker, value) && value) OnChanged(nameof(BusyWorkers)); } }
+    /// <summary>The currently-busy workers — shown in the "no idle worker" modal so the user can see
+    /// what's blocking. Snapshotted when the modal opens (re-notified by the setter above).</summary>
+    public IEnumerable<SessionViewModel> BusyWorkers => WorkerPool.Where(IsWorkerBusy);
 
     // ----- 위임 에디터 상태 -----
     private SessionViewModel? _delegateMain;
