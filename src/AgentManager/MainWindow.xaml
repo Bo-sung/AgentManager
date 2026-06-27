@@ -40,7 +40,7 @@
 
         <!-- ===== Transcript block templates ===== -->
         <DataTemplate DataType="{x:Type vm:UserBlock}">
-            <Grid Margin="0,14" HorizontalAlignment="Right" MaxWidth="880">
+            <Grid Margin="0,8" HorizontalAlignment="Right" MaxWidth="880">
                 <Border Background="{DynamicResource Bg3}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
                         CornerRadius="10,10,2,10" Padding="13,11">
                     <StackPanel>
@@ -59,7 +59,7 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:AgentTextBlock}">
-            <Grid Margin="0,16,0,8">
+            <Grid Margin="0,8,0,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="40"/>
                     <ColumnDefinition Width="*"/>
@@ -267,7 +267,7 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:WorkingBlock}">
-            <StackPanel Orientation="Horizontal" Margin="40,8,0,4">
+            <StackPanel Orientation="Horizontal" Margin="40,8,0,8">
                 <!-- 원본 @keyframes blink(opacity 1↔0 steps(2) 1s): 라이브 작업 표시 점 깜빡임 -->
                 <TextBlock Text="●" Foreground="{DynamicResource Accent}" Margin="0,0,8,0">
                     <TextBlock.Triggers>
@@ -288,7 +288,7 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:ThinkingBlock}">
-            <StackPanel Margin="40,4,0,4">
+            <StackPanel Margin="40,8,0,8">
                 <ToggleButton IsChecked="{Binding IsOpen}" Cursor="Hand" Background="Transparent" BorderThickness="0"
                                HorizontalAlignment="Left">
                     <ToggleButton.Template>
@@ -313,7 +313,7 @@
 
         <!-- Approval prompt: engine is blocked until Approve/Deny -->
         <DataTemplate DataType="{x:Type vm:ApprovalBlock}">
-            <Border Margin="40,10,0,10" BorderBrush="{DynamicResource Warn}" BorderThickness="1"
+            <Border Margin="40,8,0,8" BorderBrush="{DynamicResource Warn}" BorderThickness="1"
                     CornerRadius="7" Background="#10F5B531">
                 <StackPanel>
                     <DockPanel Margin="13,10,13,0">
