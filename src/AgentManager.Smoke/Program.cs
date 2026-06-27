@@ -1385,7 +1385,19 @@ static async Task TestGitWorktreeAsync()
         Assert((await File.ReadAllTextAsync(Path.Combine(tmp, "a.txt"))).StartsWith("feature2"), "main has merged content");
 
         await GitWorktree.RemoveAsync(tmp, wt.Path);
-        Console.WriteLine("GitWorktree end-to-end OK (create/changes/diff/discard/commit-only/merge)");
+
+        // branch cleanup on session delete: a merged agent branch is safe-deleted, an unmerged one is kept
+        var mergedGone = await GitWorktree.RemoveBranchAsync(tmp, "agent/s1");
+        Assert(mergedGone && string.IsNullOrWhiteSpace(await Git("branch", "--list", "agent/s1")), "merged branch safe-deleted");
+
+        var wt2 = await GitWorktree.CreateAsync(tmp, "s2", "agent/unmerged", wtRoot);
+        await File.WriteAllTextAsync(Path.Combine(wt2!.Path, "u.txt"), "wip\n");
+        await GitWorktree.CommitAsync(wt2.Path, "agent: unmerged wip");
+        await GitWorktree.RemoveAsync(tmp, wt2.Path);
+        var unmergedKept = !await GitWorktree.RemoveBranchAsync(tmp, "agent/unmerged");
+        Assert(unmergedKept && !string.IsNullOrWhiteSpace(await Git("branch", "--list", "agent/unmerged")), "unmerged branch preserved");
+
+        Console.WriteLine("GitWorktree end-to-end OK (create/changes/diff/discard/commit-only/merge/branch-cleanup)");
     }
     finally
     {

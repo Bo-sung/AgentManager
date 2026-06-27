@@ -61,6 +61,17 @@ public static class GitWorktree
         try { await RunAsync(repoPath, "worktree", "remove", "--force", worktreePath); } catch { }
     }
 
+    /// <summary>Delete a session's agent branch (call after its worktree is removed, else git refuses).
+    /// Safe delete only (<c>git branch -d</c>): a branch carrying unmerged commits is left intact, so
+    /// nothing is lost — without this, merged session branches pile up in the repo forever.
+    /// Returns true only when the branch was actually deleted.</summary>
+    public static async Task<bool> RemoveBranchAsync(string repoPath, string branch)
+    {
+        if (string.IsNullOrWhiteSpace(branch)) return false;
+        try { return (await RunAsync(repoPath, "branch", "-d", branch)).code == 0; }
+        catch { return false; }
+    }
+
     /// <summary>Drop all changes in the worktree (tracked + untracked) back to HEAD. Worktree is kept.</summary>
     public static async Task<(bool ok, string message)> DiscardAsync(string worktreePath)
     {

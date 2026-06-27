@@ -424,6 +424,9 @@ public sealed partial class AppViewModel : ObservableObject
         {
             await GitWorktree.RemoveAsync(s.ProjectPath, s.WorktreePath);
             s.WorktreePath = null;
+            // The worktree is gone but its agent branch lingers — that residue is what used to
+            // accumulate. Safe-delete it (merged only); a branch with unmerged commits is kept.
+            await GitWorktree.RemoveBranchAsync(s.ProjectPath, s.Branch);
         }
         s.PropertyChanged -= SessionStatusWatch;
         _allSessions.Remove(s);
