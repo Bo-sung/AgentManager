@@ -28,6 +28,12 @@ if (args.Contains("--worker-task-store-check"))
     return;
 }
 
+if (args.Contains("--json-write-atomic-check"))
+{
+    JsonWriteAtomicCheck();
+    return;
+}
+
 // Live headless E2E of the task queue (real engine, no GUI). Run in YOUR terminal — costs a few tokens:
 // dotnet run --project src/AgentManager.Smoke -- --worker-task-run
 if (args.Contains("--worker-task-run"))
@@ -1619,6 +1625,45 @@ static void RunSchedCreateCheck()
         }
         catch {}
     }
+}
+
+// JsonFile.WriteAtomic: normal write + retry-on-transient-lock (token-0).
+static void JsonWriteAtomicCheck()
+{
+    var dir = Directory.CreateTempSubdirectory("am_jfwa_").FullName;
+    var path = Path.Combine(dir, "state.json");
+    var ok = true;
+    try
+    {
+        // 1) normal write round-trips
+        AgentManager.Core.JsonFile.WriteAtomic(path, new { v = 1 });
+        var okNormal = File.Exists(path) && File.ReadAllText(path).Contains("\"v\": 1");
+
+        // 2) destination locked at first, released ~150ms in (under the ~970ms total backoff budget):
+        //    the retry loop should ride out the lock and succeed instead of throwing.
+        var locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+        var releaser = System.Threading.Tasks.Task.Run(() =>
+        {
+            System.Threading.Thread.Sleep(150);
+            locked.Dispose();
+        });
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        Exception? threw = null;
+        try { AgentManager.Core.JsonFile.WriteAtomic(path, new { v = 2 }); }
+        catch (Exception ex) { threw = ex; }
+        sw.Stop();
+        releaser.Wait();
+        var okRetry = threw is null && File.ReadAllText(path).Contains("\"v\": 2") && sw.ElapsedMilliseconds >= 100;
+
+        ok = okNormal && okRetry;
+        Console.WriteLine($"[json-write-atomic] normal={okNormal} retryOnLock={okRetry} (waited {sw.ElapsedMilliseconds}ms, threw={threw?.GetType().Name ?? "none"})");
+    }
+    finally
+    {
+        try { Directory.Delete(dir, true); } catch { }
+    }
+    Console.WriteLine($"[json-write-atomic] {(ok ? "PASS" : "FAIL")}");
+    Environment.Exit(ok ? 0 : 1);
 }
 
 static void Assert(bool condition, string message)
