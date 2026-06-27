@@ -102,11 +102,75 @@ public sealed class SessionViewModel : ObservableObject
 
     /// <summary>Per-session sandbox: ReadOnly(분석만)/WorkspaceWrite/DangerFullAccess.</summary>
     private Core.Agents.SandboxMode _sandbox = Core.Agents.SandboxMode.DangerFullAccess;
-    public Core.Agents.SandboxMode Sandbox { get => _sandbox; set => Set(ref _sandbox, value); }
+    public Core.Agents.SandboxMode Sandbox
+    {
+        get => _sandbox;
+        set { if (Set(ref _sandbox, value)) { OnChanged(nameof(PermissionMode)); OnChanged(nameof(PermissionRisk)); } }
+    }
 
     /// <summary>승인 broker Stage 1 (Claude만): true면 툴 실행 전 사용자 승인 요구.</summary>
     private bool _requireApproval;
-    public bool RequireApproval { get => _requireApproval; set => Set(ref _requireApproval, value); }
+    public bool RequireApproval
+    {
+        get => _requireApproval;
+        set { if (Set(ref _requireApproval, value)) { OnChanged(nameof(PermissionMode)); OnChanged(nameof(PermissionRisk)); } }
+    }
+
+    // ----- 권한/안전 모드 (engine-aware) -------------------------------------------------
+    // 엔진별 네이티브 모드를 (Sandbox, RequireApproval)의 친화적 뷰로 노출 — 백킹 필드는 그대로라
+    // 런 경로/어댑터는 불변. 매핑은 CLI 실측 기준(ClaudeAdapter: ReadOnly→plan / broker / skip;
+    // CodexAdapter: bypass(=RequireApproval false) / --sandbox read-only|workspace-write).
+    // agy는 항상 skip-permissions(고정 full), pi는 권한 개념 없음(Permissions:false) → 선택지 없음.
+
+    /// <summary>cc/gx만 모드 선택 가능. agy/pi는 고정(피커 비노출, 정적 배지).</summary>
+    public bool HasPermissionModeChoice => AgentId is "cc" or "gx";
+
+    /// <summary>엔진별 네이티브 모드 목록 (왼→오 = 안전→위험).</summary>
+    public string[] PermissionModeOptions => AgentId switch
+    {
+        "cc" => ["plan", "default", "bypass"],
+        "gx" => ["read-only", "workspace-write", "full-access"],
+        _    => [],
+    };
+
+    /// <summary>현재 모드 — (Sandbox, RequireApproval)에서 파생, set 시 둘을 엔진별로 설정.</summary>
+    public string PermissionMode
+    {
+        get => AgentId switch
+        {
+            "cc" => Sandbox == Core.Agents.SandboxMode.ReadOnly ? "plan" : (RequireApproval ? "default" : "bypass"),
+            "gx" => !RequireApproval ? "full-access"
+                  : Sandbox == Core.Agents.SandboxMode.ReadOnly ? "read-only" : "workspace-write",
+            "agy" => "full",
+            _ => "default", // pi (권한 없음)
+        };
+        set
+        {
+            switch (AgentId)
+            {
+                case "cc":
+                    if (value == "plan") { Sandbox = Core.Agents.SandboxMode.ReadOnly; RequireApproval = true; }
+                    else if (value == "bypass") { Sandbox = Core.Agents.SandboxMode.WorkspaceWrite; RequireApproval = false; }
+                    else { Sandbox = Core.Agents.SandboxMode.WorkspaceWrite; RequireApproval = true; } // default(ask)
+                    break;
+                case "gx":
+                    if (value == "read-only") { Sandbox = Core.Agents.SandboxMode.ReadOnly; RequireApproval = true; }
+                    else if (value == "full-access") { Sandbox = Core.Agents.SandboxMode.DangerFullAccess; RequireApproval = false; }
+                    else { Sandbox = Core.Agents.SandboxMode.WorkspaceWrite; RequireApproval = true; } // workspace-write
+                    break;
+                // agy/pi: 고정 — 변경 없음
+            }
+        }
+    }
+
+    /// <summary>공통 위험 그라데이션 색 키: read(중립) / write(정상) / full(경고) / none(pi).</summary>
+    public string PermissionRisk => PermissionMode switch
+    {
+        "plan" or "read-only" => "read",
+        "default" or "workspace-write" => "write",
+        "bypass" or "full-access" or "full" => "full",
+        _ => "none",
+    };
 
     private string _status = "idle";
     public string Status
