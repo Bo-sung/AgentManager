@@ -95,12 +95,15 @@ public partial class AppViewModel
         }
         else if (mode == '/')
         {
-            // 엔진 슬래시 명령: cc는 커스텀 명령(.claude/commands)을 발견해 자동완성, 선택 시 그대로 전달.
-            // 다른 엔진은 발견 목록 없음 — 미인식 /명령은 전송 시 텍스트로 엔진에 패스스루된다.
+            // 엔진 슬래시 명령. cc는 커스텀 명령(.claude/commands) 파일 발견, 그 외 엔진은 빌트인 카탈로그.
+            // 선택 시 드래프트에 삽입 → 전송 시 엔진에 전달(cc는 확장 / 그 외는 대부분 텍스트 패스스루).
             ComposerSuggestionHeader = L("L.OrchSlashHeader");
-            if (ActiveSession?.AgentId == "cc")
+            if (ActiveSession is { } s)
             {
-                foreach (var cmd in CcSlashCommands(ActiveSession.ProjectPath))
+                IEnumerable<ComposerSuggestionItem> cmds = s.AgentId == "cc"
+                    ? CcSlashCommands(s.ProjectPath)
+                    : EngineSlashCommands.For(s.AgentId).Select(c => new ComposerSuggestionItem($"{c.Cmd} - {c.Desc}", c.Cmd, "Command"));
+                foreach (var cmd in cmds)
                     if (string.IsNullOrWhiteSpace(query) || cmd.Label.Contains(query, StringComparison.OrdinalIgnoreCase))
                         ComposerSuggestions.Add(cmd);
             }
