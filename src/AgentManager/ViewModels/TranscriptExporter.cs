@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 
 namespace AgentManager.ViewModels;
@@ -8,6 +9,13 @@ public static class TranscriptExporter
     {
         var sb = new StringBuilder();
         sb.AppendLine("# " + s.Title).AppendLine();
+        // 세션 메타: 엔진 · 모델 · 추론단계 · 추출시각 (맨 위 한 줄로 컨텍스트 보존)
+        var reasoning = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? "default" : s.ReasoningEffort;
+        sb.AppendLine($"- **Engine**: {s.AgentName} (`{s.Cli}`)");
+        sb.AppendLine($"- **Model**: {s.Model}");
+        sb.AppendLine($"- **Reasoning**: {reasoning}");
+        sb.AppendLine($"- **Exported**: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine().AppendLine("---").AppendLine();
         foreach (var item in s.Transcript)
         {
             switch (item)
