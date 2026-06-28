@@ -12,7 +12,7 @@ public static class EngineSlashCommands
     {
         "gx" => Codex,
         "agy" => Antigravity,
-        // "pi"  => Pi,   // 사용자 /help 목록 받으면 채움
+        "pi" => Pi,
         _ => System.Array.Empty<(string, string)>(),
     };
 
@@ -108,5 +108,33 @@ public static class EngineSlashCommands
         ("/grill-me", "Interview me to align on a plan"),
         ("/teamwork-preview", "Invoke a team of agents to tackle large projects"),
         ("/learn", "Reflect on recent successes/corrections to capture reusable skills or rules"),
+    ];
+
+    // Pi (pi) — from `/help`. Built-ins only; `skill:*` entries are skills (AgentManager-managed),
+    // excluded. "/"-prefixed for the composer "/" popup (pi shows them bare in its own menu).
+    private static readonly (string, string)[] Pi =
+    [
+        ("/settings", "Open settings menu"),
+        ("/model", "Select model (opens selector UI)"),
+        ("/scoped-models", "Enable/disable models for Ctrl+P cycling"),
+        ("/export", "Export session (HTML default, or a .html/.jsonl path)"),
+        ("/import", "Import and resume a session from a JSONL file"),
+        ("/share", "Share session as a secret GitHub gist"),
+        ("/copy", "Copy last agent message to clipboard"),
+        ("/name", "Set session display name"),
+        ("/session", "Show session info and stats"),
+        ("/changelog", "Show changelog entries"),
+        ("/hotkeys", "Show all keyboard shortcuts"),
+        ("/fork", "Create a new fork from a previous user message"),
+        ("/clone", "Duplicate the current session at the current position"),
+        ("/tree", "Navigate session tree (switch branches)"),
+        ("/trust", "Save project trust decision for future sessions"),
+        ("/login", "Configure provider authentication"),
+        ("/logout", "Remove provider authentication"),
+        ("/new", "Start a new session"),
+        ("/compact", "Manually compact the session context"),
+        ("/resume", "Resume a different session"),
+        ("/reload", "Reload keybindings, extensions, skills, prompts, and themes"),
+        ("/quit", "Quit pi"),
     ];
 }
