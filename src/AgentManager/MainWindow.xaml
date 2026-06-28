@@ -172,18 +172,18 @@
                         </StackPanel>
                     </DockPanel>
                     <Border Margin="0,9,0,0" Background="{DynamicResource Bg2}" CornerRadius="6" Padding="9">
-                        <TextBlock Text="{Binding Prompt}" FontSize="11" Foreground="{DynamicResource Txt2}" TextWrapping="Wrap"/>
+                        <TextBox Style="{StaticResource SelectableText}" Text="{Binding Prompt, Mode=OneWay}" FontSize="11" Foreground="{DynamicResource Txt2}"/>
                     </Border>
                     <StackPanel Visibility="{Binding IsReady, Converter={StaticResource BoolVis}}">
                         <TextBlock Text="{StaticResource L.Report}" Style="{StaticResource Lbl}" Margin="0,11,0,5" Foreground="{DynamicResource Ok}"/>
                         <Border Background="{DynamicResource AddBg}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="9">
-                            <TextBlock Text="{Binding Report}" FontSize="11" Foreground="{DynamicResource Txt0}" TextWrapping="Wrap"/>
+                            <TextBox Style="{StaticResource SelectableText}" Text="{Binding Report, Mode=OneWay}" FontSize="11" Foreground="{DynamicResource Txt0}"/>
                         </Border>
                     </StackPanel>
                     <StackPanel Visibility="{Binding IsFailed, Converter={StaticResource BoolVis}}">
                         <TextBlock Text="{StaticResource L.ErrorLabel}" Style="{StaticResource Lbl}" Margin="0,11,0,5" Foreground="{DynamicResource Err}"/>
                         <Border Background="{DynamicResource DelBg}" CornerRadius="6" Padding="9">
-                            <TextBlock Text="{Binding Error}" FontSize="11" Foreground="{DynamicResource Err}" TextWrapping="Wrap"/>
+                            <TextBox Style="{StaticResource SelectableText}" Text="{Binding Error, Mode=OneWay}" FontSize="11" Foreground="{DynamicResource Err}"/>
                         </Border>
                     </StackPanel>
                     <DockPanel Margin="0,10,0,0">
