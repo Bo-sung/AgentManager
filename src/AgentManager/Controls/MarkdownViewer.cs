@@ -180,18 +180,36 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
 
     private static BlockUIContainer CodeBlock(string code)
     {
-        var text = new TextBlock
+        // Read-only borderless TextBox (not a TextBlock): the FlowDocument's own selection can't reach
+        // inside a BlockUIContainer, but a TextBox is independently drag-selectable, so the user can
+        // copy just part of the code. The copy button still grabs the whole block in one click.
+        var text = new TextBox
         {
             Text = code,
             FontFamily = Mono,
             FontSize = 12,
             Foreground = MutedBrush,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
+            IsReadOnly = true,
+            IsReadOnlyCaretVisible = false,
+            IsTabStop = false,
             TextWrapping = TextWrapping.Wrap,
-            LineHeight = 18,
+            AcceptsReturn = true,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        };
+        // A TextBox swallows the mouse wheel; re-raise it on the parent so the transcript keeps scrolling
+        // when the pointer is over a code block.
+        text.PreviewMouseWheel += (_, e) =>
+        {
+            if (e.Handled) return;
+            e.Handled = true;
+            if (text.Parent is UIElement parent)
+                parent.RaiseEvent(new System.Windows.Input.MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta) { RoutedEvent = UIElement.MouseWheelEvent });
         };
 
-        // FlowDocument text selection can't reach inside a BlockUIContainer, so a one-click
-        // copy button is the only reliable way to grab a code block (e.g. a worker prompt).
         var copyLabel = AgentManager.App.L("L.Copy");
         var copy = new Button
         {
