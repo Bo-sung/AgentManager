@@ -11,8 +11,8 @@ public static class EngineSlashCommands
     public static IReadOnlyList<(string Cmd, string Desc)> For(string engineId) => engineId switch
     {
         "gx" => Codex,
+        "agy" => Antigravity,
         // "pi"  => Pi,   // 사용자 /help 목록 받으면 채움
-        // "agy" => Antigravity,
         _ => System.Array.Empty<(string, string)>(),
     };
 
@@ -65,5 +65,48 @@ public static class EngineSlashCommands
         ("/clear", "clear the terminal and start a new chat"),
         ("/personality", "choose a communication style for Codex"),
         ("/subagents", "switch the active agent thread"),
+    ];
+
+    // Antigravity (agy) — from `/help`. Built-ins only; injected skills (ask-user / worker-prompt /
+    // antigravity-guide) are excluded since AgentManager manages those.
+    private static readonly (string, string)[] Antigravity =
+    [
+        ("/add-dir", "Add a directory to the workspace"),
+        ("/agents", "List available custom agents"),
+        ("/artifact", "View and review artifacts"),
+        ("/btw", "Ask a side question without interrupting the current task"),
+        ("/changelog", "Show release notes and changes"),
+        ("/clear", "Clear conversation and start a new one"),
+        ("/config", "Open settings panel"),
+        ("/context", "Visualize current context usage"),
+        ("/copy", "Copy the last planner response to the clipboard"),
+        ("/credits", "Show remaining G1 credits and purchase link"),
+        ("/diff", "View uncommitted changes and per-turn diffs"),
+        ("/exit", "Exit the CLI"),
+        ("/fast", "Agent executes tasks directly — for simple, faster tasks"),
+        ("/feedback", "Submit qualitative feedback to improve the agent"),
+        ("/fork", "Branch the current conversation at this point"),
+        ("/help", "Show available commands and keybindings"),
+        ("/hooks", "Manage hook configurations for tool events"),
+        ("/keybindings", "Set custom keybindings"),
+        ("/logout", "Log out"),
+        ("/mcp", "Manage MCP servers"),
+        ("/model", "Set a model"),
+        ("/open", "Open a file or view opened/edited files"),
+        ("/permissions", "Manage tool permissions"),
+        ("/planning", "Agent plans before executing — for complex/collaborative work"),
+        ("/rename", "Rename the current conversation"),
+        ("/resume", "Browse and resume past conversations"),
+        ("/rewind", "Rewind conversation to a previous message"),
+        ("/skills", "List available skills"),
+        ("/statusline", "Toggle the statusline"),
+        ("/tasks", "View background tasks"),
+        ("/title", "Toggle custom terminal window title"),
+        ("/usage", "View model quota usage"),
+        ("/goal", "Run until the specified goal is completely finished"),
+        ("/schedule", "Run an instruction on a recurring schedule or one-time timer"),
+        ("/grill-me", "Interview me to align on a plan"),
+        ("/teamwork-preview", "Invoke a team of agents to tackle large projects"),
+        ("/learn", "Reflect on recent successes/corrections to capture reusable skills or rules"),
     ];
 }
