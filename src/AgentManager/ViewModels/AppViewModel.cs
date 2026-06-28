@@ -820,6 +820,10 @@ public sealed partial class AppViewModel : ObservableObject
 
     private void SessionStatusWatch(object? sender, PropertyChangedEventArgs e)
     {
+        // 번역 토글이 바뀌면 떠 있는 구조화 선택지의 질문·옵션 표시를 다시 번역/원복.
+        if (e.PropertyName == nameof(SessionViewModel.TranslationEnabled) && sender is SessionViewModel ts && ts.ActiveChoice is { } flow)
+            _ = ApplyChoiceTranslationAsync(ts, flow);
+
         if (e.PropertyName == nameof(SessionViewModel.Status) && sender is SessionViewModel s)
         {
             if (s.Status == "running")

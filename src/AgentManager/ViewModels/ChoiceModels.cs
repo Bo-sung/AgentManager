@@ -4,26 +4,33 @@ using System.Linq;
 
 namespace AgentManager.ViewModels;
 
-/// <summary>One selectable option. <see cref="Marker"/> = "1".."9"/"A".. shortcut, <see cref="Label"/> =
-/// display text, <see cref="Text"/> = what is sent when chosen. <see cref="IsSelected"/> drives the
-/// multi-select checkbox state.</summary>
+/// <summary>One selectable option. <see cref="Marker"/> = "1".."9"/"A".. shortcut, <see cref="Text"/> =
+/// the raw model text that is SENT when chosen (immutable), <see cref="Label"/> = what is DISPLAYED
+/// (translated to the UI language when translation is on, raw otherwise). <see cref="IsSelected"/>
+/// drives the multi-select checkbox state.</summary>
 public sealed class ChoiceOption(string marker, string label, string text) : ObservableObject
 {
     public string Marker { get; } = marker;
-    public string Label { get; } = label;
     public string Text { get; } = text;
+    private string _label = label;
+    public string Label { get => _label; set => Set(ref _label, value); }
     private bool _selected;
     public bool IsSelected { get => _selected; set => Set(ref _selected, value); }
 }
 
-/// <summary>A single question: prompt + options, single- or multi-select. <see cref="Answer"/> holds
-/// the captured response once the page is answered (so the pager can revisit it).</summary>
+/// <summary>A single question: prompt + options, single- or multi-select. <see cref="Question"/> is the
+/// raw model text; <see cref="DisplayQuestion"/> is what the header shows (translated when on).
+/// <see cref="Answer"/> holds the captured response once the page is answered (so the pager can revisit).</summary>
 public sealed class ChoiceItem : ObservableObject
 {
     public string? Question { get; init; }
     public bool Multi { get; init; }
     public ObservableCollection<ChoiceOption> Options { get; } = [];
     public string? Answer { get; set; }
+
+    private string? _displayQuestion;
+    public string? DisplayQuestion { get => _displayQuestion ?? Question; set { if (Set(ref _displayQuestion, value)) OnChanged(nameof(HeaderText)); } }
+    public string HeaderText => string.IsNullOrWhiteSpace(DisplayQuestion) ? AgentManager.App.L("L.PickOne") : DisplayQuestion!;
 
     public int SelectedCount => Options.Count(o => o.IsSelected);
     public bool HasSelection => Options.Any(o => o.IsSelected);
@@ -71,5 +78,15 @@ public sealed class ChoiceFlow : ObservableObject
             var q = string.IsNullOrWhiteSpace(i.Question) ? "?" : i.Question!.Trim();
             return $"{q}: {i.Answer ?? "-"}";
         }));
+    }
+
+    /// <summary>Drop any translated display text — show the raw model question/options (translation off).</summary>
+    public void RevertDisplay()
+    {
+        foreach (var i in Items)
+        {
+            i.DisplayQuestion = i.Question;
+            foreach (var o in i.Options) o.Label = o.Text;
+        }
     }
 }

@@ -64,10 +64,39 @@ public partial class AppViewModel
             if (items.Count < 1) return;
             var s = _allSessions.FirstOrDefault(x => x.Id == sessionId);
             if (s is not null)
-                s.ActiveChoice = new ChoiceFlow { Items = items, Structured = true };
+            {
+                var flow = new ChoiceFlow { Items = items, Structured = true };
+                s.ActiveChoice = flow;
+                if (s.TranslationEnabled) _ = ApplyChoiceTranslationAsync(s, flow); // show options in the UI language
+            }
             try { File.Delete(path); } catch { }
         }
         catch { }
+    }
+
+    /// <summary>Translate a structured choice's question + option labels into the UI language for display
+    /// (translation on); revert to the raw model text (translation off). Heuristic choices are already in
+    /// the display language, so they're left untouched. The sent value (<see cref="ChoiceOption.Text"/>)
+    /// never changes — only what's shown.</summary>
+    private async System.Threading.Tasks.Task ApplyChoiceTranslationAsync(SessionViewModel s, ChoiceFlow flow)
+    {
+        if (!flow.Structured) return;
+        if (!s.TranslationEnabled) { flow.RevertDisplay(); return; }
+        try
+        {
+            if (!await Core.Translation.OllamaTranslator.PingAsync(_ollamaEndpoint, 1500)) return; // down → leave raw
+            var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
+                ? CreateTranslator(_ollamaEndpoint, _ollamaModel, src, tgt) : _translator;
+            if (translator is null) return;
+            foreach (var item in flow.Items)
+            {
+                if (item.Question is { Length: > 0 } q)
+                    item.DisplayQuestion = await translator.TranslateAsync(q, Core.Translation.TranslationDirection.TargetToSource);
+                foreach (var o in item.Options)
+                    o.Label = await translator.TranslateAsync(o.Text, Core.Translation.TranslationDirection.TargetToSource);
+            }
+        }
+        catch { /* translation is best-effort; leave raw on any failure */ }
     }
 
     /// <summary>Parse the ask spool JSON: a single question ({ question, options, multi }) or a

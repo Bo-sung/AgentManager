@@ -190,6 +190,10 @@
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
+                                            <!-- 번역 토글 (✕ 왼쪽): ON=선택지·직접입력 번역 / OFF=원문 -->
+                                            <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Height="22" Padding="9,0" Margin="0,0,6,0"
+                                                          VerticalAlignment="Center" IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
+                                                          Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
                                             <TextBlock DockPanel.Dock="Right" FontFamily="{StaticResource Mono}" FontSize="9.5" Foreground="{DynamicResource Txt3}"
                                                        VerticalAlignment="Center" Margin="0,0,8,0" Text="{Binding ActiveChoice.PagerLabel}"
                                                        Visibility="{Binding ActiveChoice.HasPager, Converter={StaticResource BoolVis}}"/>
@@ -207,7 +211,7 @@
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
-                                            <TextBlock Text="{Binding ActiveChoice.Header}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                            <TextBlock Text="{Binding ActiveChoice.Current.HeaderText}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center" Foreground="{DynamicResource Txt0}"/>
                                         </DockPanel>
                                         <!-- 옵션 행 (단일=마커+화살표 / 멀티=체크박스, ↑↓ 네비) -->
@@ -330,8 +334,6 @@
                                                     </Style>
                                                 </Button.Style>
                                             </Button>
-                                            <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Height="24" Padding="9,0" Margin="8,0,0,0"
-                                                          IsChecked="{Binding TranslationEnabled, Mode=TwoWay}" Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
                                             <Grid>
                                                 <TextBox Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="ChoiceOther_PreviewKeyDown"
                                                          Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Txt0}" FontSize="13.5" VerticalContentAlignment="Center"/>
