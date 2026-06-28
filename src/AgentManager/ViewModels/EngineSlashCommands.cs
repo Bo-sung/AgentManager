@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AgentManager.ViewModels;
 
@@ -8,12 +10,31 @@ namespace AgentManager.ViewModels;
 /// non-interactive runs, pass through as plain text rather than executing.</summary>
 public static class EngineSlashCommands
 {
-    public static IReadOnlyList<(string Cmd, string Desc)> For(string engineId) => engineId switch
+    public static IReadOnlyList<(string Cmd, string Desc)> For(string engineId)
     {
-        "gx" => Codex,
-        "agy" => Antigravity,
-        "pi" => Pi,
-        _ => System.Array.Empty<(string, string)>(),
+        var all = engineId switch
+        {
+            "gx" => Codex,
+            "agy" => Antigravity,
+            "pi" => Pi,
+            _ => Array.Empty<(string, string)>(),
+        };
+        // 노이즈 제거: 터미널/디스플레이/인증/종료 + AgentManager UI로 대체된 명령은 숨긴다(원본 배열은 보존).
+        return all.Where(c => !Hidden.Contains(c.Item1)).ToArray();
+    }
+
+    /// <summary>비대화형 실행에선 의미 없거나 AgentManager UI로 이미 대체된 명령 — `/` 팝업에서 숨김.</summary>
+    private static readonly HashSet<string> Hidden = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // 터미널/디스플레이/입력 설정
+        "/vim", "/keymap", "/keybindings", "/theme", "/pets", "/statusline", "/title",
+        "/personality", "/hotkeys", "/raw", "/ide",
+        // 인증/종료/메타
+        "/exit", "/quit", "/logout", "/login", "/feedback", "/credits", "/app",
+        "/scoped-models", "/experimental", "/reload", "/changelog", "/sandbox-add-read-dir",
+        "/ps", "/stop", "/trust",
+        // AgentManager UI로 대체됨(@ 멘션·복사 버튼)
+        "/mention", "/copy",
     };
 
     // Codex (codex) — from `/help` in the TUI. Deduped, original order.
