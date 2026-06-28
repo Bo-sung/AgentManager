@@ -281,9 +281,10 @@
     <sys:String x:Key="L.AttachImageTip">파일 첨부 — 이미지·문서 (또는 입력창에 Ctrl+V로 이미지 붙여넣기)</sys:String>
     <sys:String x:Key="L.Remove">제거</sys:String>
     <sys:String x:Key="L.MessagePrefix">Message </sys:String>
-    <sys:String x:Key="L.MessageSuffix">...  @ to mention, / for actions</sys:String>
+    <sys:String x:Key="L.MessageSuffix">...  @ 멘션 · / 명령 · &gt; 액션</sys:String>
     <sys:String x:Key="L.OrchMentionHeader">멘션 (파일 및 세션)</sys:String>
-    <sys:String x:Key="L.OrchActionHeader">액션 / 슬래시 명령</sys:String>
+    <sys:String x:Key="L.OrchActionHeader">앱 액션 (&gt;)</sys:String>
+    <sys:String x:Key="L.OrchSlashHeader">엔진 슬래시 명령 (/)</sys:String>
     <sys:String x:Key="L.ActionClearDesc">작성 글 초기화</sys:String>
     <sys:String x:Key="L.ActionReviewDesc">리뷰 패널 토글</sys:String>
     <sys:String x:Key="L.ActionSettingsDesc">설정 창 열기</sys:String>

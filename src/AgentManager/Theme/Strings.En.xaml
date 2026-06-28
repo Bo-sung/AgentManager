@@ -281,9 +281,10 @@
     <sys:String x:Key="L.AttachImageTip">Attach files — images or documents (or Ctrl+V an image into the composer)</sys:String>
     <sys:String x:Key="L.Remove">Remove</sys:String>
     <sys:String x:Key="L.MessagePrefix">Message </sys:String>
-    <sys:String x:Key="L.MessageSuffix">...  @ to mention, / for actions</sys:String>
+    <sys:String x:Key="L.MessageSuffix">...  @ mention · / commands · &gt; actions</sys:String>
     <sys:String x:Key="L.OrchMentionHeader">Mentions (Files &amp; Sessions)</sys:String>
-    <sys:String x:Key="L.OrchActionHeader">Actions / Slash Commands</sys:String>
+    <sys:String x:Key="L.OrchActionHeader">App actions (&gt;)</sys:String>
+    <sys:String x:Key="L.OrchSlashHeader">Engine slash commands (/)</sys:String>
     <sys:String x:Key="L.ActionClearDesc">Clear draft</sys:String>
     <sys:String x:Key="L.ActionReviewDesc">Toggle Review Pane</sys:String>
     <sys:String x:Key="L.ActionSettingsDesc">Open settings modal</sys:String>
