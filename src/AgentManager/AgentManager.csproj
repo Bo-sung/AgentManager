@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.16.0: 구조화 선택지(ask-user 스킬+스풀, 전엔진) · 멀티셀렉트 + 페이지네이션 · 워크트리 미사용 명확화 -->
-    <Version>1.16.0</Version>
+    <!-- 1.16.1: 선택지 표시 번역 · 트랜스크립트 복사(표/코드/위임 선택가능) + 메타 헤더 · 슬래시 명령(/=엔진, >=앱) -->
+    <Version>1.16.1</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
