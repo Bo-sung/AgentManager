@@ -4,7 +4,8 @@
              xmlns:controls="clr-namespace:AgentManager.Controls"
              xmlns:vm="clr-namespace:AgentManager.ViewModels"
              xmlns:sys="clr-namespace:System;assembly=System.Runtime"
-             x:Name="SessionRoot">
+             x:Name="SessionRoot"
+             AllowDrop="True" PreviewDragOver="Session_DragOver" PreviewDrop="Session_Drop">
     <Grid>
                     <!-- empty state -->
                     <TextBlock Text="{StaticResource L.NoSessionStart}" FontFamily="{StaticResource Mono}"

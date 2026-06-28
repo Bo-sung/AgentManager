@@ -218,6 +218,26 @@ public partial class SessionView : UserControl
             s.PendingAttachments.Remove(a);
     }
 
+    // 파일 드래그앤드롭 → 첨부(파일 픽커와 동일 처리). Preview(터널)로 자식 TextBox보다 먼저 가로챈다.
+    private void Session_DragOver(object sender, DragEventArgs e)
+    {
+        if (Vm?.ActiveSession is not null && e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true; // 파일 드롭만 가로채고, 텍스트 드래그는 TextBox에 맡긴다
+        }
+    }
+
+    private void Session_Drop(object sender, DragEventArgs e)
+    {
+        if (Vm?.ActiveSession is not { } s) return;
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] files) return;
+        foreach (var f in files)
+            if (System.IO.File.Exists(f)) // 폴더는 건너뜀
+                s.PendingAttachments.Add(new PendingAttachment(f, AgentManager.Attachments.IsImage(f)));
+        e.Handled = true;
+    }
+
     private void ModelOption_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is string model && Vm?.ActiveSession is { } s)
