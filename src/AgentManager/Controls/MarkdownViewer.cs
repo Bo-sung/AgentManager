@@ -357,7 +357,9 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
         return cleaned.Length == 0 && trimmed.Contains('-');
     }
 
-    private static BlockUIContainer RenderTable(string headerLine, string separatorLine, List<string> tableLines)
+    // FlowDocument Table (not a BlockUIContainer/Grid): keeps cell text inside the document flow so it is
+    // selectable and Ctrl+C-copyable (UI-island tables are skipped by the viewer's text selection).
+    private static Block RenderTable(string headerLine, string separatorLine, List<string> tableLines)
     {
         var rawParts = headerLine.Split('|');
         var headers = new List<string>();
@@ -385,104 +387,54 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
         var colCount = Math.Max(headers.Count, rows.Count > 0 ? rows.Max(r => r.Count) : 0);
         if (colCount == 0) colCount = 1;
 
-        var grid = new Grid
-        {
-            Margin = new Thickness(0, 4, 0, 12),
-            Background = Brushes.Transparent
-        };
-
-        for (int c = 0; c < colCount; c++)
-        {
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        }
-
-        for (int r = 0; r <= rows.Count; r++)
-        {
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        }
-
         var lineSoftBrush = Application.Current?.TryFindResource("LineSoft") as Brush ?? Brush("#FF1A242D");
         var bg3Brush = Application.Current?.TryFindResource("Bg3") as Brush ?? Brush("#FF161F29");
         var txt0Brush = Application.Current?.TryFindResource("Txt0") as Brush ?? Brush("#FFDBE3EA");
         var txt1Brush = Application.Current?.TryFindResource("Txt1") as Brush ?? Brush("#FF90A0AC");
 
-        // Header Row (r = 0)
+        var table = new Table { CellSpacing = 0, Margin = new Thickness(0, 4, 0, 12) };
+        for (int c = 0; c < colCount; c++)
+            table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+
+        var group = new TableRowGroup();
+        table.RowGroups.Add(group);
+
+        // Header row — left border on the first column, top/right/bottom on all (CellSpacing=0 → no doubles)
+        var headerRow = new TableRow();
         for (int c = 0; c < colCount; c++)
         {
-            var thickness = new Thickness(
-                c == 0 ? 1 : 0,
-                1,
-                1,
-                1
-            );
-
-            var cellBorder = new Border
+            var p = new Paragraph { Margin = new Thickness(0), FontFamily = Sans, FontSize = 13, LineHeight = 19,
+                                    Foreground = txt0Brush, FontWeight = FontWeights.SemiBold };
+            AddInlineRuns(p.Inlines, c < headers.Count ? headers[c] : "");
+            headerRow.Cells.Add(new TableCell(p)
             {
+                Background = bg3Brush,
                 BorderBrush = lineSoftBrush,
-                BorderThickness = thickness,
+                BorderThickness = new Thickness(c == 0 ? 1 : 0, 1, 1, 1),
                 Padding = new Thickness(6, 3, 6, 3),
-                Background = bg3Brush
-            };
-
-            var cellText = c < headers.Count ? headers[c] : "";
-            var tb = new TextBlock
-            {
-                TextWrapping = TextWrapping.Wrap,
-                FontFamily = Sans,
-                FontSize = 13,
-                LineHeight = 19,
-                Foreground = txt0Brush,
-                FontWeight = FontWeights.SemiBold
-            };
-
-            AddInlineRuns(tb.Inlines, cellText);
-            cellBorder.Child = tb;
-
-            Grid.SetRow(cellBorder, 0);
-            Grid.SetColumn(cellBorder, c);
-            grid.Children.Add(cellBorder);
+            });
         }
+        group.Rows.Add(headerRow);
 
-        // Body Rows (r = 1 to rows.Count)
-        for (int r = 1; r <= rows.Count; r++)
+        // Body rows
+        foreach (var rowCells in rows)
         {
-            var rowCells = rows[r - 1];
+            var tr = new TableRow();
             for (int c = 0; c < colCount; c++)
             {
-                var thickness = new Thickness(
-                    c == 0 ? 1 : 0,
-                    0,
-                    1,
-                    1
-                );
-
-                var cellBorder = new Border
+                var p = new Paragraph { Margin = new Thickness(0), FontFamily = Sans, FontSize = 13, LineHeight = 19, Foreground = txt1Brush };
+                AddInlineRuns(p.Inlines, c < rowCells.Count ? rowCells[c] : "");
+                tr.Cells.Add(new TableCell(p)
                 {
                     BorderBrush = lineSoftBrush,
-                    BorderThickness = thickness,
-                    Padding = new Thickness(6, 3, 6, 3)
-                };
-
-                var cellText = c < rowCells.Count ? rowCells[c] : "";
-                var tb = new TextBlock
-                {
-                    TextWrapping = TextWrapping.Wrap,
-                    FontFamily = Sans,
-                    FontSize = 13,
-                    LineHeight = 19,
-                    Foreground = txt1Brush
-                };
-
-                AddInlineRuns(tb.Inlines, cellText);
-                cellBorder.Child = tb;
-
-                Grid.SetRow(cellBorder, r);
-                Grid.SetColumn(cellBorder, c);
-                grid.Children.Add(cellBorder);
+                    BorderThickness = new Thickness(c == 0 ? 1 : 0, 0, 1, 1),
+                    Padding = new Thickness(6, 3, 6, 3),
+                });
             }
+            group.Rows.Add(tr);
         }
 
-        return new BlockUIContainer(grid) { Margin = new Thickness(0, 0, 0, 8) };
+        return table;
     }
 
     /// <summary>Leading backtick count of a (trimmed) line — used for variable-length code fences.</summary>
