@@ -11,7 +11,9 @@ namespace AgentManager.Core.Hosting;
 /// </summary>
 public static partial class ConPtyHost
 {
-    public static async Task<(string Output, int ExitCode)> RunAsync(string commandLine, string cwd, TimeSpan timeout, CancellationToken ct = default, IReadOnlyDictionary<string, string>? extraEnv = null)
+    /// <param name="onOutput">Optional live tap: called (throttled ~150ms, on the reader thread) with the
+    /// raw accumulated output so far, so a caller can stream a preview. The caller does its own VT-strip.</param>
+    public static async Task<(string Output, int ExitCode)> RunAsync(string commandLine, string cwd, TimeSpan timeout, CancellationToken ct = default, IReadOnlyDictionary<string, string>? extraEnv = null, Action<string>? onOutput = null)
     {
         // pty <-> 호스트 파이프 (input: 호스트→pty, output: pty→호스트)
         if (!CreatePipe(out var inRead, out var inWrite, IntPtr.Zero, 0)) throw new InvalidOperationException("CreatePipe(in) failed");
@@ -46,6 +48,7 @@ public static partial class ConPtyHost
             outWrite.Dispose();
 
             var sb = new StringBuilder();
+            var lastReport = DateTime.MinValue;
             var readTask = Task.Run(() =>
             {
                 using var fs = new FileStream(outRead, FileAccess.Read);
@@ -54,7 +57,15 @@ public static partial class ConPtyHost
                 try
                 {
                     while ((n = fs.Read(buf, 0, buf.Length)) > 0)
+                    {
                         lock (sb) sb.Append(Encoding.UTF8.GetString(buf, 0, n));
+                        if (onOutput is not null && (DateTime.UtcNow - lastReport).TotalMilliseconds >= 150)
+                        {
+                            lastReport = DateTime.UtcNow;
+                            string snap; lock (sb) snap = sb.ToString();
+                            try { onOutput(snap); } catch { /* tap must never break the read loop */ }
+                        }
+                    }
                 }
                 catch { /* pty 닫힘 */ }
             });

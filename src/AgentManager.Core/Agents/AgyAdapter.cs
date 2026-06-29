@@ -36,12 +36,37 @@ public sealed class AgyAdapter : IAgentAdapter, IPtyTurnRunner
         var cmd = BuildCommandLine(executablePath, options, prompt);
         // PTY 엔진에도 env 주입(AGENTMANAGER_TASK_SPOOL 등) — 안 그러면 워커-프롬프트 스킬이 스풀 경로를
         // 못 보고 agy 자체 스크래치(./.am/worker-tasks/)에 써서 백로그로 유입되지 않는다.
-        var (raw, exit) = await ConPtyHost.RunAsync(cmd, options.WorkingDirectory, TimeSpan.FromMinutes(10), ct, options.ExtraEnvironment);
+        // onOutput 탭으로 raw 스냅샷만 저장(read 스레드) → 폴링 루프가 emit (어댑터 흐름, 순차) → 동시 emit 회피.
+        var gate = new object();
+        var latestRaw = "";
+        var runTask = ConPtyHost.RunAsync(cmd, options.WorkingDirectory, TimeSpan.FromMinutes(10), ct,
+            options.ExtraEnvironment, onOutput: snap => { lock (gate) latestRaw = snap; });
+
+        // 라이브 프리뷰: agy가 도는 동안 "깔끔히 append된" 부분만 델타로 흘린다(나레이션이 실시간으로 쌓이게).
+        // emit은 이 흐름에서 순차로만 일어나 stdio 엔진과 동일한 한-이벤트씩 순서를 유지하고, 아래 최종
+        // AssistantText가 프리뷰를 권위 텍스트로 교체하므로 TUI redraw로 인한 글리치는 자가 치유된다.
+        var lastSent = "";
+        while (!runTask.IsCompleted)
+        {
+            try { await Task.Delay(200, ct); } catch (OperationCanceledException) { break; }
+            string snapRaw; lock (gate) snapRaw = latestRaw;
+            var snap = ConPtyHost.StripVt(snapRaw).Trim();
+            if (snap.Length > lastSent.Length && snap.StartsWith(lastSent, StringComparison.Ordinal))
+                await emitAsync(new AssistantDelta(snap[lastSent.Length..]));
+            lastSent = snap; // 항상 최신으로 전진(redraw/분기면 emit 없이 재동기화)
+        }
+
+        var (raw, exit) = await runTask;
         var text = ConPtyHost.StripVt(raw).Trim();
 
         var conversationId = TryReadConversationId(options.WorkingDirectory);
         if (conversationId is not null)
             await emitAsync(new SessionStarted(conversationId, options.Model, 0, options.WorkingDirectory));
+
+        // 최종 권위 텍스트로 스트리밍 프리뷰를 교체(델타가 없었으면 새 블록으로 추가). 에러 경로에서도
+        // 먼저 보내, 흘려둔 라이브 블록이 미완 상태로 남지 않게 한다.
+        if (!string.IsNullOrWhiteSpace(text))
+            await emitAsync(new AssistantText(text));
 
         if (exit != 0)
         {
@@ -56,7 +81,6 @@ public sealed class AgyAdapter : IAgentAdapter, IPtyTurnRunner
             return;
         }
 
-        await emitAsync(new AssistantText(text));
         await emitAsync(new TurnCompleted(null, false, null, null));
     }
 
