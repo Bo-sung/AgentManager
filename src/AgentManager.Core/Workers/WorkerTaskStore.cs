@@ -156,8 +156,43 @@ public sealed class WorkerTaskStore
     public IEnumerable<WorkerTaskDto> ReportsForOrigin(string originSessionId) =>
         _tasks.Where(t => t.OriginSessionId == originSessionId
                           && WorkerTaskStatus.IsFinished(t.Status)
-                          && !string.IsNullOrEmpty(t.Report))
+                          && !string.IsNullOrEmpty(t.Report)
+                          && !t.ReportDismissed)
               .OrderBy(t => t.Order).ThenBy(t => t.CreatedUtc, StringComparer.Ordinal);
+
+    /// <summary>Hide a report from its origin session's inbox (dismiss = handled). The task stays in the
+    /// worker's finished history — this only clears the inbox notification.</summary>
+    public void DismissReport(string taskId)
+    {
+        var i = IndexOf(taskId);
+        if (i < 0 || _tasks[i].ReportDismissed) return;
+        _tasks[i] = _tasks[i] with { ReportDismissed = true, ReportSeen = true };
+        Changed?.Invoke();
+    }
+
+    /// <summary>Mark one report seen (e.g. after the user copies/opens it) — clears its NEW badge.</summary>
+    public void MarkReportSeen(string taskId)
+    {
+        var i = IndexOf(taskId);
+        if (i < 0 || _tasks[i].ReportSeen) return;
+        _tasks[i] = _tasks[i] with { ReportSeen = true };
+        Changed?.Invoke();
+    }
+
+    /// <summary>Mark all of a session's inbox reports seen (clears every NEW badge). Returns true if any changed.</summary>
+    public bool MarkReportsSeen(string originSessionId)
+    {
+        var changed = false;
+        for (int i = 0; i < _tasks.Count; i++)
+        {
+            var t = _tasks[i];
+            if (t.OriginSessionId == originSessionId && WorkerTaskStatus.IsFinished(t.Status)
+                && !string.IsNullOrEmpty(t.Report) && !t.ReportDismissed && !t.ReportSeen)
+            { _tasks[i] = t with { ReportSeen = true }; changed = true; }
+        }
+        if (changed) Changed?.Invoke();
+        return changed;
+    }
 
     public void Delete(string taskId)
     {

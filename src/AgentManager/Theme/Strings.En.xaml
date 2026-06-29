@@ -266,6 +266,8 @@
     <sys:String x:Key="L.CopySelected">Copy selected</sys:String>
     <sys:String x:Key="L.SelectAll">Select all</sys:String>
     <sys:String x:Key="L.DeselectAll">Deselect all</sys:String>
+    <sys:String x:Key="L.MarkAllRead">Mark all read</sys:String>
+    <sys:String x:Key="L.NewBadge">NEW</sys:String>
     <sys:String x:Key="L.StatusAgent">AGENT </sys:String>
     <sys:String x:Key="L.StatusModel">MODEL </sys:String>
     <sys:String x:Key="L.AgentEngineTip">This session's engine</sys:String>

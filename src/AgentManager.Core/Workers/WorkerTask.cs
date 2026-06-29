@@ -26,6 +26,10 @@ public sealed record WorkerTaskDto
     public string OriginSessionId { get; init; } = "";
     /// <summary>The worker's result text, captured when the task finishes (empty until done).</summary>
     public string Report { get; init; } = "";
+    /// <summary>Report inbox: the user has seen this report (false → shows a NEW badge).</summary>
+    public bool ReportSeen { get; init; }
+    /// <summary>Report inbox: dismissed from the inbox by the user (still kept in the worker's history).</summary>
+    public bool ReportDismissed { get; init; }
     public string CreatedUtc { get; init; } = DateTime.UtcNow.ToString("o");
 }
 

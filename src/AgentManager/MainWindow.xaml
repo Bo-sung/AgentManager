@@ -1380,6 +1380,11 @@
                                         </TextBlock>
                                     </StackPanel>
                                 </Button>
+                                <Button Style="{StaticResource ChipButton}" Margin="0,0,6,6"
+                                        Visibility="{Binding DataContext.HasNewReports, ElementName=Root, Converter={StaticResource BoolVis}}"
+                                        Command="{Binding DataContext.MarkReportsSeenCommand, ElementName=Root}">
+                                    <TextBlock><Run Text="{StaticResource L.MarkAllRead}"/><Run Text=" ("/><Run Text="{Binding DataContext.NewReportCount, ElementName=Root, Mode=OneWay}"/><Run Text=")"/></TextBlock>
+                                </Button>
                                 <Button Style="{StaticResource ChipButton}" Margin="0,0,0,6"
                                         Visibility="{Binding DataContext.HasSelectedReports, ElementName=Root, Converter={StaticResource BoolVis}}"
                                         Command="{Binding DataContext.CopySelectedReportsCommand, ElementName=Root}">
@@ -1407,6 +1412,12 @@
                                                 <DockPanel Margin="9,7,9,5">
                                                     <ToggleButton DockPanel.Dock="Left" Style="{StaticResource SelectCheck}" Margin="0,0,8,0"
                                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+                                                    <Button DockPanel.Dock="Right" Margin="6,0,0,0" Padding="4,0"
+                                                            Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                                            Foreground="{DynamicResource Txt3}" ToolTip="{StaticResource L.Remove}"
+                                                            Command="{Binding DataContext.DismissReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                                                        <controls:IconView Icon="{StaticResource IconX}" Width="12" Height="12"/>
+                                                    </Button>
                                                     <Button DockPanel.Dock="Right" Margin="6,0,0,0"
                                                             ToolTip="{StaticResource L.Copy}"
                                                             Command="{Binding DataContext.CopyReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
@@ -1429,6 +1440,9 @@
                                                             Visibility="{Binding HasEngine, Converter={StaticResource BoolVis}}">
                                                         <TextBlock Text="{Binding EngineLabel}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="{DynamicResource Accent}"/>
                                                     </Border>
+                                                    <TextBlock DockPanel.Dock="Left" Text="{StaticResource L.NewBadge}" FontFamily="{StaticResource Mono}" FontSize="9" FontWeight="Bold"
+                                                               Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,7,0"
+                                                               Visibility="{Binding IsNew, Converter={StaticResource BoolVis}}"/>
                                                     <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                                 </DockPanel>
                                                 <Border BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,1,0,0" Padding="9,7" MaxHeight="160">

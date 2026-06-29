@@ -21,6 +21,8 @@ public sealed class WorkerTaskViewModel : ObservableObject
     public string AssignedWorkerName { get; }
     public int Order { get; }
     public string Report { get; }
+    /// <summary>Report inbox: the user has already seen this report (false → NEW badge).</summary>
+    public bool ReportSeen { get; }
 
     public WorkerTaskViewModel(WorkerTaskDto dto, string assignedWorkerName = "")
     {
@@ -30,7 +32,11 @@ public sealed class WorkerTaskViewModel : ObservableObject
         AssignedWorkerName = assignedWorkerName;
         Order = dto.Order;
         Report = dto.Report ?? "";
+        ReportSeen = dto.ReportSeen;
     }
+
+    /// <summary>Report inbox: this report arrived since the user last marked it/them read.</summary>
+    public bool IsNew => !ReportSeen;
 
     public string ReportPreview => Report.Length <= 600 ? Report : Report[..599] + "…";
     public string PromptPreview => Prompt.Length <= 200 ? Prompt : Prompt[..199] + "…";
@@ -115,6 +121,9 @@ public sealed partial class AppViewModel
     /// <summary>How many report cards are checked — drives the "선택 복사 (N)" button label/visibility.</summary>
     public int SelectedReportCount => ActiveTaskReports.Count(r => r.IsSelected);
     public bool HasSelectedReports => SelectedReportCount > 0;
+    /// <summary>Unseen (newly-arrived) reports — drives the "모두 읽음 (N)" button + per-card NEW badge.</summary>
+    public int NewReportCount => ActiveTaskReports.Count(r => r.IsNew);
+    public bool HasNewReports => NewReportCount > 0;
     /// <summary>Every report card checked — drives the select-all toggle's checked state + label.</summary>
     public bool AllReportsSelected => ActiveTaskReports.Count > 0 && ActiveTaskReports.All(r => r.IsSelected);
 
@@ -133,6 +142,8 @@ public sealed partial class AppViewModel
         OnChanged(nameof(SelectedReportCount));
         OnChanged(nameof(HasSelectedReports));
         OnChanged(nameof(AllReportsSelected));
+        OnChanged(nameof(NewReportCount));
+        OnChanged(nameof(HasNewReports));
     }
 
     private void OnReportSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -182,6 +193,8 @@ public sealed partial class AppViewModel
     public RelayCommand CopyReportCommand { get; private set; } = null!;
     public RelayCommand ToggleSelectAllReportsCommand { get; private set; } = null!;
     public RelayCommand CopySelectedReportsCommand { get; private set; } = null!;
+    public RelayCommand DismissReportCommand { get; private set; } = null!;
+    public RelayCommand MarkReportsSeenCommand { get; private set; } = null!;
 
     /// <summary>Per-worker: whether the finished-task history is expanded (survives view rebuilds).</summary>
     private readonly HashSet<string> _expandedQueueHistory = [];
@@ -249,8 +262,11 @@ public sealed partial class AppViewModel
             p => p is WorkerQueueViewModel { CanRunQueue: true });
 
         // Report inbox: single-card copy (per card) + select-all toggle + copy the checked subset.
-        // Copy is a manual hand-off to the session (clipboard, not draft injection).
-        CopyReportCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) CopyToClipboard(t.ClipboardText); });
+        // Copy is a manual hand-off to the session (clipboard, not draft injection); copying also marks
+        // the card seen (you've read it → no longer NEW). Dismiss clears the inbox card (history kept).
+        CopyReportCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) { CopyToClipboard(t.ClipboardText); _taskStore.MarkReportSeen(t.Id); } });
+        DismissReportCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) _taskStore.DismissReport(t.Id); });
+        MarkReportsSeenCommand = new RelayCommand(_ => { if (ActiveSession is { } a) _taskStore.MarkReportsSeen(a.Id); });
         ToggleSelectAllReportsCommand = new RelayCommand(_ =>
         {
             var selectAll = !AllReportsSelected;   // none/partial → select all; all → clear
