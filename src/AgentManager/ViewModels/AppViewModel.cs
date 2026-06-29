@@ -34,10 +34,12 @@ public sealed partial class AppViewModel : ObservableObject
     private readonly Dictionary<string, INativeWorkObserver> _nativeObservers = [];
     private readonly DispatcherTimer _runtimeTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly TimerScheduler _scheduler = new();
-    private string _claudePath = "";
-    private string _codexPath = "";
-    private string _agyPath = "";
-    private string _piPath = "";
+    // 일반 설정은 Core SettingsService가 소유; 아래 VM 필드들은 위임 프로퍼티(read/write 모두 서비스로) — overhaul (a) step 2b.
+    private readonly AgentManager.Core.Settings.SettingsService _settings = new();
+    private string _claudePath { get => _settings.ClaudePath; set => _settings.ClaudePath = value; }
+    private string _codexPath { get => _settings.CodexPath; set => _settings.CodexPath = value; }
+    private string _agyPath { get => _settings.AgyPath; set => _settings.AgyPath = value; }
+    private string _piPath { get => _settings.PiPath; set => _settings.PiPath = value; }
     private string _ollamaEndpoint = "http://localhost:11434";
     private string _ollamaModel = "exaone3.5:7.8b";
 
