@@ -228,7 +228,7 @@ public partial class MainWindow : Window
     private void CopyAgentText_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is AgentTextBlock b)
-            try { Clipboard.SetText(b.Text); } catch { }
+            try { Clipboard.SetText(b.DisplayText); } catch { } // respect the 원문/translated toggle
     }
 
     protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
