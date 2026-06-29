@@ -1189,6 +1189,7 @@ AssertResumeArgs();
 AssertSandboxAndModelArgs();
 AssertPermissionResponse();
 AssertAppServerAdapter();
+AssertAgySdkAdapter();
 AssertQuickReplyParser();
 AssertMarkdownFenceSplit();
 
@@ -1326,6 +1327,55 @@ static void AssertAppServerAdapter()
     Assert(resume.Contains("thread/resume") && resume.Contains("th-old"), "appserver thread/resume");
 
     Console.WriteLine("codex app-server adapter asserts OK");
+}
+
+// Antigravity SDK bridge (agy API mode) — canned JSONL lines (no live SDK / no process spawn):
+// ParseLine maps each bridge event to the right NormalizedEvent, and the permission round-trip
+// writes the JSON the bridge's blocking handler reads to unblock.
+static void AssertAgySdkAdapter()
+{
+    static List<NormalizedEvent> Parse(IAgentAdapter a, string line) => a.ParseLine(line).ToList();
+    var ad = (IAgentAdapter)new AgySdkAdapter();
+
+    Assert(ad.Id == "agy", "agysdk Id == agy");
+    Assert(ad.CloseStdinAfterStart == false, "agysdk keeps stdin open for broker round-trip");
+    Assert(ad.Capabilities.Permissions && ad.Capabilities.Thinking && ad.Capabilities.TokenUsage,
+           "agysdk capabilities (perms+thinking+usage)");
+
+    var sess = Parse(ad, """{"type":"session_started","conversation_id":"conv-77"}""");
+    Assert(sess.Count == 1 && sess[0] is SessionStarted { SessionId: "conv-77" }, "agysdk session_started");
+
+    var think = Parse(ad, """{"type":"thinking","text":"considering files"}""");
+    Assert(think.Count == 1 && think[0] is Thinking { Text: "considering files" }, "agysdk thinking");
+
+    var delta = Parse(ad, """{"type":"assistant_delta","text":"Hello "}""");
+    Assert(delta.Count == 1 && delta[0] is AssistantDelta { Delta: "Hello " }, "agysdk assistant_delta");
+
+    var ts = Parse(ad, """{"type":"tool_started","id":"t1","name":"edit_file","input":"{}"}""");
+    Assert(ts.Count == 1 && ts[0] is ToolUseStarted { ToolUseId: "t1", Name: "edit_file", InputJson: "{}" },
+           "agysdk tool_started");
+
+    var tr = Parse(ad, """{"type":"tool_result","id":"t1","content":"edited","is_error":false}""");
+    Assert(tr.Count == 1 && tr[0] is ToolResult { ToolUseId: "t1", Content: "edited", IsError: false }, "agysdk tool_result");
+
+    var pr = Parse(ad, """{"type":"permission_request","id":"t2","name":"run_command","args":"{}"}""");
+    Assert(pr.Count == 1 && pr[0] is PermissionRequest { RequestId: "t2", ToolName: "run_command" }, "agysdk permission_request");
+    var allow = ad.BuildPermissionResponse((PermissionRequest)pr[0], new PermissionDecision(true));
+    Assert(allow == """{"type":"permission_decision","id":"t2","allow":true}""" ||
+           allow != null && allow.Contains("\"allow\":true") && allow.Contains("t2"), "agysdk allow writeback");
+    var deny = ad.BuildPermissionResponse((PermissionRequest)pr[0], new PermissionDecision(false, "no"));
+    Assert(deny != null && deny.Contains("\"allow\":false"), "agysdk deny writeback");
+
+    var usage = Parse(ad, """{"type":"token_usage","in":120,"out":8}""");
+    Assert(usage.Count == 1 && usage[0] is TokenUsage { InputTokens: 120, OutputTokens: 8 }, "agysdk token_usage");
+
+    var err = Parse(ad, """{"type":"engine_error","message":"bridge: boom"}""");
+    Assert(err.Count == 1 && err[0] is EngineError { Message: "bridge: boom" }, "agysdk engine_error");
+
+    var done = Parse(ad, """{"type":"turn_completed","is_error":false}""");
+    Assert(done.Count == 1 && done[0] is TurnCompleted { IsError: false }, "agysdk turn_completed");
+
+    Console.WriteLine("antigravity sdk adapter asserts OK");
 }
 await TestGitWorktreeAsync();
 Console.WriteLine("smoke OK");

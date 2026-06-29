@@ -9,6 +9,9 @@
     <Resource Include="Resources\Fonts\*.ttf" />
     <!-- Install/setup guide content (rendered by MarkdownViewer → theme-matched). -->
     <Resource Include="Resources\Guide.*.md" />
+    <!-- Antigravity SDK bridge (agy API mode): plain Python helper shipped next to the app so the
+         AgySdkAdapter can spawn it. AgySdkAdapter.BridgeScriptPath resolves this copy at runtime. -->
+    <None Include="..\..\tools\am_agy_bridge.py" CopyToOutputDirectory="PreserveNewest" Link="am_agy_bridge.py" />
   </ItemGroup>
 
   <PropertyGroup>

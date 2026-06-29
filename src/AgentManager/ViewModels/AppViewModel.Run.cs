@@ -211,8 +211,43 @@ public sealed partial class AppViewModel
         s.Status = "running";
         s.MarkRunStarted(s.TranslationEnabled ? L("L.TranslatingPreparingRun") : L("L.PreparingRun"));
 
-        var adapter = EngineRegistry.CreateAdapter(s.AgentId, s.RequireApproval);
-        var exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath, _agyPath, _piPath);
+        // agy 백엔드 분기: API 모드(GEMINI_API_KEY로 Antigravity SDK 구동)면 AgySdkAdapter + python,
+        // subscription이면 기존 AgyAdapter(CLI/ConPTY)를 바이트 단위로 유지. cc/gx는 어댑터 내
+        // 크리덴셜만 바꾸지만 agy는 어댑터 클래스 자체가 바뀌므로 분기를 호출점에 둔다.
+        bool agyApi = s.AgentId == "agy" && IsApiMode("agy");
+        IAgentAdapter? adapter;
+        string? exe;
+        if (agyApi)
+        {
+            adapter = new Core.Agents.AgySdkAdapter();
+            exe = ResolvePython();
+            if (exe is null)
+            {
+                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiPythonMissing")));
+                s.Status = "error";
+                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
+                return;
+            }
+            if (!System.IO.File.Exists(Core.Agents.AgySdkAdapter.BridgeScriptPath))
+            {
+                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiBridgeMissing")));
+                s.Status = "error";
+                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
+                return;
+            }
+            if (!HasApiKey("agy"))
+            {
+                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiKeyMissing")));
+                s.Status = "error";
+                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
+                return;
+            }
+        }
+        else
+        {
+            adapter = EngineRegistry.CreateAdapter(s.AgentId, s.RequireApproval);
+            exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath, _agyPath, _piPath);
+        }
         if (adapter is null || exe is null)
         {
             s.Transcript.Add(new ErrorBlock(L("L.EngineUnavailableTitle"), L("L.EngineUnavailableBody", s.AgentName)));
@@ -332,6 +367,20 @@ public sealed partial class AppViewModel
 
     private static string SafeFileName(string value)
         => string.Concat(value.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch));
+
+    /// <summary>Antigravity SDK 브리지를 구동할 Python 인터프리터 경로. PATH의 'python' → 'py' 폴백.
+    /// 사용자가 커스텀 인터프리터를 쓰면 확장 가능하도록 별도 메서드(향후 설정 연결점).</summary>
+    private static string? ResolvePython()
+    {
+        foreach (var name in new[] { "python", "python3", "py" })
+            foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator))
+            {
+                if (string.IsNullOrWhiteSpace(dir)) continue;
+                foreach (var ext in new[] { "", ".exe" })
+                    try { var full = Path.Combine(dir.Trim(), name + ext); if (File.Exists(full)) return full; } catch { }
+            }
+        return null;
+    }
 
     private static void ClearNativeHookSpool(string? path)
     {

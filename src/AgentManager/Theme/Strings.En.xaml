@@ -516,6 +516,12 @@
     <sys:String x:Key="L.ScheduledRunMarker">scheduled trigger fired · {0}</sys:String>
     <sys:String x:Key="L.OrchDiffFileSuffixOne">file</sys:String>
     <sys:String x:Key="L.OrchDiffFileSuffixMany">files</sys:String>
+    <sys:String x:Key="L.AgyApiKeyHint">Stored encrypted on this machine (DPAPI) and injected as GEMINI_API_KEY to the SDK at run time.</sys:String>
+    <sys:String x:Key="L.AgyApiBillsViaGemini">⚠ API mode runs via the Antigravity SDK and is billed per Gemini API usage (unlike the subscription CLI).</sys:String>
+    <sys:String x:Key="L.AgyApiModeTitle">Antigravity API mode error</sys:String>
+    <sys:String x:Key="L.AgyApiPythonMissing">No Python interpreter found. Install Python and add it to PATH.</sys:String>
+    <sys:String x:Key="L.AgyApiBridgeMissing">The Antigravity SDK bridge script (am_agy_bridge.py) is missing. Re-run setup.</sys:String>
+    <sys:String x:Key="L.AgyApiKeyMissing">No agy API key set. Enter the Gemini API key for Antigravity API mode in Settings.</sys:String>
     <sys:String x:Key="L.OpenInTerminal">Open in terminal</sys:String>
     <sys:String x:Key="L.OpenInTerminalLaunchedWt">↗ Opened agy in an external terminal (Windows Terminal). Full TUI/auth run in that window.</sys:String>
     <sys:String x:Key="L.OpenInTerminalLaunchedCmd">↗ Opened agy in an external console (cmd). Full TUI/auth run in that window.</sys:String>

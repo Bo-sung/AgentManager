@@ -102,6 +102,7 @@ public sealed partial class AppViewModel
             if (parts.Length != 2) return;
             if (parts[0] == "cc") SettingsAuthCc = parts[1];
             else if (parts[0] == "gx") SettingsAuthGx = parts[1];
+            else if (parts[0] == "agy") SettingsAuthAgy = parts[1];
         });
         SignInCommand = new RelayCommand(p => { if (p is string id) SignIn(id); });
         ThemeSelectCommand = new RelayCommand(p => { if (p is string id) SettingsTheme = id; });

@@ -516,6 +516,12 @@
     <sys:String x:Key="L.ScheduledRunMarker">예약 트리거 실행 · {0}</sys:String>
     <sys:String x:Key="L.OrchDiffFileSuffixOne">개 파일</sys:String>
     <sys:String x:Key="L.OrchDiffFileSuffixMany">개 파일</sys:String>
+    <sys:String x:Key="L.AgyApiKeyHint">이 머신에 암호화(DPAPI) 저장되어 실행 시 GEMINI_API_KEY 환경변수로 SDK에 주입됩니다.</sys:String>
+    <sys:String x:Key="L.AgyApiBillsViaGemini">⚠ API 모드는 Antigravity SDK로 동작해 Gemini API 사용량 기준 과금됩니다(구독 CLI와 다름).</sys:String>
+    <sys:String x:Key="L.AgyApiModeTitle">Antigravity API 모드 오류</sys:String>
+    <sys:String x:Key="L.AgyApiPythonMissing">Python 인터프리터를 찾을 수 없습니다. Python을 설치하고 PATH에 추가하세요.</sys:String>
+    <sys:String x:Key="L.AgyApiBridgeMissing">Antigravity SDK 브리지 스크립트(am_agy_bridge.py)를 찾을 수 없습니다. 설치를 다시 진행하세요.</sys:String>
+    <sys:String x:Key="L.AgyApiKeyMissing">agy API 키가 설정되지 않았습니다. 설정에서 Antigravity API 모드의 Gemini API 키를 입력하세요.</sys:String>
     <sys:String x:Key="L.OpenInTerminal">터미널에서 열기</sys:String>
     <sys:String x:Key="L.OpenInTerminalLaunchedWt">↗ agy를 외부 터미널(Windows Terminal)에서 열었습니다. 풀 TUI/인증은 그 창에서 동작합니다.</sys:String>
     <sys:String x:Key="L.OpenInTerminalLaunchedCmd">↗ agy를 외부 콘솔(cmd)에서 열었습니다. 풀 TUI/인증은 그 창에서 동작합니다.</sys:String>

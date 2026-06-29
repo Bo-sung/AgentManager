@@ -342,11 +342,12 @@ public sealed partial class AppViewModel
         _engineLimitedUntil[id] = resetUnix > now ? resetUnix : now + 3600;
     }
 
-    /// <summary>엔진의 API 키 env 변수명 (cc/gx). 없으면 null.</summary>
+    /// <summary>엔진의 API 키 env 변수명 (cc/gx/agy). agy(API 모드)는 GEMINI_API_KEY로 SDK를 구동한다. 없으면 null.</summary>
     private static string? ApiEnvVar(string id) => id switch
     {
         "cc" => "ANTHROPIC_API_KEY",
         "gx" => "OPENAI_API_KEY",
+        "agy" => "GEMINI_API_KEY",   // Antigravity SDK 인증 (API 모드)
         _ => null,
     };
     /// <summary>실행 시 주입할 env: api 모드 + 키 있음 → { 변수명: 복호화키 }.</summary>
@@ -381,6 +382,20 @@ public sealed partial class AppViewModel
     public bool SettingsAutoApiCc { get => _settingsAutoApiCc; set => Set(ref _settingsAutoApiCc, value); }
     private bool _settingsAutoApiGx;
     public bool SettingsAutoApiGx { get => _settingsAutoApiGx; set => Set(ref _settingsAutoApiGx, value); }
+    // ----- agy auth (API 모드 = Antigravity SDK 백엔드; subscription = 기존 CLI/ConPTY) -----
+    public string SettingsAuthAgy { get => _settingsAuthAgy; set => Set(ref _settingsAuthAgy, value); }
+    private string _settingsAuthAgy = "subscription";
+    public string SettingsApiKeyAgy { get => _settingsApiKeyAgy; set => Set(ref _settingsApiKeyAgy, value); }
+    private string _settingsApiKeyAgy = "";
+    private bool _settingsAutoApiAgy;
+    public bool SettingsAutoApiAgy { get => _settingsAutoApiAgy; set => Set(ref _settingsAutoApiAgy, value); }
+
+    /// <summary>이 엔진이 현재 API 모드로 동작해야 하는가 — 백엔드 분기(agy 어댑터 선택)의 단일 기준.
+    /// 명시적 API 모드 + 키 보유, 또는 (한도 소진 + 자동전환 ON + 키 보유). cc/gx는 어댑터 내 크리덴셜만
+    /// 바꾸지만 agy는 어댑터 클래스 자체를 바꾸므로 이 값이 AgyAdapter ↔ AgySdkAdapter를 결정한다.</summary>
+    public bool IsApiMode(string id)
+        => _engineAuthMode.GetValueOrDefault(id, "subscription") == "api" && HasApiKey(id)
+           || (IsEngineLimited(id) && WillUseApiOnLimit(id));
 
     // ----- appearance: accent / zoom / telemetry -----
     private string _accent = "ember";
@@ -632,10 +647,13 @@ public sealed partial class AppViewModel
         SettingsEnginePi = !_disabledEngines.Contains("pi");
         SettingsAuthCc = _engineAuthMode.GetValueOrDefault("cc", "subscription");
         SettingsAuthGx = _engineAuthMode.GetValueOrDefault("gx", "subscription");
+        SettingsAuthAgy = _engineAuthMode.GetValueOrDefault("agy", "subscription");
         SettingsAutoApiCc = _engineAutoApi.GetValueOrDefault("cc");
         SettingsAutoApiGx = _engineAutoApi.GetValueOrDefault("gx");
+        SettingsAutoApiAgy = _engineAutoApi.GetValueOrDefault("agy");
         SettingsApiKeyCc = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("cc", ""));
         SettingsApiKeyGx = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("gx", ""));
+        SettingsApiKeyAgy = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("agy", ""));
         RefreshDetectLabels(); // CLI 경로 감지 라벨 + 로그인 계정 표시 갱신
     }
 
@@ -705,8 +723,10 @@ public sealed partial class AppViewModel
         }
         SaveEngineAuth("cc", SettingsAuthCc, SettingsApiKeyCc);
         SaveEngineAuth("gx", SettingsAuthGx, SettingsApiKeyGx);
+        SaveEngineAuth("agy", SettingsAuthAgy, SettingsApiKeyAgy);
         _engineAutoApi["cc"] = SettingsAutoApiCc;
         _engineAutoApi["gx"] = SettingsAutoApiGx;
+        _engineAutoApi["agy"] = SettingsAutoApiAgy;
         _theme = Theme.ThemePalette.Normalize(SettingsTheme); // 테마는 이미 라이브 적용됨
         var newLanguage = SettingsLanguage == "en" ? "en" : "ko";
         var languageChanged = newLanguage != _language;
