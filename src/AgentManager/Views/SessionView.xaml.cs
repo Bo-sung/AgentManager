@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -132,7 +133,23 @@ public partial class SessionView : UserControl
         {
             if (e.Key == Key.Up) { MoveSuggestionSelection(-1); e.Handled = true; return; }
             if (e.Key == Key.Down) { MoveSuggestionSelection(1); e.Handled = true; return; }
-            if (e.Key == Key.Enter || e.Key == Key.Tab) { ApplySuggestionToComposer(); e.Handled = true; return; }
+            if (e.Key == Key.Enter || e.Key == Key.Tab)
+            {
+                // Popup open but nothing applicable (empty/no-match list, no selection):
+                // don't steal the key — close it and let Enter fall through to send.
+                // (Tab just closes; it never sends.)
+                if (vm.SelectedComposerSuggestion is null || vm.ComposerSuggestions.Count == 0)
+                {
+                    vm.CloseComposerSuggestion();
+                    if (e.Key == Key.Tab) { e.Handled = true; return; }
+                }
+                else
+                {
+                    ApplySuggestionToComposer();
+                    e.Handled = true;
+                    return;
+                }
+            }
             if (e.Key == Key.Escape) { vm.CloseComposerSuggestion(); e.Handled = true; return; }
         }
 
@@ -155,7 +172,30 @@ public partial class SessionView : UserControl
 
     private void ComposerBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (Vm is { } vm && sender is TextBox tb) vm.UpdateComposerSuggestion(tb.Text ?? "", tb.CaretIndex);
+        if (Vm is not { } vm || sender is not TextBox tb) return;
+
+        // Only a freshly TYPED single character may open the popup. Paste, multi-char
+        // inserts and deletions must not — otherwise a trigger char (@ / >) that merely
+        // sits before the caret (e.g. a pasted "PS ...>" log) opens the popup and steals
+        // Enter. Filtering still works because once open, every edit keeps updating it.
+        var changes = e.Changes;
+        bool isSingleTypedInsert = changes.Count == 1
+            && changes.First().AddedLength == 1
+            && changes.First().RemovedLength == 0;
+
+        if (vm.IsComposerSuggestionOpen)
+        {
+            // already open from active query typing — keep filtering on every edit (incl. backspace)
+            vm.UpdateComposerSuggestion(tb.Text ?? "", tb.CaretIndex);
+        }
+        else if (isSingleTypedInsert)
+        {
+            vm.UpdateComposerSuggestion(tb.Text ?? "", tb.CaretIndex);
+        }
+        else
+        {
+            vm.CloseComposerSuggestion();
+        }
     }
 
     /// <summary>VM에서 서제스천을 Draft에 적용한 뒤, 반환된 캐럿 위치로 TextBox 포커스/캐럿을 맞춘다.</summary>
