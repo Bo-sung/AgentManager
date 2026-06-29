@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.16.2
+`WPF · .NET 10 · Windows` · v1.16.3
 
 ---
 
@@ -18,7 +18,7 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 |----|------|-----|-----------|----------|
 | `cc` | **Claude Code** | `claude` | stream-json (단발 + `--resume`) | claude-sonnet-4-6 · claude-opus-4-8 · claude-haiku-4-5 · sonnet[1m] |
 | `gx` | **Codex** | `codex` | `exec --json` / 승인 시 app-server | gpt-5.5 · gpt-5.4 · gpt-5.4-mini |
-| `agy` | **Antigravity** (badge `AG`) | `agy` | TTY 전용 → ConPTY 구동 (텍스트 v1) | default · gemini-3.5-flash · gemini-3.1-pro · claude-* · gpt-oss-120b |
+| `agy` | **Antigravity** (badge `AG`) | `agy` | **구독**=TTY 전용 ConPTY(텍스트) · **API**=Antigravity SDK(Python 브리지, 구조화) — 설정에서 모드 전환 | default · gemini-3.5-flash · gemini-3.1-pro · claude-* · gpt-oss-120b |
 | `pi` | **Pi** (pi.dev) | `pi` (node) | `--mode rpc` (JSONL, thin-proxy) | `pi --list-models`로 동적 조회 (멀티 provider: Anthropic·OpenAI·Google·zai 등) |
 
 > Google 계열은 `agy` 엔진으로 일원화되었습니다(구형 standalone Gemini CLI 어댑터는 제거). **Pi**는 여러 provider를 하나로 묶는 멀티 provider 에이전트 — provider 추가·인증은 pi가 자체 관리(`~/.pi`)하고 앱은 호출·표시만 합니다. 각 엔진은 사이드바·New Agent에서 식별색으로 구분됩니다.

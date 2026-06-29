@@ -21,8 +21,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.16.2: 프로젝트-로컬 상태(.am/project.json) · 오피스/PDF 경로 패스스루 · 드래그드롭 첨부 · 폴더 열기 · 백로그 갱신 · 컴포저 전송 수정 -->
-    <Version>1.16.2</Version>
+    <!-- 1.16.3: agy API 모드(Antigravity SDK 옵트인) · agy 터미널 열기/라이브 스트리밍 · 마크다운 펜스/선택지 감지 견고화 · 리포트 dismiss+NEW · 실패 태스크 재시도 -->
+    <Version>1.16.3</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
