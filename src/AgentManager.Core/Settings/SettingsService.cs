@@ -16,6 +16,7 @@ public sealed class SettingsService
     // ----- local translation (Ollama) + language pair -----
     public string OllamaEndpoint { get; set; } = "http://localhost:11434";
     public string OllamaModel { get; set; } = "exaone3.5:7.8b";
+    public bool TranslationEnabled { get; set; } = true;
     public string TranslateSourceLanguage { get; set; } = "Korean";
     public string TranslateTargetLanguage { get; set; } = "English";
 

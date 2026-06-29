@@ -18,8 +18,11 @@ namespace AgentManager.ViewModels;
 public sealed partial class AppViewModel
 {
     // ----- translation + quota -----
-    private bool _translationEnabled = true;
-    public bool TranslationEnabled { get => _translationEnabled; set => Set(ref _translationEnabled, value); }
+    public bool TranslationEnabled
+    {
+        get => _settings.TranslationEnabled;
+        set { if (_settings.TranslationEnabled != value) { _settings.TranslationEnabled = value; OnChanged(nameof(TranslationEnabled)); } }
+    }
     private string _quotaText = "";
     public string QuotaText
     {
