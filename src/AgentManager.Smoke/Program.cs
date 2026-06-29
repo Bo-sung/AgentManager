@@ -1190,6 +1190,7 @@ AssertSandboxAndModelArgs();
 AssertPermissionResponse();
 AssertAppServerAdapter();
 AssertQuickReplyParser();
+AssertMarkdownFenceSplit();
 
 static void AssertQuickReplyParser()
 {
@@ -1246,6 +1247,29 @@ static void AssertQuickReplyParser()
         throw new Exception("quickreply: glued single marker falsely detected");
 
     Console.WriteLine("quick-reply parser asserts OK");
+}
+
+static void AssertMarkdownFenceSplit()
+{
+    static string F(string t) => AgentManager.Core.MarkdownText.SplitGluedFences(t);
+
+    // translation glued a fence opener onto the text line → split onto its own line (recover the block)
+    if (F("시각적 확인입니다 — ```powershell\ndotnet run\n```") != "시각적 확인입니다 —\n```powershell\ndotnet run\n```")
+        throw new Exception("markdown: glued fence opener not split");
+    // English glued opener too
+    if (F("confirm they're correct: ```bash\nnpm test\n```") != "confirm they're correct:\n```bash\nnpm test\n```")
+        throw new Exception("markdown: glued english fence opener not split");
+    // a clean fence at line start is untouched
+    if (F("```powershell\ndotnet run\n```") != "```powershell\ndotnet run\n```")
+        throw new Exception("markdown: clean fence wrongly modified");
+    // inline single-backtick code is untouched
+    if (F("use `git status` to check it") != "use `git status` to check it")
+        throw new Exception("markdown: inline code wrongly modified");
+    // a bare ``` (no language) glued mid-line is NOT split (ambiguous) — left for the renderer's stray guard
+    if (F("see the fence ```") != "see the fence ```")
+        throw new Exception("markdown: bare fence wrongly split");
+
+    Console.WriteLine("markdown fence-split asserts OK");
 }
 
 static void AssertAppServerAdapter()

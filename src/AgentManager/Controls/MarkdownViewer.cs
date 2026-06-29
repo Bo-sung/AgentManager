@@ -65,6 +65,9 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
         };
 
         var text = (markdown ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
+        // Recover a code fence that translation glued onto the end of a text line ("…설명: ```powershell")
+        // so it pairs correctly instead of leaving a stray ``` that swallows the rest as code.
+        text = AgentManager.Core.MarkdownText.SplitGluedFences(text);
         var lines = text.Split('\n');
         for (var i = 0; i < lines.Length;)
         {
