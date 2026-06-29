@@ -2,6 +2,10 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.16.4
+워커 동명 충돌 핫픽스.
+- **워커 브랜치 고유화**: 같은 이름의 워커를 둘 이상 만들면 `worker/<이름>` 브랜치가 겹쳐 둘째 워커가 격리 워크트리를 못 받던(`git worktree add` → "already used by worktree") 문제 수정. 브랜치에 고유 세션 id 접미사를 붙여 분리(worktree 디렉토리는 이미 id 기반이라 무영향).
+
 ## 1.16.3
 agy 구조화(SDK API 모드) · 렌더/선택지 견고화 · 워커 리포트 개선.
 - **agy API 모드 (Antigravity SDK · 옵트인)**: agy를 인증모드로 전환 — 구독이면 기존 CLI(텍스트 전용), API 키면 Antigravity SDK를 Python 브리지로 구동해 **구조화 이벤트**(툴 호출·thinking·권한·스트리밍)를 표시. 설정의 subscription/api 토글(cc/gx와 동일). 라이브엔 `pip install google-antigravity` + Gemini API 키 필요(종량과금).

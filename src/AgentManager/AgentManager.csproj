@@ -21,8 +21,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.16.3: agy API 모드(Antigravity SDK 옵트인) · agy 터미널 열기/라이브 스트리밍 · 마크다운 펜스/선택지 감지 견고화 · 리포트 dismiss+NEW · 실패 태스크 재시도 -->
-    <Version>1.16.3</Version>
+    <!-- 1.16.4: 핫픽스 — 같은 이름 워커 둘 이상일 때 worktree 브랜치 충돌(둘째 격리 실패) 수정 -->
+    <Version>1.16.4</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
