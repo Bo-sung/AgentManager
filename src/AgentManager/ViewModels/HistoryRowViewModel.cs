@@ -1,5 +1,6 @@
 using System.Globalization;
 using AgentManager.Persistence;
+using AgentManager.Core.Agents;
 
 namespace AgentManager.ViewModels;
 

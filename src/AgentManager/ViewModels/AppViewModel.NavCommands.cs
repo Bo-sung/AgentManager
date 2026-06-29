@@ -1,3 +1,5 @@
+using AgentManager.Core.Agents;
+
 namespace AgentManager.ViewModels;
 
 /// <summary>

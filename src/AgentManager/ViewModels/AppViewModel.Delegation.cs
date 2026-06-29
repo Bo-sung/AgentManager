@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using AgentManager.Core.Workers;
+using AgentManager.Core.Agents;
 
 namespace AgentManager.ViewModels;
 
