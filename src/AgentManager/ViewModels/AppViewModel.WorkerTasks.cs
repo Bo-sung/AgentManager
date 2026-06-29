@@ -419,17 +419,20 @@ public sealed partial class AppViewModel
     /// show up without a restart, even if the live watcher missed a newly-created subfolder.</summary>
     public void RescanTaskSpool()
     {
+        // Synchronous on the UI thread (button click) — ingest directly rather than via the dispatcher-
+        // deferred ScheduleIngest. The files already exist and are fully written, so the mid-write delay
+        // isn't needed, and going direct avoids depending on dispatcher timing / availability.
         try
         {
             if (Directory.Exists(TaskSpool.Root))
                 foreach (var f in Directory.EnumerateFiles(TaskSpool.Root, "*.json", SearchOption.AllDirectories))
-                    ScheduleIngest(f); // projectId inferred from parent dir
+                    IngestSpoolFile(f); // projectId inferred from parent dir
             if (ActiveProject is { } p && !string.IsNullOrWhiteSpace(p.Path))
             {
                 var dir = Path.Combine(p.Path, ".am", "worker-tasks");
                 if (Directory.Exists(dir))
                     foreach (var f in Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories))
-                        ScheduleIngest(f, p.Id);
+                        IngestSpoolFile(f, p.Id);
             }
         }
         catch { /* best-effort */ }
