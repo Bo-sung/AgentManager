@@ -516,6 +516,11 @@
     <sys:String x:Key="L.ScheduledRunMarker">scheduled trigger fired · {0}</sys:String>
     <sys:String x:Key="L.OrchDiffFileSuffixOne">file</sys:String>
     <sys:String x:Key="L.OrchDiffFileSuffixMany">files</sys:String>
+    <sys:String x:Key="L.OpenInTerminal">Open in terminal</sys:String>
+    <sys:String x:Key="L.OpenInTerminalLaunchedWt">↗ Opened agy in an external terminal (Windows Terminal). Full TUI/auth run in that window.</sys:String>
+    <sys:String x:Key="L.OpenInTerminalLaunchedCmd">↗ Opened agy in an external console (cmd). Full TUI/auth run in that window.</sys:String>
+    <sys:String x:Key="L.OpenInTerminalFailed">Failed to open external terminal</sys:String>
+    <sys:String x:Key="L.OpenInTerminalNoCwd">No working directory (cwd) — cannot open an external terminal</sys:String>
     <sys:String x:Key="L.AttachmentWarningTitle">Attachment warning</sys:String>
     <sys:String x:Key="L.AttachmentCopyFailed">Failed to copy '{0}' — referencing original path (the agent may not read it)</sys:String>
     <sys:String x:Key="L.AttachmentAgyWarning">⚠ This engine (agy) may not read '{0}' directly</sys:String>

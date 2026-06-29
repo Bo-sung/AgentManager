@@ -142,6 +142,7 @@ public sealed partial class AppViewModel : ObservableObject
         ApproveForSessionCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, true, forSession: true); });
         DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
         OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
+        OpenInTerminalCommand = new RelayCommand(_ => OpenAgyInTerminal(ActiveSession), _ => ActiveSession is { IsAgy: true });
         CheckUsageCommand = new RelayCommand(_ => _ = CheckUsageAsync(), _ => !_checkingUsage);
         RefreshScheduledJobsCommand = new RelayCommand(_ => LoadScheduledJobs());
         NewScheduleCommand = new RelayCommand(_ => OpenNewSchedule(), _ => ActiveProject is not null);
@@ -161,6 +162,9 @@ public sealed partial class AppViewModel : ObservableObject
     }
 
     public RelayCommand OpenIdeCommand { get; }
+    /// <summary>agy를 외부 터미널에서 인터랙티브로 실행(ConPTY 트랜스크립트의 escape hatch).
+    /// agy 세션에서만 활성화(CanExecute).</summary>
+    public RelayCommand OpenInTerminalCommand { get; }
     public RelayCommand CheckUsageCommand { get; }
     public RelayCommand RefreshScheduledJobsCommand { get; }
     public RelayCommand NewScheduleCommand { get; }
@@ -236,6 +240,74 @@ public sealed partial class AppViewModel : ObservableObject
         }
         catch { }
     }
+
+    /// <summary>agy를 외부 터미널에서 인터랙티브(비 -p)로 실행 — ConPTY 캡처 대신 진짜 콘솔에서 풀 TUI/인증 확보.
+    /// cwd = worktree(존재 시) 또는 프로젝트 루트; conversation은 agy 캐시 조회로 resume(--conversation id),
+    /// 못 찾으면 --continue(이 cwd의 마지막 대화). 터미널은 wt.exe 우선, 없으면 cmd /k 폴백. 실패 시 트랜스크립트 안내.
+    /// 스파이크: AGENTMANAGER_* env는 전달하지 않는다(wt.exe 인자로 env 주입이 까다로워 이번엔 생략).</summary>
+    private void OpenAgyInTerminal(SessionViewModel? s)
+    {
+        if (s is null || s.AgentId != "agy") return;
+        var cwd = !string.IsNullOrWhiteSpace(s.WorktreePath) && Directory.Exists(s.WorktreePath)
+            ? s.WorktreePath! : s.ProjectPath;
+        if (!Directory.Exists(cwd))
+        {
+            s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalNoCwd")));
+            return;
+        }
+
+        var agyExe = EngineRegistry.ResolveExe("agy", _agyPath) ?? "agy";
+        // resume: agy 캐시 cwd→conversation 매핑 우선; 없으면 --continue(이 폴더 마지막 대화).
+        var convId = AgyAdapter.FindConversationId(cwd);
+        var resumeArg = convId is { Length: > 0 } id ? $"--conversation {Quote(id)}" : "--continue";
+        var agyArgs = $"{resumeArg} --dangerously-skip-permissions"; // 인터랙티브 = -p 생략
+
+        try
+        {
+            // 우선 Windows Terminal: "wt -d cwd -- agy ..."
+            if (TryResolveOnPath("wt.exe") is { } wt)
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = wt,
+                    Arguments = $"-d {Quote(cwd)} -- {Quote(agyExe)} {agyArgs}",
+                    UseShellExecute = false,
+                    WorkingDirectory = cwd,
+                };
+                System.Diagnostics.Process.Start(psi);
+                s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedWt")));
+                return;
+            }
+            // 폴백: conhost/cmd — "cmd /k agy ..." 를 cwd에서 띄운다.
+            var cmdPsi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/k {Quote(agyExe)} {agyArgs}",
+                UseShellExecute = false,
+                WorkingDirectory = cwd,
+            };
+            System.Diagnostics.Process.Start(cmdPsi);
+            s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedCmd")));
+        }
+        catch (Exception ex)
+        {
+            s.Transcript.Add(new ErrorBlock(L("L.OpenInTerminalFailed"), ex.Message));
+        }
+    }
+
+    /// <summary>PATH에서 bare 실행파일(wt.exe 등)의 전체 경로를 찾는다. 없으면 null.</summary>
+    private static string? TryResolveOnPath(string name)
+    {
+        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            try { var full = Path.Combine(dir.Trim(), name); if (File.Exists(full)) return full; } catch { }
+        }
+        return null;
+    }
+
+    /// <summary>Windows 인자용 quoting (공백 포함 시 큰따옴표, 내부 따옴표는 백슬래시 이스케이프).</summary>
+    private static string Quote(string s) =>
+        s.Contains(' ') || s.Contains('\t') ? "\"" + s.Replace("\"", "\\\"") + "\"" : s;
 
     private static string? FindVsCodeCli()
     {

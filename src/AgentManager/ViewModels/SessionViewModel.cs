@@ -82,6 +82,9 @@ public sealed class SessionViewModel : ObservableObject
     /// <summary>엔진별 컴포저 분기: 코덱스만 추론 강도 선택 노출 + 보라 테두리.</summary>
     public bool IsCodex => AgentId == "gx";
     public bool IsClaude => AgentId == "cc";
+    /// <summary>Antigravity 터미널 전용 액션(외부 터미널 실행) 노출 게이트. ConPTY 캡처 트랜스크립트 대신
+    /// 진짜 콘솔에서 agy의 풀 TUI/인증을 쓰기 위한 escape hatch 버튼 가시성에 바인딩.</summary>
+    public bool IsAgy => AgentId == "agy";
 
     /// <summary>추론 강도 옵션 — 엔진별 공식 단계(전부 CLI/API로 검증). agy만 추론 플래그 없음 → 피커 비노출.
     /// claude(--effort): low/medium/high/xhigh/max ("claude --effort zzz" 경고의 Valid values).

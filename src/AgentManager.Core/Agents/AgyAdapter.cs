@@ -59,7 +59,7 @@ public sealed class AgyAdapter : IAgentAdapter, IPtyTurnRunner
         var (raw, exit) = await runTask;
         var text = ConPtyHost.StripVt(raw).Trim();
 
-        var conversationId = TryReadConversationId(options.WorkingDirectory);
+        var conversationId = FindConversationId(options.WorkingDirectory);
         if (conversationId is not null)
             await emitAsync(new SessionStarted(conversationId, options.Model, 0, options.WorkingDirectory));
 
@@ -96,8 +96,9 @@ public sealed class AgyAdapter : IAgentAdapter, IPtyTurnRunner
         return string.Join(" ", parts);
     }
 
-    /// <summary>agy 캐시의 cwd→conversation 매핑에서 이 작업 폴더의 대화 id를 찾는다 (resume용).</summary>
-    private static string? TryReadConversationId(string cwd)
+    /// <summary>agy 캐시의 cwd→conversation 매핑에서 이 작업 폴더의 대화 id를 찾는다 (resume용).
+    /// 외부(터미널 실행 등)에서도 동일한 조회를 재사용한다 — 파싱 중복 금지.</summary>
+    public static string? FindConversationId(string cwd)
     {
         try
         {
