@@ -1,0 +1,37 @@
+# Spike — Antigravity SDK as a First-Class AgentManager Engine (FINDINGS)
+
+**Status:** INVESTIGATION ONLY. No source modified. Research date: 2026-06-30.
+**Question:** Can `agy` become a *structured* AM engine via the Antigravity **Python SDK** (Antigravity 2.0, I/O 2026-05-19) + Managed Agents API, instead of the text-only ConPTY CLI adapter?
+
+Sources actually fetched & read: SDK README + `models.py` + `agent.py` + `types.py` + examples (`streaming`, `policies`, `human_in_the_loop`, `persistence`, `autonomous_shell`) from `github.com/google-antigravity/antigravity-sdk-python`; the Gemini API "Antigravity Agent" doc (`ai.google.dev/gemini-api/docs/antigravity-agent`). AM code surface: `IAgentAdapter.cs`, `PiAdapter.cs`, `StdioJsonAdapter.cs`, `NormalizedEvent.cs`, `AgyAdapter.cs`, `docs/PHASE0_ANTIGRAVITY_GEMINI_KO.md`.
+
+---
+
+## 1) AUTH / BILLING — DECISIVE
+**CONFIRMED: the LOCAL Python SDK does NOT use the Antigravity SUBSCRIPTION. It REQUIRES a Gemini API key (pay-as-you-go) or Vertex ADC.** `google/antigravity/models.py::GeminiAPIEndpoint.validate_endpoint()` raises verbatim: *"A Gemini API key is required. Set it via GEMINI_API_KEY environment variable or via LocalAgentConfig(api_key=...)."* README quickstart: `export GEMINI_API_KEY="..."; python hello_world.py`; Vertex path uses `gcloud auth application-default login` (ADC). The subscription that authenticates the **CLI/IDE** is a separate identity surface — the SDK authenticates to the **Gemini Developer API** (or Vertex) and is billed per the Gemini API Pricing page (`Pricing` / `Billing info` are top-level doc nav on the fetched page; rate limits + "Interactions API" billing exist). **This is the central trade-off**: moving agy from the CLI (subscription-included) to the SDK re-bills every turn through Gemini API metering. (INFERRED: the CLI's subscription is *not* an API-key quota; I could not find a doc stating the SDK accepts a subscription token, and the SDK code path hard-requires `GEMINI_API_KEY`/ADC.)
+
+## 2) STRUCTURED EVENTS → NormalizedEvent
+**CONFIRMED stream surface** (README "Streaming"/"Thoughts & Tool Call Streams"; `streaming.py`): `async for token in response` (text deltas), `response.thoughts` (reasoning deltas), `response.tool_calls` (typed `ToolCall` events), `response.chunks` (unified raw stream). `ToolCall`/`ToolResult` are pydantic models with `id`/`name`/`args` (`types.py:438-456`). **Mapping to AM `NormalizedEvent`:**
+- `response` text token → `AssistantDelta` ✓
+- final `await response.text()` → `AssistantText` ✓
+- `response.thoughts` → `Thinking` ✓ (clean)
+- `response.tool_calls` start → `ToolUseStarted(ToolUseId, Name, InputJson)` ✓
+- `ToolResult` → `ToolResult(ToolUseId, Content, IsError)` ✓ (need a step/result stream — exposed via `Conversation.receive_steps()` / `response.chunks`)
+- usage → `TokenUsage`: **PARTIAL** — README mentions "usage" in architecture; AM relies on end-of-turn totals (PiAdapter pattern). Exact token fields not enumerated in read sources → INFERRED available, needs live check.
+- `TurnCompleted` → derived when stream/loop ends ✓
+- **MISSING/unclear:** explicit end-of-turn usage/cost event, and `SessionStarted`/quota — no `QuotaUpdate` surface seen (unlike Claude).
+
+## 3) LOCAL EXECUTION + PERMISSIONS
+**CONFIRMED: SDK runs tools LOCALLY in the host process.** `types.py::BuiltinTools`: `list_directory`, `view_file`, `create_file`, `edit_file`, `run_command` (shell). Working dir = process `cwd` (README examples operate on "current directory"). Default = **read-only** (`CapabilitiesConfig.read_only`); `CapabilitiesConfig()` / `allow_all()` enables writes+shell (`autonomous_shell.py`). **Permissions map cleanly to AM:** `policy.ask_user(handler=...)` with a **programmatic handler returning bool** (`policies.py::programmatic_approval_handler(tool_call)->bool`) is exactly AM's broker — emit `PermissionRequest`, await `PermissionDecision`, return `Allow`. `deny_all()/allow()/deny(when=predicate)` give deny-by-default + wildcard granularity (better than CLI's single `--dangerously-skip-permissions`). This is the strongest fit of any engine.
+
+## 4) SESSION/RESUME + MODELS
+**CONFIRMED:** resume via `LocalAgentConfig(save_dir=..., conversation_id=...)`; `Agent.conversation_id` is assigned by the runtime and reused to restore history across process restarts (`persistence.py`: session 2 recalls session 1's fact). Model: default `gemini-3.5-flash` (`models.py::DEFAULT_MODEL`); selectable via `ModelTarget.name`. Reasoning effort: `GeminiModelOptions.thinking_level` ∈ {minimal, low, medium, high} (`ThinkingLevel` enum) — maps to AM's `ReasoningEffort` with a 4-step set (vs CLI embedding effort in model display name).
+
+## 5) .NET BRIDGE (thin-proxy adapter)
+Closest AM precedent = **`PiAdapter`** (`PiAdapter.cs`): AM spawns `node dist/cli.js --mode rpc`, sends JSONL commands on stdin, parses stdout JSONL → `NormalizedEvent`. The Antigravity path is identical in shape: AM spawns `python am_agy_bridge.py` (cwd = worktree), writes `{prompt, model, effort, resume_id, sandbox, approvals}` JSON, the bridge drives `Agent`/`Conversation`, and **emits one JSON line per event** (`assistant_delta`/`thinking`/`tool_started`/`tool_result`/`permission_request`/`turn_completed`). The `ask_user` handler in the bridge blocks → prints `permission_request` → reads the `allow/deny` line → returns bool. New `AgySdkAdapter : StdioJsonAdapter` (or `IPtyTurnRunner`-style self-runner) + `Capabilities(Permissions:true, Thinking:true, Sessions:true, Images:true, TokenUsage:partial)`. **Risks:** (a) Python runtime + `pip install google-antigravity` (ships a **compiled binary in the wheel** — README warns "cloning the repo is not sufficient"; platform-specific wheel) as a hard dep; (b) Python version/env pinning across user machines; (c) async↔AM's line-pump bridging (the bridge must serialize `async for` streams to sync stdout writes); (d) the binary wheel availability on the user's OS/arch; (e) error/traceback surfacing (`EngineError`). Effort ≈ **M** (bridge ~150 LoC Python + adapter ~100 LoC C# + packaging story).
+
+## 6) MANAGED AGENTS API (CLOUD) ALTERNATIVE
+**CONFIRMED NOT viable for AM's local-repo case as-is.** The fetched Gemini API doc states: *"A single API call gives you an agent ... inside your own secure Linux sandbox, hosted by Google"* with `"environment": "remote"`. It runs **Bash/code/file ops in Google's sandbox, NOT the user's repo**, via `function_call`/`function_result` steps. To edit the local repo you'd have to **round-trip every file op as a custom function call** that AM executes locally and returns — possible in principle (the agent emits `function_call`, AM performs it, returns `function_result`), but that re-implements the entire local tool layer over REST and forfeits the SDK's built-in tools/policies/streaming. **Effort ≈ L, high risk, and still bills per Gemini API call.** Discard for the local-repo use case.
+
+## 7) VERDICT
+**Technically feasible and a clean structural fit** (local execution, structured streaming, broker-ready permissions, resume, model+effort control all CONFIRMED in SDK sources). The **single blocker is billing**: the SDK routes through Gemini API pay-as-you-go, abandoning the CLI's subscription. If product accepts "agy = API-billed engine," build is a **Medium** thin-proxy (`AgySdkAdapter` + Python bridge, mirroring `PiAdapter`). If subscription-only billing is a hard requirement, this is **NO-GO** until/unless Google exposes a subscription-authenticated SDK path (none found).
