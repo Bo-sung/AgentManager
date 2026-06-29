@@ -106,6 +106,7 @@ public sealed partial class AppViewModel : ObservableObject
         CloseAboutCommand = new RelayCommand(_ => ShowAbout = false);
         CreateProjectCommand = new RelayCommand(_ => CreateProject(), _ => !string.IsNullOrWhiteSpace(NewProjectPath));
         SelectProjectCommand = new RelayCommand(p => { if (p is ProjectViewModel vm) ActiveProject = vm; });
+        OpenProjectFolderCommand = new RelayCommand(p => { if (p is ProjectViewModel vm) OpenProjectFolder(vm.Path); });
         ImportCliSessionCommand = new RelayCommand(p => { if (p is CliHistoryItemViewModel h) ImportCliSession(h); });
         ShowSettingsCommand = new RelayCommand(_ => OpenSettings());
         CancelSettingsCommand = new RelayCommand(_ => CloseSettings());
@@ -220,6 +221,22 @@ public sealed partial class AppViewModel : ObservableObject
         catch { }
     }
 
+    /// <summary>Reveal a project's folder in Explorer (context-menu "open project folder").</summary>
+    private static void OpenProjectFolder(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path)) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"\"{path}\"",
+                UseShellExecute = true,
+            });
+        }
+        catch { }
+    }
+
     private static string? FindVsCodeCli()
     {
         string[] candidates =
@@ -304,6 +321,7 @@ public sealed partial class AppViewModel : ObservableObject
     public RelayCommand CloseAboutCommand { get; }
     public RelayCommand CreateProjectCommand { get; }
     public RelayCommand SelectProjectCommand { get; }
+    public RelayCommand OpenProjectFolderCommand { get; }
     public RelayCommand ImportCliSessionCommand { get; }
     public RelayCommand ShowSettingsCommand { get; }
     public RelayCommand ShowViewCommand { get; }

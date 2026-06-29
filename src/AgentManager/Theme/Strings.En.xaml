@@ -250,6 +250,7 @@
     <sys:String x:Key="L.Unarchive">Unarchive</sys:String>
     <sys:String x:Key="L.Fork">Fork</sys:String>
     <sys:String x:Key="L.Delete">Delete</sys:String>
+    <sys:String x:Key="L.OpenProjectFolder">📂 Open project folder</sys:String>
     <sys:String x:Key="L.RemoveProject">Remove project</sys:String>
     <sys:String x:Key="L.Rename">RENAME</sys:String>
     <sys:String x:Key="L.Apply">Apply</sys:String>

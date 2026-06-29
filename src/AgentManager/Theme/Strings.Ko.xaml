@@ -250,6 +250,7 @@
     <sys:String x:Key="L.Unarchive">보관 해제</sys:String>
     <sys:String x:Key="L.Fork">분기</sys:String>
     <sys:String x:Key="L.Delete">삭제</sys:String>
+    <sys:String x:Key="L.OpenProjectFolder">📂 프로젝트 폴더 열기</sys:String>
     <sys:String x:Key="L.RemoveProject">프로젝트 제거</sys:String>
     <sys:String x:Key="L.Rename">RENAME</sys:String>
     <sys:String x:Key="L.Apply">적용</sys:String>

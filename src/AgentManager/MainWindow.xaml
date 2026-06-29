@@ -796,6 +796,9 @@
                                                 controls:MouseClick.Command="{Binding DataContext.SelectProjectCommand, Source={x:Reference Root}}" controls:MouseClick.CommandParameter="{Binding}" ToolTip="{Binding Path}">
                                             <Border.ContextMenu>
                                                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                    <MenuItem Header="{StaticResource L.OpenProjectFolder}" Command="{Binding DataContext.OpenProjectFolderCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="{Binding Path}" IsEnabled="False"/>
+                                                    <Separator/>
                                                     <MenuItem Header="{StaticResource L.RemoveProject}" Command="{Binding DataContext.RemoveProjectCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
                                                     <Separator/>
                                                     <StackPanel Width="190" Margin="8,6">
