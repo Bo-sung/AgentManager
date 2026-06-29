@@ -30,7 +30,7 @@ public sealed partial class AppViewModel : ObservableObject
     private static string L(string key, params object?[] args) => AgentManager.App.L(key, args);
     private readonly List<SessionViewModel> _allSessions = [];
     /// <summary>사용자가 삭제한 CLI 세션 id — CLI History 재발견에서 영구 제외(삭제가 재시작 후에도 유지).</summary>
-    private readonly HashSet<string> _dismissedCliSessions = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _dismissedCliSessions => _settings.DismissedCliSessions;
     private readonly Dictionary<string, INativeWorkObserver> _nativeObservers = [];
     private readonly DispatcherTimer _runtimeTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly TimerScheduler _scheduler = new();
@@ -56,7 +56,7 @@ public sealed partial class AppViewModel : ObservableObject
     public ObservableCollection<HistoryRowViewModel> HistoryRows { get; } = [];
     /// <summary>레지스트리에서 활성화된 전체 엔진 (설정 카드·모델 조회용 — 사용자 비활성과 무관).</summary>
     public EngineDef[] AllEngines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
-    private readonly HashSet<string> _disabledEngines = [];
+    private HashSet<string> _disabledEngines => _settings.DisabledEngines;
     /// <summary>New Agent 피커에 노출할 엔진 (사용자가 비활성한 것 제외).</summary>
     public IEnumerable<EngineDef> Engines => Array.FindAll(AllEngines, e => !_disabledEngines.Contains(e.Id));
     public string Project => ActiveProject?.Name ?? "workspace";
@@ -399,27 +399,24 @@ public sealed partial class AppViewModel : ObservableObject
     public IDialogService? Dialogs { get; set; }
 
     /// <summary>동시 실행 세션 수 제한 (설정, 영속).</summary>
-    private int _maxConcurrentSessions = 3;
     public int MaxConcurrentSessions
     {
-        get => _maxConcurrentSessions;
-        set => Set(ref _maxConcurrentSessions, Math.Max(1, value));
+        get => _settings.MaxConcurrentSessions;
+        set { var v = Math.Max(1, value); if (_settings.MaxConcurrentSessions != v) { _settings.MaxConcurrentSessions = v; OnChanged(nameof(MaxConcurrentSessions)); } }
     }
 
     /// <summary>워커 전용 동시 실행 cap (메인 cap과 분리, 설정·영속).</summary>
-    private int _maxConcurrentWorkers = AgentManager.Core.Workers.WorkerDefaults.DefaultMaxConcurrentWorkers;
     public int MaxConcurrentWorkers
     {
-        get => _maxConcurrentWorkers;
-        set => Set(ref _maxConcurrentWorkers, Math.Max(1, value));
+        get => _settings.MaxConcurrentWorkers;
+        set { var v = Math.Max(1, value); if (_settings.MaxConcurrentWorkers != v) { _settings.MaxConcurrentWorkers = v; OnChanged(nameof(MaxConcurrentWorkers)); } }
     }
 
     /// <summary>새 워커 기본 행동 규칙 preamble 템플릿 (설정·영속). 빈값이면 기본 템플릿 사용.</summary>
-    private string _workerBehaviorPreamble = AgentManager.Core.Workers.WorkerDefaults.BehaviorPreamble;
     public string WorkerBehaviorPreamble
     {
-        get => _workerBehaviorPreamble;
-        set => Set(ref _workerBehaviorPreamble, value);
+        get => _settings.WorkerBehaviorPreamble;
+        set { if (_settings.WorkerBehaviorPreamble != value) { _settings.WorkerBehaviorPreamble = value; OnChanged(nameof(WorkerBehaviorPreamble)); } }
     }
 
     /// <summary>Commit-only: 에이전트 브랜치에 커밋만 하고 머지하지 않음(리뷰 보존).</summary>
@@ -588,11 +585,10 @@ public sealed partial class AppViewModel : ObservableObject
 
     public string PersistencePath => AppStateStore.StatePath;
 
-    private bool _isReviewOpen = true;
     public bool IsReviewOpen
     {
-        get => _isReviewOpen;
-        set { if (Set(ref _isReviewOpen, value)) { OnChanged(nameof(ReviewPaneWidth)); SaveState(); } }
+        get => _settings.ReviewPaneOpen;
+        set { if (_settings.ReviewPaneOpen != value) { _settings.ReviewPaneOpen = value; OnChanged(nameof(IsReviewOpen)); OnChanged(nameof(ReviewPaneWidth)); SaveState(); } }
     }
     public GridLength ReviewPaneWidth => IsSessionView && IsReviewOpen ? new GridLength(420) : new GridLength(0);
 

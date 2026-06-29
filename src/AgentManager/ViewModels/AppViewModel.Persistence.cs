@@ -37,12 +37,12 @@ public sealed partial class AppViewModel
         _skillDirs = MergeSkillDirs(s.SkillDirs);
         // 구조화 ask-user 스킬은 고정 콘텐츠 → 시작 시 자동 주입(설정 저장을 기다리지 않게). 멱등.
         try { AgentManager.Core.SkillInjector.Inject(AgentManager.Core.SkillInjector.AskUserDefault, _skillDirs); } catch { }
-        _isReviewOpen = s.ReviewPaneOpen;
+        _settings.ReviewPaneOpen = s.ReviewPaneOpen;
         _warnNoWorktree = s.WarnNoWorktree;
         _approvalPolicy = s.ApprovalPolicy is "ask" or "safe" ? s.ApprovalPolicy : "yolo";
         _worktreeBase = (s.WorktreeBase ?? "").Trim();
         _autoStartLastSession = s.AutoStartLastSession;
-        _streamLogs = s.StreamLogs;
+        _settings.StreamLogs = s.StreamLogs;
         _defaultModels = s.DefaultModels ?? new();
         _accent = Theme.AccentPalette.Normalize(s.Accent);
         // UI 줌: 본문/모달 독립 배율. 구버전(UiScale/ZoomScope) 마이그레이션.
@@ -92,7 +92,7 @@ public sealed partial class AppViewModel
         ApprovalPolicy = _approvalPolicy,
         WorktreeBase = _worktreeBase,
         AutoStartLastSession = _autoStartLastSession,
-        StreamLogs = _streamLogs,
+        StreamLogs = _settings.StreamLogs,
         DefaultModels = new Dictionary<string, string>(_defaultModels),
         Accent = _accent,
         BodyScale = _bodyScale,

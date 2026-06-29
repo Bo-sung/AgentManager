@@ -18,4 +18,30 @@ public sealed class SettingsService
     public string OllamaModel { get; set; } = "exaone3.5:7.8b";
     public string TranslateSourceLanguage { get; set; } = "Korean";
     public string TranslateTargetLanguage { get; set; } = "English";
+
+    // ----- orchestration / behavior flags -----
+    public bool WarnNoWorktree { get; set; }
+    public string ApprovalPolicy { get; set; } = "yolo";
+    public string WorktreeBase { get; set; } = "";
+    public bool AutoStartLastSession { get; set; }
+    public bool StreamLogs { get; set; } = true;
+    public bool Telemetry { get; set; }
+    public bool ReviewPaneOpen { get; set; } = true;
+    public int MaxConcurrentSessions { get; set; } = 3;
+    public int MaxConcurrentWorkers { get; set; } = AgentManager.Core.Workers.WorkerDefaults.DefaultMaxConcurrentWorkers;
+    public string WorkerBehaviorPreamble { get; set; } = AgentManager.Core.Workers.WorkerDefaults.BehaviorPreamble;
+    public string SkillContent { get; set; } = SkillInjector.WorkerPromptDefault;
+
+    // ----- collections (default models · preferred sets · disabled/dismissed · skill dirs) -----
+    public Dictionary<string, string> DefaultModels { get; set; } = new();
+    public Dictionary<string, string> SkillDirs { get; set; } = SkillInjector.DefaultDirs();
+    public HashSet<string> DisabledEngines { get; } = [];
+    public HashSet<string> DismissedCliSessions { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, HashSet<string>> Preferred { get; } = new()
+    {
+        ["cc"] = new(StringComparer.OrdinalIgnoreCase),
+        ["gx"] = new(StringComparer.OrdinalIgnoreCase),
+        ["agy"] = new(StringComparer.OrdinalIgnoreCase),
+        ["pi"] = new(StringComparer.OrdinalIgnoreCase),
+    };
 }

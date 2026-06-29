@@ -161,28 +161,27 @@ public sealed partial class AppViewModel
     ];
 
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내를 띄울지 (기본 끔 — 비-git 사용이 일반 흐름인 사용자 배려).</summary>
-    private bool _warnNoWorktree;
+    private bool _warnNoWorktree { get => _settings.WarnNoWorktree; set => _settings.WarnNoWorktree = value; }
 
     /// <summary>새 세션 기본 승인 정책: ask | safe | yolo. RequireApproval + Sandbox 둘 다 시드.</summary>
-    private string _approvalPolicy = "yolo";
+    private string _approvalPolicy { get => _settings.ApprovalPolicy; set => _settings.ApprovalPolicy = value; }
     private string _settingsApprovalPolicy = "yolo";
     public string SettingsApprovalPolicy { get => _settingsApprovalPolicy; set => Set(ref _settingsApprovalPolicy, value); }
 
     // ----- orchestration -----
-    private string _worktreeBase = "";
+    private string _worktreeBase { get => _settings.WorktreeBase; set => _settings.WorktreeBase = value; }
     public string SettingsWorktreeBase { get => _settingsWorktreeBase; set => Set(ref _settingsWorktreeBase, value); }
     private string _settingsWorktreeBase = "";
-    private bool _autoStartLastSession;
+    private bool _autoStartLastSession { get => _settings.AutoStartLastSession; set => _settings.AutoStartLastSession = value; }
     public bool SettingsAutoStart { get => _settingsAutoStart; set => Set(ref _settingsAutoStart, value); }
     private bool _settingsAutoStart;
-    private bool _streamLogs = true;
     /// <summary>목록의 실시간 활동 표시 여부 (즉시 반영, 영속).</summary>
-    public bool StreamLogs { get => _streamLogs; set => Set(ref _streamLogs, value); }
+    public bool StreamLogs { get => _settings.StreamLogs; set { if (_settings.StreamLogs != value) { _settings.StreamLogs = value; OnChanged(nameof(StreamLogs)); } } }
     public bool SettingsStreamLogs { get => _settingsStreamLogs; set => Set(ref _settingsStreamLogs, value); }
     private bool _settingsStreamLogs = true;
 
     // ----- per-engine default model -----
-    private Dictionary<string, string> _defaultModels = new();
+    private Dictionary<string, string> _defaultModels { get => _settings.DefaultModels; set => _settings.DefaultModels = value; }
     public string[] CcModels => DropdownModelsFor("cc");
     public string[] GxModels => DropdownModelsFor("gx");
     public string[] AgyModels => DropdownModelsFor("agy");
@@ -190,13 +189,7 @@ public sealed partial class AppViewModel
     private string[] EngineModels(string id) => Array.Find(AllEngines, e => e.Id == id)?.Models ?? [];
 
     // ----- "주로 쓰는 모델" — 엔진별 선호 집합(설정 영속) + 체크리스트(cc/gx/agy/pi 공통) -----
-    private readonly Dictionary<string, HashSet<string>> _preferred = new()
-    {
-        ["cc"] = new(StringComparer.OrdinalIgnoreCase),
-        ["gx"] = new(StringComparer.OrdinalIgnoreCase),
-        ["agy"] = new(StringComparer.OrdinalIgnoreCase),
-        ["pi"] = new(StringComparer.OrdinalIgnoreCase),
-    };
+    private Dictionary<string, HashSet<string>> _preferred => _settings.Preferred;
     public ModelChecklistVm CcChecklist { get; private set; } = null!;
     public ModelChecklistVm GxChecklist { get; private set; } = null!;
     public ModelChecklistVm AgyChecklist { get; private set; } = null!;
@@ -436,7 +429,7 @@ public sealed partial class AppViewModel
         _zoomSaveTimer.Stop(); _zoomSaveTimer.Start();
     }
     private void ZoomSaveTick(object? sender, EventArgs e) { _zoomSaveTimer!.Stop(); SaveState(); }
-    private bool _telemetry;
+    private bool _telemetry { get => _settings.Telemetry; set => _settings.Telemetry = value; }
     public bool SettingsTelemetry { get => _settingsTelemetry; set => Set(ref _settingsTelemetry, value); }
     private bool _settingsTelemetry;
 
@@ -517,8 +510,8 @@ public sealed partial class AppViewModel
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
 
     // ----- 스킬 주입: Save 시 각 엔진 스킬 폴더에 SKILL.md 기록 -----
-    private string _skillContent = AgentManager.Core.SkillInjector.WorkerPromptDefault;
-    private Dictionary<string, string> _skillDirs = AgentManager.Core.SkillInjector.DefaultDirs();
+    private string _skillContent { get => _settings.SkillContent; set => _settings.SkillContent = value; }
+    private Dictionary<string, string> _skillDirs { get => _settings.SkillDirs; set => _settings.SkillDirs = value; }
 
     private string _settingsSkillContent = "";
     public string SettingsSkillContent { get => _settingsSkillContent; set => Set(ref _settingsSkillContent, value); }
@@ -583,7 +576,7 @@ public sealed partial class AppViewModel
         SettingsApprovalPolicy = _approvalPolicy;
         SettingsWorktreeBase = _worktreeBase;
         SettingsAutoStart = _autoStartLastSession;
-        SettingsStreamLogs = _streamLogs;
+        SettingsStreamLogs = _settings.StreamLogs;
         SettingsSkillContent = _skillContent;
         SettingsSkillDirCc = _skillDirs.GetValueOrDefault("cc", "");
         SettingsSkillDirGx = _skillDirs.GetValueOrDefault("gx", "");
