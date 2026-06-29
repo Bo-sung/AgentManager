@@ -385,9 +385,6 @@ public sealed partial class AppViewModel
         RebuildTaskViews(); // explicit: during restore the Changed subscription isn't attached yet
     }
 
-    /// <summary>Tasks to persist (Core store is the source of truth).</summary>
-    private IReadOnlyList<WorkerTaskDto> WorkerTasksSnapshot() => _taskStore.Snapshot();
-
     // ---- spool watcher --------------------------------------------------
 
     /// <summary>Watch the task-spool root; ingest skill-written task files into the backlog.</summary>

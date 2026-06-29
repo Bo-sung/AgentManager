@@ -147,58 +147,85 @@ public sealed partial class AppViewModel
             Projects.Add(new ProjectViewModel(Slug("workspace") + "-" + DateTime.Now.Ticks, "workspace", repo));
         }
 
-        foreach (var dto in state.Sessions)
+        // 세션 + 워커 백로그는 프로젝트 로컬(<project>/.am/project.json)에서 읽는다.
+        // 로컬 파일이 없는 프로젝트는 레거시 전역 state.json의 슬라이스로 폴백 = 1회 마이그레이션.
+        // (전역 파일의 Sessions/WorkerTasks는 더 이상 기록되지 않으므로, 첫 저장 후엔 로컬만 남는다.)
+        var legacySessions = state.Sessions ?? [];
+        var legacyTasks = state.WorkerTasks ?? [];
+        var restoredTasks = new List<AgentManager.Core.Workers.WorkerTaskDto>();
+        var migrationPending = false; // 레거시 전역 데이터가 프로젝트 로컬로 아직 옮겨지지 않았는지(1회 마이그레이션)
+        foreach (var project in Projects)
         {
-            var project = Projects.FirstOrDefault(p => p.Id == dto.ProjectId);
-            if (project is null) continue;
-            var engine = EngineRegistry.Get(dto.AgentId);
-            // 모델 카탈로그가 바뀌면(예: codex gpt-5.1 계열 폐기) 저장된 구 모델 id를 현행 기본값으로 정규화
-            var model = engine.Models.Contains(dto.Model) ? dto.Model : engine.Models[0];
-            var s = new SessionViewModel(
-                dto.Id,
-                engine,
-                dto.Title,
-                dto.Branch,
-                dto.ProjectId,
-                dto.Project,
-                dto.ProjectPath,
-                model,
-                dto.StartedAt)
+            var local = ProjectStateStore.Load(project.Path);
+            List<SessionDto> sessionsForProject;
+            List<AgentManager.Core.Workers.WorkerTaskDto> tasksForProject;
+            if (local is not null)
             {
-                WorktreePath = Directory.Exists(dto.WorktreePath) ? dto.WorktreePath : null,
-                Isolated = dto.Isolated && Directory.Exists(dto.WorktreePath),
-                WorktreeAttempted = dto.WorktreeAttempted,
-                WorktreeOptOut = dto.WorktreeOptOut,
-                Status = dto.Status is "running" or "waiting" ? "idle" : dto.Status,
-                Activity = dto.Status is "running" or "waiting" ? L("L.RestoredAfterRestart") : dto.Activity,
-                TokensIn = dto.TokensIn,
-                TokensOut = dto.TokensOut,
-                CostUsd = dto.CostUsd,
-                IsArchived = dto.IsArchived,
-                Sandbox = Enum.TryParse<SandboxMode>(dto.Sandbox, out var sb) ? sb : SandboxMode.DangerFullAccess,
-                RequireApproval = dto.RequireApproval,
-                ReasoningEffort = !string.IsNullOrWhiteSpace(dto.ReasoningEffort) ? dto.ReasoningEffort
-                    : dto.AgentId == "gx" ? "medium" : "default",
-                TranslationEnabled = dto.TranslationEnabled ?? true,
-                EngineSessionId = dto.EngineSessionId,
-                Role = Enum.TryParse<AgentManager.Core.Workers.SessionRole>(dto.Role, out var role) ? role : AgentManager.Core.Workers.SessionRole.Plain,
-                BehaviorPreamble = dto.BehaviorPreamble ?? "",
-                TranslateSourceLanguage = dto.TranslateSourceLanguage,
-                TranslateTargetLanguage = dto.TranslateTargetLanguage,
-                LastMainSessionId = dto.LastMainSessionId,
-            };
-            foreach (var item in dto.Transcript)
-                s.Transcript.Add(AppStateStore.FromDto(item));
-            foreach (var a in dto.Artifacts)
-                s.Artifacts.Add(new ArtifactViewModel(a.Kind, a.Title) { Content = a.Content, IsError = a.IsError });
-            s.PropertyChanged += SessionStatusWatch;
-            _allSessions.Add(s);
+                sessionsForProject = local.Sessions;
+                tasksForProject = local.WorkerTasks;
+            }
+            else
+            {
+                // 마이그레이션: 레거시 전역 배열에서 이 프로젝트 소속 슬라이스를 가져온다.
+                // 실제로 옮길 데이터가 있으면 마이그레이션 저장을 예약한다(전역 중복 제거).
+                sessionsForProject = legacySessions.Where(s => s.ProjectId == project.Id).ToList();
+                tasksForProject = legacyTasks.Where(t => t.ProjectId == project.Id).ToList();
+                if (sessionsForProject.Count > 0 || tasksForProject.Count > 0) migrationPending = true;
+            }
+            restoredTasks.AddRange(tasksForProject);
+            foreach (var dto in sessionsForProject)
+            {
+                var engine = EngineRegistry.Get(dto.AgentId);
+                // 모델 카탈로그가 바뀌면(예: codex gpt-5.1 계열 폐기) 저장된 구 모델 id를 현행 기본값으로 정규화
+                var model = engine.Models.Contains(dto.Model) ? dto.Model : engine.Models[0];
+                var s = new SessionViewModel(
+                    dto.Id,
+                    engine,
+                    dto.Title,
+                    dto.Branch,
+                    dto.ProjectId,
+                    dto.Project,
+                    dto.ProjectPath,
+                    model,
+                    dto.StartedAt)
+                {
+                    WorktreePath = Directory.Exists(dto.WorktreePath) ? dto.WorktreePath : null,
+                    Isolated = dto.Isolated && Directory.Exists(dto.WorktreePath),
+                    WorktreeAttempted = dto.WorktreeAttempted,
+                    WorktreeOptOut = dto.WorktreeOptOut,
+                    Status = dto.Status is "running" or "waiting" ? "idle" : dto.Status,
+                    Activity = dto.Status is "running" or "waiting" ? L("L.RestoredAfterRestart") : dto.Activity,
+                    TokensIn = dto.TokensIn,
+                    TokensOut = dto.TokensOut,
+                    CostUsd = dto.CostUsd,
+                    IsArchived = dto.IsArchived,
+                    Sandbox = Enum.TryParse<SandboxMode>(dto.Sandbox, out var sb) ? sb : SandboxMode.DangerFullAccess,
+                    RequireApproval = dto.RequireApproval,
+                    ReasoningEffort = !string.IsNullOrWhiteSpace(dto.ReasoningEffort) ? dto.ReasoningEffort
+                        : dto.AgentId == "gx" ? "medium" : "default",
+                    TranslationEnabled = dto.TranslationEnabled ?? true,
+                    EngineSessionId = dto.EngineSessionId,
+                    Role = Enum.TryParse<AgentManager.Core.Workers.SessionRole>(dto.Role, out var role) ? role : AgentManager.Core.Workers.SessionRole.Plain,
+                    BehaviorPreamble = dto.BehaviorPreamble ?? "",
+                    TranslateSourceLanguage = dto.TranslateSourceLanguage,
+                    TranslateTargetLanguage = dto.TranslateTargetLanguage,
+                    LastMainSessionId = dto.LastMainSessionId,
+                };
+                foreach (var item in dto.Transcript)
+                    s.Transcript.Add(AppStateStore.FromDto(item));
+                foreach (var a in dto.Artifacts)
+                    s.Artifacts.Add(new ArtifactViewModel(a.Kind, a.Title) { Content = a.Content, IsError = a.IsError });
+                s.PropertyChanged += SessionStatusWatch;
+                _allSessions.Add(s);
+            }
         }
-
-        LoadWorkerTasks(state.WorkerTasks ?? []);
+        LoadWorkerTasks(restoredTasks);
         ActiveProject = Projects.FirstOrDefault(p => p.Id == state.ActiveProjectId) ?? Projects[0];
         RefreshProjectSessions();
         RefreshQuotaText(); // 복원된 사용량 스냅샷을 footer에 즉시 표시(신선도 라벨 포함)
+        // 1회 마이그레이션: 레거시 전역 데이터를 프로젝트 로컬로 옮기고 전역 중복을 제거한다.
+        // SaveState는 디바운스되므로 생성자 중에 호출해도 안전(수백 ms 후 한 번 기록).
+        if (migrationPending) SaveState();
     }
 
     // ----- 영속화: 디바운스(코얼레싱) + 오프-UI 쓰기 + 종료 시 강제 flush -----
@@ -260,16 +287,18 @@ public sealed partial class AppViewModel
             // 설정은 settings.json으로 분리 저장(SettingsStore). 자기-쓰기로 인한 리로드는 ReloadSettingsFromDisk가 내용 비교로 무시.
             var settings = BuildSettingsDto();
             var state = BuildStateDto();
+            // 프로젝트 로컬 스냅샷도 UI 스레드에서 빌드(VM 컬렉션 접근) — DTO만 백그라운드로 넘긴다.
+            var projectStates = BuildProjectStates();
             // 완성된 DTO(불변 스냅샷)는 VM 컬렉션과 무관하므로 어느 스레드에서 써도 안전하다.
             // 종료 경로(synchronousWrite)에선 프로세스가 백그라운드 Task 완료 전에 죽을 수 있으니 동기로 끝까지 쓴다.
             if (synchronousWrite)
-                ReportSaveResult(WriteSnapshot(settings, state));
+                ReportSaveResult(WriteSnapshot(settings, state, projectStates));
             else
             {
                 var disp = Application.Current?.Dispatcher;
                 _ = Task.Run(() =>
                 {
-                    var ok = WriteSnapshot(settings, state);
+                    var ok = WriteSnapshot(settings, state, projectStates);
                     // SaveFailing is bound to the UI — flip it back on the UI thread.
                     if (disp is not null) disp.InvokeAsync(() => ReportSaveResult(ok));
                     else ReportSaveResult(ok);
@@ -286,11 +315,18 @@ public sealed partial class AppViewModel
 
     /// <summary>완성된 DTO 스냅샷을 디스크에 쓴다. settings/state를 독립적으로 try해 한쪽 실패가 다른 쪽을 막지 않게 한다.
     /// WriteAtomic이 일시적 잠금을 재시도하고도 실패하면 그 예외가 여기서 잡혀 save-errors.log에 남는다.</summary>
-    /// <summary>Returns whether the state write succeeded (settings failure alone doesn't alarm the user).</summary>
-    private static bool WriteSnapshot(AppSettingsDto settings, AppStateDto state)
+    /// <summary>Returns whether the GLOBAL state write succeeded (settings/project-local failures are logged
+    /// but don't alarm — a temporarily-unreachable project folder shouldn't trip the save banner).</summary>
+    private static bool WriteSnapshot(AppSettingsDto settings, AppStateDto state, List<(string Path, ProjectStateDto Dto)> projectStates)
     {
         try { SettingsStore.Save(settings); }
         catch (Exception ex) { LogPersistError("settings.json", ex); }
+        // 프로젝트 로컬 파일 먼저(세션·백로그). 읽기 전용/공유 드라이브 실패는 로그만 남기고 흡수.
+        foreach (var (projectPath, dto) in projectStates)
+        {
+            try { ProjectStateStore.Save(projectPath, dto); }
+            catch (Exception ex) { LogPersistError($"project.json {projectPath}", ex); }
+        }
         try { AppStateStore.Save(state); return true; }
         catch (Exception ex) { LogPersistError("state.json", ex); return false; }
     }
@@ -309,14 +345,34 @@ public sealed partial class AppViewModel
     }
 
     /// <summary>현재 앱 상태를 state.json DTO로 직렬화(UI 스레드에서만 호출).
-    /// 세션별 매핑(특히 Transcript)을 각각 try로 격리해, 한 세션이 깨져도 나머지 세션 저장을 막지 않는다(P3).</summary>
+    /// 세션·워커태스크는 프로젝트 로컬(<see cref="BuildProjectStates"/>)로 분리 — 전역엔 프로젝트 목록/활성 id만 남는다.
+    /// (레거시 호환을 위해 필드는 유지하되 항상 빈 배열로 기록 → 마이그레이션 후엔 중복이 사라진다.)</summary>
     private AppStateDto BuildStateDto() => new()
     {
         ActiveProjectId = ActiveProject?.Id,
         Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
-        WorkerTasks = WorkerTasksSnapshot().ToList(),
-        Sessions = _allSessions.Select(BuildSessionDto).ToList(),
+        WorkerTasks = [],
+        Sessions = [],
     };
+
+    /// <summary>프로젝트 로컬 상태 스냅샷 — 각 프로젝트의 세션 + 워커 백로그/큐를 projectId로 그룹핑해
+    /// <c>&lt;project.Path&gt;/.am/project.json</c> 용 DTO 리스트로 만든다(UI 스레드에서만 호출).</summary>
+    private List<(string Path, ProjectStateDto Dto)> BuildProjectStates()
+    {
+        var result = new List<(string, ProjectStateDto)>();
+        var tasksByProject = _taskStore.Snapshot()
+            .Where(t => !string.IsNullOrEmpty(t.ProjectId))
+            .GroupBy(t => t.ProjectId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<AgentManager.Core.Workers.WorkerTaskDto>)g.ToList());
+        foreach (var p in Projects)
+        {
+            if (string.IsNullOrWhiteSpace(p.Path)) continue;
+            var sessions = _allSessions.Where(s => s.ProjectId == p.Id).Select(BuildSessionDto).ToList();
+            tasksByProject.TryGetValue(p.Id, out var tasks);
+            result.Add((p.Path, new ProjectStateDto { Sessions = sessions, WorkerTasks = (tasks ?? []).ToList() }));
+        }
+        return result;
+    }
 
     /// <summary>한 세션을 SessionDto로 매핑. 매핑 중 예외가 나면(예: 손상된 transcript 블록) 식별 필드만 담은
     /// 최소 DTO로 대체하고 기록한다 — 한 세션의 실패가 전체 저장을 막지 않도록(per-session fault isolation).</summary>
