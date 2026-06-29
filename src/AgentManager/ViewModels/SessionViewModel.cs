@@ -24,6 +24,10 @@ public sealed class SessionViewModel : ObservableObject
     /// inlined prompt text. Cleared on send; not persisted.</summary>
     public ObservableCollection<PendingAttachment> PendingAttachments { get; } = [];
 
+    private string _renameDraft = "";
+    /// <summary>Inline rename 입력(컨텍스트 메뉴) — 프로젝트의 RenameDraft와 동일 패턴. 미영속.</summary>
+    public string RenameDraft { get => _renameDraft; set => Set(ref _renameDraft, value); }
+
     /// <summary>The active choice — heuristic A/B/C detected in the last assistant message, or a
     /// structured question pushed by the ask-user skill (single/multi-select, one or more pages).
     /// Null = no choice (composer shown). Set on turn completion / ask ingest, cleared on a new turn,

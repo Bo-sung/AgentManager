@@ -122,7 +122,7 @@ public sealed partial class AppViewModel : ObservableObject
         DiscardReviewCommand = new RelayCommand(_ => _ = DiscardReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
         DeleteSessionCommand = new RelayCommand(p => _ = DeleteSessionAsync(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         ArchiveSessionCommand = new RelayCommand(p => ToggleArchive(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
-        RenameSessionCommand = new RelayCommand(p => { if (p is string t) RenameSession(ActiveSession, t); }, _ => ActiveSession is not null);
+        RenameSessionCommand = new RelayCommand(p => { if (p is SessionViewModel s && !string.IsNullOrWhiteSpace(s.RenameDraft)) RenameSession(s, s.RenameDraft.Trim()); }, _ => true);
         RenameProjectCommand = new RelayCommand(p =>
         {
             if (p is ProjectViewModel proj && !string.IsNullOrWhiteSpace(proj.RenameDraft))
@@ -430,13 +430,20 @@ public sealed partial class AppViewModel : ObservableObject
         SaveState();
     }
 
+    /// <summary>세션마다 고유한 브랜치명 — 같은 제목의 세션 둘이어도 동일 "agent/&lt;slug&gt;" 브랜치로
+    /// `git worktree add`가 "already checked out" 실패하지 않게 세션 id의 seq 접미사를 붙인다
+    /// (worktree 디렉토리는 이미 id 기반이라 따로 안 겹친다). worker/ 위임·예약 실행도 공유.</summary>
+    private static string UniqueBranch(string baseName, string id)
+        => baseName + "-" + id[(id.LastIndexOf('-') + 1)..];
+
     /// <summary>Fork: 트랜스크립트·엔진세션id를 상속한 새 세션(새 worktree). 다음 턴은 같은 대화에서 분기.</summary>
     public void ForkSession(SessionViewModel? src)
     {
         if (src is null) return;
         var engine = EngineRegistry.Get(src.AgentId);
         var title = src.Title + " (fork)";
-        var s = new SessionViewModel(NewSessionId("s"), engine, title, "agent/" + Slug(title),
+        var id = NewSessionId("s");
+        var s = new SessionViewModel(id, engine, title, UniqueBranch("agent/" + Slug(title), id),
             src.ProjectId, src.Project, src.ProjectPath, src.Model)
         {
             TranslationEnabled = src.TranslationEnabled,
@@ -815,9 +822,10 @@ public sealed partial class AppViewModel : ObservableObject
         }
 
         var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
-        var branch = "agent/" + Slug(title);
+        var id = NewSessionId("s");
+        var branch = UniqueBranch("agent/" + Slug(title), id);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
-        var s = new SessionViewModel(NewSessionId("s"), engine, title, branch, project.Id, project.Name, project.Path, model)
+        var s = new SessionViewModel(id, engine, title, branch, project.Id, project.Name, project.Path, model)
         {
             TranslationEnabled = NewAgentTranslation,
             RequireApproval = reqAppr,
