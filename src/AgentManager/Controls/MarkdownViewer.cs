@@ -78,6 +78,15 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
             var fence = LeadingBacktickRun(line);
             if (fence >= 3)
             {
+                // A bare fence (just backticks, no language tag) with no matching close ahead is almost
+                // always a STRAY close left by a mid-line open — e.g. a translation glued "text: ```lang"
+                // onto one line, so the real open was never recognized. Treating it as an open would
+                // swallow the rest of the message as one code block. Open a block only when there is a
+                // language/info tag (covers a still-streaming block) or a real closing fence ahead;
+                // otherwise skip the stray fence and render the rest as normal markdown.
+                var info = line.TrimStart()[fence..].Trim();
+                if (info.Length == 0 && !HasClosingFence(lines, i + 1, fence)) { i++; continue; }
+
                 // Variable-length fence: close only on a fence of equal-or-greater length, so a
                 // prompt that itself contains ``` code blocks stays one (copyable) block.
                 var codeLines = new List<string>();
@@ -462,6 +471,15 @@ public sealed partial class MarkdownViewer : FlowDocumentScrollViewer
         int n = 0;
         while (n < s.Length && s[n] == '`') n++;
         return n;
+    }
+
+    /// <summary>Is there a fence of equal-or-greater length at/after <paramref name="from"/>? Used to
+    /// tell a real (closable) code block from a stray bare ``` left by a mid-line open.</summary>
+    private static bool HasClosingFence(string[] lines, int from, int fence)
+    {
+        for (int j = from; j < lines.Length; j++)
+            if (LeadingBacktickRun(lines[j]) >= fence) return true;
+        return false;
     }
 
     private static SolidColorBrush Brush(string hex) =>
