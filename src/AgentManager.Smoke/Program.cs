@@ -1210,6 +1210,15 @@ static void AssertQuickReplyParser()
     // plain numbered plan (no choice cue) → ignored
     if (N("Plan:\n1. Create the solution\n2. Add projects\n3. Wire CI") != 0)
         throw new Exception("quickreply: plain numbered list falsely detected");
+    // a cue that only FOLLOWS the options ("어떻게 진행할까요?" after a work-list) must NOT validate
+    // the earlier numbered list — the prompt has to come before the options
+    if (N("모크업과 일치하기 위한 나머지 작업 (두 단계):\n" +
+          "1. 셸 크롬 — 제목 표시줄, 메뉴 바, 상태 표시줄.\n" +
+          "2. 패널 다듬기 — 아이콘 이동, 생성 버튼, 빈 상태.\n\n" +
+          "어떻게 진행할까요?\n" +
+          "(a) 먼저 실행하여 확인.\n" +
+          "(b) 지금 계속 진행해서 통합 및 빌드.") != 0)
+        throw new Exception("quickreply: numbered work-list validated by a trailing cue");
     // prose, no options → none
     if (N("All done. Everything builds and tests pass.") != 0)
         throw new Exception("quickreply: false positive on prose");

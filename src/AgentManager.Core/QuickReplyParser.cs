@@ -56,7 +56,7 @@ public static partial class QuickReplyParser
             if (run.Count < 2) continue;
             var picked = run.Select(ix => opts[ix]).ToList();
             if (!Sequential(picked)) continue;                       // A,B,C… or 1,2,3…
-            if (picked[0].kind == 'N' && !LooksLikeChoice(assistantText, picked)) continue;
+            if (picked[0].kind == 'N' && !LooksLikeChoice(lines, picked)) continue;
             if (!EndAnchored(lines, picked[^1].idx)) continue;       // a choice is asked, then the message ends
 
             return picked.Take(6)
@@ -103,12 +103,27 @@ public static partial class QuickReplyParser
     }
 
     /// <summary>Numbered lists are often just enumerated points/questions, not a pick-one choice.
-    /// Require a choice cue and reject lists that are mostly questions.</summary>
-    static bool LooksLikeChoice(string text, List<(int idx, char kind, string marker, string content)> p)
+    /// Require a choice cue and reject lists that are mostly questions. The cue must be in the LEAD-IN
+    /// (the prompt line just above the first option), not anywhere in the message — otherwise a cue
+    /// that only FOLLOWS the options (e.g. an "어떻게 진행할까요?" after an unrelated numbered work-list)
+    /// would wrongly validate that earlier list. A real choice reads "&lt;prompt?&gt; → 1. … 2. …".</summary>
+    static bool LooksLikeChoice(string[] lines, List<(int idx, char kind, string marker, string content)> p)
     {
         int questionish = p.Count(x => x.content.TrimEnd().EndsWith('?'));
         if (questionish * 2 >= p.Count) return false;
-        return CueRx().IsMatch(text);
+        var lead = LeadIn(lines, p[0].idx);
+        return CueRx().IsMatch(lead) || lead.EndsWith('?');
+    }
+
+    /// <summary>The last non-blank line above <paramref name="firstOptIdx"/> — the choice's prompt line.</summary>
+    static string LeadIn(string[] lines, int firstOptIdx)
+    {
+        for (int i = firstOptIdx - 1; i >= 0; i--)
+        {
+            var t = lines[i].Trim();
+            if (t.Length > 0) return t;
+        }
+        return "";
     }
 
     /// <summary>A genuine choice is asked and then the message ends. Reject a run that is followed by
