@@ -145,6 +145,7 @@
     <sys:String x:Key="L.TaskDone">done</sys:String>
     <sys:String x:Key="L.TaskFailed">failed</sys:String>
     <sys:String x:Key="L.WorkerBacklog">Worker backlog</sys:String>
+    <sys:String x:Key="L.RefreshBacklogTip">Refresh backlog — rescan the task spool (picks up external drops immediately)</sys:String>
     <sys:String x:Key="L.WorkerQueues">Assigned to workers</sys:String>
     <sys:String x:Key="L.AssignToWorker">Assign</sys:String>
     <sys:String x:Key="L.RunTask">Run</sys:String>

@@ -175,6 +175,7 @@ public sealed partial class AppViewModel
     public RelayCommand MoveTaskUpCommand { get; private set; } = null!;
     public RelayCommand MoveTaskDownCommand { get; private set; } = null!;
     public RelayCommand ClearFinishedCommand { get; private set; } = null!;
+    public RelayCommand RefreshBacklogCommand { get; private set; } = null!;
     public RelayCommand ToggleQueueHistoryCommand { get; private set; } = null!;
     public RelayCommand CopyReportCommand { get; private set; } = null!;
     public RelayCommand ToggleSelectAllReportsCommand { get; private set; } = null!;
@@ -227,6 +228,7 @@ public sealed partial class AppViewModel
         });
         UnassignTaskCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) _taskStore.Unassign(t.Id); });
         DeleteTaskCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) _taskStore.Delete(t.Id); });
+        RefreshBacklogCommand = new RelayCommand(_ => RescanTaskSpool());
         MoveTaskUpCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) _taskStore.Move(t.Id, -1); });
         MoveTaskDownCommand = new RelayCommand(p => { if (p is WorkerTaskViewModel t) _taskStore.Move(t.Id, +1); });
         ClearFinishedCommand = new RelayCommand(p => { if (p is WorkerQueueViewModel q) _taskStore.ClearFinished(q.WorkerId); });
@@ -409,6 +411,28 @@ public sealed partial class AppViewModel
                 ScheduleIngest(f);
         }
         catch { /* spool optional — never block startup */ }
+    }
+
+    /// <summary>Manual refresh (UI button): re-scan the task spool now and ingest anything pending into
+    /// the backlog. Covers the canonical global spool (TaskSpool.Root, projectId = parent dir) AND the
+    /// worker-prompt skill's fallback (&lt;project&gt;/.am/worker-tasks/) — so externally-dropped tasks
+    /// show up without a restart, even if the live watcher missed a newly-created subfolder.</summary>
+    public void RescanTaskSpool()
+    {
+        try
+        {
+            if (Directory.Exists(TaskSpool.Root))
+                foreach (var f in Directory.EnumerateFiles(TaskSpool.Root, "*.json", SearchOption.AllDirectories))
+                    ScheduleIngest(f); // projectId inferred from parent dir
+            if (ActiveProject is { } p && !string.IsNullOrWhiteSpace(p.Path))
+            {
+                var dir = Path.Combine(p.Path, ".am", "worker-tasks");
+                if (Directory.Exists(dir))
+                    foreach (var f in Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories))
+                        ScheduleIngest(f, p.Id);
+            }
+        }
+        catch { /* best-effort */ }
     }
 
     /// <summary>FS events can fire mid-write; ingest after a short delay on the UI thread.

@@ -145,6 +145,7 @@
     <sys:String x:Key="L.TaskDone">완료</sys:String>
     <sys:String x:Key="L.TaskFailed">실패</sys:String>
     <sys:String x:Key="L.WorkerBacklog">워커 백로그</sys:String>
+    <sys:String x:Key="L.RefreshBacklogTip">백로그 새로고침 — 태스크 스풀 재스캔(외부 등록 즉시 반영)</sys:String>
     <sys:String x:Key="L.WorkerQueues">워커별 할당</sys:String>
     <sys:String x:Key="L.AssignToWorker">할당</sys:String>
     <sys:String x:Key="L.RunTask">실행</sys:String>
