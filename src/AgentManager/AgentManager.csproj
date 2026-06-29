@@ -18,8 +18,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.16.1: 선택지 표시 번역 · 트랜스크립트 복사(표/코드/위임 선택가능) + 메타 헤더 · 슬래시 명령(/=엔진, >=앱) -->
-    <Version>1.16.1</Version>
+    <!-- 1.16.2: 프로젝트-로컬 상태(.am/project.json) · 오피스/PDF 경로 패스스루 · 드래그드롭 첨부 · 폴더 열기 · 백로그 갱신 · 컴포저 전송 수정 -->
+    <Version>1.16.2</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
