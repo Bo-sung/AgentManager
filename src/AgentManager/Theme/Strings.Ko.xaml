@@ -513,4 +513,7 @@
     <sys:String x:Key="L.ScheduledRunMarker">예약 트리거 실행 · {0}</sys:String>
     <sys:String x:Key="L.OrchDiffFileSuffixOne">개 파일</sys:String>
     <sys:String x:Key="L.OrchDiffFileSuffixMany">개 파일</sys:String>
+    <sys:String x:Key="L.AttachmentWarningTitle">첨부 파일 경고</sys:String>
+    <sys:String x:Key="L.AttachmentCopyFailed">'{0}' 복사 실패 — 원본 경로로 참조합니다 (에이전트가 읽지 못할 수 있음)</sys:String>
+    <sys:String x:Key="L.AttachmentAgyWarning">⚠ 이 엔진(agy)은 '{0}' 파일을 직접 읽지 못할 수 있습니다</sys:String>
 </ResourceDictionary>

@@ -13,7 +13,16 @@ public static class Attachments
     static readonly HashSet<string> ImageExt = new(StringComparer.OrdinalIgnoreCase)
         { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp" };
 
+    /// <summary>Binary office/PDF formats. Inlined text fails for these, so they are delivered by
+    /// PATH PASS-THROUGH (copied under cwd/.am/attachments and referenced in the prompt) and the
+    /// agent parses them with its own tools. Verified: cc/gx/pi read docx/xlsx/pptx/pdf this way.</summary>
+    static readonly HashSet<string> BinaryDocExt = new(StringComparer.OrdinalIgnoreCase)
+        { ".pdf", ".docx", ".xlsx", ".pptx", ".doc", ".xls", ".ppt" };
+
     public static bool IsImage(string path) => ImageExt.Contains(Path.GetExtension(path));
+
+    /// <summary>Binary office/PDF document — delivered by path pass-through, not inlined text.</summary>
+    public static bool IsBinaryDoc(string path) => BinaryDocExt.Contains(Path.GetExtension(path));
 
     const long MaxDocBytes = 512 * 1024; // cap inlined text per file
 
@@ -38,6 +47,55 @@ public static class Attachments
         var note = "📎 " + string.Join(", ", names);
         return string.IsNullOrEmpty(prompt) ? note : prompt + "\n\n" + note;
     }
+
+    /// <summary>Copy <paramref name="source"/> into <c>&lt;cwd&gt;/.am/attachments/&lt;filename&gt;</c>
+    /// (deduped on name collisions) so the agent can read it from its working directory. If the
+    /// file already lives under <paramref name="cwd"/> it is referenced in place (no copy).
+    /// Returns the absolute path to reference and whether the path is usable: true when copied OR
+    /// when referenced in place; false on copy failure (caller falls back to the original path).</summary>
+    public static (string RefPath, bool Ok) CopyToAttachmentsDir(string source, string cwd)
+    {
+        try
+        {
+            var fullSrc = Path.GetFullPath(source);
+            var fullCwd = Path.GetFullPath(cwd);
+            var cwdRoot = fullCwd.EndsWith(Path.DirectorySeparatorChar) || fullCwd.EndsWith(Path.AltDirectorySeparatorChar)
+                ? fullCwd : fullCwd + Path.DirectorySeparatorChar;
+            // Already inside cwd → reference as-is (agent reads it in place).
+            if (fullSrc.Equals(fullCwd, StringComparison.OrdinalIgnoreCase) ||
+                fullSrc.StartsWith(cwdRoot, StringComparison.OrdinalIgnoreCase))
+                return (fullSrc, true);
+
+            var dir = Path.Combine(fullCwd, ".am", "attachments");
+            Directory.CreateDirectory(dir);
+            var dest = Dedupe(Path.Combine(dir, Path.GetFileName(fullSrc)));
+            File.Copy(fullSrc, dest, overwrite: true);
+            return (dest, true);
+        }
+        catch
+        {
+            // Fall back to the original absolute path; caller emits a warning. Never throw.
+            try { return (Path.GetFullPath(source), false); } catch { return (source, false); }
+        }
+    }
+
+    static string Dedupe(string path)
+    {
+        if (!File.Exists(path)) return path;
+        var dir = Path.GetDirectoryName(path) ?? "";
+        var name = Path.GetFileNameWithoutExtension(path);
+        var ext = Path.GetExtension(path);
+        for (int i = 2; ; i++)
+        {
+            var candidate = Path.Combine(dir, $"{name} ({i}){ext}");
+            if (!File.Exists(candidate)) return candidate;
+        }
+    }
+
+    /// <summary>One prompt line telling the agent to read a pass-through attachment. The agent parses
+    /// it with its own tools (docx/xlsx/pptx/pdf) — we never inline bytes that fail to inline.</summary>
+    public static string BuildAttachedRef(string absolutePath)
+        => $"첨부 파일(읽어서 참고): {absolutePath}";
 
     static string ReadDocBlock(string path)
     {

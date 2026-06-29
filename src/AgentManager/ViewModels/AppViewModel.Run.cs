@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Threading;
 using AgentManager.Persistence;
@@ -16,6 +17,40 @@ namespace AgentManager.ViewModels;
 
 public sealed partial class AppViewModel
 {
+    /// <summary>Render attachment docs into prompt text. Text/code docs are inlined as fenced
+    /// blocks (verbatim, never translated). Binary office/PDF docs are copied into
+    /// <c>&lt;cwd&gt;/.am/attachments/</c> and referenced by absolute path so the agent reads them
+    /// with its own tools. agy (ConPTY single-shot) and any copy failure get a transcript warning
+    /// but still attach by path.</summary>
+    private string BuildAttachedDocsText(SessionViewModel s, string cwd, string[]? docs)
+    {
+        if (docs is null || docs.Length == 0) return "";
+        List<string> textDocs = [], binaryDocs = [];
+        foreach (var d in docs)
+            (Attachments.IsBinaryDoc(d) ? binaryDocs : textDocs).Add(d);
+
+        var sb = new StringBuilder();
+        var inline = Attachments.BuildDocsText(textDocs);
+        if (inline.Length > 0) sb.Append(inline).Append("\n\n");
+
+        if (binaryDocs.Count > 0)
+        {
+            var isAgy = s.AgentId == "agy";
+            foreach (var bin in binaryDocs)
+            {
+                var (refPath, ok) = Attachments.CopyToAttachmentsDir(bin, cwd);
+                sb.Append(Attachments.BuildAttachedRef(refPath)).Append('\n');
+                if (isAgy)
+                    s.Transcript.Add(new WorkingBlock(L("L.AttachmentAgyWarning", Path.GetFileName(refPath))));
+                else if (!ok)
+                    s.Transcript.Add(new ErrorBlock(L("L.AttachmentWarningTitle"),
+                        L("L.AttachmentCopyFailed", Path.GetFileName(refPath))));
+            }
+        }
+
+        return sb.ToString().TrimEnd('\n', '\r');
+    }
+
     private async Task EnsureWorktreeAsync(SessionViewModel s)
     {
         if (s.WorktreeAttempted) return;
@@ -193,6 +228,12 @@ public sealed partial class AppViewModel
         WatchSessionTaskSpool(cwd, s.ProjectId, s.Id); // skill fallback (.am/worker-tasks/) → backlog; report back to s
         WatchSessionAskSpool(cwd, s.Id);               // ask-user skill (.am/ask/) → structured choice panel
 
+        // Attachment docs: text/code are inlined verbatim; binary office/PDF docs go by PATH
+        // PASS-THROUGH (copied under cwd/.am/attachments, gitignored, and referenced in the prompt
+        // so the agent reads them with its own tools). agy (ConPTY single-shot) and any copy failure
+        // get a clear transcript warning but still attach by path — never crash.
+        var attachedDocsText = BuildAttachedDocsText(s, cwd, docs);
+
         var tools = new Dictionary<string, ToolBlock>();
         // 워커는 생성 시 고정된 번역 언어쌍을 사용(일반 세션은 전역 번역기).
         var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
@@ -221,7 +262,7 @@ public sealed partial class AppViewModel
             Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
             McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
             Images = images ?? [],
-            AttachedDocsText = Attachments.BuildDocsText(docs),
+            AttachedDocsText = attachedDocsText,
             AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
             ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
             ExtraEnvironment = WithTaskSpoolEnv(ApiEnvFor(s.AgentId), Path.Combine(cwd, ".am", "worker-tasks", s.Id), Path.Combine(cwd, ".am", "ask", s.Id)),
