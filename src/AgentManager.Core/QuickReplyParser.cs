@@ -57,6 +57,7 @@ public static partial class QuickReplyParser
             var picked = run.Select(ix => opts[ix]).ToList();
             if (!Sequential(picked)) continue;                       // A,B,C… or 1,2,3…
             if (picked[0].kind == 'N' && !LooksLikeChoice(assistantText, picked)) continue;
+            if (!EndAnchored(lines, picked[^1].idx)) continue;       // a choice is asked, then the message ends
 
             return picked.Take(6)
                 .Where(p => p.content.Length is > 0 and <= 240)
@@ -108,6 +109,25 @@ public static partial class QuickReplyParser
         int questionish = p.Count(x => x.content.TrimEnd().EndsWith('?'));
         if (questionish * 2 >= p.Count) return false;
         return CueRx().IsMatch(text);
+    }
+
+    /// <summary>A genuine choice is asked and then the message ends. Reject a run that is followed by
+    /// another option-like line (it's just part of a longer list) or by substantial prose (an
+    /// enumeration / document that merely *contains* A)/B) lines — e.g. a spec's "STATES: A)… B)…"
+    /// with sections after). Only a short closing (≤120 chars, e.g. "Just say go.") may trail it.
+    /// This is the main precision guard against documents and mid-message lists false-popping.</summary>
+    static bool EndAnchored(string[] lines, int lastOptIdx)
+    {
+        int tail = 0;
+        for (int i = lastOptIdx + 1; i < lines.Length; i++)
+        {
+            var t = StripLead(lines[i]);
+            if (t.Length == 0) continue;
+            if (LetterRx().IsMatch(t) || NumberRx().IsMatch(t)) return false; // more options follow
+            tail += t.Length;
+            if (tail > 120) return false;                                     // long prose after the options
+        }
+        return true;
     }
 
     static string Truncate(string s, int max) => s.Length <= max ? s : s[..(max - 1)].TrimEnd() + "…";

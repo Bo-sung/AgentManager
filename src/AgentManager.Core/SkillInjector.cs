@@ -124,37 +124,46 @@ Reply with ONLY a short confirmation: how many tasks you registered, and their t
 """
 ---
 name: ask-user
-description: Use whenever you would otherwise ask the user to pick between options (e.g. "which approach?", "A or B?", "what should I do next?"). Renders a clickable choice panel in AgentManager instead of listing options as plain text.
+description: Use EVERY time you would pause to let the user pick between options — "which approach?", "A or B?", "what next?", yes/no go-aheads, picking files/targets/branches, or any multiple-choice. Renders a clickable choice panel in AgentManager. This skill is the ONLY reliable way to get clickable buttons; plain "A) … B) …" text is NOT turned into buttons.
 ---
 
 # Ask the user to choose
 
-When you want the user to choose between options, DO NOT list "A) … B) …" in the chat.
-Instead WRITE ONE JSON file to the spool dir and STOP your turn — AgentManager shows a
-clickable panel and sends the user's choice back as your next message.
+Whenever your turn would end by asking the user to choose, DO NOT write the options as
+text ("A) … B) …", "1. … 2. …", "Option A / Option B", etc.). That text is shown as-is and
+is NOT reliably turned into buttons. Instead WRITE ONE JSON file to the spool dir and STOP —
+AgentManager renders a clickable panel and sends the user's pick back as your next message.
+
+Use this for ANY pick-one or pick-many moment: choosing an approach, a yes/no go-ahead
+(options ["예", "아니오"]), selecting among files / branches / targets, or confirming before a
+side-effecting action. If there are real options, this skill — not prose — is how you ask.
 
 ## Where to write
-- The spool dir is in the env var `AGENTMANAGER_ASK_SPOOL`. If it is set, write there.
-- If it is NOT set (running outside AgentManager), fall back to plain "A) … B) …" text.
+- The spool dir is in the env var `AGENTMANAGER_ASK_SPOOL`. If set, write there.
+- If it is NOT set (running outside AgentManager), only then fall back to plain "A) … B) …" text.
 
 ## How to write
-Write ONE JSON file named `ask.json` to the spool dir.
+Write ONE JSON file named `ask.json` to the spool dir (UTF-8).
 
 Single question:
 { "question": "<one short question>", "options": ["<option 1>", "<option 2>", ...], "multi": false }
-- `question`: a single short line shown as the panel header.
-- `options`: 2–9 short option labels (the text the user sees and picks).
-- `multi` (optional): true = the user can check several options and submit them together;
-  false/omitted = single pick.
+- `question`: one short line shown as the panel header (phrase it as the actual question).
+- `options`: 2–9 SHORT labels — the exact text the user sees and picks. Keep each under ~8 words.
+- `multi` (optional): true = user can check several and submit together; false/omitted = single pick.
 
-Several questions in a row (a wizard — the panel pages through them, then sends all answers):
+Worked example — "rebuild or patch?":
+{ "question": "이 모듈을 어떻게 갈까요?", "options": ["처음부터 재작성", "그대로 패치"], "multi": false }
+
+Wizard — several questions in a row (the panel pages through them, then sends all answers at once):
 { "questions": [
     { "question": "<q1>", "options": ["a", "b"] },
     { "question": "<q2>", "options": ["x", "y", "z"], "multi": true }
 ] }
 
 ## After writing
-Reply with ONLY a one-line note (e.g. "선택지를 띄웠습니다.") and STOP. Wait for the user's
-choice — it arrives as your next message. Do NOT also paste the options as text.
+Reply with ONLY a one-line note (e.g. "선택지를 띄웠습니다.") and STOP your turn. Do NOT also
+list the options as text, and do NOT keep working — the user's pick arrives as your next
+message. The user can always type a free-form answer instead, so don't add an "기타/other"
+option yourself.
 """;
 }

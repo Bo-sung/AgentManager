@@ -1213,6 +1213,19 @@ static void AssertQuickReplyParser()
     // prose, no options → none
     if (N("All done. Everything builds and tests pass.") != 0)
         throw new Exception("quickreply: false positive on prose");
+    // lettered list buried in a document (states + spec prose after) → NOT a pick-one
+    if (N("STATES TO MOCK (show these as separate frames):\n" +
+          "A) Empty - nothing loaded yet (controls present but inert)\n" +
+          "B) Loaded + animating - a character in the preview, status:\n" +
+          "   \"Loaded 'Swing' - 12 frames\"\n" +
+          "C) Sheet generated - the Output panel with a populated thumbnail\n\n" +
+          "DELIVERABLE: the screens above, plus a short STYLE SPEC with hex colors.") != 0)
+        throw new Exception("quickreply: lettered list inside a document falsely detected");
+    // a genuine choice that trails a longer message → still detected
+    var t2 = AgentManager.Core.QuickReplyParser.Parse(
+        "I compared both routes and they're close.\n\nWhich do you want?\nA) Refactor now\nB) Defer to next sprint");
+    if (t2.Count != 2 || t2[0].Marker != "A" || t2[1].Marker != "B")
+        throw new Exception("quickreply: trailing choice after prose missed");
 
     // engine glued the first marker to the sentence ("…적절합니다.A) …") → still detect A,B,C (agy)
     var g = AgentManager.Core.QuickReplyParser.Parse(
