@@ -149,6 +149,7 @@
     <sys:String x:Key="L.WorkerQueues">워커별 할당</sys:String>
     <sys:String x:Key="L.AssignToWorker">할당</sys:String>
     <sys:String x:Key="L.RunTask">실행</sys:String>
+    <sys:String x:Key="L.RetryTask">재시도</sys:String>
     <sys:String x:Key="L.RunQueue">큐 실행</sys:String>
     <sys:String x:Key="L.QueuePending">대기</sys:String>
     <sys:String x:Key="L.ClearFinished">완료 정리</sys:String>

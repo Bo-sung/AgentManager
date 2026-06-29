@@ -149,6 +149,7 @@
     <sys:String x:Key="L.WorkerQueues">Assigned to workers</sys:String>
     <sys:String x:Key="L.AssignToWorker">Assign</sys:String>
     <sys:String x:Key="L.RunTask">Run</sys:String>
+    <sys:String x:Key="L.RetryTask">Retry</sys:String>
     <sys:String x:Key="L.RunQueue">Run queue</sys:String>
     <sys:String x:Key="L.QueuePending">queued</sys:String>
     <sys:String x:Key="L.ClearFinished">Clear finished</sys:String>

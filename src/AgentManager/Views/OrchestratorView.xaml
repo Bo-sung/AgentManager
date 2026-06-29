@@ -400,6 +400,7 @@
                                                                                             <Setter Property="Foreground" Value="{DynamicResource Txt2}"/>
                                                                                             <Style.Triggers>
                                                                                                 <DataTrigger Binding="{Binding IsRunning}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Accent}"/></DataTrigger>
+                                                                                                <DataTrigger Binding="{Binding IsFailed}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Err}"/></DataTrigger>
                                                                                             </Style.Triggers>
                                                                                         </Style>
                                                                                     </TextBlock.Style>
@@ -416,7 +417,7 @@
                                                                                         Command="{Binding DataContext.RunTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                                                                                     <StackPanel Orientation="Horizontal">
                                                                                         <controls:IconView Icon="{StaticResource IconPlay}" Filled="True" Width="9" Height="9" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                                                        <TextBlock Text="{StaticResource L.RunTask}" VerticalAlignment="Center"/>
+                                                                                        <TextBlock Text="{Binding RunActionLabel}" VerticalAlignment="Center"/>
                                                                                     </StackPanel>
                                                                                 </Button>
                                                                                 <Button Style="{StaticResource XsIconButton}" Margin="4,0,0,0" ToolTip="{StaticResource L.Unassign}"

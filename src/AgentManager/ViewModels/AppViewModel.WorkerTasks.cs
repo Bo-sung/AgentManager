@@ -55,6 +55,8 @@ public sealed class WorkerTaskViewModel : ObservableObject
     public bool CanMoveDown => !IsLast;
     /// <summary>A single task can be run when queued (assigned) or retried (failed).</summary>
     public bool CanRun => Status is WorkerTaskStatus.Assigned or WorkerTaskStatus.Failed;
+    /// <summary>Run-button label — "Retry" for a failed task (it re-queues + re-runs), "Run" otherwise.</summary>
+    public string RunActionLabel => IsFailed ? App.L("L.RetryTask") : App.L("L.RunTask");
 
     public string StatusLabel => Status switch
     {
@@ -366,8 +368,10 @@ public sealed partial class AppViewModel
             var engineId = w?.AgentId ?? "";
             var engine = engineId.ToUpperInvariant();
             var all = _taskStore.AssignedTo(wid).Select(d => new WorkerTaskViewModel(d, name)).ToList();
-            var active = all.Where(t => !t.IsFinished).ToList();   // assigned + running — shown in the queue
-            var finished = all.Where(t => t.IsFinished);           // done/failed — under the history toggle
+            // Failed stays in the active queue (needs attention — one-click retry, always visible);
+            // only Done drops into the collapsible history.
+            var active = all.Where(t => t.Status != WorkerTaskStatus.Done).ToList();   // assigned + running + failed
+            var finished = all.Where(t => t.Status == WorkerTaskStatus.Done);          // done — under the history toggle
             for (int i = 0; i < active.Count; i++) { active[i].IsFirst = i == 0; active[i].IsLast = i == active.Count - 1; }
             WorkerQueues.Add(new WorkerQueueViewModel(wid, name, engine, engineId, active, finished, _expandedQueueHistory.Contains(wid)));
         }
