@@ -54,14 +54,7 @@ public sealed partial class AppViewModel
         foreach (var d in s.DisabledEngines ?? []) _disabledEngines.Add(d);
         _dismissedCliSessions.Clear();
         foreach (var d in s.DismissedCliSessions ?? []) _dismissedCliSessions.Add(d);
-        _engineAuthMode.Clear();
-        foreach (var kv in s.EngineAuthMode ?? new()) _engineAuthMode[kv.Key] = kv.Value;
-        _engineApiKey.Clear();
-        foreach (var kv in s.EngineApiKey ?? new()) _engineApiKey[kv.Key] = kv.Value;
-        _engineAutoApi.Clear();
-        foreach (var kv in s.EngineAutoApiOnLimit ?? new()) _engineAutoApi[kv.Key] = kv.Value;
-        _engineLimitedUntil.Clear();
-        foreach (var kv in s.EngineLimitedUntil ?? new()) _engineLimitedUntil[kv.Key] = kv.Value;
+        _engineAuth.Load(s.EngineAuthMode, s.EngineApiKey, s.EngineAutoApiOnLimit, s.EngineLimitedUntil);
         _usage.Clear();
         foreach (var kv in s.Usage ?? new())
             _usage[kv.Key] = new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc);
@@ -107,10 +100,10 @@ public sealed partial class AppViewModel
         Telemetry = _telemetry,
         DisabledEngines = _disabledEngines.ToList(),
         DismissedCliSessions = _dismissedCliSessions.ToList(),
-        EngineAuthMode = new Dictionary<string, string>(_engineAuthMode),
-        EngineApiKey = new Dictionary<string, string>(_engineApiKey),
-        EngineAutoApiOnLimit = new Dictionary<string, bool>(_engineAutoApi),
-        EngineLimitedUntil = new Dictionary<string, long>(_engineLimitedUntil),
+        EngineAuthMode = _engineAuth.SnapshotAuthMode(),
+        EngineApiKey = _engineAuth.SnapshotApiKey(),
+        EngineAutoApiOnLimit = _engineAuth.SnapshotAutoApi(),
+        EngineLimitedUntil = _engineAuth.SnapshotLimitedUntil(),
         Usage = _usage.ToDictionary(k => k.Key, v => new UsageSnapshotDto
         {
             Utilization = v.Value.Utilization,

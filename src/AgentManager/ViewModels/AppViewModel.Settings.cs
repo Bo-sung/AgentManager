@@ -318,53 +318,21 @@ public sealed partial class AppViewModel
     public bool SettingsEnginePi { get => _settingsEnginePi; set => Set(ref _settingsEnginePi, value); }
     private bool _settingsEnginePi = true;
 
-    // ----- per-engine auth (subscription / api key) -----
-    private readonly Dictionary<string, string> _engineAuthMode = new();   // id → "subscription" | "api"
-    private readonly Dictionary<string, string> _engineApiKey = new();     // id → DPAPI base64
-    private readonly Dictionary<string, bool> _engineAutoApi = new();      // id → 한도 도달 시 API 자동 전환(opt-in)
-    private readonly Dictionary<string, long> _engineLimitedUntil = new(); // id → rate-limit 차단 해제(unix). 실제 실패 시 기록
+    // ----- per-engine auth (subscription / api key) → Core EngineAuthService (overhaul (a) step 2) -----
+    // 상태(4 dict)와 로직은 Core 서비스가 소유; VM은 forward만 한다(호출부 불변, 서비스가 실제로 쓰인다).
+    // DPAPI·usage는 델리게이트로 주입 → Core는 WPF/Windows-포트 비의존. usageOf는 _usage를 lazy로 읽는다.
+    private AgentManager.Core.Settings.EngineAuthService? _engineAuthBacking;
+    private AgentManager.Core.Settings.EngineAuthService _engineAuth => _engineAuthBacking ??=
+        new(Persistence.Dpapi.Encrypt, Persistence.Dpapi.Decrypt,
+            id => _usage.TryGetValue(id, out var u) ? (u.Utilization, u.ResetsAtUnix) : ((double, long)?)null);
 
-    public bool HasApiKey(string id) => !string.IsNullOrWhiteSpace(Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault(id, "")));
-    public bool AutoApiOnLimit(string id) => _engineAutoApi.GetValueOrDefault(id);
-    /// <summary>한도 소진 상태인가 — 사용량 ~100% 또는 실제 rate-limit 실패(리셋 전).</summary>
-    public bool IsEngineLimited(string id)
-    {
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        if (_engineLimitedUntil.TryGetValue(id, out var until) && until > now) return true;
-        if (_usage.TryGetValue(id, out var s) && s.Utilization >= 0.999 && s.ResetsAtUnix > now) return true;
-        return false;
-    }
-    /// <summary>소진 시 API로 자동 전환되어 계속 사용 가능한가(토글 ON + 키 보유).</summary>
-    public bool WillUseApiOnLimit(string id) => AutoApiOnLimit(id) && HasApiKey(id);
-    /// <summary>rate-limit 실제 실패를 기록 — 리셋 시각(모르면 +1h)까지 소진 처리.</summary>
-    public void MarkRateLimited(string id, long resetUnix)
-    {
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        _engineLimitedUntil[id] = resetUnix > now ? resetUnix : now + 3600;
-    }
-
-    /// <summary>엔진의 API 키 env 변수명 (cc/gx/agy). agy(API 모드)는 GEMINI_API_KEY로 SDK를 구동한다. 없으면 null.</summary>
-    private static string? ApiEnvVar(string id) => CoreHelpers.ApiEnvVar(id);
-    /// <summary>실행 시 주입할 env: api 모드 + 키 있음 → { 변수명: 복호화키 }.</summary>
-    private IReadOnlyDictionary<string, string> ApiEnvFor(string id)
-    {
-        if (ApiEnvVar(id) is not { } var) return EmptyEnv;
-        // 명시적 API 모드 OR (한도 소진 + 자동전환 ON + 키 보유) → API 키 주입
-        var useApi = _engineAuthMode.GetValueOrDefault(id, "subscription") == "api"
-                     || (IsEngineLimited(id) && WillUseApiOnLimit(id));
-        if (!useApi) return EmptyEnv;
-        var key = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault(id, ""));
-        return string.IsNullOrWhiteSpace(key) ? EmptyEnv : new Dictionary<string, string> { [var] = key };
-    }
-    private static readonly Dictionary<string, string> EmptyEnv = new();
-    private void SaveEngineAuth(string id, string mode, string plainKey)
-    {
-        _engineAuthMode[id] = mode == "api" ? "api" : "subscription";
-        if (!string.IsNullOrWhiteSpace(plainKey))
-            _engineApiKey[id] = Persistence.Dpapi.Encrypt(plainKey.Trim());
-        else
-            _engineApiKey.Remove(id);
-    }
+    public bool HasApiKey(string id) => _engineAuth.HasApiKey(id);
+    public bool AutoApiOnLimit(string id) => _engineAuth.AutoApiOnLimit(id);
+    public bool IsEngineLimited(string id) => _engineAuth.IsEngineLimited(id);
+    public bool WillUseApiOnLimit(string id) => _engineAuth.WillUseApiOnLimit(id);
+    public void MarkRateLimited(string id, long resetUnix) => _engineAuth.MarkRateLimited(id, resetUnix);
+    private IReadOnlyDictionary<string, string> ApiEnvFor(string id) => _engineAuth.ApiEnvFor(id);
+    private void SaveEngineAuth(string id, string mode, string plainKey) => _engineAuth.SaveEngineAuth(id, mode, plainKey);
     public string SettingsAuthCc { get => _settingsAuthCc; set => Set(ref _settingsAuthCc, value); }
     private string _settingsAuthCc = "subscription";
     public string SettingsApiKeyCc { get => _settingsApiKeyCc; set => Set(ref _settingsApiKeyCc, value); }
@@ -388,9 +356,7 @@ public sealed partial class AppViewModel
     /// <summary>이 엔진이 현재 API 모드로 동작해야 하는가 — 백엔드 분기(agy 어댑터 선택)의 단일 기준.
     /// 명시적 API 모드 + 키 보유, 또는 (한도 소진 + 자동전환 ON + 키 보유). cc/gx는 어댑터 내 크리덴셜만
     /// 바꾸지만 agy는 어댑터 클래스 자체를 바꾸므로 이 값이 AgyAdapter ↔ AgySdkAdapter를 결정한다.</summary>
-    public bool IsApiMode(string id)
-        => _engineAuthMode.GetValueOrDefault(id, "subscription") == "api" && HasApiKey(id)
-           || (IsEngineLimited(id) && WillUseApiOnLimit(id));
+    public bool IsApiMode(string id) => _engineAuth.IsApiMode(id);
 
     // ----- appearance: accent / zoom / telemetry -----
     private string _accent = "ember";
@@ -635,15 +601,15 @@ public sealed partial class AppViewModel
         SettingsEngineGx = !_disabledEngines.Contains("gx");
         SettingsEngineAgy = !_disabledEngines.Contains("agy");
         SettingsEnginePi = !_disabledEngines.Contains("pi");
-        SettingsAuthCc = _engineAuthMode.GetValueOrDefault("cc", "subscription");
-        SettingsAuthGx = _engineAuthMode.GetValueOrDefault("gx", "subscription");
-        SettingsAuthAgy = _engineAuthMode.GetValueOrDefault("agy", "subscription");
-        SettingsAutoApiCc = _engineAutoApi.GetValueOrDefault("cc");
-        SettingsAutoApiGx = _engineAutoApi.GetValueOrDefault("gx");
-        SettingsAutoApiAgy = _engineAutoApi.GetValueOrDefault("agy");
-        SettingsApiKeyCc = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("cc", ""));
-        SettingsApiKeyGx = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("gx", ""));
-        SettingsApiKeyAgy = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("agy", ""));
+        SettingsAuthCc = _engineAuth.GetAuthMode("cc");
+        SettingsAuthGx = _engineAuth.GetAuthMode("gx");
+        SettingsAuthAgy = _engineAuth.GetAuthMode("agy");
+        SettingsAutoApiCc = _engineAuth.GetAutoApi("cc");
+        SettingsAutoApiGx = _engineAuth.GetAutoApi("gx");
+        SettingsAutoApiAgy = _engineAuth.GetAutoApi("agy");
+        SettingsApiKeyCc = _engineAuth.GetApiKeyPlain("cc");
+        SettingsApiKeyGx = _engineAuth.GetApiKeyPlain("gx");
+        SettingsApiKeyAgy = _engineAuth.GetApiKeyPlain("agy");
         RefreshDetectLabels(); // CLI 경로 감지 라벨 + 로그인 계정 표시 갱신
     }
 
@@ -714,9 +680,9 @@ public sealed partial class AppViewModel
         SaveEngineAuth("cc", SettingsAuthCc, SettingsApiKeyCc);
         SaveEngineAuth("gx", SettingsAuthGx, SettingsApiKeyGx);
         SaveEngineAuth("agy", SettingsAuthAgy, SettingsApiKeyAgy);
-        _engineAutoApi["cc"] = SettingsAutoApiCc;
-        _engineAutoApi["gx"] = SettingsAutoApiGx;
-        _engineAutoApi["agy"] = SettingsAutoApiAgy;
+        _engineAuth.SetAutoApi("cc", SettingsAutoApiCc);
+        _engineAuth.SetAutoApi("gx", SettingsAutoApiGx);
+        _engineAuth.SetAutoApi("agy", SettingsAutoApiAgy);
         _theme = Theme.ThemePalette.Normalize(SettingsTheme); // 테마는 이미 라이브 적용됨
         var newLanguage = SettingsLanguage == "en" ? "en" : "ko";
         var languageChanged = newLanguage != _language;
