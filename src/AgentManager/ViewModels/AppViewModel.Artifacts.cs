@@ -10,6 +10,7 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -18,21 +19,9 @@ public sealed partial class AppViewModel
 {
     // ----- artifacts (light): derived from events, no extra engine calls -----
 
-    private static string? ExtractCommand(ToolUseStarted u)
-    {
-        if (u.Name is not ("Bash" or "shell")) return null;
-        try
-        {
-            using var doc = System.Text.Json.JsonDocument.Parse(u.InputJson);
-            return doc.RootElement.TryGetProperty("command", out var c) ? c.GetString() : null;
-        }
-        catch { return null; }
-    }
+    private static string? ExtractCommand(ToolUseStarted u) => CoreHelpers.ExtractCommand(u);
 
-    private static bool IsTestCommand(string cmd) =>
-        System.Text.RegularExpressions.Regex.IsMatch(cmd,
-            @"\b(dotnet\s+test|npm\s+(run\s+)?test|pytest|vitest|jest|mocha|cargo\s+test|go\s+test)\b",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    private static bool IsTestCommand(string cmd) => CoreHelpers.IsTestCommand(cmd);
 
     private static ArtifactViewModel GetOrAddArtifact(SessionViewModel s, string kind, string title)
     {
@@ -106,53 +95,16 @@ public sealed partial class AppViewModel
 
     /// <summary>엔진들이 stderr로 흘리는 무해한 안내/경고 — 에러 블록으로 띄우지 않는다.
     /// 진짜 실패는 정규화 이벤트(result/turn.failed/error)로 따로 들어온다.</summary>
-    private static bool IsBenignStderr(string m) =>
-        m.Contains("Reading additional input")            // codex exec 안내
-        || m.Contains("YOLO mode is enabled")             // gemini 승인모드 안내
-        || m.Contains("256-color support")                // gemini 터미널 경고
-        || m.Contains("Ripgrep is not available")         // gemini 폴백 안내
-        || m.Contains("Retrying after")                   // gemini 일시 쿼터 재시도
-        || m.Contains("AttachConsole failed")             // gemini node-pty 무해 오류 (실행엔 영향 없음 실측)
-        || m.Contains("node-pty") || m.Contains("conpty_console_list")
-        || m.Contains("node:internal/") || m.StartsWith("Node.js v")
-        || m.TrimStart().StartsWith("at ") || m.Trim() == "^"
-        || m.Contains("var consoleProcessList")
-        // pi(node)를 턴 종료 후 강제 kill할 때 libuv가 정리 중 내는 무해한 teardown assertion —
-        // 워커 출력은 이미 그 전에 생성됨(작업은 성공). 빨간 에러로 띄우지 않는다.
-        || m.Contains("UV_HANDLE_CLOSING");
+    private static bool IsBenignStderr(string m) => CoreHelpers.IsBenignStderr(m);
 
-    private static string KindOf(string name) => name switch
-    {
-        "Read" or "Glob" or "Grep" or "LS" => "READ",
-        "Edit" or "MultiEdit" or "Write" => "EDIT",
-        _ => "RUN",
-    };
+    private static string KindOf(string name) => CoreHelpers.KindOf(name);
 
-    private static string Trim(string s, int max) => s.Length > max ? s[..max] + "…" : s;
+    private static string Trim(string s, int max) => CoreHelpers.Trim(s, max);
 
-    private static string Slug(string s)
-    {
-        var chars = s.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray();
-        var slug = new string(chars);
-        while (slug.Contains("--")) slug = slug.Replace("--", "-");
-        return slug.Trim('-')[..Math.Min(28, slug.Trim('-').Length)].TrimEnd('-');
-    }
+    private static string Slug(string s) => CoreHelpers.Slug(s);
 
-    private static string FindRepoRoot()
-    {
-        var dir = AppContext.BaseDirectory;
-        for (var d = new DirectoryInfo(dir); d is not null; d = d.Parent)
-            if (Directory.Exists(Path.Combine(d.FullName, ".git")))
-                return d.FullName;
-        return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-    }
+    private static string FindRepoRoot() => CoreHelpers.FindRepoRoot();
 
     private static OllamaTranslator CreateTranslator(string endpoint, string model, string sourceLang = "Korean", string targetLang = "English") =>
-        new(new OllamaOptions
-        {
-            Endpoint = string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:11434" : endpoint.Trim(),
-            Model = string.IsNullOrWhiteSpace(model) ? "exaone3.5:7.8b" : model.Trim(),
-            SourceLanguage = string.IsNullOrWhiteSpace(sourceLang) ? "Korean" : sourceLang.Trim(),
-            TargetLanguage = string.IsNullOrWhiteSpace(targetLang) ? "English" : targetLang.Trim(),
-        });
+        CoreHelpers.CreateTranslator(endpoint, model, sourceLang, targetLang);
 }

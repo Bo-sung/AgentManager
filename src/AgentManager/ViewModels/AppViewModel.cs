@@ -10,6 +10,7 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -296,36 +297,12 @@ public sealed partial class AppViewModel : ObservableObject
     }
 
     /// <summary>PATH에서 bare 실행파일(wt.exe 등)의 전체 경로를 찾는다. 없으면 null.</summary>
-    private static string? TryResolveOnPath(string name)
-    {
-        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
-        {
-            try { var full = Path.Combine(dir.Trim(), name); if (File.Exists(full)) return full; } catch { }
-        }
-        return null;
-    }
+    private static string? TryResolveOnPath(string name) => CoreHelpers.TryResolveOnPath(name);
 
     /// <summary>Windows 인자용 quoting (공백 포함 시 큰따옴표, 내부 따옴표는 백슬래시 이스케이프).</summary>
-    private static string Quote(string s) =>
-        s.Contains(' ') || s.Contains('\t') ? "\"" + s.Replace("\"", "\\\"") + "\"" : s;
+    private static string Quote(string s) => CoreHelpers.Quote(s);
 
-    private static string? FindVsCodeCli()
-    {
-        string[] candidates =
-        [
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Microsoft VS Code", "bin", "code.cmd"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft VS Code", "bin", "code.cmd"),
-        ];
-        foreach (var c in candidates)
-            if (File.Exists(c)) return c;
-        // PATH lookup (covers custom installs)
-        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var p = Path.Combine(dir.Trim(), "code.cmd");
-            try { if (File.Exists(p)) return p; } catch { }
-        }
-        return null;
-    }
+    private static string? FindVsCodeCli() => CoreHelpers.FindVsCodeCli();
 
     /// <summary>Attention signal for the View (taskbar flash/sound when the window is unfocused).
     /// Reasons: "approval" (input needed now), "done", "error".</summary>

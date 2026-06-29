@@ -11,6 +11,7 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -346,14 +347,7 @@ public sealed partial class AppViewModel
     }
 
     /// <summary>에러 메시지가 rate-limit/사용량 한도로 보이는가(소진 기록 트리거).</summary>
-    private static bool LooksRateLimited(string? msg)
-    {
-        if (string.IsNullOrEmpty(msg)) return false;
-        var m = msg.ToLowerInvariant();
-        return m.Contains("rate limit") || m.Contains("rate_limit") || m.Contains("ratelimit")
-            || m.Contains("usage limit") || m.Contains("quota") || m.Contains("429")
-            || m.Contains("too many requests") || m.Contains("limit reached") || m.Contains("limit exceeded");
-    }
+    private static bool LooksRateLimited(string? msg) => CoreHelpers.LooksRateLimited(msg);
 
     private static string? NativeHookSpoolDirectoryFor(SessionViewModel s)
     {

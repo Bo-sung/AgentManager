@@ -10,6 +10,7 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -239,17 +240,7 @@ public sealed partial class AppViewModel
     }
 
     /// <summary>/usage 응답 텍스트에서 세션·주간 사용 비율(0~1)을 추출. 못 찾으면 -1.</summary>
-    private static (double session, double week) ParseUsageText(string text)
-    {
-        double s = -1, w = -1;
-        var ms = System.Text.RegularExpressions.Regex.Match(text, @"session[^0-9]*(\d+)\s*%\s*used",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        if (ms.Success) s = int.Parse(ms.Groups[1].Value) / 100.0;
-        var mw = System.Text.RegularExpressions.Regex.Match(text, @"week[^0-9]*(\d+)\s*%\s*used",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        if (mw.Success) w = int.Parse(mw.Groups[1].Value) / 100.0;
-        return (s, w);
-    }
+    private static (double session, double week) ParseUsageText(string text) => CoreHelpers.ParseUsageText(text);
 
 }
 

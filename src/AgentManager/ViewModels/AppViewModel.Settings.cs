@@ -10,6 +10,7 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -343,13 +344,7 @@ public sealed partial class AppViewModel
     }
 
     /// <summary>엔진의 API 키 env 변수명 (cc/gx/agy). agy(API 모드)는 GEMINI_API_KEY로 SDK를 구동한다. 없으면 null.</summary>
-    private static string? ApiEnvVar(string id) => id switch
-    {
-        "cc" => "ANTHROPIC_API_KEY",
-        "gx" => "OPENAI_API_KEY",
-        "agy" => "GEMINI_API_KEY",   // Antigravity SDK 인증 (API 모드)
-        _ => null,
-    };
+    private static string? ApiEnvVar(string id) => CoreHelpers.ApiEnvVar(id);
     /// <summary>실행 시 주입할 env: api 모드 + 키 있음 → { 변수명: 복호화키 }.</summary>
     private IReadOnlyDictionary<string, string> ApiEnvFor(string id)
     {
@@ -479,12 +474,7 @@ public sealed partial class AppViewModel
     public bool SettingsTelemetry { get => _settingsTelemetry; set => Set(ref _settingsTelemetry, value); }
     private bool _settingsTelemetry;
 
-    private static (bool requireApproval, SandboxMode sandbox) PolicyToSession(string policy) => policy switch
-    {
-        "ask" => (true, SandboxMode.ReadOnly),
-        "safe" => (false, SandboxMode.WorkspaceWrite),
-        _ => (false, SandboxMode.DangerFullAccess), // yolo
-    };
+    private static (bool requireApproval, SandboxMode sandbox) PolicyToSession(string policy) => CoreHelpers.PolicyToSession(policy);
 
     // provider detection status (settings panel)
     /// <summary>엔진의 CLI를 프로젝트 경로의 새 터미널로 열어 사용자가 직접 로그인하게 한다
@@ -739,15 +729,15 @@ public sealed partial class AppViewModel
         SaveState();
     }
 
-    private static string Clean(string value) => value.Trim().Trim('"');
+    private static string Clean(string value) => CoreHelpers.Clean(value);
 
     /// <summary>번역 언어 값을 선택지(영어 표기)로 정규화. 미상이면 기본값.</summary>
     private string NormalizeTranslationLang(string? value, string fallback)
     {
-        var v = (value ?? "").Trim();
-        return AvailableTranslationLanguages.Any(l => string.Equals(l.Id, v, StringComparison.OrdinalIgnoreCase))
-            ? AvailableTranslationLanguages.First(l => string.Equals(l.Id, v, StringComparison.OrdinalIgnoreCase)).Id
-            : fallback;
+        return CoreHelpers.NormalizeTranslationLang(
+            value,
+            fallback,
+            AvailableTranslationLanguages.Select(l => l.Id));
     }
 
 }
