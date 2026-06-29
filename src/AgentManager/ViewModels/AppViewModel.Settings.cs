@@ -143,8 +143,8 @@ public sealed partial class AppViewModel
     private string _language = "ko";
 
     // ----- 번역 언어 쌍 (번역 전 = 사용자 언어, 번역 후 = 엔진 전달 언어) -----
-    private string _translateSource = "Korean";
-    private string _translateTarget = "English";
+    private string _translateSource { get => _settings.TranslateSourceLanguage; set => _settings.TranslateSourceLanguage = value; }
+    private string _translateTarget { get => _settings.TranslateTargetLanguage; set => _settings.TranslateTargetLanguage = value; }
     private string _settingsTranslateSource = "Korean";
     /// <summary>번역 전 언어(사용자 입력·표시). Id = 프롬프트용 영어 표기.</summary>
     public string SettingsTranslateSource { get => _settingsTranslateSource; set => Set(ref _settingsTranslateSource, value); }

@@ -12,4 +12,10 @@ public sealed class SettingsService
     public string CodexPath { get; set; } = "";
     public string AgyPath { get; set; } = "";
     public string PiPath { get; set; } = "";
+
+    // ----- local translation (Ollama) + language pair -----
+    public string OllamaEndpoint { get; set; } = "http://localhost:11434";
+    public string OllamaModel { get; set; } = "exaone3.5:7.8b";
+    public string TranslateSourceLanguage { get; set; } = "Korean";
+    public string TranslateTargetLanguage { get; set; } = "English";
 }
