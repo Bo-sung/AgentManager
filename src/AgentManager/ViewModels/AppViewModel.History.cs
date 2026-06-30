@@ -207,7 +207,11 @@ public sealed partial class AppViewModel
             entry = entries.Where(e => string.Equals(e.EngineId, s.AgentId, StringComparison.OrdinalIgnoreCase))
                            .OrderByDescending(e => e.LastWriteUtc).FirstOrDefault();
             if (entry is null) { s.Transcript.Add(new WorkingBlock(L("L.ResyncNotFound"))); return; }
-            history = await Task.Run(() => CliSessionDiscovery.LoadTranscript(entry.EngineId, entry.FilePath));
+            // Load the WHOLE conversation, then keep the recent tail: the terminal's new turns are at the
+            // END, but LoadTranscript's default cap reads from the TOP, so a long conversation would show
+            // its old start and cut off exactly the terminal work the user wants to see.
+            var all = await Task.Run(() => CliSessionDiscovery.LoadTranscript(entry.EngineId, entry.FilePath, maxItems: int.MaxValue));
+            history = all.Count > 400 ? all.GetRange(all.Count - 400, 400) : all;
         }
         catch (Exception ex) { s.Transcript.Add(new ErrorBlock(L("L.ResyncFailed"), ex.Message)); return; }
         if (history.Count == 0) { s.Transcript.Add(new WorkingBlock(L("L.ResyncNotFound"))); return; }
