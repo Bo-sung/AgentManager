@@ -106,13 +106,26 @@ public sealed class SessionViewModel : ObservableObject
     private string _reasoningEffort = "";
     public string ReasoningEffort { get => _reasoningEffort; set => Set(ref _reasoningEffort, value); }
 
+    /// <summary>The worktree's live current branch, read from git after each review refresh — the agent
+    /// may switch/create a branch, and the creation-time <see cref="Branch"/> would then be stale. Null
+    /// until first read; displays fall back to <see cref="Branch"/>.</summary>
+    private string? _currentBranch;
+    public string? CurrentBranch
+    {
+        get => _currentBranch;
+        set { if (Set(ref _currentBranch, value)) { OnChanged(nameof(EffectiveBranch)); OnChanged(nameof(BranchTail)); OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); } }
+    }
+
+    /// <summary>The branch to show: the live git branch when known, else the creation branch.</summary>
+    public string EffectiveBranch => string.IsNullOrEmpty(_currentBranch) ? Branch : _currentBranch!;
+
     /// <summary>Last segment of the branch, e.g. "agent/foo-bar" → "foo-bar" (composer pill).</summary>
-    public string BranchTail => Branch.Contains('/') ? Branch[(Branch.LastIndexOf('/') + 1)..] : Branch;
+    public string BranchTail => EffectiveBranch.Contains('/') ? EffectiveBranch[(EffectiveBranch.LastIndexOf('/') + 1)..] : EffectiveBranch;
 
     /// <summary>Branch label for list/header pills. When the user opted out of a worktree, no branch is
     /// ever created (the agent works in the project's main tree) — so showing the phantom "agent/…"
     /// name is misleading; show a "shared tree" marker instead.</summary>
-    public string BranchDisplay => WorktreeOptOut ? AgentManager.App.L("L.BranchShared") : Branch;
+    public string BranchDisplay => WorktreeOptOut ? AgentManager.App.L("L.BranchShared") : EffectiveBranch;
 
     /// <summary>Composer worktree pill: "Worktree · &lt;tail&gt;" when isolated, "main tree (shared)"
     /// when opted out (no worktree is created).</summary>

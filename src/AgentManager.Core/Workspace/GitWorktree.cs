@@ -100,6 +100,16 @@ public static class GitWorktree
     /// current branch. On failure (dirty main tree / conflict) the merge is aborted and the
     /// commit remains on the agent branch (nothing lost).
     /// </summary>
+    /// <summary>The worktree's CURRENT branch — the agent may have switched or created one after the
+    /// worktree was made. Empty string on detached HEAD or error.</summary>
+    public static async Task<string> CurrentBranchAsync(string worktreePath)
+    {
+        var r = await RunAsync(worktreePath, "rev-parse", "--abbrev-ref", "HEAD");
+        if (r.code != 0) return "";
+        var b = r.stdout.Trim();
+        return b == "HEAD" ? "" : b; // detached HEAD
+    }
+
     public static async Task<(bool ok, string message)> MergeAsync(string repoPath, string branch, string commitMessage, string worktreePath)
     {
         await RunAsync(worktreePath, "add", "-A");
@@ -111,13 +121,19 @@ public static class GitWorktree
         if (commit.code != 0)
             return (false, "commit 실패: " + (commit.stdout + commit.stderr).Trim());
 
-        var merge = await RunAsync(repoPath, "merge", "--no-ff", branch, "-m", $"Merge agent branch {branch}");
+        // Merge the worktree's ACTUAL current branch, not the name recorded at creation: if the agent
+        // switched/created a branch, the work is committed on THAT branch, so merging the stale name would
+        // silently merge nothing and lose the work.
+        var actual = await CurrentBranchAsync(worktreePath);
+        var target = string.IsNullOrEmpty(actual) ? branch : actual;
+
+        var merge = await RunAsync(repoPath, "merge", "--no-ff", target, "-m", $"Merge agent branch {target}");
         if (merge.code != 0)
         {
             await RunAsync(repoPath, "merge", "--abort");
-            return (false, "머지 실패(메인 작업트리 dirty 또는 충돌). 변경은 브랜치 '" + branch + "'에 커밋됨: " + (merge.stdout + merge.stderr).Trim());
+            return (false, "머지 실패(메인 작업트리 dirty 또는 충돌). 변경은 브랜치 '" + target + "'에 커밋됨: " + (merge.stdout + merge.stderr).Trim());
         }
-        return (true, $"'{branch}' → 메인 머지 완료");
+        return (true, $"'{target}' → 메인 머지 완료");
     }
 
     /// <summary>Files changed in the worktree vs its HEAD (includes untracked).</summary>

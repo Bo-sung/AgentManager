@@ -1528,7 +1528,19 @@ static async Task TestGitWorktreeAsync()
         var unmergedKept = !await GitWorktree.RemoveBranchAsync(tmp, "agent/unmerged");
         Assert(unmergedKept && !string.IsNullOrWhiteSpace(await Git("branch", "--list", "agent/unmerged")), "unmerged branch preserved");
 
-        Console.WriteLine("GitWorktree end-to-end OK (create/changes/diff/discard/commit-only/merge/branch-cleanup)");
+        // agent switched/created a branch in its worktree → CurrentBranch reflects it, and merge must
+        // follow the ACTUAL branch, not the stale creation name (else the work is silently lost).
+        var wt3 = await GitWorktree.CreateAsync(tmp, "s3", "agent/s3", wtRoot);
+        await Git("-C", wt3!.Path, "checkout", "-q", "-b", "agent/switched");
+        Assert(await GitWorktree.CurrentBranchAsync(wt3.Path) == "agent/switched", "CurrentBranch reflects agent switch");
+        await File.WriteAllTextAsync(Path.Combine(wt3.Path, "a.txt"), "switched-work\n");
+        var (sok, smsg) = await GitWorktree.MergeAsync(tmp, "agent/s3" /* stale name */, "agent: switched", wt3.Path);
+        Assert(sok, "merge after branch switch: " + smsg);
+        Assert((await File.ReadAllTextAsync(Path.Combine(tmp, "a.txt"))).StartsWith("switched-work"),
+            "merge followed the actual branch, not the stale creation name");
+        await GitWorktree.RemoveAsync(tmp, wt3.Path);
+
+        Console.WriteLine("GitWorktree end-to-end OK (create/changes/diff/discard/commit-only/merge/branch-switch/cleanup)");
     }
     finally
     {

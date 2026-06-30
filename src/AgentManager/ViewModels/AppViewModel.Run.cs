@@ -549,6 +549,7 @@ public sealed partial class AppViewModel
             s.DiffAdded = added;
             s.DiffRemoved = deleted;
             s.DiffFiles = changes.Count;
+            s.CurrentBranch = await GitWorktree.CurrentBranchAsync(s.WorktreePath); // live branch — agent may have switched/created one
             lock (_scannedSessionDiffIds)
             {
                 _scannedSessionDiffIds.Add(s.Id);
