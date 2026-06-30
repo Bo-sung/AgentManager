@@ -182,10 +182,7 @@ public sealed partial class AppViewModel : ObservableObject
         // 창을 닫을 때 진행 중인 세션을 먼저 취소해 엔진 자식 프로세스(cc/gx/ag/agy) 트리를 정리한다.
         // ct.Register(() => proc.Kill(entireProcessTree: true))가 걸려 있어 Cancel()이 프로세스 트리를 죽인다.
         // 비차단(non-blocking)으로 발사만 한다 — UI 스레드에서 절대 .Wait()/.Result로 막지 않는다.
-        foreach (var cts in _running.Values.ToArray())
-        {
-            try { cts.Cancel(); } catch { /* 이미 dispose된 CTS일 수 있음 */ }
-        }
+        _runs.CancelAll();
 
         _scheduler.JobDue -= Scheduler_JobDue;
         _scheduler.Dispose();
@@ -358,8 +355,9 @@ public sealed partial class AppViewModel : ObservableObject
         }
     }
 
-    // running sessions → their cancellation source (Stop)
-    private readonly Dictionary<string, CancellationTokenSource> _running = [];
+    // running sessions → their cancellation source (Stop). Owned by the Core RunRegistry so turn-loop
+    // ownership can move to Core (a closed window / CLI drives the same registry). Overhaul (a) step 5.
+    private readonly AgentManager.Core.Orchestration.RunRegistry _runs = new();
 
     // ----- commands -----
     public RelayCommand NewAgentCommand { get; }
@@ -492,7 +490,7 @@ public sealed partial class AppViewModel : ObservableObject
     public async Task DeleteSessionAsync(SessionViewModel? s)
     {
         if (s is null) return;
-        if (_running.TryGetValue(s.Id, out var cts)) { try { cts.Cancel(); } catch { } }
+        _runs.Cancel(s.Id);
         if (s.WorktreePath is not null)
         {
             await GitWorktree.RemoveAsync(s.ProjectPath, s.WorktreePath);
@@ -561,10 +559,7 @@ public sealed partial class AppViewModel : ObservableObject
 
         foreach (var s in sessionsToRemove)
         {
-            if (_running.TryGetValue(s.Id, out var cts))
-            {
-                try { cts.Cancel(); } catch { }
-            }
+            _runs.Cancel(s.Id);
             s.PropertyChanged -= SessionStatusWatch;
             _allSessions.Remove(s);
         }
@@ -584,10 +579,8 @@ public sealed partial class AppViewModel : ObservableObject
 
     private void StopActive()
     {
-        if (ActiveSession is { } s && _running.TryGetValue(s.Id, out var cts))
-        {
-            try { cts.Cancel(); } catch { }
-        }
+        if (ActiveSession is { } s)
+            _runs.Cancel(s.Id);
     }
 
     public string PersistencePath => AppStateStore.StatePath;

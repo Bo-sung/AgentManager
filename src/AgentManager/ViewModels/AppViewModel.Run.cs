@@ -198,7 +198,7 @@ public sealed partial class AppViewModel
     {
         // concurrency cap: 워커와 일반 세션은 별도 cap을 소비(워커 위임이 메인 슬롯을 굶기지 않도록)
         var cap = s.IsWorker ? MaxConcurrentWorkers : MaxConcurrentSessions;
-        var runningSameKind = _allSessions.Count(x => x.IsWorker == s.IsWorker && _running.ContainsKey(x.Id));
+        var runningSameKind = _allSessions.Count(x => x.IsWorker == s.IsWorker && _runs.IsRunning(x.Id));
         if (runningSameKind >= cap)
         {
             s.Transcript.Add(new ErrorBlock(L("L.ConcurrentLimitErrorTitle"),
@@ -287,15 +287,14 @@ public sealed partial class AppViewModel
             TaskSpoolDir: Path.Combine(cwd, ".am", "worker-tasks", s.Id),
             AskSpoolDir: Path.Combine(cwd, ".am", "ask", s.Id),
             NativeHookSpoolDirectory: NativeHookSpoolDirectoryFor(s)));
-        var cts = new CancellationTokenSource();
-        _running[s.Id] = cts;
+        var token = _runs.Start(s.Id);
         try
         {
             s.NativeWorkItems.Clear();
             ClearNativeHookSpool(options.NativeHookSpoolDirectory);
             await StartNativeObserverAsync(s, options);
             s.Activity = s.TranslationEnabled ? L("L.TranslatingStartingEngine") : L("L.StartingEngine");
-            await Task.Run(() => session.RunAsync(options, prompt, cts.Token), cts.Token);
+            await Task.Run(() => session.RunAsync(options, prompt, token), token);
             if (s.Status == "running") s.Status = "done";
             if (s.Status == "done") s.MarkRunEnded(L("L.Completed"));
         }
@@ -320,8 +319,7 @@ public sealed partial class AppViewModel
             ExpirePendingApprovals(s);
             await RefreshReviewAsync(s);
             SaveState();
-            _running.Remove(s.Id);
-            cts.Dispose();
+            _runs.Complete(s.Id);
         }
     }
 

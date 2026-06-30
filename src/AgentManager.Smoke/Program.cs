@@ -1381,6 +1381,7 @@ static void AssertAgySdkAdapter()
 await TestGitWorktreeAsync();
 ProjectStoreCheck();
 TranscriptProjectorCheck();
+RunRegistryCheck();
 Console.WriteLine("smoke OK");
 
 static void AssertPermissionResponse()
@@ -1879,6 +1880,34 @@ static void TranscriptProjectorCheck()
         && start.Any(x => x is ActivitySignal { Kind: ActivityKind.ConnectedModel }), "projector: agy session start");
 
     Console.WriteLine("TranscriptProjector golden asserts OK");
+}
+
+static void RunRegistryCheck()
+{
+    var reg = new RunRegistry();
+    Assert(!reg.IsRunning("a") && reg.Count == 0, "registry: empty");
+
+    var tokenA = reg.Start("a");
+    var tokenB = reg.Start("b");
+    Assert(reg.IsRunning("a") && reg.IsRunning("b") && reg.Count == 2, "registry: two running");
+    Assert(!tokenA.IsCancellationRequested, "registry: token not pre-cancelled");
+
+    reg.Cancel("a");
+    Assert(tokenA.IsCancellationRequested, "registry: cancel fires the token");
+    Assert(!tokenB.IsCancellationRequested, "registry: cancel is per-session");
+    Assert(reg.IsRunning("a"), "registry: cancel does not remove (Complete does)");
+
+    reg.Complete("a");
+    Assert(!reg.IsRunning("a") && reg.Count == 1, "registry: complete removes");
+
+    // Start replaces a stale prior (disposes it) — defensive; the normal flow Completes first.
+    var tokenB2 = reg.Start("b");
+    Assert(!tokenB2.IsCancellationRequested && reg.Count == 1, "registry: restart replaces");
+
+    reg.CancelAll();
+    Assert(tokenB2.IsCancellationRequested, "registry: cancel-all fires every token");
+
+    Console.WriteLine("RunRegistry asserts OK");
 }
 
 static void Assert(bool condition, string message)

@@ -310,7 +310,7 @@ public sealed partial class AppViewModel
 
                 // Respect the global worker cap: RunTurnAsync rejects (does not wait) once the cap is
                 // reached, which would falsely mark this task failed. Leave it assigned to run later.
-                if (_allSessions.Count(x => x.IsWorker && _running.ContainsKey(x.Id)) >= MaxConcurrentWorkers) break;
+                if (_allSessions.Count(x => x.IsWorker && _runs.IsRunning(x.Id)) >= MaxConcurrentWorkers) break;
 
                 _taskStore.SetStatus(next.Id, WorkerTaskStatus.Running);
                 var before = worker.Transcript.OfType<AgentTextBlock>().Count();
