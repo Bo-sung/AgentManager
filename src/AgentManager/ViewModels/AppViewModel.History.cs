@@ -197,10 +197,15 @@ public sealed partial class AppViewModel
         if (s is null || string.IsNullOrEmpty(s.EngineSessionId)) return;
         var cwd = !string.IsNullOrWhiteSpace(s.WorktreePath) ? s.WorktreePath! : s.ProjectPath;
         List<CliSessionDiscovery.CliTranscriptItem> history;
+        CliHistoryEntry? entry;
         try
         {
             var entries = await Task.Run(() => CliSessionDiscovery.Discover(cwd));
-            var entry = entries.FirstOrDefault(e => string.Equals(e.SessionId, s.EngineSessionId, StringComparison.OrdinalIgnoreCase));
+            // Prefer the MOST RECENT conversation for this cwd+engine, not the originally-recorded id: a
+            // terminal `claude --resume` continues into a NEW session file (new id), so matching the old id
+            // misses the terminal's new turns. The newest file for this cwd is what the terminal just wrote.
+            entry = entries.Where(e => string.Equals(e.EngineId, s.AgentId, StringComparison.OrdinalIgnoreCase))
+                           .OrderByDescending(e => e.LastWriteUtc).FirstOrDefault();
             if (entry is null) { s.Transcript.Add(new WorkingBlock(L("L.ResyncNotFound"))); return; }
             history = await Task.Run(() => CliSessionDiscovery.LoadTranscript(entry.EngineId, entry.FilePath));
         }
@@ -221,6 +226,9 @@ public sealed partial class AppViewModel
             s.Transcript.Add(block);
             i++;
         }
+        // Follow the continuation: adopt the newest conversation id so future resume/resync chains forward.
+        if (!string.Equals(entry.SessionId, s.EngineSessionId, StringComparison.OrdinalIgnoreCase))
+            s.EngineSessionId = entry.SessionId;
         s.Transcript.Add(new WorkingBlock(L("L.ResyncDone")));
         SaveState();
     }
