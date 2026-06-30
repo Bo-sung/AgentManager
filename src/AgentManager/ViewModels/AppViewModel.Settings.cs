@@ -236,12 +236,12 @@ public sealed partial class AppViewModel
             return _piCatalog.Count > 0 ? [.. _piCatalog] : EngineModels("pi");
         }
         var all = EngineModels(id);
-        if (pref is { Count: > 0 })
-        {
-            var picked = all.Where(pref.Contains).ToArray();   // 정적 목록 순서 보존
-            if (picked.Length > 0) return picked;
-        }
-        return all;
+        if (pref is not { Count: > 0 }) return all;
+        // custom = 사용자가 설정에서 추가한 세부 버전(정적 별칭 목록에 없는 것) → 항상 드롭다운에 더한다.
+        var custom = pref.Where(m => !all.Contains(m)).OrderBy(m => m, StringComparer.OrdinalIgnoreCase).ToArray();
+        var picked = all.Where(pref.Contains).ToArray();       // 정적 중 명시 선택(필터); 없으면 별칭 전부 유지
+        var staticPart = picked.Length > 0 ? picked : all;
+        return custom.Length > 0 ? [.. staticPart, .. custom] : staticPart;
     }
 
     // pi: 동적 모델 카탈로그(`pi --list-models`) + 연동 provider.

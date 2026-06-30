@@ -536,4 +536,6 @@
     <sys:String x:Key="L.ResyncDone">↻ Resynced from the engine's conversation</sys:String>
     <sys:String x:Key="L.ResyncNotFound">No engine conversation found to resync (run a turn or continue it in a terminal first)</sys:String>
     <sys:String x:Key="L.ResyncFailed">Transcript resync failed</sys:String>
+    <sys:String x:Key="L.AddModel">Add</sys:String>
+    <sys:String x:Key="L.AddModelHint">Add a specific version (e.g. claude-opus-4-6) — aliases like 'sonnet' auto-track the latest</sys:String>
 </ResourceDictionary>

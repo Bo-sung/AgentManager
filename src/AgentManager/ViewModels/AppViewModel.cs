@@ -822,10 +822,10 @@ public sealed partial class AppViewModel : ObservableObject
         var project = ActiveProject ?? Projects.FirstOrDefault();
         if (project is null) return;
         var engine = NewAgentSelectedEngine ?? Engines.FirstOrDefault() ?? AllEngines[0];
-        // 모달에서 고른 모델 우선 (유효할 때), 없으면 엔진 기본
-        // pi는 멀티 provider라 동적 모델("provider/id")을 자유 허용; 그 외는 엔진 정적 목록으로 검증.
-        var model = !string.IsNullOrWhiteSpace(NewAgentModel) && (engine.Id == "pi" || Array.IndexOf(engine.Models, NewAgentModel) >= 0)
-            ? NewAgentModel
+        // 모델은 자유 입력(편집 가능 콤보): 별칭(sonnet)·풀네임·새 모델 전부 그대로 통과 — 정적 목록에
+        // 가두지 않는다(새 모델마다 패치 불필요). 잘못된 값이면 엔진이 런타임에 에러로 알려준다.
+        var model = !string.IsNullOrWhiteSpace(NewAgentModel)
+            ? NewAgentModel.Trim()
             : (DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0]);
 
         // 워커로 생성: 작업 대기 풀에 추가만 하고 자동 실행하지 않음(작업 할당 시 구동).
