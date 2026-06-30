@@ -289,6 +289,19 @@ public sealed partial class AppViewModel
             TaskSpoolDir: Path.Combine(cwd, ".am", "worker-tasks", s.Id),
             AskSpoolDir: Path.Combine(cwd, ".am", "ask", s.Id),
             NativeHookSpoolDirectory: NativeHookSpoolDirectoryFor(s)));
+
+        // gx/agy는 프롬프트를 명령행 인자로 받아 ~32K 한도를 넘기면 실행 자체가 실패한다 → 큰 프롬프트는
+        // 파일로 빼고 짧은 참조만 전달. cc/pi는 stdin이라 인라인 유지(대형도 빠름 — init-ack 이후 전송).
+        var sendPrompt = prompt;
+        if (s.AgentId is "gx" or "agy")
+        {
+            var (offloaded, promptFile) = Attachments.OffloadLargePrompt(prompt, cwd);
+            if (promptFile is not null)
+            {
+                sendPrompt = offloaded;
+                s.Transcript.Add(new WorkingBlock(L("L.LargePromptOffloaded", Path.GetFileName(promptFile))));
+            }
+        }
         var token = _runs.Start(s.Id);
         try
         {
@@ -296,7 +309,7 @@ public sealed partial class AppViewModel
             ClearNativeHookSpool(options.NativeHookSpoolDirectory);
             await StartNativeObserverAsync(s, options);
             s.Activity = s.TranslationEnabled ? L("L.TranslatingStartingEngine") : L("L.StartingEngine");
-            await Task.Run(() => session.RunAsync(options, prompt, token), token);
+            await Task.Run(() => session.RunAsync(options, sendPrompt, token), token);
             if (s.Status == "running") s.Status = "done";
             if (s.Status == "done") s.MarkRunEnded(L("L.Completed"));
         }
