@@ -1378,6 +1378,7 @@ static void AssertAgySdkAdapter()
     Console.WriteLine("antigravity sdk adapter asserts OK");
 }
 await TestGitWorktreeAsync();
+ProjectStoreCheck();
 Console.WriteLine("smoke OK");
 
 static void AssertPermissionResponse()
@@ -1784,6 +1785,48 @@ static void JsonWriteAtomicCheck()
     }
     Console.WriteLine($"[json-write-atomic] {(ok ? "PASS" : "FAIL")}");
     Environment.Exit(ok ? 0 : 1);
+}
+
+// Core ProjectStore<T> (overhaul step 3): coalescing debounce → one write; synchronous Flush; the
+// no-dispatcher path flushes without a tick; write failure surfaces via report(false).
+static void ProjectStoreCheck()
+{
+    var debounce = TimeSpan.FromMilliseconds(60);
+    var maxLat = TimeSpan.FromMilliseconds(400);
+
+    // (1) debounce coalescing: rapid Saves within the window collapse to a single write.
+    var writes1 = 0; var report1 = false;
+    var store = new AgentManager.Core.Persistence.ProjectStore<int>(
+        build: () => 1,
+        write: _ => { System.Threading.Interlocked.Increment(ref writes1); return true; },
+        postToOwner: a => a(),
+        report: ok => report1 = ok,
+        logError: (_, _) => { },
+        canDebounce: () => true,
+        debounce: debounce, maxLatency: maxLat);
+    for (var i = 0; i < 6; i++) store.Save();
+    System.Threading.Thread.Sleep(220);   // > debounce + background write
+    Assert(System.Threading.Volatile.Read(ref writes1) == 1, $"ProjectStore coalesce: expected 1 write, got {writes1}");
+    Assert(report1, "ProjectStore coalesce: success not reported");
+
+    // (2) synchronous Flush writes immediately (inline, same thread).
+    store.Flush(synchronousWrite: true);
+    Assert(System.Threading.Volatile.Read(ref writes1) == 2, $"ProjectStore sync flush: expected 2, got {writes1}");
+    store.Dispose();
+
+    // (3) no dispatcher → immediate flush (no tick); a failing write reports false.
+    var writes2 = 0; bool? report2 = null;
+    var store2 = new AgentManager.Core.Persistence.ProjectStore<int>(
+        () => 1, _ => { System.Threading.Interlocked.Increment(ref writes2); return false; },
+        a => a(), ok => report2 = ok, (_, _) => { }, () => false /* no dispatcher */,
+        debounce, maxLat);
+    store2.Save();
+    System.Threading.Thread.Sleep(150);   // background write completes
+    Assert(System.Threading.Volatile.Read(ref writes2) == 1, $"ProjectStore no-dispatcher: expected 1 write, got {writes2}");
+    Assert(report2 == false, "ProjectStore failure not reported");
+    store2.Dispose();
+
+    Console.WriteLine("ProjectStore debounce/flush asserts OK");
 }
 
 static void Assert(bool condition, string message)

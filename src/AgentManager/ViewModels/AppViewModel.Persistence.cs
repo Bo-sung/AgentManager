@@ -224,8 +224,6 @@ public sealed partial class AppViewModel
     // ----- 영속화: 디바운스(코얼레싱) + 오프-UI 쓰기 + 종료 시 강제 flush -----
     // 모든 변경마다 전체 상태를 동기 직렬화/쓰기하던 것을, 한 턴의 연속 변경을 한 번의 쓰기로 합치도록 바꾼다.
     // DTO 빌드는 반드시 UI 스레드(VM 컬렉션은 UI-affine)에서 하고, 완성된 DTO만 백그라운드 Task로 넘겨 파일에 쓴다.
-    private DispatcherTimer? _saveDebounce;
-    private DateTime _firstPendingSaveUtc; // 디바운스가 무한정 밀리지 않도록 첫 변경 시각을 캡처(최대 지연 캡)
     private static readonly TimeSpan SaveDebounce = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan SaveMaxLatency = TimeSpan.FromSeconds(1); // 활동이 있어도 ~1s 내에는 반드시 저장
 
@@ -243,68 +241,34 @@ public sealed partial class AppViewModel
         catch { }
     }
 
-    /// <summary>코얼레싱 저장 예약 — 한 턴의 연속 변경을 한 번의 쓰기로 합친다.
-    /// 디바운스 타이머를 매 변경마다 재시작하되, 첫 변경으로부터 SaveMaxLatency가 지나면 즉시 발화시켜
-    /// 변경이 계속돼도 저장이 무한정 밀리지 않게 한다.</summary>
-    private void SaveState()
+    // 영속 '메커니즘'(디바운스 타이머·빌드(UI)/쓰기(백그라운드) 분리·결과 핸드오프)은 Core ProjectStore가 소유한다.
+    // VM은 라이브 OC를 읽어 DTO를 만드는 build와, 그 불변 스냅샷을 디스크에 쓰는 write만 제공(둘 다 WPF/VM 측). overhaul (a) step 3.
+    private sealed record SaveSnapshot(AppSettingsDto Settings, AppStateDto State, List<(string Path, ProjectStateDto Dto)> ProjectStates);
+    private AgentManager.Core.Persistence.ProjectStore<SaveSnapshot>? _projectStoreBacking;
+    private AgentManager.Core.Persistence.ProjectStore<SaveSnapshot> _projectStore => _projectStoreBacking ??= new(
+        build: () => new SaveSnapshot(BuildSettingsDto(), BuildStateDto(), BuildProjectStates()),
+        write: s => WriteSnapshot(s.Settings, s.State, s.ProjectStates),
+        postToOwner: PostToOwner,
+        report: ReportSaveResult,
+        logError: LogPersistError,
+        canDebounce: () => Application.Current?.Dispatcher is not null,
+        debounce: SaveDebounce, maxLatency: SaveMaxLatency);
+
+    /// <summary>build(UI 스레드)→write(백그라운드) 핸드오프와 저장 결과 보고를 UI 스레드로 마샬. 디스패처 없으면 인라인.</summary>
+    private static void PostToOwner(Action a)
     {
         var disp = Application.Current?.Dispatcher;
-        if (disp is null) { FlushStateNow(); return; } // 디스패처 없음(테스트/종료 중) → 동기 저장
-
-        if (_saveDebounce is null)
-        {
-            _saveDebounce = new DispatcherTimer(DispatcherPriority.Background, disp) { Interval = SaveDebounce };
-            _saveDebounce.Tick += (_, _) => { _saveDebounce!.Stop(); FlushStateNow(); };
-        }
-
-        if (!_saveDebounce.IsEnabled) _firstPendingSaveUtc = DateTime.UtcNow;
-        // 최대 지연 캡 도달 시 더 미루지 않고 바로 저장
-        if (DateTime.UtcNow - _firstPendingSaveUtc >= SaveMaxLatency)
-        {
-            _saveDebounce.Stop();
-            FlushStateNow();
-            return;
-        }
-        _saveDebounce.Stop();
-        _saveDebounce.Start(); // 재시작으로 디바운스
+        if (disp is not null) disp.InvokeAsync(a);
+        else a();
     }
+
+    /// <summary>코얼레싱 저장 예약 — 한 턴의 연속 변경을 한 번의 쓰기로 합친다(디바운스 + 최대 지연 캡은 ProjectStore가 담당).</summary>
+    private void SaveState() => _projectStore.Save();
 
     /// <summary>지금 즉시 저장 — 반드시-잃으면-안-되는 경로(앱 종료 등)에서 호출. 대기 중 디바운스도 취소한다.
     /// DTO는 UI 스레드에서 빌드하고(컬렉션 접근), 종료 경로에선 백그라운드 Task가 완료 전에 죽을 수 있으므로
     /// 동기로 파일까지 쓴다.</summary>
-    internal void FlushStateNow(bool synchronousWrite = false)
-    {
-        _saveDebounce?.Stop();
-        try
-        {
-            // 설정은 settings.json으로 분리 저장(SettingsStore). 자기-쓰기로 인한 리로드는 ReloadSettingsFromDisk가 내용 비교로 무시.
-            var settings = BuildSettingsDto();
-            var state = BuildStateDto();
-            // 프로젝트 로컬 스냅샷도 UI 스레드에서 빌드(VM 컬렉션 접근) — DTO만 백그라운드로 넘긴다.
-            var projectStates = BuildProjectStates();
-            // 완성된 DTO(불변 스냅샷)는 VM 컬렉션과 무관하므로 어느 스레드에서 써도 안전하다.
-            // 종료 경로(synchronousWrite)에선 프로세스가 백그라운드 Task 완료 전에 죽을 수 있으니 동기로 끝까지 쓴다.
-            if (synchronousWrite)
-                ReportSaveResult(WriteSnapshot(settings, state, projectStates));
-            else
-            {
-                var disp = Application.Current?.Dispatcher;
-                _ = Task.Run(() =>
-                {
-                    var ok = WriteSnapshot(settings, state, projectStates);
-                    // SaveFailing is bound to the UI — flip it back on the UI thread.
-                    if (disp is not null) disp.InvokeAsync(() => ReportSaveResult(ok));
-                    else ReportSaveResult(ok);
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            // DTO 빌드 자체의 예외(드묾) — 기록만 하고 흡수. 저장 실패가 에이전트 런/UI를 끊어선 안 된다.
-            LogPersistError("BuildStateDto", ex);
-            ReportSaveResult(false);
-        }
-    }
+    internal void FlushStateNow(bool synchronousWrite = false) => _projectStore.Flush(synchronousWrite);
 
     /// <summary>완성된 DTO 스냅샷을 디스크에 쓴다. settings/state를 독립적으로 try해 한쪽 실패가 다른 쪽을 막지 않게 한다.
     /// WriteAtomic이 일시적 잠금을 재시도하고도 실패하면 그 예외가 여기서 잡혀 save-errors.log에 남는다.</summary>
