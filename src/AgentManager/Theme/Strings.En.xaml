@@ -531,4 +531,5 @@
     <sys:String x:Key="L.AttachmentCopyFailed">Failed to copy '{0}' — referencing original path (the agent may not read it)</sys:String>
     <sys:String x:Key="L.AttachmentAgyWarning">⚠ This engine (agy) may not read '{0}' directly</sys:String>
     <sys:String x:Key="L.LargePromptOffloaded">📎 Large prompt sent as a file the agent reads (this engine has a command-line size limit): {0}</sys:String>
+    <sys:String x:Key="L.SessionNameOptional">Session name (optional)</sys:String>
 </ResourceDictionary>

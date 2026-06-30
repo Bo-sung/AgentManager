@@ -840,7 +840,7 @@ public sealed partial class AppViewModel : ObservableObject
             return;
         }
 
-        var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
+        var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} session" : NewAgentTitle.Trim();
         var id = NewSessionId("s");
         var branch = UniqueBranch("agent/" + Slug(title), id);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
