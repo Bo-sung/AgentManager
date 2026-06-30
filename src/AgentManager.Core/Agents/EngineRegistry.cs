@@ -19,7 +19,7 @@ public static class EngineRegistry
         // ALIASES, not pinned full names: `claude --model sonnet|opus|haiku` resolves to the LATEST of
         // that family (verified — incl. a future Sonnet 5), so new models work with no code patch. Pinned
         // versions can still be typed (the model field is free-form). sonnet[1m] = 1M-context alias.
-        new("cc", "CC", "Claude Code",     "claude",      ["sonnet", "opus", "haiku", "sonnet[1m]"], "anthropic · cli", true, "https://docs.claude.com/en/docs/claude-code/overview"),
+        new("cc", "CC", "Claude Code",     "claude",      ["sonnet", "opus", "haiku", "sonnet[1m]", "opus[1m]"], "anthropic · cli", true, "https://docs.claude.com/en/docs/claude-code/overview"),
         new("gx", "GX", "Codex",           "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true, "https://github.com/openai/codex"),
         // Google 계열은 agy(Antigravity)로 일원화 — 구형 Gemini CLI는 제거됨.
         // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략.
