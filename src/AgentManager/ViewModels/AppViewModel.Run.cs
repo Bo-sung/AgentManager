@@ -309,7 +309,7 @@ public sealed partial class AppViewModel
         {
             // 실제 rate-limit 실패면 해당 엔진을 소진으로 기록(리셋 전까지 회색/자동전환 트리거)
             if (LooksRateLimited(ex.Message))
-                MarkRateLimited(s.AgentId, _usage.TryGetValue(s.AgentId, out var snap) ? snap.ResetsAtUnix : 0);
+                MarkRateLimited(s.AgentId, _usageService.TryGet(s.AgentId, out var snap) ? snap.ResetsAtUnix : 0);
             s.Transcript.Add(new ErrorBlock(L("L.RunFailed"), ex.Message));
             s.Status = "error";
             s.MarkRunEnded(L("L.Failed"));

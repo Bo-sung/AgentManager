@@ -11,6 +11,7 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core.Usage;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -55,9 +56,9 @@ public sealed partial class AppViewModel
         _dismissedCliSessions.Clear();
         foreach (var d in s.DismissedCliSessions ?? []) _dismissedCliSessions.Add(d);
         _engineAuth.Load(s.EngineAuthMode, s.EngineApiKey, s.EngineAutoApiOnLimit, s.EngineLimitedUntil);
-        _usage.Clear();
+        _usageService.Clear();
         foreach (var kv in s.Usage ?? new())
-            _usage[kv.Key] = new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc);
+            _usageService.Set(kv.Key, new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc));
         _theme = Theme.ThemePalette.Normalize(s.Theme);
         _language = s.Language == "en" ? "en" : "ko";
         _translateSource = NormalizeTranslationLang(s.TranslateSourceLanguage, "Korean");
@@ -104,7 +105,7 @@ public sealed partial class AppViewModel
         EngineApiKey = _engineAuth.SnapshotApiKey(),
         EngineAutoApiOnLimit = _engineAuth.SnapshotAutoApi(),
         EngineLimitedUntil = _engineAuth.SnapshotLimitedUntil(),
-        Usage = _usage.ToDictionary(k => k.Key, v => new UsageSnapshotDto
+        Usage = _usageService.Snapshots.ToDictionary(k => k.Key, v => new UsageSnapshotDto
         {
             Utilization = v.Value.Utilization,
             ResetsAtUnix = v.Value.ResetsAtUnix,

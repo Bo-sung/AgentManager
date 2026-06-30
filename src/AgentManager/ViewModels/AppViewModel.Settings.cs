@@ -313,11 +313,11 @@ public sealed partial class AppViewModel
 
     // ----- per-engine auth (subscription / api key) → Core EngineAuthService (overhaul (a) step 2) -----
     // 상태(4 dict)와 로직은 Core 서비스가 소유; VM은 forward만 한다(호출부 불변, 서비스가 실제로 쓰인다).
-    // DPAPI·usage는 델리게이트로 주입 → Core는 WPF/Windows-포트 비의존. usageOf는 _usage를 lazy로 읽는다.
+    // DPAPI·usage는 델리게이트로 주입 → Core는 WPF/Windows-포트 비의존. usageOf는 _usageService를 lazy로 읽는다.
     private AgentManager.Core.Settings.EngineAuthService? _engineAuthBacking;
     private AgentManager.Core.Settings.EngineAuthService _engineAuth => _engineAuthBacking ??=
         new(Persistence.Dpapi.Encrypt, Persistence.Dpapi.Decrypt,
-            id => _usage.TryGetValue(id, out var u) ? (u.Utilization, u.ResetsAtUnix) : ((double, long)?)null);
+            id => _usageService.TryGet(id, out var u) ? (u.Utilization, u.ResetsAtUnix) : ((double, long)?)null);
 
     public bool HasApiKey(string id) => _engineAuth.HasApiKey(id);
     public bool AutoApiOnLimit(string id) => _engineAuth.AutoApiOnLimit(id);
