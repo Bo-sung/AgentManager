@@ -16,6 +16,13 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
         Permissions: true, Thinking: true, Sessions: true, Images: true, TokenUsage: true, Quota: true);
     public override bool CloseStdinAfterStart => false;
 
+    /// <summary>The user message, held back until cc acks the init handshake. Sending init + a large user
+    /// message in one stdin batch makes cc's stream-json reader stall (~90s on 60KB; a 19-byte message is
+    /// 6s) — deferring the user message until after the init <c>control_response</c> keeps it fast (2s on
+    /// the same 60KB), matching how an interactive terminal feeds the prompt only after startup. Per-turn
+    /// state (a fresh adapter is created per turn).</summary>
+    private string? _pendingUserMessage;
+
     public override ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
     {
         var psi = NewStdioStartInfo(executablePath, options.WorkingDirectory);
@@ -101,14 +108,26 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
             catch { /* unreadable image — skip, keep the turn alive */ }
         }
 
-        var user = JsonSerializer.Serialize(new
+        // Hold the user message; it is sent as a writeback once cc acks init (see ParseRoot). Sending it
+        // in the same batch as init is the cause of the large-prompt stall.
+        _pendingUserMessage = JsonSerializer.Serialize(new
         {
             type = "user",
             session_id = "",
             parent_tool_use_id = (string?)null,
             message = new { role = "user", content },
         });
-        return [init, user];
+        return [init];
+    }
+
+    /// <summary>Emit the deferred user message (once) now that init has been acknowledged.</summary>
+    private IEnumerable<NormalizedEvent> FlushPendingUser()
+    {
+        if (_pendingUserMessage is { } user)
+        {
+            _pendingUserMessage = null;
+            yield return new EngineWriteback(user);
+        }
     }
 
     private static string MediaTypeOf(string path) => Path.GetExtension(path).ToLowerInvariant() switch
@@ -125,12 +144,19 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
         var type = Str(root, "type");
         switch (type)
         {
+            case "control_response":
+                // cc's ack of our init control_request (the only control_response it emits). Init done →
+                // send the deferred user message now; batching it with init is what stalls large prompts.
+                foreach (var ev in FlushPendingUser()) yield return ev;
+                break;
+
             case "system" when Str(root, "subtype") == "init":
                 yield return new SessionStarted(
                     Str(root, "session_id") ?? "",
                     Str(root, "model"),
                     root.TryGetProperty("tools", out var t) && t.ValueKind == JsonValueKind.Array ? t.GetArrayLength() : 0,
                     Str(root, "cwd"));
+                foreach (var ev in FlushPendingUser()) yield return ev; // fallback if no control_response arrived first
                 break;
 
             case "rate_limit_event":
