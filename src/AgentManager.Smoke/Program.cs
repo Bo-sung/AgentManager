@@ -1382,6 +1382,7 @@ await TestGitWorktreeAsync();
 ProjectStoreCheck();
 TranscriptProjectorCheck();
 RunRegistryCheck();
+ApprovalBrokerCheck();
 Console.WriteLine("smoke OK");
 
 static void AssertPermissionResponse()
@@ -1908,6 +1909,26 @@ static void RunRegistryCheck()
     Assert(tokenB2.IsCancellationRequested, "registry: cancel-all fires every token");
 
     Console.WriteLine("RunRegistry asserts OK");
+}
+
+static void ApprovalBrokerCheck()
+{
+    var broker = new ApprovalBroker();
+
+    var task = broker.Request("r1");
+    Assert(broker.IsPending("r1") && !task.IsCompleted, "broker: pending until resolved");
+
+    Assert(broker.Resolve("r1", new PermissionDecision(true, null, true)), "broker: resolve returns true");
+    Assert(task.IsCompleted && task.Result.Allow && task.Result.ForSession, "broker: decision delivered");
+    Assert(!broker.IsPending("r1"), "broker: removed after resolve");
+    Assert(!broker.Resolve("r1", new PermissionDecision(false)), "broker: double-resolve returns false");
+
+    // a denial (e.g. session expiry) delivers Allow=false with a reason
+    var task2 = broker.Request("r2");
+    broker.Resolve("r2", new PermissionDecision(false, "session ended"));
+    Assert(task2.Result is { Allow: false, Reason: "session ended" }, "broker: denial delivered");
+
+    Console.WriteLine("ApprovalBroker asserts OK");
 }
 
 static void Assert(bool condition, string message)

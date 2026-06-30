@@ -308,49 +308,54 @@ public sealed partial class AppViewModel : ObservableObject
     public event Action<string, SessionViewModel>? AttentionRequested;
 
     // ----- approval broker (Stage 1: Claude) -----
-    private readonly Dictionary<string, (TaskCompletionSource<PermissionDecision> Tcs, ApprovalBlock Block, SessionViewModel Session)> _pendingApprovals = [];
+    // The decision round-trip is owned by the Core ApprovalBroker (so a headless core/CLI can answer);
+    // the VM keeps only the UI mapping requestId → (block, session) for rendering + expiry. Step 5.
+    private readonly AgentManager.Core.Orchestration.ApprovalBroker _broker = new();
+    private readonly Dictionary<string, (ApprovalBlock Block, SessionViewModel Session)> _approvalUi = [];
     public RelayCommand ApproveCommand { get; }
     public RelayCommand ApproveForSessionCommand { get; }
     public RelayCommand DenyCommand { get; }
 
     private Task<PermissionDecision> HandlePermissionAsync(SessionViewModel s, PermissionRequest pr)
     {
-        var tcs = new TaskCompletionSource<PermissionDecision>(TaskCreationOptions.RunContinuationsAsynchronously);
-        Application.Current.Dispatcher.Invoke(() =>
+        // Register + render on the UI thread (the engine calls this from its own thread); Invoke<T> hands
+        // the awaited task back. The broker owns the completion; the VM owns the block/session mapping.
+        return Application.Current.Dispatcher.Invoke(() =>
         {
+            var task = _broker.Request(pr.RequestId);
             var summary = pr.InputJson.Length > 400 ? pr.InputJson[..400] + "…" : pr.InputJson;
             var block = new ApprovalBlock(pr.RequestId, pr.ToolName, summary)
             {
                 SupportsSessionApproval = s.IsCodex, // codex app-server만 acceptForSession 지원
             };
             s.Transcript.Add(block);
-            _pendingApprovals[pr.RequestId] = (tcs, block, s);
+            _approvalUi[pr.RequestId] = (block, s);
             s.Status = "waiting";
             s.Activity = L("L.WaitingApproval", pr.ToolName);
             AttentionRequested?.Invoke("approval", s);
+            return task;
         });
-        return tcs.Task;
     }
 
     public void ResolveApproval(string requestId, bool allow, bool forSession = false)
     {
-        if (!_pendingApprovals.Remove(requestId, out var entry)) return;
+        if (!_approvalUi.Remove(requestId, out var entry)) return;
         entry.Block.State = allow ? (forSession ? "allowed (session)" : "allowed") : "denied";
         entry.Session.Status = "running";
         entry.Session.Activity = allow ? L("L.ApprovalGrantedContinue", entry.Block.ToolName) : L("L.ApprovalRejected", entry.Block.ToolName);
-        entry.Tcs.TrySetResult(new PermissionDecision(allow, allow ? null : L("L.PermissionDenied"), forSession));
+        _broker.Resolve(requestId, new PermissionDecision(allow, allow ? null : L("L.PermissionDenied"), forSession));
         SaveState();
     }
 
     /// <summary>턴 종료/중지 시 남은 승인 요청은 거부로 정리(엔진은 이미 종료됨).</summary>
     private void ExpirePendingApprovals(SessionViewModel s)
     {
-        foreach (var key in _pendingApprovals.Where(kv => ReferenceEquals(kv.Value.Session, s)).Select(kv => kv.Key).ToList())
+        foreach (var key in _approvalUi.Where(kv => ReferenceEquals(kv.Value.Session, s)).Select(kv => kv.Key).ToList())
         {
-            if (_pendingApprovals.Remove(key, out var entry))
+            if (_approvalUi.Remove(key, out var entry))
             {
                 entry.Block.State = "expired";
-                entry.Tcs.TrySetResult(new PermissionDecision(false, L("L.SessionEnded")));
+                _broker.Resolve(key, new PermissionDecision(false, L("L.SessionEnded")));
             }
         }
     }
