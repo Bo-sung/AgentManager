@@ -523,8 +523,8 @@
     <sys:String x:Key="L.AgyApiBridgeMissing">The Antigravity SDK bridge script (am_agy_bridge.py) is missing. Re-run setup.</sys:String>
     <sys:String x:Key="L.AgyApiKeyMissing">No agy API key set. Enter the Gemini API key for Antigravity API mode in Settings.</sys:String>
     <sys:String x:Key="L.OpenInTerminal">Open in terminal</sys:String>
-    <sys:String x:Key="L.OpenInTerminalLaunchedWt">↗ Opened agy in an external terminal (Windows Terminal). Full TUI/auth run in that window.</sys:String>
-    <sys:String x:Key="L.OpenInTerminalLaunchedCmd">↗ Opened agy in an external console (cmd). Full TUI/auth run in that window.</sys:String>
+    <sys:String x:Key="L.OpenInTerminalLaunchedWt">↗ Opened {0} in an external terminal (Windows Terminal). The session continues there (resumed if it had started).</sys:String>
+    <sys:String x:Key="L.OpenInTerminalLaunchedCmd">↗ Opened {0} in an external console (cmd). The session continues there (resumed if it had started).</sys:String>
     <sys:String x:Key="L.OpenInTerminalFailed">Failed to open external terminal</sys:String>
     <sys:String x:Key="L.OpenInTerminalNoCwd">No working directory (cwd) — cannot open an external terminal</sys:String>
     <sys:String x:Key="L.AttachmentWarningTitle">Attachment warning</sys:String>

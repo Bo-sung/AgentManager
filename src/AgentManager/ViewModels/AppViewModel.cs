@@ -145,7 +145,7 @@ public sealed partial class AppViewModel : ObservableObject
         ApproveForSessionCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, true, forSession: true); });
         DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
         OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
-        OpenInTerminalCommand = new RelayCommand(_ => OpenAgyInTerminal(ActiveSession), _ => ActiveSession is { IsAgy: true });
+        OpenInTerminalCommand = new RelayCommand(_ => OpenInTerminal(ActiveSession), _ => ActiveSession is not null);
         CheckUsageCommand = new RelayCommand(_ => _ = CheckUsageAsync(), _ => !_checkingUsage);
         RefreshScheduledJobsCommand = new RelayCommand(_ => LoadScheduledJobs());
         NewScheduleCommand = new RelayCommand(_ => OpenNewSchedule(), _ => ActiveProject is not null);
@@ -245,9 +245,13 @@ public sealed partial class AppViewModel : ObservableObject
     /// cwd = worktree(존재 시) 또는 프로젝트 루트; conversation은 agy 캐시 조회로 resume(--conversation id),
     /// 못 찾으면 --continue(이 cwd의 마지막 대화). 터미널은 wt.exe 우선, 없으면 cmd /k 폴백. 실패 시 트랜스크립트 안내.
     /// 스파이크: AGENTMANAGER_* env는 전달하지 않는다(wt.exe 인자로 env 주입이 까다로워 이번엔 생략).</summary>
-    private void OpenAgyInTerminal(SessionViewModel? s)
+    /// <summary>Open THIS session in a real external terminal (Windows Terminal, falling back to cmd) at
+    /// its worktree cwd, launching the engine interactively and resuming the same conversation when the
+    /// session already started (EngineSessionId set). An escape hatch: when a session is stuck at
+    /// "starting engine" the user can see/continue it directly. All engines (was agy-only).</summary>
+    private void OpenInTerminal(SessionViewModel? s)
     {
-        if (s is null || s.AgentId != "agy") return;
+        if (s is null) return;
         var cwd = !string.IsNullOrWhiteSpace(s.WorktreePath) && Directory.Exists(s.WorktreePath)
             ? s.WorktreePath! : s.ProjectPath;
         if (!Directory.Exists(cwd))
@@ -255,44 +259,61 @@ public sealed partial class AppViewModel : ObservableObject
             s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalNoCwd")));
             return;
         }
-
-        var agyExe = EngineRegistry.ResolveExe("agy", _agyPath) ?? "agy";
-        // resume: agy 캐시 cwd→conversation 매핑 우선; 없으면 --continue(이 폴더 마지막 대화).
-        var convId = AgyAdapter.FindConversationId(cwd);
-        var resumeArg = convId is { Length: > 0 } id ? $"--conversation {Quote(id)}" : "--continue";
-        var agyArgs = $"{resumeArg} --dangerously-skip-permissions"; // 인터랙티브 = -p 생략
+        if (ResolveTerminalLaunch(s, cwd) is not { } launch)
+        {
+            s.Transcript.Add(new ErrorBlock(L("L.OpenInTerminalFailed"), L("L.EngineUnavailableBody", s.AgentName)));
+            return;
+        }
 
         try
         {
-            // 우선 Windows Terminal: "wt -d cwd -- agy ..."
+            // Windows Terminal 우선: "wt -d cwd -- <exe> <args>"; 없으면 "cmd /k <exe> <args>".
             if (TryResolveOnPath("wt.exe") is { } wt)
             {
-                var psi = new System.Diagnostics.ProcessStartInfo
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = wt,
-                    Arguments = $"-d {Quote(cwd)} -- {Quote(agyExe)} {agyArgs}",
+                    Arguments = $"-d {Quote(cwd)} -- {Quote(launch.Exe)} {launch.Args}",
                     UseShellExecute = false,
                     WorkingDirectory = cwd,
-                };
-                System.Diagnostics.Process.Start(psi);
-                s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedWt")));
+                });
+                s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedWt", s.AgentName)));
                 return;
             }
-            // 폴백: conhost/cmd — "cmd /k agy ..." 를 cwd에서 띄운다.
-            var cmdPsi = new System.Diagnostics.ProcessStartInfo
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $"/k {Quote(agyExe)} {agyArgs}",
+                Arguments = $"/k {Quote(launch.Exe)} {launch.Args}",
                 UseShellExecute = false,
                 WorkingDirectory = cwd,
-            };
-            System.Diagnostics.Process.Start(cmdPsi);
-            s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedCmd")));
+            });
+            s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedCmd", s.AgentName)));
         }
         catch (Exception ex)
         {
             s.Transcript.Add(new ErrorBlock(L("L.OpenInTerminalFailed"), ex.Message));
         }
+    }
+
+    /// <summary>Per-engine INTERACTIVE launch (exe + args) for the terminal escape hatch, resuming the
+    /// engine's own conversation when known. Interactive forms differ from the stdio adapters: cc drops
+    /// stream-json (<c>--resume id</c>), gx is the TUI <c>resume id</c> (not <c>exec resume</c>), pi drops
+    /// <c>--mode rpc</c> and runs via node, agy uses its cwd→conversation cache. Null = engine unresolved.</summary>
+    private (string Exe, string Args)? ResolveTerminalLaunch(SessionViewModel s, string cwd)
+    {
+        var id = s.EngineSessionId;
+        var exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath, _agyPath, _piPath);
+        return s.AgentId switch
+        {
+            "cc" => exe is null ? null : (exe, string.IsNullOrEmpty(id) ? "" : $"--resume {Quote(id!)}"),
+            "gx" => exe is null ? null : (exe, string.IsNullOrEmpty(id) ? "" : $"resume {Quote(id!)}"),
+            // pi is a node script (exe = dist/cli.js); interactive = node <cli.js> [--session id] (no --mode rpc).
+            "pi" => exe is null ? null : ("node", string.IsNullOrEmpty(id) ? Quote(exe) : $"{Quote(exe)} --session {Quote(id!)}"),
+            "agy" => (exe ?? "agy",
+                      (AgyAdapter.FindConversationId(cwd) is { Length: > 0 } c ? $"--conversation {Quote(c)}" : "--continue")
+                      + " --dangerously-skip-permissions"),
+            _ => null,
+        };
     }
 
     /// <summary>PATH에서 bare 실행파일(wt.exe 등)의 전체 경로를 찾는다. 없으면 null.</summary>
