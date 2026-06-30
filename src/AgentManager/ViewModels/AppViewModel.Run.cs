@@ -8,6 +8,7 @@ using AgentManager.Persistence;
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
 using AgentManager.Core.Observation;
+using AgentManager.Core.Orchestration;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
@@ -215,47 +216,30 @@ public sealed partial class AppViewModel
         // agy 백엔드 분기: API 모드(GEMINI_API_KEY로 Antigravity SDK 구동)면 AgySdkAdapter + python,
         // subscription이면 기존 AgyAdapter(CLI/ConPTY)를 바이트 단위로 유지. cc/gx는 어댑터 내
         // 크리덴셜만 바꾸지만 agy는 어댑터 클래스 자체가 바뀌므로 분기를 호출점에 둔다.
-        bool agyApi = s.AgentId == "agy" && IsApiMode("agy");
-        IAgentAdapter? adapter;
-        string? exe;
-        if (agyApi)
+        // 결정 로직은 Core TurnPlanner로 추출(헤드리스); 여기선 타입 실패를 지역화된 에러 블록으로 렌더한다.
+        var resolution = TurnPlanner.ResolveEngine(new EngineResolveRequest(
+            AgentId: s.AgentId,
+            RequireApproval: s.RequireApproval,
+            ApiMode: s.AgentId == "agy" && IsApiMode("agy"),
+            HasApiKey: HasApiKey("agy"),
+            ClaudePath: _claudePath, CodexPath: _codexPath, AgyPath: _agyPath, PiPath: _piPath,
+            ResolvePython: ResolvePython));
+        if (!resolution.Ok)
         {
-            adapter = new Core.Agents.AgySdkAdapter();
-            exe = ResolvePython();
-            if (exe is null)
+            var (title, body) = resolution.Error switch
             {
-                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiPythonMissing")));
-                s.Status = "error";
-                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
-                return;
-            }
-            if (!System.IO.File.Exists(Core.Agents.AgySdkAdapter.BridgeScriptPath))
-            {
-                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiBridgeMissing")));
-                s.Status = "error";
-                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
-                return;
-            }
-            if (!HasApiKey("agy"))
-            {
-                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiKeyMissing")));
-                s.Status = "error";
-                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
-                return;
-            }
-        }
-        else
-        {
-            adapter = EngineRegistry.CreateAdapter(s.AgentId, s.RequireApproval);
-            exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath, _agyPath, _piPath);
-        }
-        if (adapter is null || exe is null)
-        {
-            s.Transcript.Add(new ErrorBlock(L("L.EngineUnavailableTitle"), L("L.EngineUnavailableBody", s.AgentName)));
+                EngineSetupError.AgyPythonMissing => (L("L.AgyApiModeTitle"), L("L.AgyApiPythonMissing")),
+                EngineSetupError.AgyBridgeMissing => (L("L.AgyApiModeTitle"), L("L.AgyApiBridgeMissing")),
+                EngineSetupError.AgyKeyMissing => (L("L.AgyApiModeTitle"), L("L.AgyApiKeyMissing")),
+                _ => (L("L.EngineUnavailableTitle"), L("L.EngineUnavailableBody", s.AgentName)),
+            };
+            s.Transcript.Add(new ErrorBlock(title, body));
             s.Status = "error";
             s.MarkRunEnded(L("L.EngineUnavailableActivity"));
             return;
         }
+        var adapter = resolution.Adapter!;
+        var exe = resolution.Exe!;
 
         // Worktree isolation: each session works in its own git worktree.
         s.Activity = L("L.PreparingWorktree");
@@ -287,27 +271,22 @@ public sealed partial class AppViewModel
         s.TurnBaseOut = s.TokensOut;
 
         var sessionProject = Projects.FirstOrDefault(p => p.Id == s.ProjectId);
-        var mcpPath = sessionProject?.McpConfigPath;
-        var nativeHookSpoolDirectory = NativeHookSpoolDirectoryFor(s);
-        var options = new SessionOptions
-        {
-            WorkingDirectory = cwd,
-            BypassPermissions = !s.RequireApproval, // Stage 1: Claude stdio approvals; Codex falls to sandbox
-            Sandbox = s.Sandbox,
-            ResumeSessionId = s.EngineSessionId,
-            Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
-            McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
-            Images = images ?? [],
-            AttachedDocsText = attachedDocsText,
-            AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
-            ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
-            ExtraEnvironment = WithTaskSpoolEnv(ApiEnvFor(s.AgentId), Path.Combine(cwd, ".am", "worker-tasks", s.Id), Path.Combine(cwd, ".am", "ask", s.Id)),
-            NativeHookSpoolDirectory = nativeHookSpoolDirectory,
-            NativeHookCommand = s.AgentId is "gx" or "cc" && nativeHookSpoolDirectory is not null
-                ? NativeHookCommandFactory.WindowsPowerShellSpoolScript(nativeHookSpoolDirectory)
-                : null,
-            BypassHookTrust = s.AgentId == "gx",
-        };
+        var options = TurnPlanner.BuildOptions(new TurnOptionsRequest(
+            AgentId: s.AgentId,
+            WorkingDirectory: cwd,
+            RequireApproval: s.RequireApproval,
+            Sandbox: s.Sandbox,
+            ResumeSessionId: s.EngineSessionId,
+            Model: s.Model,
+            McpConfigPath: sessionProject?.McpConfigPath,
+            Images: images ?? [],
+            AttachedDocsText: attachedDocsText,
+            AdditionalDirectories: sessionProject?.ExtraPaths.ToArray() ?? [],
+            ReasoningEffort: s.ReasoningEffort,
+            ApiEnv: ApiEnvFor(s.AgentId),
+            TaskSpoolDir: Path.Combine(cwd, ".am", "worker-tasks", s.Id),
+            AskSpoolDir: Path.Combine(cwd, ".am", "ask", s.Id),
+            NativeHookSpoolDirectory: NativeHookSpoolDirectoryFor(s)));
         var cts = new CancellationTokenSource();
         _running[s.Id] = cts;
         try

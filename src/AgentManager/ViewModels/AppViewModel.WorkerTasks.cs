@@ -168,17 +168,6 @@ public sealed partial class AppViewModel
     private FileSystemWatcher? _taskSpoolWatcher;
     private readonly HashSet<string> _drivingWorkers = [];
 
-    /// <summary>Point AGENTMANAGER_TASK_SPOOL at the session's own <c>&lt;cwd&gt;/.am/worker-tasks/</c> —
-    /// the same dir <see cref="WatchSessionTaskSpool"/> observes — so skill-written tasks are ingested
-    /// WITH this session as their origin and the worker's report can route back to it. A project-wide
-    /// central spool can't attribute which session wrote a task, so its reports were orphaned.</summary>
-    private static IReadOnlyDictionary<string, string> WithTaskSpoolEnv(IReadOnlyDictionary<string, string> baseEnv, string taskDir, string askDir)
-    {
-        try { Directory.CreateDirectory(taskDir); } catch { }
-        try { Directory.CreateDirectory(askDir); } catch { }
-        return new Dictionary<string, string>(baseEnv) { ["AGENTMANAGER_TASK_SPOOL"] = taskDir, ["AGENTMANAGER_ASK_SPOOL"] = askDir };
-    }
-
     public RelayCommand AssignTaskCommand { get; private set; } = null!;
     public RelayCommand AssignToWorkerCommand { get; private set; } = null!;
     public RelayCommand AssignToNewWorkerCommand { get; private set; } = null!;
