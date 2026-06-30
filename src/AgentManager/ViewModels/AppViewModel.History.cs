@@ -188,4 +188,41 @@ public sealed partial class AppViewModel
         SaveState();
     }
 
+    /// <summary>Re-read this session's engine conversation file (after the user continued it in an external
+    /// terminal via "open in terminal") and rebuild the transcript from it. cc/gx only — those have
+    /// discoverable session files keyed by EngineSessionId. The engine file is authoritative for the full
+    /// conversation, so the transcript is replaced.</summary>
+    private async Task ResyncTranscriptAsync(SessionViewModel? s)
+    {
+        if (s is null || string.IsNullOrEmpty(s.EngineSessionId)) return;
+        var cwd = !string.IsNullOrWhiteSpace(s.WorktreePath) ? s.WorktreePath! : s.ProjectPath;
+        List<CliSessionDiscovery.CliTranscriptItem> history;
+        try
+        {
+            var entries = await Task.Run(() => CliSessionDiscovery.Discover(cwd));
+            var entry = entries.FirstOrDefault(e => string.Equals(e.SessionId, s.EngineSessionId, StringComparison.OrdinalIgnoreCase));
+            if (entry is null) { s.Transcript.Add(new WorkingBlock(L("L.ResyncNotFound"))); return; }
+            history = await Task.Run(() => CliSessionDiscovery.LoadTranscript(entry.EngineId, entry.FilePath));
+        }
+        catch (Exception ex) { s.Transcript.Add(new ErrorBlock(L("L.ResyncFailed"), ex.Message)); return; }
+        if (history.Count == 0) { s.Transcript.Add(new WorkingBlock(L("L.ResyncNotFound"))); return; }
+
+        s.Transcript.Clear();
+        var i = 0;
+        foreach (var h in history)
+        {
+            TranscriptItem block = h.Role switch
+            {
+                "user" => new UserBlock(h.Text),
+                "assistant" => new AgentTextBlock(h.Text),
+                "thinking" => new ThinkingBlock(h.Text),
+                _ => new ToolBlock("resync-" + i, KindOf(h.Name), h.Name) { Body = h.Text, Stat = "done" },
+            };
+            s.Transcript.Add(block);
+            i++;
+        }
+        s.Transcript.Add(new WorkingBlock(L("L.ResyncDone")));
+        SaveState();
+    }
+
 }

@@ -97,6 +97,15 @@
                                     </StackPanel>
                                 </Button>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                        ToolTip="{StaticResource L.ResyncTranscript}"
+                                        Command="{Binding DataContext.ResyncTranscriptCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:IconView Icon="{StaticResource IconRefresh}" Width="13" Height="13"
+                                                           Foreground="{DynamicResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.ResyncTranscript}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
                                         ToolTip="{StaticResource L.ExportTip}" Click="ExportTranscript_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <controls:IconView Icon="{StaticResource IconFile}" Width="12" Height="12"

@@ -146,6 +146,8 @@ public sealed partial class AppViewModel : ObservableObject
         DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
         OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
         OpenInTerminalCommand = new RelayCommand(_ => OpenInTerminal(ActiveSession), _ => ActiveSession is not null);
+        ResyncTranscriptCommand = new RelayCommand(_ => _ = ResyncTranscriptAsync(ActiveSession),
+            _ => ActiveSession is { AgentId: "cc" or "gx" } s && !string.IsNullOrEmpty(s.EngineSessionId));
         CheckUsageCommand = new RelayCommand(_ => _ = CheckUsageAsync(), _ => !_checkingUsage);
         RefreshScheduledJobsCommand = new RelayCommand(_ => LoadScheduledJobs());
         NewScheduleCommand = new RelayCommand(_ => OpenNewSchedule(), _ => ActiveProject is not null);
@@ -168,6 +170,7 @@ public sealed partial class AppViewModel : ObservableObject
     /// <summary>agy를 외부 터미널에서 인터랙티브로 실행(ConPTY 트랜스크립트의 escape hatch).
     /// agy 세션에서만 활성화(CanExecute).</summary>
     public RelayCommand OpenInTerminalCommand { get; }
+    public RelayCommand ResyncTranscriptCommand { get; }
     public RelayCommand CheckUsageCommand { get; }
     public RelayCommand RefreshScheduledJobsCommand { get; }
     public RelayCommand NewScheduleCommand { get; }
