@@ -126,13 +126,14 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 
 ## 아키텍처
 
-3계층 클린룸 설계 + WPF MVVM:
+헤드리스 코어 + 씬(thin) 프런트엔드 설계:
 
-- **`AgentManager.Core`** — 엔진 어댑터(Claude/Codex/Antigravity/Pi), 정규화 이벤트, 번역기, 세션 실행, GitWorktree, 스케줄링, 관측(observation). UI 비의존.
-- **`AgentManager`** (WPF) — MVVM. `AppViewModel`(partial 분할) + 컴포넌트 VM + Views/UserControls + Controls(behaviors·컨트롤). 클릭은 커맨드/attached behavior로 바인딩, VM은 View 타입 비의존.
-- **`AgentManager.Smoke`** — 헤드리스 스모크(어댑터 파싱·인자 매트릭스·승인·GitWorktree e2e·관측), 토큰 0.
+- **`AgentManager.Core`** — 엔진 어댑터(Claude/Codex/Antigravity/Pi), 정규화 이벤트, 번역기, 세션 실행, GitWorktree, 스케줄링, 관측(observation)에 더해 **오케스트레이션 서비스**(설정·인증·상태 저장, 턴 셋업 `TurnPlanner`, 이벤트→트랜스크립트 리듀서 `TranscriptProjector`, 실행 레지스트리 `RunRegistry`, 승인 broker `ApprovalBroker`, 사용량 `UsageService`). **UI/WPF 완전 비의존**(`net10.0`).
+- **`AgentManager`** (WPF, `net10.0-windows`) — MVVM. `AppViewModel`(partial 분할)이 Core 서비스에 위임하고 라이브 컬렉션을 UI로 투영. Views/UserControls + Controls(behaviors·컨트롤). VM은 View 타입 비의존.
+- **`AgentManager.Cli`** (`am`, `net10.0`) — Core만 참조하는 **헤드리스 CLI 프런트엔드**. 같은 Core 서비스로 한 턴을 실행하고 트랜스크립트를 콘솔로 투영. `am <cc|gx|agy|pi> [--cwd dir] [--model m] [--approve] <prompt…>`. *Core가 진짜로 WPF 비의존임을 증명하는 두 번째 프런트엔드.*
+- **`AgentManager.Smoke`** — 헤드리스 스모크(어댑터 파싱·인자 매트릭스·승인·GitWorktree e2e·관측 + Core 서비스 골든 테스트), 토큰 0.
 
-각 엔진 CLI의 출력은 **정규화 이벤트**로 변환되어 UI가 엔진 차이를 모르게 합니다. 프로토콜 실측은 `docs/PHASE0_*` 참조.
+각 엔진 CLI의 출력은 **정규화 이벤트**로 변환되고, `TranscriptProjector`가 이를 중립 델타로 환원해 **GUI는 WPF 블록으로, CLI는 콘솔 텍스트로** 각자 렌더합니다. 프로토콜 실측은 `docs/PHASE0_*`, 코어 추출 설계는 `docs/OVERHAUL_A_EXTRACTION_MAP.md` 참조.
 
 ---
 
