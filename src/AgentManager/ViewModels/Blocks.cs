@@ -133,13 +133,22 @@ public sealed class ToolBlock : TranscriptItem
     public string? CommandText { get; set; }
 }
 
-public sealed class ErrorBlock(string title, string body) : TranscriptItem
+public sealed class ErrorBlock : TranscriptItem
 {
-    public string Title { get; } = title;
-    public string Body { get; } = body;
+    public ErrorBlock(string title, string body) { Title = title; _body = body; }
+    public string Title { get; }
+
+    private string _body;
+    /// <summary>Mutable so a run of consecutive stderr lines coalesces into ONE block (append on each
+    /// line) instead of spamming a block per line — codex/PowerShell error dumps are multi-line.</summary>
+    public string Body { get => _body; set => Set(ref _body, value); }
+
     /// <summary>True when this is claude's "no conversation found" resume failure — the engine
     /// conversation is gone so the session can't continue; the template surfaces a delete action.</summary>
     public bool IsStaleSession { get; init; }
+
+    /// <summary>True for raw engine stderr (vs a turn-failure error). Consecutive stderr blocks coalesce.</summary>
+    public bool IsStderr { get; init; }
 }
 
 /// <summary>Model reasoning (Claude thinking block) — collapsed by default.</summary>

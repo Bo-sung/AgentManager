@@ -720,10 +720,19 @@ public sealed partial class AppViewModel
                 s.Status = d.Status;
                 break;
             case ErrorAdd d:
-                // claude can't --resume a conversation that no longer exists → the session is dead. Don't
-                // stack the prompt on repeated stderr lines.
-                if (d.IsStaleSession && s.Transcript.LastOrDefault() is ErrorBlock { IsStaleSession: true }) break;
-                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), d.Message) { IsStaleSession = d.IsStaleSession });
+                // claude can't --resume a conversation that no longer exists → the session is dead (stale,
+                // delete action); don't stack repeats. Otherwise COALESCE a run of stderr lines into one
+                // block — codex/PowerShell error dumps spew many lines, one block per line was a wall.
+                if (s.Transcript.LastOrDefault() is ErrorBlock { IsStderr: true } lastErr)
+                {
+                    if (d.IsStaleSession && lastErr.IsStaleSession) break;
+                    if (!d.IsStaleSession && !lastErr.IsStaleSession)
+                    {
+                        lastErr.Body = lastErr.Body.Length == 0 ? d.Message : lastErr.Body + "\n" + d.Message;
+                        break;
+                    }
+                }
+                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), d.Message) { IsStaleSession = d.IsStaleSession, IsStderr = true });
                 break;
             case TotalsChanged:
                 RefreshTotals();
