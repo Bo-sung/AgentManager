@@ -71,7 +71,7 @@ public sealed class SessionViewModel : ObservableObject
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
         _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
         AvailableModels = engine.Models;
-        _reasoningEffort = engine.Id switch { "gx" => "medium", "cc" or "pi" => "default", _ => "" };
+        _reasoningEffort = RecommendedEffort(engine.Id, model);
         StartedAt = startedAt ?? DateTime.Now;
         NativeWorkItems.CollectionChanged += (_, _) => OnChanged(nameof(HasNativeWorkItems));
     }
@@ -105,6 +105,17 @@ public sealed class SessionViewModel : ObservableObject
     };
     private string _reasoningEffort = "";
     public string ReasoningEffort { get => _reasoningEffort; set => Set(ref _reasoningEffort, value); }
+
+    /// <summary>Recommended DEFAULT reasoning effort for an engine+model — a smart default, NOT a gate
+    /// (the user can still pick any level). cc recommends medium for Opus (per cc's own guidance: "We
+    /// recommend medium effort for Opus"); other cc models use cc's default; gx defaults to medium.</summary>
+    public static string RecommendedEffort(string? engineId, string? model) => engineId switch
+    {
+        "cc" when model is { } m && m.Contains("opus", StringComparison.OrdinalIgnoreCase) => "medium",
+        "gx" => "medium",
+        "cc" or "pi" => "default",
+        _ => "",
+    };
 
     /// <summary>The worktree's live current branch, read from git after each review refresh — the agent
     /// may switch/create a branch, and the creation-time <see cref="Branch"/> would then be stale. Null

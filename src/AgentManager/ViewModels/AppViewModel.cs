@@ -741,13 +741,14 @@ public sealed partial class AppViewModel : ObservableObject
                 // 추론 수준 옵션/기본값 엔진별 재계산 (cc/gx/pi 노출, agy 제외)
                 OnChanged(nameof(NewAgentHasEffort));
                 OnChanged(nameof(NewAgentEffortOptions));
-                NewAgentReasoning = DefaultEffortFor(value?.Id);
+                NewAgentReasoning = SessionViewModel.RecommendedEffort(value?.Id, NewAgentModel);
             }
         }
     }
     public string[] NewAgentModels => _newEngine is { } e ? DropdownModelsFor(e.Id) : [];
     private string _newAgentModel = "";
-    public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
+    // 모델을 바꾸면 그 모델의 권장 effort로 기본값을 맞춘다(예: opus → medium). 게이팅이 아니라 스마트 기본값 — 이후 변경 가능.
+    public string NewAgentModel { get => _newAgentModel; set { if (Set(ref _newAgentModel, value)) NewAgentReasoning = SessionViewModel.RecommendedEffort(_newEngine?.Id, value); } }
 
     /// <summary>추론 수준을 소비하는 엔진(cc: --effort, gx: model_reasoning_effort, pi: --thinking)만 노출.
     /// agy만 추론 플래그가 없음. SessionViewModel.HasEffort(= not agy)와 일치.</summary>
@@ -760,7 +761,6 @@ public sealed partial class AppViewModel : ObservableObject
         "pi" => ["default", "off", "minimal", "low", "medium", "high", "xhigh"],
         _    => ["default", "low", "medium", "high", "xhigh", "max"], // cc
     };
-    private static string DefaultEffortFor(string? id) => id switch { "gx" => "medium", "cc" or "pi" => "default", _ => "" };
     private string _newAgentReasoning = "default";
     public string NewAgentReasoning { get => _newAgentReasoning; set => Set(ref _newAgentReasoning, value); }
 
