@@ -41,6 +41,28 @@ public static class Attachments
         try { return new FileInfo(path).Length > MaxInlineBytes; } catch { return false; }
     }
 
+    /// <summary>If the composer prompt itself is large enough to stall the engine's stdin (cc in
+    /// stream-json input mode degrades super-linearly — a 60KB user message delays its init ~90s; a few
+    /// hundred KB → many minutes), write it to <c>&lt;cwd&gt;/.am/attachments/prompt-*.md</c> and return a
+    /// short reference for the agent to Read, keeping the stdin small. Small prompts pass through unchanged.
+    /// Never throws — falls back to the inline prompt. Returns (promptToSend, savedFile or null).</summary>
+    public static (string Prompt, string? SavedFile) OffloadLargePrompt(string prompt, string cwd)
+    {
+        if (string.IsNullOrEmpty(prompt) || Encoding.UTF8.GetByteCount(prompt) <= MaxInlineBytes)
+            return (prompt, null);
+        try
+        {
+            var dir = Path.Combine(Path.GetFullPath(cwd), ".am", "attachments");
+            Directory.CreateDirectory(dir);
+            var file = Dedupe(Path.Combine(dir, $"prompt-{DateTime.Now:yyyyMMdd-HHmmss}.md"));
+            System.IO.File.WriteAllText(file, prompt, new UTF8Encoding(false));
+            var reference = "The instruction below was too large to send inline, so it was saved to a file. "
+                + "Read this file and follow its full contents as the request:\n" + file;
+            return (reference, file);
+        }
+        catch { return (prompt, null); }
+    }
+
     /// <summary>Render the given document paths as fenced blocks for the prompt. Empty if none.</summary>
     public static string BuildDocsText(IReadOnlyList<string>? docs)
     {

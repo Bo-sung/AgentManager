@@ -530,4 +530,5 @@
     <sys:String x:Key="L.AttachmentWarningTitle">Attachment warning</sys:String>
     <sys:String x:Key="L.AttachmentCopyFailed">Failed to copy '{0}' — referencing original path (the agent may not read it)</sys:String>
     <sys:String x:Key="L.AttachmentAgyWarning">⚠ This engine (agy) may not read '{0}' directly</sys:String>
+    <sys:String x:Key="L.LargePromptOffloaded">📎 Prompt was large — sent as a file the agent reads: {0}</sys:String>
 </ResourceDictionary>

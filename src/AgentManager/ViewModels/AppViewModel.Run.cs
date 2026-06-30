@@ -289,6 +289,11 @@ public sealed partial class AppViewModel
             TaskSpoolDir: Path.Combine(cwd, ".am", "worker-tasks", s.Id),
             AskSpoolDir: Path.Combine(cwd, ".am", "ask", s.Id),
             NativeHookSpoolDirectory: NativeHookSpoolDirectoryFor(s)));
+        // 큰 컴포저 프롬프트는 파일로 오프로드 — cc는 stream-json stdin에 거대한 user 메시지가 오면
+        // init을 수 분~수십 분 지연시킨다(초선형). 작은 참조만 보내고 에이전트가 파일을 Read한다.
+        var (sendPrompt, promptFile) = Attachments.OffloadLargePrompt(prompt, cwd);
+        if (promptFile is not null)
+            s.Transcript.Add(new WorkingBlock(L("L.LargePromptOffloaded", Path.GetFileName(promptFile))));
         var token = _runs.Start(s.Id);
         try
         {
@@ -296,7 +301,7 @@ public sealed partial class AppViewModel
             ClearNativeHookSpool(options.NativeHookSpoolDirectory);
             await StartNativeObserverAsync(s, options);
             s.Activity = s.TranslationEnabled ? L("L.TranslatingStartingEngine") : L("L.StartingEngine");
-            await Task.Run(() => session.RunAsync(options, prompt, token), token);
+            await Task.Run(() => session.RunAsync(options, sendPrompt, token), token);
             if (s.Status == "running") s.Status = "done";
             if (s.Status == "done") s.MarkRunEnded(L("L.Completed"));
         }
