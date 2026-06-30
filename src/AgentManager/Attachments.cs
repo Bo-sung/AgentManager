@@ -26,6 +26,21 @@ public static class Attachments
 
     const long MaxDocBytes = 512 * 1024; // cap inlined text per file
 
+    /// <summary>Above this size a TEXT doc is delivered by PATH PASS-THROUGH instead of inlined. A large
+    /// inlined block bloats every turn's prompt (re-sent each turn = token waste) and — critically — makes
+    /// some engines stall: measured, cc in stream-json input mode delays its init by ~90s on a 60KB
+    /// inlined user message (a 19-byte message inits in 6s; pi tolerates the large one). Small snippets
+    /// still inline for convenience; anything substantial is referenced by path and the agent Reads it.</summary>
+    const long MaxInlineBytes = 16 * 1024;
+
+    /// <summary>Deliver this doc by path pass-through (copied + referenced) rather than inlining its text?
+    /// True for binary office/PDF formats, and for any text doc larger than <see cref="MaxInlineBytes"/>.</summary>
+    public static bool PassThrough(string path)
+    {
+        if (IsBinaryDoc(path)) return true;
+        try { return new FileInfo(path).Length > MaxInlineBytes; } catch { return false; }
+    }
+
     /// <summary>Render the given document paths as fenced blocks for the prompt. Empty if none.</summary>
     public static string BuildDocsText(IReadOnlyList<string>? docs)
     {

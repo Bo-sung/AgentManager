@@ -27,20 +27,22 @@ public sealed partial class AppViewModel
     private string BuildAttachedDocsText(SessionViewModel s, string cwd, string[]? docs)
     {
         if (docs is null || docs.Length == 0) return "";
-        List<string> textDocs = [], binaryDocs = [];
+        // Small text/code docs are inlined verbatim; binary office/PDF docs AND large text docs go by PATH
+        // PASS-THROUGH (a big inlined block bloats every turn + stalls cc's stream-json init — see PassThrough).
+        List<string> inlineDocs = [], passDocs = [];
         foreach (var d in docs)
-            (Attachments.IsBinaryDoc(d) ? binaryDocs : textDocs).Add(d);
+            (Attachments.PassThrough(d) ? passDocs : inlineDocs).Add(d);
 
         var sb = new StringBuilder();
-        var inline = Attachments.BuildDocsText(textDocs);
+        var inline = Attachments.BuildDocsText(inlineDocs);
         if (inline.Length > 0) sb.Append(inline).Append("\n\n");
 
-        if (binaryDocs.Count > 0)
+        if (passDocs.Count > 0)
         {
             var isAgy = s.AgentId == "agy";
-            foreach (var bin in binaryDocs)
+            foreach (var doc in passDocs)
             {
-                var (refPath, ok) = Attachments.CopyToAttachmentsDir(bin, cwd);
+                var (refPath, ok) = Attachments.CopyToAttachmentsDir(doc, cwd);
                 sb.Append(Attachments.BuildAttachedRef(refPath)).Append('\n');
                 if (isAgy)
                     s.Transcript.Add(new WorkingBlock(L("L.AttachmentAgyWarning", Path.GetFileName(refPath))));
