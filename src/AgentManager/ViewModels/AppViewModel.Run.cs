@@ -605,26 +605,45 @@ public sealed partial class AppViewModel
         SaveState();
     }
 
+    /// <summary>Reduce one engine event into transcript/state changes. The classification + streaming-replace
+    /// + stderr-suppression logic lives in the headless Core <see cref="TranscriptProjector"/> (golden-tested,
+    /// CLI-reusable); this method only APPLIES the resulting domain deltas to the WPF transcript + session
+    /// (localizing markers, firing UI side-effects). Overhaul (a) step 4.</summary>
     private void Apply(SessionViewModel s, NormalizedEvent ev, Dictionary<string, ToolBlock> tools)
     {
         s.MarkRunSignal();
-        switch (ev)
+        foreach (var delta in _projector.Project(s.Id, s.AgentId, ev))
+            ApplyDelta(s, delta, tools);
+        SaveState();
+    }
+
+    /// <summary>Apply one neutral transcript delta to the live WPF transcript + session. The UI-affine
+    /// state the projector deliberately doesn't hold (the live streaming block, the tool-by-id table, the
+    /// last user block, localized labels, attention/review/artifact actions) is realized here.</summary>
+    private void ApplyDelta(SessionViewModel s, TranscriptDelta delta, Dictionary<string, ToolBlock> tools)
+    {
+        switch (delta)
         {
-            case SessionStarted started:
-                if (!string.IsNullOrWhiteSpace(started.SessionId))
-                    s.EngineSessionId = started.SessionId;
-                if (s.AgentId == "agy")
-                    _ = StartNativeObserverAsync(s);
-                if (!string.IsNullOrWhiteSpace(started.Model))
-                    s.MarkRunSignal(L("L.ConnectedModel", started.Model));
+            case EngineSessionIdSet d:
+                s.EngineSessionId = d.SessionId;
+                break;
+            case StartNativeObserver:
+                _ = StartNativeObserverAsync(s);
+                break;
+            case ActivitySignal a:
+                var label = ActivityLabel(a);
+                // Connected/Tool reset the "quiet" timer (MarkRunSignal); streaming/receiving/thinking just
+                // update the activity text (the per-event MarkRunSignal() at the top already bumped it).
+                if (a.Kind is ActivityKind.Connected or ActivityKind.ConnectedModel or ActivityKind.ToolRunning)
+                    s.MarkRunSignal(label);
                 else
-                    s.MarkRunSignal(L("L.Connected"));
+                    s.Activity = label;
                 break;
-            case PromptTranslated pt:
+            case UserSentTextSet d:
                 if (s.Transcript.OfType<UserBlock>().LastOrDefault() is { } ub)
-                    ub.SentText = pt.SentText;
+                    ub.SentText = d.SentText;
                 break;
-            case AssistantDelta d:
+            case AssistantStreamAppend d:
                 // 스트리밍: 라이브 블록에 즉시 덧붙이고, 최종 AssistantText(번역본)가 오면 교체
                 if (!_liveText.TryGetValue(s.Id, out var live))
                 {
@@ -633,87 +652,103 @@ public sealed partial class AppViewModel
                     s.Transcript.Add(live);
                 }
                 live.Text += d.Delta;
-                s.Activity = L("L.StreamingResponse");
                 break;
-            case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
+            case AssistantStreamReplace d:
                 if (_liveText.Remove(s.Id, out var streamed))
                 {
-                    streamed.Text = at.Text;
-                    streamed.OriginalText = at.OriginalText;
+                    streamed.Text = d.Text;
+                    streamed.OriginalText = d.OriginalText;
                 }
                 else
-                    s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText, ModelUsed = s.Model });
-                s.Activity = L("L.ReceivingResponse");
+                    s.Transcript.Add(new AgentTextBlock(d.Text) { OriginalText = d.OriginalText, ModelUsed = s.Model });
                 break;
-            case Thinking th when !string.IsNullOrWhiteSpace(th.Text):
-                s.Transcript.Add(new ThinkingBlock(th.Text));
-                s.Activity = L("L.ThinkingActivity");
+            case AssistantAdd d:
+                s.Transcript.Add(new AgentTextBlock(d.Text) { OriginalText = d.OriginalText, ModelUsed = s.Model });
                 break;
-            case ToolUseStarted u:
-                var tb = new ToolBlock(u.ToolUseId, KindOf(u.Name), u.Name) { CommandText = ExtractCommand(u) };
-                tools[u.ToolUseId] = tb;
+            case AssistantStreamEnd:
+                _liveText.Remove(s.Id); // 스트리밍 잔여 해제 (최종 텍스트 미도착 시 라이브 내용 그대로 유지)
+                break;
+            case ThinkingAdd d:
+                s.Transcript.Add(new ThinkingBlock(d.Text));
+                break;
+            case ToolAdd d:
+                var tb = new ToolBlock(d.ToolUseId, d.Kind, d.Name) { CommandText = d.CommandText };
+                tools[d.ToolUseId] = tb;
                 s.Transcript.Add(tb);
-                s.MarkRunSignal(L("L.ToolRunning", u.Name));
-                if (u.Name == "TodoWrite")
-                    UpsertTaskListArtifact(s, u.InputJson);
                 break;
-            case ToolResult r:
-                if (tools.TryGetValue(r.ToolUseId, out var t))
+            case TaskListArtifactUpdate d:
+                UpsertTaskListArtifact(s, d.InputJson);
+                break;
+            case ToolFinished d:
+                if (tools.TryGetValue(d.ToolUseId, out var t))
                 {
-                    t.Body = Trim(r.Content, 2000);
-                    t.OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000);
-                    t.Stat = r.IsError ? L("L.ToolError") : L("L.ToolDone");
+                    t.Body = Trim(d.Content, 2000);
+                    t.OriginalBody = d.OriginalContent is null ? null : Trim(d.OriginalContent, 2000);
+                    t.Stat = d.IsError ? L("L.ToolError") : L("L.ToolDone");
                     if (t.CommandText is { } cmd && IsTestCommand(cmd))
-                        UpsertTestArtifact(s, cmd, r.Content, r.IsError);
+                        UpsertTestArtifact(s, cmd, d.Content, d.IsError);
                 }
                 else
                 {
-                    s.Transcript.Add(new ToolBlock(r.ToolUseId, "RUN", L("L.Result"))
+                    s.Transcript.Add(new ToolBlock(d.ToolUseId, "RUN", L("L.Result"))
                     {
-                        Body = Trim(r.Content, 2000),
-                        OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000),
-                        Stat = r.IsError ? L("L.ToolError") : L("L.ToolDone")
+                        Body = Trim(d.Content, 2000),
+                        OriginalBody = d.OriginalContent is null ? null : Trim(d.OriginalContent, 2000),
+                        Stat = d.IsError ? L("L.ToolError") : L("L.ToolDone")
                     });
                 }
                 // live review: a finished tool may have changed files in the worktree
                 _ = QueueLiveReviewRefreshAsync(s);
                 break;
-            case TokenUsage k:
-                // live accumulation; TurnCompleted.Usage reconciles to the turn total
-                s.TokensIn += k.InputTokens;
-                s.TokensOut += k.OutputTokens;
+            case TokensAdded d:
+                // live accumulation; TurnUsageSet reconciles to the turn total
+                s.TokensIn += d.Input;
+                s.TokensOut += d.Output;
+                break;
+            case TurnUsageSet d:
+                // reconcile: per-message usage undercounts (esp. output); result.usage is the turn total
+                s.TokensIn = s.TurnBaseIn + d.Input;
+                s.TokensOut = s.TurnBaseOut + d.Output;
+                break;
+            case CostAdded d:
+                s.CostUsd += d.Usd;
+                break;
+            case QuotaRecorded d:
+                RecordUsage(s.AgentId, d.Quota);
+                break;
+            case StatusSet d:
+                s.Status = d.Status;
+                break;
+            case ErrorAdd d:
+                // claude can't --resume a conversation that no longer exists → the session is dead. Don't
+                // stack the prompt on repeated stderr lines.
+                if (d.IsStaleSession && s.Transcript.LastOrDefault() is ErrorBlock { IsStaleSession: true }) break;
+                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), d.Message) { IsStaleSession = d.IsStaleSession });
+                break;
+            case TotalsChanged:
                 RefreshTotals();
                 break;
-            case QuotaUpdate q:
-                RecordUsage(s.AgentId, q);
-                break;
-            case EngineError e when !SuppressStderr(s, e.Message):
-                // claude can't --resume a conversation that no longer exists → the session is dead.
-                // Flag it (cc only for now; other engines have different signatures) so the error
-                // block can offer a delete action. Don't stack the prompt on repeated stderr lines.
-                var staleSession = s.AgentId == "cc"
-                    && e.Message.Contains("No conversation found with session ID", StringComparison.OrdinalIgnoreCase);
-                if (staleSession && s.Transcript.LastOrDefault() is ErrorBlock { IsStaleSession: true }) break;
-                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), e.Message) { IsStaleSession = staleSession });
-                break;
-            case TurnCompleted c:
-                _liveText.Remove(s.Id); // 스트리밍 잔여 해제 (최종 텍스트 미도착 시 라이브 내용 그대로 유지)
-                if (c.Usage is { } turnUsage)
-                {
-                    // reconcile: per-message usage undercounts (esp. output); result.usage is the turn total
-                    s.TokensIn = s.TurnBaseIn + turnUsage.InputTokens;
-                    s.TokensOut = s.TurnBaseOut + turnUsage.OutputTokens;
-                }
-                if (c.CostUsd is { } turnCost) s.CostUsd += turnCost;
+            case TurnFinished d:
                 UpsertSummaryArtifact(s);
-                AttentionRequested?.Invoke(c.IsError ? "error" : "done", s);
-                s.Status = c.IsError ? "error" : "done";
-                s.MarkRunEnded(c.IsError ? L("L.Failed") : L("L.Completed"));
+                AttentionRequested?.Invoke(d.IsError ? "error" : "done", s);
+                s.MarkRunEnded(d.IsError ? L("L.Failed") : L("L.Completed"));
                 PopulateQuickReplies(s);
-                RefreshTotals();
                 break;
         }
-        SaveState();
     }
+
+    /// <summary>Localize a neutral activity marker for the run-signal/activity line.</summary>
+    private static string ActivityLabel(ActivitySignal a) => a.Kind switch
+    {
+        ActivityKind.Connected => L("L.Connected"),
+        ActivityKind.ConnectedModel => L("L.ConnectedModel", a.Arg ?? ""),
+        ActivityKind.Streaming => L("L.StreamingResponse"),
+        ActivityKind.Receiving => L("L.ReceivingResponse"),
+        ActivityKind.Thinking => L("L.ThinkingActivity"),
+        ActivityKind.ToolRunning => L("L.ToolRunning", a.Arg ?? ""),
+        _ => "",
+    };
+
+    private readonly TranscriptProjector _projector = new();
 
 }

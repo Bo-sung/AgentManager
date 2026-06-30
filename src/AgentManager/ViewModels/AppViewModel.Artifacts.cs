@@ -19,8 +19,6 @@ public sealed partial class AppViewModel
 {
     // ----- artifacts (light): derived from events, no extra engine calls -----
 
-    private static string? ExtractCommand(ToolUseStarted u) => CoreHelpers.ExtractCommand(u);
-
     private static bool IsTestCommand(string cmd) => CoreHelpers.IsTestCommand(cmd);
 
     private static ArtifactViewModel GetOrAddArtifact(SessionViewModel s, string kind, string title)
@@ -69,33 +67,9 @@ public sealed partial class AppViewModel
         GetOrAddArtifact(s, "summary", L("L.Summary")).Content = last.Text;
     }
 
-    /// <summary>gemini가 셸 실행 시 stderr로 쏟는 멀티라인 덤프(xterm.js Parsing error — JS 객체 수십 줄)를
-    /// 중괄호 깊이로 추적해 통째로 삼킨다. 라인 단위 패턴으로는 못 잡는 형태.</summary>
-    private readonly Dictionary<string, (int Depth, int Ttl)> _stderrDump = [];
-
-    /// <summary>세션별 스트리밍 중인 라이브 응답 블록 (최종 AssistantText 도착 시 교체·해제).</summary>
+    /// <summary>세션별 스트리밍 중인 라이브 응답 블록 (최종 AssistantText 도착 시 교체·해제). 스트리밍
+    /// 여부 판단은 Core TranscriptProjector가 소유; 여기선 실제 블록만 보유해 델타를 적용한다.</summary>
     private readonly Dictionary<string, AgentTextBlock> _liveText = [];
-    private bool SuppressStderr(SessionViewModel s, string m)
-    {
-        if (IsBenignStderr(m)) return true;
-        if (_stderrDump.TryGetValue(s.Id, out var st) && st.Depth > 0)
-        {
-            var depth = st.Depth + m.Count(c => c == '{') - m.Count(c => c == '}');
-            var ttl = st.Ttl - 1;
-            _stderrDump[s.Id] = (ttl <= 0 ? 0 : Math.Max(0, depth), ttl); // TTL: 덤프가 잘려도 영원히 삼키지 않게
-            return true;
-        }
-        if (m.Contains("xterm.js: Parsing error"))
-        {
-            _stderrDump[s.Id] = (Math.Max(1, m.Count(c => c == '{') - m.Count(c => c == '}')), 80);
-            return true;
-        }
-        return false;
-    }
-
-    /// <summary>엔진들이 stderr로 흘리는 무해한 안내/경고 — 에러 블록으로 띄우지 않는다.
-    /// 진짜 실패는 정규화 이벤트(result/turn.failed/error)로 따로 들어온다.</summary>
-    private static bool IsBenignStderr(string m) => CoreHelpers.IsBenignStderr(m);
 
     private static string KindOf(string name) => CoreHelpers.KindOf(name);
 
