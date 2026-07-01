@@ -548,4 +548,5 @@
     <sys:String x:Key="L.CustomModelHint">Model id</sys:String>
     <sys:String x:Key="L.CustomKeyHint">API key (optional; blank for local)</sys:String>
     <sys:String x:Key="L.RemoveCustom">Remove</sys:String>
+    <sys:String x:Key="L.AgentTranslationModel">Translation model (blank = engine default; a cheap/fast model is recommended)</sys:String>
 </ResourceDictionary>

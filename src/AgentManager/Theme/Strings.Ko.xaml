@@ -548,4 +548,5 @@
     <sys:String x:Key="L.CustomModelHint">모델 id</sys:String>
     <sys:String x:Key="L.CustomKeyHint">API 키 (선택; 로컬은 비움)</sys:String>
     <sys:String x:Key="L.RemoveCustom">삭제</sys:String>
+    <sys:String x:Key="L.AgentTranslationModel">번역 모델 (비우면 엔진 기본; 싸고 빠른 모델 권장)</sys:String>
 </ResourceDictionary>

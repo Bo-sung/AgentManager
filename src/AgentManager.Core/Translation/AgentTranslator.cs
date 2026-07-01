@@ -11,7 +11,7 @@ namespace AgentManager.Core.Translation;
 /// collects the assistant's text. Trade-off vs a local model: it spends the agent's tokens and pays a per-call
 /// process spawn, so it's an opt-in provider rather than the always-on default.
 /// </summary>
-public sealed class AgentTranslator(string agentId, string exePath, string sourceLanguage, string targetLanguage)
+public sealed class AgentTranslator(string agentId, string exePath, string sourceLanguage, string targetLanguage, string? model = null)
     : TranslatorBase(sourceLanguage, targetLanguage)
 {
     /// <summary>Engines usable as translators. agy is excluded — its ConPTY text-only capture is unreliable for
@@ -35,6 +35,8 @@ public sealed class AgentTranslator(string agentId, string exePath, string sourc
             WorkingDirectory = cwd,
             BypassPermissions = true,
             Sandbox = SandboxMode.ReadOnly,
+            // Optional: a cheaper/faster model for translation (e.g. cc haiku) instead of the engine default.
+            Model = string.IsNullOrWhiteSpace(model) ? null : model,
         };
 
         var sb = new StringBuilder();

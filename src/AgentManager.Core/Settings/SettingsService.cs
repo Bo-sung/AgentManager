@@ -30,6 +30,10 @@ public sealed class SettingsService
     public string OllamaEndpoint { get; set; } = "http://localhost:11434";
     public string OllamaModel { get; set; } = "exaone3.5:7.8b";
 
+    /// <summary>Model the agent provider uses for translation (blank = engine default). Applies to the selected
+    /// <c>agent:&lt;id&gt;</c> — e.g. a cheap/fast model like cc's haiku so translation doesn't burn the default.</summary>
+    public string TranslationAgentModel { get; set; } = "";
+
     /// <summary>User-added OpenAI-compatible / cloud endpoints (the "+ Add custom" list). API keys are stored
     /// DPAPI-encrypted by the frontend (<see cref="TranslationCustomProvider.ApiKeyEnc"/> is opaque to Core).</summary>
     public List<TranslationCustomProvider> TranslationCustomProviders { get; set; } = new();

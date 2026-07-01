@@ -482,6 +482,20 @@
                                                 <TextBlock Text="{Binding OllamaModelsStatus}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0"/>
                                                 </StackPanel>
 
+                                                <!-- Agent provider: which model translates (visible when an agent provider is selected) -->
+                                                <StackPanel Margin="0,12,0,0">
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsAgentProviderSelected}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </StackPanel.Style>
+                                                    <TextBlock Text="{StaticResource L.AgentTranslationModel}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                    <ComboBox IsEditable="True" ItemsSource="{Binding TranslationAgentModels}" Text="{Binding SettingsTranslationAgentModel, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch"/>
+                                                </StackPanel>
+
                                                 <!-- Custom OpenAI-compatible endpoints: existing entries + add form -->
                                                 <ItemsControl ItemsSource="{Binding CustomTranslationProviders}" Margin="0,12,0,0">
                                                     <ItemsControl.ItemTemplate>

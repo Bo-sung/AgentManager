@@ -565,7 +565,22 @@ public sealed partial class AppViewModel
     public ObservableCollection<Core.Translation.TranslationProviderInfo> TranslationProviders { get; } = [];
 
     private string _settingsTranslationSelectedId = "ollama";
-    public string SettingsTranslationSelectedId { get => _settingsTranslationSelectedId; set => Set(ref _settingsTranslationSelectedId, value); }
+    public string SettingsTranslationSelectedId
+    {
+        get => _settingsTranslationSelectedId;
+        set { if (Set(ref _settingsTranslationSelectedId, value)) { OnChanged(nameof(IsAgentProviderSelected)); OnChanged(nameof(TranslationAgentModels)); } }
+    }
+
+    /// <summary>True when the selected provider is an installed agent (agent:&lt;id&gt;) — gates the agent model picker.</summary>
+    public bool IsAgentProviderSelected => _settingsTranslationSelectedId?.StartsWith("agent:", StringComparison.Ordinal) == true;
+
+    /// <summary>Models offered by the selected agent (for the translation-model picker); empty for non-agent providers.</summary>
+    public string[] TranslationAgentModels =>
+        IsAgentProviderSelected ? Core.Agents.EngineRegistry.Get(_settingsTranslationSelectedId["agent:".Length..]).Models : [];
+
+    private string _settingsTranslationAgentModel = "";
+    /// <summary>Chosen translation model for the agent provider (blank = engine default).</summary>
+    public string SettingsTranslationAgentModel { get => _settingsTranslationAgentModel; set => Set(ref _settingsTranslationAgentModel, value); }
 
     /// <summary>Editable copy of the custom OpenAI-compat entries (applied to settings on Save).</summary>
     public ObservableCollection<Core.Translation.TranslationCustomProvider> CustomTranslationProviders { get; } = [];
@@ -639,6 +654,7 @@ public sealed partial class AppViewModel
         LoadCustomProvidersEditor();
         RebuildTranslationProviders();
         SettingsTranslationSelectedId = _settings.TranslationSelectedId;
+        SettingsTranslationAgentModel = _settings.TranslationAgentModel;
         SettingsDefaultTranslationEnabled = TranslationEnabled;
         SettingsTranslateSource = _translateSource;
         SettingsTranslateTarget = _translateTarget;
@@ -755,6 +771,7 @@ public sealed partial class AppViewModel
         _translateSource = NormalizeTranslationLang(SettingsTranslateSource, "Korean");
         _translateTarget = NormalizeTranslationLang(SettingsTranslateTarget, "English");
         _settings.TranslationCustomProviders = CustomTranslationProviders.ToList();
+        _settings.TranslationAgentModel = (SettingsTranslationAgentModel ?? "").Trim();
         _settings.TranslationSelectedId = string.IsNullOrWhiteSpace(SettingsTranslationSelectedId) ? "ollama" : SettingsTranslationSelectedId;
         _translator = BuildTranslator(); // selected provider (ollama / agent / custom) via the factory
         ApplyAndInjectSkill(); // 각 엔진 스킬 폴더에 SKILL.md 기록

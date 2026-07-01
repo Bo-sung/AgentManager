@@ -62,7 +62,7 @@ public static class TranslatorFactory
             var agentId = id["agent:".Length..];
             if (!AgentTranslator.Supports(agentId)) return null;
             var exe = resolveExe(agentId);
-            return string.IsNullOrWhiteSpace(exe) ? null : new AgentTranslator(agentId, exe!, src, tgt);
+            return string.IsNullOrWhiteSpace(exe) ? null : new AgentTranslator(agentId, exe!, src, tgt, s.TranslationAgentModel);
         }
 
         var cp = s.TranslationCustomProviders.FirstOrDefault(c => c.Id == id);
