@@ -430,7 +430,23 @@
 
                                                 <Border Height="1" Background="{DynamicResource LineSoft}" Margin="0,14"/>
 
-                                                <!-- 번역 엔진 (Ollama) -->
+                                                <!-- Translation provider picker: Ollama / installed agent (cc/gx/pi) / custom OpenAI-compatible -->
+                                                <TextBlock Text="{StaticResource L.TranslationProvider}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <ComboBox ItemsSource="{Binding TranslationProviders}" SelectedValuePath="Id" SelectedValue="{Binding SettingsTranslationSelectedId, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                                                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding DisplayName}"/></DataTemplate></ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                                <TextBlock Text="{StaticResource L.TranslationProviderDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+
+                                                <!-- Ollama config — visible only when the Ollama provider is selected -->
+                                                <StackPanel Margin="0,12,0,0">
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SettingsTranslationSelectedId}" Value="ollama"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </StackPanel.Style>
                                                 <TextBlock Text="{StaticResource L.Endpoint}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                 <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsOllamaEndpoint, UpdateSourceTrigger=PropertyChanged}"/>
                                                 <!-- Ollama 서비스 상태 + 제어 -->
@@ -464,6 +480,40 @@
                                                     <ComboBox IsEditable="True" ItemsSource="{Binding OllamaModels}" Text="{Binding SettingsOllamaModel, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch"/>
                                                 </DockPanel>
                                                 <TextBlock Text="{Binding OllamaModelsStatus}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0"/>
+                                                </StackPanel>
+
+                                                <!-- Custom OpenAI-compatible endpoints: existing entries + add form -->
+                                                <ItemsControl ItemsSource="{Binding CustomTranslationProviders}" Margin="0,12,0,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="0,0,0,4">
+                                                                <DockPanel LastChildFill="True">
+                                                                    <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.RemoveCustom}"
+                                                                            Command="{Binding DataContext.RemoveCustomProviderCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"/>
+                                                                    <StackPanel VerticalAlignment="Center">
+                                                                        <TextBlock Text="{Binding Name}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis"/>
+                                                                        <TextBlock FontSize="9.5" FontFamily="{StaticResource Mono}" Foreground="{DynamicResource Txt3}" TextTrimming="CharacterEllipsis">
+                                                                            <Run Text="{Binding Endpoint}"/><Run Text=" · "/><Run Text="{Binding Model}"/>
+                                                                        </TextBlock>
+                                                                    </StackPanel>
+                                                                </DockPanel>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Expander Header="{StaticResource L.AddCustomEndpoint}" Margin="0,4,0,0" Foreground="{DynamicResource Txt1}">
+                                                    <StackPanel Margin="0,8,0,0">
+                                                        <TextBlock Text="{StaticResource L.CustomNameHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}"/>
+                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewCustomName, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+                                                        <TextBlock Text="{StaticResource L.CustomEndpointHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}"/>
+                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewCustomEndpoint, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+                                                        <TextBlock Text="{StaticResource L.CustomModelHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}"/>
+                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewCustomModel, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+                                                        <TextBlock Text="{StaticResource L.CustomKeyHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}"/>
+                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewCustomKey, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,8"/>
+                                                        <Button Style="{StaticResource ChipButton}" HorizontalAlignment="Left" Content="{StaticResource L.AddCustomEndpoint}" Command="{Binding AddCustomProviderCommand}"/>
+                                                    </StackPanel>
+                                                </Expander>
                                                 <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,12,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsDefaultTranslationEnabled, Mode=TwoWay}" Content="{StaticResource L.DefaultTranslation}" ToolTip="{StaticResource L.DefaultTranslationTip}"/>
                                             </StackPanel>
                                         </Border>
