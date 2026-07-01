@@ -133,14 +133,18 @@ public sealed class SessionViewModel : ObservableObject
     /// <summary>Last segment of the branch, e.g. "agent/foo-bar" → "foo-bar" (composer pill).</summary>
     public string BranchTail => EffectiveBranch.Contains('/') ? EffectiveBranch[(EffectiveBranch.LastIndexOf('/') + 1)..] : EffectiveBranch;
 
-    /// <summary>Branch label for list/header pills. When the user opted out of a worktree, no branch is
-    /// ever created (the agent works in the project's main tree) — so showing the phantom "agent/…"
-    /// name is misleading; show a "shared tree" marker instead.</summary>
-    public string BranchDisplay => WorktreeOptOut ? AgentManager.App.L("L.BranchShared") : EffectiveBranch;
+    /// <summary>Branch label for list/header pills. Isolated → the worktree's (live) branch. Shared /
+    /// no-worktree → the project repo's LIVE current branch (so you can see which branch it's working on),
+    /// marked "(shared)"; falls back to a plain "shared tree" marker before the branch is read / non-git.</summary>
+    public string BranchDisplay => WorktreeOptOut
+        ? (string.IsNullOrEmpty(_currentBranch) ? AgentManager.App.L("L.BranchShared") : AgentManager.App.L("L.BranchSharedOn", _currentBranch))
+        : EffectiveBranch;
 
-    /// <summary>Composer worktree pill: "Worktree · &lt;tail&gt;" when isolated, "main tree (shared)"
-    /// when opted out (no worktree is created).</summary>
-    public string WorktreePill => WorktreeOptOut ? AgentManager.App.L("L.SharedTreePill") : AgentManager.App.L("L.WorktreePrefix") + BranchTail;
+    /// <summary>Composer worktree pill: "Worktree · &lt;tail&gt;" when isolated; for a shared/no-worktree
+    /// session, "main tree · &lt;live branch&gt;" (or plain "main tree (shared)" before the branch is read).</summary>
+    public string WorktreePill => WorktreeOptOut
+        ? (string.IsNullOrEmpty(_currentBranch) ? AgentManager.App.L("L.SharedTreePill") : AgentManager.App.L("L.SharedTreePillOn", _currentBranch))
+        : AgentManager.App.L("L.WorktreePrefix") + BranchTail;
 
     /// <summary>Archived sessions are hidden from the Active/Project groups (kept in storage).</summary>
     private bool _isArchived;

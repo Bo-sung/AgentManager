@@ -524,6 +524,10 @@ public sealed partial class AppViewModel
     private async Task RefreshReviewAsync(SessionViewModel? s, bool quiet = false)
     {
         if (s is null) return;
+        // Live branch label: read from the session's cwd — the isolated worktree, or (for a shared /
+        // no-worktree session) the project root — so a shared session shows which repo branch it's on.
+        s.CurrentBranch = await GitWorktree.CurrentBranchAsync(
+            !string.IsNullOrWhiteSpace(s.WorktreePath) ? s.WorktreePath! : s.ProjectPath);
         if (string.IsNullOrWhiteSpace(s.WorktreePath))
         {
             s.Changes.Clear();
@@ -549,7 +553,6 @@ public sealed partial class AppViewModel
             s.DiffAdded = added;
             s.DiffRemoved = deleted;
             s.DiffFiles = changes.Count;
-            s.CurrentBranch = await GitWorktree.CurrentBranchAsync(s.WorktreePath); // live branch — agent may have switched/created one
             lock (_scannedSessionDiffIds)
             {
                 _scannedSessionDiffIds.Add(s.Id);

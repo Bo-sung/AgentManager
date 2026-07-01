@@ -538,4 +538,6 @@
     <sys:String x:Key="L.ResyncFailed">Transcript resync failed</sys:String>
     <sys:String x:Key="L.AddModel">Add</sys:String>
     <sys:String x:Key="L.AddModelHint">Add a specific version (e.g. claude-opus-4-6) — aliases like 'sonnet' auto-track the latest</sys:String>
+    <sys:String x:Key="L.BranchSharedOn">{0} (shared)</sys:String>
+    <sys:String x:Key="L.SharedTreePillOn">main tree · {0}</sys:String>
 </ResourceDictionary>

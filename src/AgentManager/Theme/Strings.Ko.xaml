@@ -538,4 +538,6 @@
     <sys:String x:Key="L.ResyncFailed">트랜스크립트 재동기화 실패</sys:String>
     <sys:String x:Key="L.AddModel">추가</sys:String>
     <sys:String x:Key="L.AddModelHint">세부 버전 직접 추가 (예: claude-opus-4-6) — 'sonnet' 같은 별칭은 자동 최신</sys:String>
+    <sys:String x:Key="L.BranchSharedOn">{0} (공유)</sys:String>
+    <sys:String x:Key="L.SharedTreePillOn">메인 트리 · {0}</sys:String>
 </ResourceDictionary>
