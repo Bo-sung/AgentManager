@@ -540,4 +540,12 @@
     <sys:String x:Key="L.AddModelHint">Add a specific version (e.g. claude-opus-4-6) — aliases like 'sonnet' auto-track the latest</sys:String>
     <sys:String x:Key="L.BranchSharedOn">{0} (shared)</sys:String>
     <sys:String x:Key="L.SharedTreePillOn">main tree · {0}</sys:String>
+    <sys:String x:Key="L.TranslationProvider">Translation provider</sys:String>
+    <sys:String x:Key="L.TranslationProviderDesc">Ollama (local), an installed agent (cc/gx/pi), or a custom OpenAI-compatible endpoint.</sys:String>
+    <sys:String x:Key="L.AddCustomEndpoint">＋ Add custom endpoint (OpenAI-compatible)</sys:String>
+    <sys:String x:Key="L.CustomNameHint">Name (e.g. LM Studio, OpenAI)</sys:String>
+    <sys:String x:Key="L.CustomEndpointHint">Base URL, e.g. http://localhost:1234/v1</sys:String>
+    <sys:String x:Key="L.CustomModelHint">Model id</sys:String>
+    <sys:String x:Key="L.CustomKeyHint">API key (optional; blank for local)</sys:String>
+    <sys:String x:Key="L.RemoveCustom">Remove</sys:String>
 </ResourceDictionary>

@@ -540,4 +540,12 @@
     <sys:String x:Key="L.AddModelHint">세부 버전 직접 추가 (예: claude-opus-4-6) — 'sonnet' 같은 별칭은 자동 최신</sys:String>
     <sys:String x:Key="L.BranchSharedOn">{0} (공유)</sys:String>
     <sys:String x:Key="L.SharedTreePillOn">메인 트리 · {0}</sys:String>
+    <sys:String x:Key="L.TranslationProvider">번역 provider</sys:String>
+    <sys:String x:Key="L.TranslationProviderDesc">Ollama(로컬), 설치된 에이전트(cc/gx/pi), 또는 커스텀 OpenAI-호환 엔드포인트.</sys:String>
+    <sys:String x:Key="L.AddCustomEndpoint">＋ 커스텀 엔드포인트 추가 (OpenAI-호환)</sys:String>
+    <sys:String x:Key="L.CustomNameHint">이름 (예: LM Studio, OpenAI)</sys:String>
+    <sys:String x:Key="L.CustomEndpointHint">베이스 URL, 예: http://localhost:1234/v1</sys:String>
+    <sys:String x:Key="L.CustomModelHint">모델 id</sys:String>
+    <sys:String x:Key="L.CustomKeyHint">API 키 (선택; 로컬은 비움)</sys:String>
+    <sys:String x:Key="L.RemoveCustom">삭제</sys:String>
 </ResourceDictionary>

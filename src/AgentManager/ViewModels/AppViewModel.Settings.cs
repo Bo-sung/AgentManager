@@ -559,6 +559,75 @@ public sealed partial class AppViewModel
     }
 
     /// <summary>VM 필드 → 설정 에디터(Settings* 미러) 프로퍼티로 끌어온다. OpenSettings + 외부 리로드에서 공용.</summary>
+    // ---- translation provider picker (Ollama / installed agents / custom OpenAI-compat) ----
+
+    /// <summary>Selectable providers for the settings picker (built-ins + custom). Rebuilt on open / edit.</summary>
+    public ObservableCollection<Core.Translation.TranslationProviderInfo> TranslationProviders { get; } = [];
+
+    private string _settingsTranslationSelectedId = "ollama";
+    public string SettingsTranslationSelectedId { get => _settingsTranslationSelectedId; set => Set(ref _settingsTranslationSelectedId, value); }
+
+    /// <summary>Editable copy of the custom OpenAI-compat entries (applied to settings on Save).</summary>
+    public ObservableCollection<Core.Translation.TranslationCustomProvider> CustomTranslationProviders { get; } = [];
+
+    private string _newCustomName = "", _newCustomEndpoint = "", _newCustomModel = "", _newCustomKey = "";
+    public string NewCustomName { get => _newCustomName; set => Set(ref _newCustomName, value); }
+    public string NewCustomEndpoint { get => _newCustomEndpoint; set => Set(ref _newCustomEndpoint, value); }
+    public string NewCustomModel { get => _newCustomModel; set => Set(ref _newCustomModel, value); }
+    public string NewCustomKey { get => _newCustomKey; set => Set(ref _newCustomKey, value); }
+
+    private RelayCommand? _addCustomProviderCommand;
+    public RelayCommand AddCustomProviderCommand => _addCustomProviderCommand ??= new RelayCommand(_ => AddCustomProvider());
+
+    private RelayCommand? _removeCustomProviderCommand;
+    public RelayCommand RemoveCustomProviderCommand => _removeCustomProviderCommand ??= new RelayCommand(p =>
+    {
+        if (p is Core.Translation.TranslationCustomProvider cp)
+        {
+            CustomTranslationProviders.Remove(cp);
+            if (SettingsTranslationSelectedId == cp.Id) SettingsTranslationSelectedId = "ollama";
+            RebuildTranslationProviders();
+        }
+    });
+
+    private void AddCustomProvider()
+    {
+        var endpoint = NewCustomEndpoint.Trim();
+        if (endpoint.Length == 0) return;
+        var cp = new Core.Translation.TranslationCustomProvider
+        {
+            Id = "custom:" + Guid.NewGuid().ToString("N")[..8],
+            Name = NewCustomName.Trim(),
+            Endpoint = endpoint,
+            Model = NewCustomModel.Trim(),
+            // Key is DPAPI-encrypted at rest (CurrentUser); opaque to Core.
+            ApiKeyEnc = string.IsNullOrWhiteSpace(NewCustomKey) ? "" : Persistence.Dpapi.Encrypt(NewCustomKey.Trim()),
+        };
+        CustomTranslationProviders.Add(cp);
+        RebuildTranslationProviders();
+        SettingsTranslationSelectedId = cp.Id; // auto-select the just-added entry
+        NewCustomName = NewCustomEndpoint = NewCustomModel = NewCustomKey = "";
+    }
+
+    private void LoadCustomProvidersEditor()
+    {
+        CustomTranslationProviders.Clear();
+        foreach (var c in _settings.TranslationCustomProviders)
+            CustomTranslationProviders.Add(new Core.Translation.TranslationCustomProvider
+            { Id = c.Id, Name = c.Name, Endpoint = c.Endpoint, Model = c.Model, ApiKeyEnc = c.ApiKeyEnc });
+    }
+
+    private void RebuildTranslationProviders()
+    {
+        TranslationProviders.Clear();
+        TranslationProviders.Add(new("ollama", "ollama", "Ollama (local)"));
+        foreach (var id in Core.Translation.AgentTranslator.SupportedEngines)
+            if (!string.IsNullOrWhiteSpace(ResolveTranslatorExe(id)))
+                TranslationProviders.Add(new($"agent:{id}", "agent", $"Agent · {id}"));
+        foreach (var c in CustomTranslationProviders)
+            TranslationProviders.Add(new(c.Id, "openai", string.IsNullOrWhiteSpace(c.Name) ? c.Endpoint : c.Name));
+    }
+
     private void PullSettingsToEditor()
     {
         SettingsClaudePath = _claudePath;
@@ -567,6 +636,9 @@ public sealed partial class AppViewModel
         SettingsPiPath = _piPath;
         SettingsOllamaEndpoint = _ollamaEndpoint;
         SettingsOllamaModel = _ollamaModel;
+        LoadCustomProvidersEditor();
+        RebuildTranslationProviders();
+        SettingsTranslationSelectedId = _settings.TranslationSelectedId;
         SettingsDefaultTranslationEnabled = TranslationEnabled;
         SettingsTranslateSource = _translateSource;
         SettingsTranslateTarget = _translateTarget;
@@ -682,7 +754,9 @@ public sealed partial class AppViewModel
         _language = newLanguage;
         _translateSource = NormalizeTranslationLang(SettingsTranslateSource, "Korean");
         _translateTarget = NormalizeTranslationLang(SettingsTranslateTarget, "English");
-        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel, _translateSource, _translateTarget);
+        _settings.TranslationCustomProviders = CustomTranslationProviders.ToList();
+        _settings.TranslationSelectedId = string.IsNullOrWhiteSpace(SettingsTranslationSelectedId) ? "ollama" : SettingsTranslationSelectedId;
+        _translator = BuildTranslator(); // selected provider (ollama / agent / custom) via the factory
         ApplyAndInjectSkill(); // 각 엔진 스킬 폴더에 SKILL.md 기록
         SettingsStatus = languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
         SaveState();
