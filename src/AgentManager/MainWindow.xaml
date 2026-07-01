@@ -667,10 +667,10 @@
                                                         <TextBlock Text="{StaticResource L.Rename}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                         <TextBox x:Name="ActiveRenameBox" Style="{StaticResource ComposerInput}" Background="{DynamicResource Bg1}"
                                                                  BorderBrush="{DynamicResource Line}" BorderThickness="1" Padding="8"
-                                                                 AcceptsReturn="False" Text="{Binding Title, Mode=OneWay}"/>
+                                                                 AcceptsReturn="False" Text="{Binding RenameDraft, UpdateSourceTrigger=PropertyChanged}"/>
                                                         <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Apply}" Margin="0,8,0,0"
                                                                 Command="{Binding DataContext.RenameSessionCommand, Source={x:Reference Root}}"
-                                                                CommandParameter="{Binding Text, ElementName=ActiveRenameBox}"/>
+                                                                CommandParameter="{Binding}"/>
                                                     </StackPanel>
                                                 </ContextMenu>
                                             </Border.ContextMenu>
@@ -856,6 +856,16 @@
                                                 <Border.ContextMenu>
                                                     <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                                         <MenuItem Header="{StaticResource L.Delete}" Command="{Binding DataContext.DeleteSessionCommand, Source={x:Reference Root}}" CommandParameter="{Binding}"/>
+                                                        <Separator/>
+                                                        <StackPanel Width="190" Margin="8,6">
+                                                            <TextBlock Text="{StaticResource L.Rename}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                            <TextBox x:Name="WorkerRenameBox" Style="{StaticResource ComposerInput}" Background="{DynamicResource Bg1}"
+                                                                     BorderBrush="{DynamicResource Line}" BorderThickness="1" Padding="8"
+                                                                     AcceptsReturn="False" Text="{Binding RenameDraft, UpdateSourceTrigger=PropertyChanged}"/>
+                                                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Apply}" Margin="0,8,0,0"
+                                                                    Command="{Binding DataContext.RenameSessionCommand, Source={x:Reference Root}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                        </StackPanel>
                                                     </ContextMenu>
                                                 </Border.ContextMenu>
                                                 <Border.Style>
@@ -928,10 +938,10 @@
                                                         <TextBlock Text="{StaticResource L.Rename}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                         <TextBox x:Name="ProjectRenameBox" Style="{StaticResource ComposerInput}" Background="{DynamicResource Bg1}"
                                                                  BorderBrush="{DynamicResource Line}" BorderThickness="1" Padding="8"
-                                                                 AcceptsReturn="False" Text="{Binding Title, Mode=OneWay}"/>
+                                                                 AcceptsReturn="False" Text="{Binding RenameDraft, UpdateSourceTrigger=PropertyChanged}"/>
                                                         <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Apply}" Margin="0,8,0,0"
                                                                 Command="{Binding DataContext.RenameSessionCommand, Source={x:Reference Root}}"
-                                                                CommandParameter="{Binding Text, ElementName=ProjectRenameBox}"/>
+                                                                CommandParameter="{Binding}"/>
                                                     </StackPanel>
                                                 </ContextMenu>
                                             </Border.ContextMenu>
@@ -1059,10 +1069,10 @@
                                                         <TextBlock Text="{StaticResource L.Rename}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                         <TextBox x:Name="ArchivedRenameBox" Style="{StaticResource ComposerInput}" Background="{DynamicResource Bg1}"
                                                                  BorderBrush="{DynamicResource Line}" BorderThickness="1" Padding="8"
-                                                                 AcceptsReturn="False" Text="{Binding Title, Mode=OneWay}"/>
+                                                                 AcceptsReturn="False" Text="{Binding RenameDraft, UpdateSourceTrigger=PropertyChanged}"/>
                                                         <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Apply}" Margin="0,8,0,0"
                                                                 Command="{Binding DataContext.RenameSessionCommand, Source={x:Reference Root}}"
-                                                                CommandParameter="{Binding Text, ElementName=ArchivedRenameBox}"/>
+                                                                CommandParameter="{Binding}"/>
                                                     </StackPanel>
                                                 </ContextMenu>
                                             </Border.ContextMenu>
@@ -1879,12 +1889,10 @@
                                 <ColumnDefinition Width="200"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="{StaticResource L.Task}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
-                                <!-- 멀티라인 허용 — 긴 프롬프트 붙여넣기 시 줄바꿈 보존(스타일의 AcceptsReturn=False 로컬 오버라이드) -->
+                                <TextBlock Text="{StaticResource L.SessionNameOptional}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>
+                                <!-- 세션 이름(선택, 단일행) — 비워도 자동 이름. 태스크 입력 강제 없이 빈 세션을 미리 생성 가능. -->
                                 <TextBox Style="{StaticResource SettingsInput}"
-                                         Text="{Binding NewAgentTitle, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" MaxHeight="180"
-                                         VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"/>
+                                         Text="{Binding NewAgentTitle, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="{StaticResource L.ModelPick}" Style="{StaticResource Lbl}" Margin="0,0,0,8"/>

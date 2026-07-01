@@ -481,6 +481,21 @@ glue + Dispatcher calls move.
 After Step 6 the VM is the thin adapter of §2.3: services hold all state/logic; the VM only projects +
 binds + collects input. A CLI can then be written against the same services (Phase a complete).
 
+> **Execution note — Steps 3–6 took the Option-B path (in-process, single frontend), NOT the full
+> ownership inversion above.** Decided at Step 3: inverting state ownership in-process (a canonical Core
+> `Session` record + a `TranscriptProjector` the VM re-reduces + an `OrchestratorService` owning `_running`
+> and the session list) costs a full VM↔Core sync — *especially the streaming transcript* — for **zero
+> benefit until multiple frontends exist** (`NormalizedEvent` is already the headless domain transcript and
+> `Run.cs:Apply` is already its thin frontend projection). So the inversion-flavoured parts of Steps 4 & 5
+> are **deferred to phase (b)**, where they pay off (a closed window must not drop live sessions/approvals).
+> What landed instead, as real headless extractions with no live-OC inversion (verified by usage):
+> **Step 3** `ProjectStore<TSnapshot>` (save *mechanism*; 6642f26), **Step 5-core** `TurnPlanner`
+> (`Core/Orchestration/` — engine-resolution decision tree + `SessionOptions` assembly; 757b93a),
+> **Step 6** `UsageService` (`Core/Usage/` — snapshot map + capture/select rules; 92ef827). Also deferred as
+> in-process churn (value only in phase b): `ApprovalBroker` (would split the pending map into two parallel
+> maps), and `ReviewService`/`CliHistoryService`/`SchedulerService` (Core already owns the heavy logic via
+> `GitWorktree`/`CliSessionDiscovery`/`ScheduleStore`; the VM glue is mostly OC rebuild + `L()` labels).
+
 ---
 
 ## 6. (b) DAEMON / IPC BOUNDARY MARKER

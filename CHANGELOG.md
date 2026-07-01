@@ -2,6 +2,17 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.17.0
+헤드리스 Core 추출(phase a) + CLI 프론트엔드 · cc 대용량 프롬프트 stall 근본수정 · 트랜스크립트 재동기화 · 워크트리 라이브 브랜치 추적 · 모델 별칭 · 모델별 기본 effort · 세션 UX.
+- **헤드리스 Core 추출 (구조 개편 phase a)**: 오케스트레이션을 WPF ViewModel에서 `AgentManager.Core`로 분리 — EngineRegistry · EngineAuthService · SettingsService · ProjectStore(저장 코디네이터) · TurnPlanner(턴 셋업) · UsageService · TranscriptProjector(이벤트→중립 델타 리듀서) · RunRegistry · ApprovalBroker. UI/디스패처 비의존 → 프론트엔드 교체 가능.
+- **`AgentManager.Cli` (`am`) — 헤드리스 CLI**: Core만 참조하는 `net10.0`(비-windows) 프론트엔드. 실제 cc 턴을 GUI 없이 실행 — Core가 진짜 WPF-프리임을 증명(phase a 완료).
+- **cc 대용량 프롬프트 stall 근본수정**: init + 유저 메시지를 stdin에 함께 배칭하던 게 cc의 stream-json 리더를 초선형 지연시키던 원인 → init ack(control_response) 이후 유저 메시지를 전송하도록 시퀀싱(4분→수초). 대형 텍스트 문서는 경로 패스스루, gx/agy 대형 프롬프트는 파일 오프로드(명령행 한도 회피).
+- **트랜스크립트 재동기화**: 세션을 터미널에서 이어 작업한 뒤, 그 cwd+엔진의 최신 엔진 대화에서 최근 tail을 불러와 GUI 트랜스크립트를 복원(오래된 시작이 아니라 최근 끝을 보여줌).
+- **워크트리 라이브 브랜치 추적**: 에이전트가 브랜치를 바꾸면 GUI가 실제 현재 브랜치를 표시하고 머지도 실제 브랜치로 수행. 공유(비워크트리) 세션도 실제 브랜치 표시. 한 번 격리된 세션도 머지 후엔 라벨이 "메인 트리"로 자동 전환(라이브 격리 상태 반영).
+- **모델 별칭 + 설정에서 세부버전 추가**: cc `sonnet`/`opus`/`haiku`가 항상 최신을 자동 추적(새 모델 나와도 패치 불필요) + `opus[1m]`(1M 컨텍스트). 설정에서 특정 버전(예: claude-opus-4-6)을 직접 추가 가능.
+- **모델별 기본 추론 강도(effort)**: 엔진+모델에 맞는 스마트 기본값(cc Opus→medium 등) — 게이팅이 아니라 기본값이라 사용자가 언제든 변경 가능.
+- **세션 UX**: 워커를 UI에서 리네임 + 이름만 지정한 세션 생성 · 전 엔진 "터미널에서 열기"(외부 콘솔 escape hatch) · 연속 stderr 줄을 한 블록으로 합치기(에러 덤프 벽 방지).
+
 ## 1.16.4
 워커 동명 충돌 핫픽스.
 - **워커 브랜치 고유화**: 같은 이름의 워커를 둘 이상 만들면 `worker/<이름>` 브랜치가 겹쳐 둘째 워커가 격리 워크트리를 못 받던(`git worktree add` → "already used by worktree") 문제 수정. 브랜치에 고유 세션 id 접미사를 붙여 분리(worktree 디렉토리는 이미 id 기반이라 무영향).

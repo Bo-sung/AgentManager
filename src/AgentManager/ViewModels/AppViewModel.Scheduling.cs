@@ -118,10 +118,13 @@ public sealed partial class AppViewModel
 
         var engine = EngineRegistry.Get(job.AgentId);
         var title = string.IsNullOrWhiteSpace(job.Title) ? L("L.ScheduledDefaultTitle") : job.Title.Trim();
-        var branch = string.IsNullOrWhiteSpace(job.TargetBranch) ? "agent/" + Slug(title) : job.TargetBranch.Trim();
         var prompt = string.IsNullOrWhiteSpace(job.Prompt) ? title : job.Prompt.Trim();
 
-        var session = new SessionViewModel(NewSessionId("s"), engine, title, branch,
+        // 예약 작업은 매 실행이 새 세션 → 같은 대상 브랜치를 공유하면 worktree가 충돌(특히 기본
+        // "agent/scheduled-task"). 표시용 base(job.TargetBranch)는 두고, 실행 브랜치만 run id로 고유화.
+        var id = NewSessionId("s");
+        var branch = UniqueBranch(string.IsNullOrWhiteSpace(job.TargetBranch) ? "agent/" + Slug(title) : job.TargetBranch.Trim(), id);
+        var session = new SessionViewModel(id, engine, title, branch,
             project.Id, project.Name, project.Path, engine.Models[0])
         {
             TranslationEnabled = TranslationEnabled,

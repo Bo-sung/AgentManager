@@ -7,6 +7,7 @@ using AgentManager.Core.Translation;
 using AgentManager.Core.Workspace;
 using AgentManager.Core.Hosting;
 using AgentManager.Core.Observation;
+using AgentManager.Core.Orchestration;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Workers;
 
@@ -1378,6 +1379,10 @@ static void AssertAgySdkAdapter()
     Console.WriteLine("antigravity sdk adapter asserts OK");
 }
 await TestGitWorktreeAsync();
+ProjectStoreCheck();
+TranscriptProjectorCheck();
+RunRegistryCheck();
+ApprovalBrokerCheck();
 Console.WriteLine("smoke OK");
 
 static void AssertPermissionResponse()
@@ -1523,7 +1528,19 @@ static async Task TestGitWorktreeAsync()
         var unmergedKept = !await GitWorktree.RemoveBranchAsync(tmp, "agent/unmerged");
         Assert(unmergedKept && !string.IsNullOrWhiteSpace(await Git("branch", "--list", "agent/unmerged")), "unmerged branch preserved");
 
-        Console.WriteLine("GitWorktree end-to-end OK (create/changes/diff/discard/commit-only/merge/branch-cleanup)");
+        // agent switched/created a branch in its worktree → CurrentBranch reflects it, and merge must
+        // follow the ACTUAL branch, not the stale creation name (else the work is silently lost).
+        var wt3 = await GitWorktree.CreateAsync(tmp, "s3", "agent/s3", wtRoot);
+        await Git("-C", wt3!.Path, "checkout", "-q", "-b", "agent/switched");
+        Assert(await GitWorktree.CurrentBranchAsync(wt3.Path) == "agent/switched", "CurrentBranch reflects agent switch");
+        await File.WriteAllTextAsync(Path.Combine(wt3.Path, "a.txt"), "switched-work\n");
+        var (sok, smsg) = await GitWorktree.MergeAsync(tmp, "agent/s3" /* stale name */, "agent: switched", wt3.Path);
+        Assert(sok, "merge after branch switch: " + smsg);
+        Assert((await File.ReadAllTextAsync(Path.Combine(tmp, "a.txt"))).StartsWith("switched-work"),
+            "merge followed the actual branch, not the stale creation name");
+        await GitWorktree.RemoveAsync(tmp, wt3.Path);
+
+        Console.WriteLine("GitWorktree end-to-end OK (create/changes/diff/discard/commit-only/merge/branch-switch/cleanup)");
     }
     finally
     {
@@ -1784,6 +1801,146 @@ static void JsonWriteAtomicCheck()
     }
     Console.WriteLine($"[json-write-atomic] {(ok ? "PASS" : "FAIL")}");
     Environment.Exit(ok ? 0 : 1);
+}
+
+// Core ProjectStore<T> (overhaul step 3): coalescing debounce → one write; synchronous Flush; the
+// no-dispatcher path flushes without a tick; write failure surfaces via report(false).
+static void ProjectStoreCheck()
+{
+    var debounce = TimeSpan.FromMilliseconds(60);
+    var maxLat = TimeSpan.FromMilliseconds(400);
+
+    // (1) debounce coalescing: rapid Saves within the window collapse to a single write.
+    var writes1 = 0; var report1 = false;
+    var store = new AgentManager.Core.Persistence.ProjectStore<int>(
+        build: () => 1,
+        write: _ => { System.Threading.Interlocked.Increment(ref writes1); return true; },
+        postToOwner: a => a(),
+        report: ok => report1 = ok,
+        logError: (_, _) => { },
+        canDebounce: () => true,
+        debounce: debounce, maxLatency: maxLat);
+    for (var i = 0; i < 6; i++) store.Save();
+    System.Threading.Thread.Sleep(220);   // > debounce + background write
+    Assert(System.Threading.Volatile.Read(ref writes1) == 1, $"ProjectStore coalesce: expected 1 write, got {writes1}");
+    Assert(report1, "ProjectStore coalesce: success not reported");
+
+    // (2) synchronous Flush writes immediately (inline, same thread).
+    store.Flush(synchronousWrite: true);
+    Assert(System.Threading.Volatile.Read(ref writes1) == 2, $"ProjectStore sync flush: expected 2, got {writes1}");
+    store.Dispose();
+
+    // (3) no dispatcher → immediate flush (no tick); a failing write reports false.
+    var writes2 = 0; bool? report2 = null;
+    var store2 = new AgentManager.Core.Persistence.ProjectStore<int>(
+        () => 1, _ => { System.Threading.Interlocked.Increment(ref writes2); return false; },
+        a => a(), ok => report2 = ok, (_, _) => { }, () => false /* no dispatcher */,
+        debounce, maxLat);
+    store2.Save();
+    System.Threading.Thread.Sleep(150);   // background write completes
+    Assert(System.Threading.Volatile.Read(ref writes2) == 1, $"ProjectStore no-dispatcher: expected 1 write, got {writes2}");
+    Assert(report2 == false, "ProjectStore failure not reported");
+    store2.Dispose();
+
+    Console.WriteLine("ProjectStore debounce/flush asserts OK");
+}
+
+static void TranscriptProjectorCheck()
+{
+    var p = new TranscriptProjector();
+    const string sid = "s1";
+
+    // streaming append, then the final AssistantText REPLACES the live block (no correlation id — temporal)
+    var d1 = p.Project(sid, "cc", new AssistantDelta("Hel"));
+    Assert(d1.Count == 2 && d1[0] is AssistantStreamAppend { Delta: "Hel" }
+        && d1[1] is ActivitySignal { Kind: ActivityKind.Streaming }, "projector: stream append");
+    p.Project(sid, "cc", new AssistantDelta("lo"));
+    var d2 = p.Project(sid, "cc", new AssistantText("Hello", false, "Hello-orig"));
+    Assert(d2[0] is AssistantStreamReplace { Text: "Hello", OriginalText: "Hello-orig" }, "projector: stream replace");
+
+    // a fresh session with no open stream → AssistantText ADDS a new block
+    var d3 = p.Project("s2", "cc", new AssistantText("Hi", false, null));
+    Assert(d3[0] is AssistantAdd { Text: "Hi" }, "projector: assistant add (no stream)");
+
+    // TurnCompleted ends the stream + finishes the turn; tracking is cleared afterwards
+    p.Project("s3", "cc", new AssistantDelta("x"));
+    var d4 = p.Project("s3", "cc", new TurnCompleted(null, false, null, null, null));
+    Assert(d4[0] is AssistantStreamEnd, "projector: stream end on turn complete");
+    Assert(d4.Any(x => x is StatusSet { Status: "done" }) && d4.Any(x => x is TurnFinished { IsError: false }),
+        "projector: turn finished");
+    var d5 = p.Project("s3", "cc", new AssistantText("done", false, null));
+    Assert(d5[0] is AssistantAdd, "projector: stream cleared after turn complete");
+
+    // stderr: the gemini xterm.js dump is swallowed whole; a normal error passes through as ErrorAdd
+    Assert(p.Project("s4", "gx", new EngineError("xterm.js: Parsing error {")).Count == 0, "projector: xterm dump start suppressed");
+    Assert(p.Project("s4", "gx", new EngineError("  more dump }")).Count == 0, "projector: xterm dump continuation suppressed");
+    var err = p.Project("s5", "gx", new EngineError("segfault at 0xdead"));
+    Assert(err.Count == 1 && err[0] is ErrorAdd { IsStaleSession: false }, "projector: normal stderr → error");
+
+    // cc stale-session ("No conversation found") is flagged for the delete action
+    var stale = p.Project("s6", "cc", new EngineError("No conversation found with session ID abc"));
+    Assert(stale[0] is ErrorAdd { IsStaleSession: true }, "projector: cc stale-session flagged");
+
+    // TodoWrite emits a tasklist-artifact signal alongside the tool add
+    var todo = p.Project("s7", "cc", new ToolUseStarted("t1", "TodoWrite", "{\"todos\":[]}"));
+    Assert(todo.Any(x => x is ToolAdd { Name: "TodoWrite" }) && todo.Any(x => x is TaskListArtifactUpdate),
+        "projector: TodoWrite artifact");
+
+    // agy session start → native observer + connected-with-model
+    var start = p.Project("s8", "agy", new SessionStarted("eng-1", "gemini-2", 0, null));
+    Assert(start.Any(x => x is EngineSessionIdSet { SessionId: "eng-1" })
+        && start.Any(x => x is StartNativeObserver)
+        && start.Any(x => x is ActivitySignal { Kind: ActivityKind.ConnectedModel }), "projector: agy session start");
+
+    Console.WriteLine("TranscriptProjector golden asserts OK");
+}
+
+static void RunRegistryCheck()
+{
+    var reg = new RunRegistry();
+    Assert(!reg.IsRunning("a") && reg.Count == 0, "registry: empty");
+
+    var tokenA = reg.Start("a");
+    var tokenB = reg.Start("b");
+    Assert(reg.IsRunning("a") && reg.IsRunning("b") && reg.Count == 2, "registry: two running");
+    Assert(!tokenA.IsCancellationRequested, "registry: token not pre-cancelled");
+
+    reg.Cancel("a");
+    Assert(tokenA.IsCancellationRequested, "registry: cancel fires the token");
+    Assert(!tokenB.IsCancellationRequested, "registry: cancel is per-session");
+    Assert(reg.IsRunning("a"), "registry: cancel does not remove (Complete does)");
+
+    reg.Complete("a");
+    Assert(!reg.IsRunning("a") && reg.Count == 1, "registry: complete removes");
+
+    // Start replaces a stale prior (disposes it) — defensive; the normal flow Completes first.
+    var tokenB2 = reg.Start("b");
+    Assert(!tokenB2.IsCancellationRequested && reg.Count == 1, "registry: restart replaces");
+
+    reg.CancelAll();
+    Assert(tokenB2.IsCancellationRequested, "registry: cancel-all fires every token");
+
+    Console.WriteLine("RunRegistry asserts OK");
+}
+
+static void ApprovalBrokerCheck()
+{
+    var broker = new ApprovalBroker();
+
+    var task = broker.Request("r1");
+    Assert(broker.IsPending("r1") && !task.IsCompleted, "broker: pending until resolved");
+
+    Assert(broker.Resolve("r1", new PermissionDecision(true, null, true)), "broker: resolve returns true");
+    Assert(task.IsCompleted && task.Result.Allow && task.Result.ForSession, "broker: decision delivered");
+    Assert(!broker.IsPending("r1"), "broker: removed after resolve");
+    Assert(!broker.Resolve("r1", new PermissionDecision(false)), "broker: double-resolve returns false");
+
+    // a denial (e.g. session expiry) delivers Allow=false with a reason
+    var task2 = broker.Request("r2");
+    broker.Resolve("r2", new PermissionDecision(false, "session ended"));
+    Assert(task2.Result is { Allow: false, Reason: "session ended" }, "broker: denial delivered");
+
+    Console.WriteLine("ApprovalBroker asserts OK");
 }
 
 static void Assert(bool condition, string message)

@@ -21,8 +21,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.16.4: 핫픽스 — 같은 이름 워커 둘 이상일 때 worktree 브랜치 충돌(둘째 격리 실패) 수정 -->
-    <Version>1.16.4</Version>
+    <!-- 1.17.0: 헤드리스 Core 추출(phase a) + AgentManager.Cli · cc 대용량 프롬프트 stall 근본수정 · 트랜스크립트 재동기화 · 워크트리 라이브 브랜치 추적 · 모델 별칭/설정추가 · 모델별 기본 effort · 세션 UX(리네임/터미널열기/stderr) -->
+    <Version>1.17.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

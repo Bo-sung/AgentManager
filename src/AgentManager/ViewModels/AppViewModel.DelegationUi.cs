@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using AgentManager.Core.Workers;
+using AgentManager.Core.Agents;
 
 namespace AgentManager.ViewModels;
 
@@ -202,7 +203,7 @@ public sealed partial class AppViewModel
         var d = await DelegateAsync(main, worker, prompt, shared);
         NotifyInbox();
         // 자동 복귀: 메인이 실행 중이 아니면 즉시 주입(단건). 다수는 사용자가 수신함에서 합쳐 주입.
-        if (auto && d is { State: DelegationState.Ready } && !_running.ContainsKey(main.Id))
+        if (auto && d is { State: DelegationState.Ready } && !_runs.IsRunning(main.Id))
         {
             InjectReport(main, d);
             NotifyInbox();

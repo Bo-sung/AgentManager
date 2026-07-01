@@ -10,6 +10,8 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core.Usage;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -17,8 +19,11 @@ namespace AgentManager.ViewModels;
 public sealed partial class AppViewModel
 {
     // ----- translation + quota -----
-    private bool _translationEnabled = true;
-    public bool TranslationEnabled { get => _translationEnabled; set => Set(ref _translationEnabled, value); }
+    public bool TranslationEnabled
+    {
+        get => _settings.TranslationEnabled;
+        set { if (_settings.TranslationEnabled != value) { _settings.TranslationEnabled = value; OnChanged(nameof(TranslationEnabled)); } }
+    }
     private string _quotaText = "";
     public string QuotaText
     {
@@ -35,7 +40,7 @@ public sealed partial class AppViewModel
         UsageRows.Count == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
     /// <summary>사용량 카드: 활성화된 엔진별 행(이름 + 막대 + 잔여 메모). cc/gx는 실측 또는 "미확인",
-    /// agy는 API가 없어 "무료 프리뷰" — 향후 agy가 쿼터를 방출하면 _usage에 잡혀 자동으로 막대까지 표시된다.</summary>
+    /// agy는 API가 없어 "무료 프리뷰" — 향후 agy가 쿼터를 방출하면 _usageService에 잡혀 자동으로 막대까지 표시된다.</summary>
     public ObservableCollection<UsageRowVm> UsageRows { get; } = [];
 
     private void RebuildUsageRows()
@@ -46,7 +51,7 @@ public sealed partial class AppViewModel
             {
                 if (_disabledEngines.Contains(id)) continue;
                 var name = EngineRegistry.Get(id).Name;
-                if (_usage.TryGetValue(id, out var snap) && snap.Utilization >= 0)
+                if (_usageService.TryGet(id, out var snap) && snap.Utilization >= 0)
                 {
                     var stale = snap.ResetsAtUnix > 0 && snap.ResetsAtUnix <= DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     if (stale) { UsageRows.Add(new UsageRowVm { Name = name, Note = L("L.UsageStaleNote") + " · " + AgeText(snap.CapturedUtc) }); continue; }
@@ -81,8 +86,7 @@ public sealed partial class AppViewModel
     // 엔진별 마지막 스냅샷. Utilization/WeekUtilization = 0~1(사용 비율), -1 = 미상.
     //   cc: 세션/주간 % 는 /usage 명령 텍스트에서만 나온다(rate_limit_event엔 리셋 시각만 있음).
     //   gx: app-server account/rateLimits/updated 의 usedPercent 가 실 사용량.
-    public sealed record UsageSnapshot(double Utilization, long ResetsAtUnix, string RateLimitType, DateTime CapturedUtc, double WeekUtilization = -1);
-    private readonly Dictionary<string, UsageSnapshot> _usage = new();
+    private readonly UsageService _usageService = new();
     private bool _checkingUsage;
     public bool CheckingUsage
     {
@@ -94,13 +98,7 @@ public sealed partial class AppViewModel
     /// 리셋 시각만 갱신하고 기존 %·캡처시각은 유지한다.</summary>
     private void RecordUsage(string engineId, QuotaUpdate q)
     {
-        _usage.TryGetValue(engineId, out var prev);
-        if (q.Utilization >= 0)
-            _usage[engineId] = new UsageSnapshot(q.Utilization, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow, prev?.WeekUtilization ?? -1);
-        else if (prev is not null)
-            _usage[engineId] = prev with { ResetsAtUnix = q.ResetsAtUnix, RateLimitType = q.RateLimitType };
-        else
-            _usage[engineId] = new UsageSnapshot(-1, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow);
+        _usageService.Record(engineId, q);
         RefreshQuotaText();
     }
 
@@ -108,22 +106,8 @@ public sealed partial class AppViewModel
     private void RefreshQuotaText()
     {
         if (_checkingUsage) return; // 확인 중에는 "확인 중…" 텍스트 유지
-        UsageSnapshot? snap = null;
-        var displayEngineId = ActiveSession?.AgentId;
-        if (displayEngineId is not null && !_usage.TryGetValue(displayEngineId, out snap))
-            displayEngineId = null;
-        if (snap is null && _usage.Count > 0)
-        {
-            foreach (var pair in _usage)
-            {
-                if (snap is null || pair.Value.CapturedUtc > snap.CapturedUtc)
-                {
-                    displayEngineId = pair.Key;
-                    snap = pair.Value;
-                }
-            }
-        }
         // footer: 단일(활성/최근) 엔진만 컴팩트하게. 카드(UsageStatusText)는 엔진별 멀티라인.
+        var (displayEngineId, snap) = _usageService.PickDisplay(ActiveSession?.AgentId);
         QuotaText = snap is null ? "" : FormatUsageLine(displayEngineId!, EngineRegistry.Get(displayEngineId!).Name, snap);
         RebuildUsageRows();
     }
@@ -206,7 +190,7 @@ public sealed partial class AppViewModel
                 case QuotaUpdate q when id == "gx" && q.Utilization >= 0:
                     // gx: app-server usedPercent = 실 사용량
                     Application.Current.Dispatcher.Invoke(() =>
-                        _usage[id] = new UsageSnapshot(q.Utilization, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow));
+                        _usageService.Set(id, new UsageSnapshot(q.Utilization, q.ResetsAtUnix, q.RateLimitType, DateTime.UtcNow)));
                     try { cts.Cancel(); } catch { }
                     break;
                 case QuotaUpdate q:
@@ -218,7 +202,7 @@ public sealed partial class AppViewModel
                     if (sUtil >= 0)
                     {
                         Application.Current.Dispatcher.Invoke(() =>
-                            _usage[id] = new UsageSnapshot(sUtil, resetAt, rlType.Length > 0 ? rlType : "five_hour", DateTime.UtcNow, wUtil));
+                            _usageService.Set(id, new UsageSnapshot(sUtil, resetAt, rlType.Length > 0 ? rlType : "five_hour", DateTime.UtcNow, wUtil)));
                         try { cts.Cancel(); } catch { }
                     }
                     break;
@@ -239,17 +223,7 @@ public sealed partial class AppViewModel
     }
 
     /// <summary>/usage 응답 텍스트에서 세션·주간 사용 비율(0~1)을 추출. 못 찾으면 -1.</summary>
-    private static (double session, double week) ParseUsageText(string text)
-    {
-        double s = -1, w = -1;
-        var ms = System.Text.RegularExpressions.Regex.Match(text, @"session[^0-9]*(\d+)\s*%\s*used",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        if (ms.Success) s = int.Parse(ms.Groups[1].Value) / 100.0;
-        var mw = System.Text.RegularExpressions.Regex.Match(text, @"week[^0-9]*(\d+)\s*%\s*used",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        if (mw.Success) w = int.Parse(mw.Groups[1].Value) / 100.0;
-        return (s, w);
-    }
+    private static (double session, double week) ParseUsageText(string text) => CoreHelpers.ParseUsageText(text);
 
 }
 

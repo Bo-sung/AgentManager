@@ -10,6 +10,7 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -29,16 +30,18 @@ public sealed partial class AppViewModel : ObservableObject
     private static string L(string key, params object?[] args) => AgentManager.App.L(key, args);
     private readonly List<SessionViewModel> _allSessions = [];
     /// <summary>사용자가 삭제한 CLI 세션 id — CLI History 재발견에서 영구 제외(삭제가 재시작 후에도 유지).</summary>
-    private readonly HashSet<string> _dismissedCliSessions = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _dismissedCliSessions => _settings.DismissedCliSessions;
     private readonly Dictionary<string, INativeWorkObserver> _nativeObservers = [];
     private readonly DispatcherTimer _runtimeTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly TimerScheduler _scheduler = new();
-    private string _claudePath = "";
-    private string _codexPath = "";
-    private string _agyPath = "";
-    private string _piPath = "";
-    private string _ollamaEndpoint = "http://localhost:11434";
-    private string _ollamaModel = "exaone3.5:7.8b";
+    // 일반 설정은 Core SettingsService가 소유; 아래 VM 필드들은 위임 프로퍼티(read/write 모두 서비스로) — overhaul (a) step 2b.
+    private readonly AgentManager.Core.Settings.SettingsService _settings = new();
+    private string _claudePath { get => _settings.ClaudePath; set => _settings.ClaudePath = value; }
+    private string _codexPath { get => _settings.CodexPath; set => _settings.CodexPath = value; }
+    private string _agyPath { get => _settings.AgyPath; set => _settings.AgyPath = value; }
+    private string _piPath { get => _settings.PiPath; set => _settings.PiPath = value; }
+    private string _ollamaEndpoint { get => _settings.OllamaEndpoint; set => _settings.OllamaEndpoint = value; }
+    private string _ollamaModel { get => _settings.OllamaModel; set => _settings.OllamaModel = value; }
 
     public ObservableCollection<ProjectViewModel> Projects { get; } = [];
     public ObservableCollection<SessionViewModel> Sessions { get; } = [];
@@ -53,7 +56,7 @@ public sealed partial class AppViewModel : ObservableObject
     public ObservableCollection<HistoryRowViewModel> HistoryRows { get; } = [];
     /// <summary>레지스트리에서 활성화된 전체 엔진 (설정 카드·모델 조회용 — 사용자 비활성과 무관).</summary>
     public EngineDef[] AllEngines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
-    private readonly HashSet<string> _disabledEngines = [];
+    private HashSet<string> _disabledEngines => _settings.DisabledEngines;
     /// <summary>New Agent 피커에 노출할 엔진 (사용자가 비활성한 것 제외).</summary>
     public IEnumerable<EngineDef> Engines => Array.FindAll(AllEngines, e => !_disabledEngines.Contains(e.Id));
     public string Project => ActiveProject?.Name ?? "workspace";
@@ -119,7 +122,7 @@ public sealed partial class AppViewModel : ObservableObject
         DiscardReviewCommand = new RelayCommand(_ => _ = DiscardReviewAsync(ActiveSession), _ => ActiveSession?.WorktreePath is not null);
         DeleteSessionCommand = new RelayCommand(p => _ = DeleteSessionAsync(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
         ArchiveSessionCommand = new RelayCommand(p => ToggleArchive(p as SessionViewModel ?? ActiveSession), p => (p as SessionViewModel ?? ActiveSession) is not null);
-        RenameSessionCommand = new RelayCommand(p => { if (p is string t) RenameSession(ActiveSession, t); }, _ => ActiveSession is not null);
+        RenameSessionCommand = new RelayCommand(p => { if (p is SessionViewModel s && !string.IsNullOrWhiteSpace(s.RenameDraft)) RenameSession(s, s.RenameDraft.Trim()); }, _ => true);
         RenameProjectCommand = new RelayCommand(p =>
         {
             if (p is ProjectViewModel proj && !string.IsNullOrWhiteSpace(proj.RenameDraft))
@@ -142,7 +145,9 @@ public sealed partial class AppViewModel : ObservableObject
         ApproveForSessionCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, true, forSession: true); });
         DenyCommand = new RelayCommand(p => { if (p is ApprovalBlock b) ResolveApproval(b.RequestId, false); });
         OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
-        OpenInTerminalCommand = new RelayCommand(_ => OpenAgyInTerminal(ActiveSession), _ => ActiveSession is { IsAgy: true });
+        OpenInTerminalCommand = new RelayCommand(_ => OpenInTerminal(ActiveSession), _ => ActiveSession is not null);
+        ResyncTranscriptCommand = new RelayCommand(_ => _ = ResyncTranscriptAsync(ActiveSession),
+            _ => ActiveSession is { AgentId: "cc" or "gx" } s && !string.IsNullOrEmpty(s.EngineSessionId));
         CheckUsageCommand = new RelayCommand(_ => _ = CheckUsageAsync(), _ => !_checkingUsage);
         RefreshScheduledJobsCommand = new RelayCommand(_ => LoadScheduledJobs());
         NewScheduleCommand = new RelayCommand(_ => OpenNewSchedule(), _ => ActiveProject is not null);
@@ -165,6 +170,7 @@ public sealed partial class AppViewModel : ObservableObject
     /// <summary>agy를 외부 터미널에서 인터랙티브로 실행(ConPTY 트랜스크립트의 escape hatch).
     /// agy 세션에서만 활성화(CanExecute).</summary>
     public RelayCommand OpenInTerminalCommand { get; }
+    public RelayCommand ResyncTranscriptCommand { get; }
     public RelayCommand CheckUsageCommand { get; }
     public RelayCommand RefreshScheduledJobsCommand { get; }
     public RelayCommand NewScheduleCommand { get; }
@@ -179,10 +185,7 @@ public sealed partial class AppViewModel : ObservableObject
         // 창을 닫을 때 진행 중인 세션을 먼저 취소해 엔진 자식 프로세스(cc/gx/ag/agy) 트리를 정리한다.
         // ct.Register(() => proc.Kill(entireProcessTree: true))가 걸려 있어 Cancel()이 프로세스 트리를 죽인다.
         // 비차단(non-blocking)으로 발사만 한다 — UI 스레드에서 절대 .Wait()/.Result로 막지 않는다.
-        foreach (var cts in _running.Values.ToArray())
-        {
-            try { cts.Cancel(); } catch { /* 이미 dispose된 CTS일 수 있음 */ }
-        }
+        _runs.CancelAll();
 
         _scheduler.JobDue -= Scheduler_JobDue;
         _scheduler.Dispose();
@@ -245,9 +248,13 @@ public sealed partial class AppViewModel : ObservableObject
     /// cwd = worktree(존재 시) 또는 프로젝트 루트; conversation은 agy 캐시 조회로 resume(--conversation id),
     /// 못 찾으면 --continue(이 cwd의 마지막 대화). 터미널은 wt.exe 우선, 없으면 cmd /k 폴백. 실패 시 트랜스크립트 안내.
     /// 스파이크: AGENTMANAGER_* env는 전달하지 않는다(wt.exe 인자로 env 주입이 까다로워 이번엔 생략).</summary>
-    private void OpenAgyInTerminal(SessionViewModel? s)
+    /// <summary>Open THIS session in a real external terminal (Windows Terminal, falling back to cmd) at
+    /// its worktree cwd, launching the engine interactively and resuming the same conversation when the
+    /// session already started (EngineSessionId set). An escape hatch: when a session is stuck at
+    /// "starting engine" the user can see/continue it directly. All engines (was agy-only).</summary>
+    private void OpenInTerminal(SessionViewModel? s)
     {
-        if (s is null || s.AgentId != "agy") return;
+        if (s is null) return;
         var cwd = !string.IsNullOrWhiteSpace(s.WorktreePath) && Directory.Exists(s.WorktreePath)
             ? s.WorktreePath! : s.ProjectPath;
         if (!Directory.Exists(cwd))
@@ -255,39 +262,35 @@ public sealed partial class AppViewModel : ObservableObject
             s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalNoCwd")));
             return;
         }
-
-        var agyExe = EngineRegistry.ResolveExe("agy", _agyPath) ?? "agy";
-        // resume: agy 캐시 cwd→conversation 매핑 우선; 없으면 --continue(이 폴더 마지막 대화).
-        var convId = AgyAdapter.FindConversationId(cwd);
-        var resumeArg = convId is { Length: > 0 } id ? $"--conversation {Quote(id)}" : "--continue";
-        var agyArgs = $"{resumeArg} --dangerously-skip-permissions"; // 인터랙티브 = -p 생략
+        if (ResolveTerminalLaunch(s, cwd) is not { } launch)
+        {
+            s.Transcript.Add(new ErrorBlock(L("L.OpenInTerminalFailed"), L("L.EngineUnavailableBody", s.AgentName)));
+            return;
+        }
 
         try
         {
-            // 우선 Windows Terminal: "wt -d cwd -- agy ..."
+            // Windows Terminal 우선: "wt -d cwd -- <exe> <args>"; 없으면 "cmd /k <exe> <args>".
             if (TryResolveOnPath("wt.exe") is { } wt)
             {
-                var psi = new System.Diagnostics.ProcessStartInfo
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = wt,
-                    Arguments = $"-d {Quote(cwd)} -- {Quote(agyExe)} {agyArgs}",
+                    Arguments = $"-d {Quote(cwd)} -- {Quote(launch.Exe)} {launch.Args}",
                     UseShellExecute = false,
                     WorkingDirectory = cwd,
-                };
-                System.Diagnostics.Process.Start(psi);
-                s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedWt")));
+                });
+                s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedWt", s.AgentName)));
                 return;
             }
-            // 폴백: conhost/cmd — "cmd /k agy ..." 를 cwd에서 띄운다.
-            var cmdPsi = new System.Diagnostics.ProcessStartInfo
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $"/k {Quote(agyExe)} {agyArgs}",
+                Arguments = $"/k {Quote(launch.Exe)} {launch.Args}",
                 UseShellExecute = false,
                 WorkingDirectory = cwd,
-            };
-            System.Diagnostics.Process.Start(cmdPsi);
-            s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedCmd")));
+            });
+            s.Transcript.Add(new WorkingBlock(L("L.OpenInTerminalLaunchedCmd", s.AgentName)));
         }
         catch (Exception ex)
         {
@@ -295,92 +298,95 @@ public sealed partial class AppViewModel : ObservableObject
         }
     }
 
-    /// <summary>PATH에서 bare 실행파일(wt.exe 등)의 전체 경로를 찾는다. 없으면 null.</summary>
-    private static string? TryResolveOnPath(string name)
+    /// <summary>Per-engine INTERACTIVE launch (exe + args) for the terminal escape hatch, resuming the
+    /// engine's own conversation when known. Interactive forms differ from the stdio adapters: cc drops
+    /// stream-json (<c>--resume id</c>), gx is the TUI <c>resume id</c> (not <c>exec resume</c>), pi drops
+    /// <c>--mode rpc</c> and runs via node, agy uses its cwd→conversation cache. Null = engine unresolved.</summary>
+    private (string Exe, string Args)? ResolveTerminalLaunch(SessionViewModel s, string cwd)
     {
-        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
+        var id = s.EngineSessionId;
+        var exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath, _agyPath, _piPath);
+        return s.AgentId switch
         {
-            try { var full = Path.Combine(dir.Trim(), name); if (File.Exists(full)) return full; } catch { }
-        }
-        return null;
+            "cc" => exe is null ? null : (exe, string.IsNullOrEmpty(id) ? "" : $"--resume {Quote(id!)}"),
+            "gx" => exe is null ? null : (exe, string.IsNullOrEmpty(id) ? "" : $"resume {Quote(id!)}"),
+            // pi is a node script (exe = dist/cli.js); interactive = node <cli.js> [--session id] (no --mode rpc).
+            "pi" => exe is null ? null : ("node", string.IsNullOrEmpty(id) ? Quote(exe) : $"{Quote(exe)} --session {Quote(id!)}"),
+            "agy" => (exe ?? "agy",
+                      (AgyAdapter.FindConversationId(cwd) is { Length: > 0 } c ? $"--conversation {Quote(c)}" : "--continue")
+                      + " --dangerously-skip-permissions"),
+            _ => null,
+        };
     }
+
+    /// <summary>PATH에서 bare 실행파일(wt.exe 등)의 전체 경로를 찾는다. 없으면 null.</summary>
+    private static string? TryResolveOnPath(string name) => CoreHelpers.TryResolveOnPath(name);
 
     /// <summary>Windows 인자용 quoting (공백 포함 시 큰따옴표, 내부 따옴표는 백슬래시 이스케이프).</summary>
-    private static string Quote(string s) =>
-        s.Contains(' ') || s.Contains('\t') ? "\"" + s.Replace("\"", "\\\"") + "\"" : s;
+    private static string Quote(string s) => CoreHelpers.Quote(s);
 
-    private static string? FindVsCodeCli()
-    {
-        string[] candidates =
-        [
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Microsoft VS Code", "bin", "code.cmd"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft VS Code", "bin", "code.cmd"),
-        ];
-        foreach (var c in candidates)
-            if (File.Exists(c)) return c;
-        // PATH lookup (covers custom installs)
-        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var p = Path.Combine(dir.Trim(), "code.cmd");
-            try { if (File.Exists(p)) return p; } catch { }
-        }
-        return null;
-    }
+    private static string? FindVsCodeCli() => CoreHelpers.FindVsCodeCli();
 
     /// <summary>Attention signal for the View (taskbar flash/sound when the window is unfocused).
     /// Reasons: "approval" (input needed now), "done", "error".</summary>
     public event Action<string, SessionViewModel>? AttentionRequested;
 
     // ----- approval broker (Stage 1: Claude) -----
-    private readonly Dictionary<string, (TaskCompletionSource<PermissionDecision> Tcs, ApprovalBlock Block, SessionViewModel Session)> _pendingApprovals = [];
+    // The decision round-trip is owned by the Core ApprovalBroker (so a headless core/CLI can answer);
+    // the VM keeps only the UI mapping requestId → (block, session) for rendering + expiry. Step 5.
+    private readonly AgentManager.Core.Orchestration.ApprovalBroker _broker = new();
+    private readonly Dictionary<string, (ApprovalBlock Block, SessionViewModel Session)> _approvalUi = [];
     public RelayCommand ApproveCommand { get; }
     public RelayCommand ApproveForSessionCommand { get; }
     public RelayCommand DenyCommand { get; }
 
     private Task<PermissionDecision> HandlePermissionAsync(SessionViewModel s, PermissionRequest pr)
     {
-        var tcs = new TaskCompletionSource<PermissionDecision>(TaskCreationOptions.RunContinuationsAsynchronously);
-        Application.Current.Dispatcher.Invoke(() =>
+        // Register + render on the UI thread (the engine calls this from its own thread); Invoke<T> hands
+        // the awaited task back. The broker owns the completion; the VM owns the block/session mapping.
+        return Application.Current.Dispatcher.Invoke(() =>
         {
+            var task = _broker.Request(pr.RequestId);
             var summary = pr.InputJson.Length > 400 ? pr.InputJson[..400] + "…" : pr.InputJson;
             var block = new ApprovalBlock(pr.RequestId, pr.ToolName, summary)
             {
                 SupportsSessionApproval = s.IsCodex, // codex app-server만 acceptForSession 지원
             };
             s.Transcript.Add(block);
-            _pendingApprovals[pr.RequestId] = (tcs, block, s);
+            _approvalUi[pr.RequestId] = (block, s);
             s.Status = "waiting";
             s.Activity = L("L.WaitingApproval", pr.ToolName);
             AttentionRequested?.Invoke("approval", s);
+            return task;
         });
-        return tcs.Task;
     }
 
     public void ResolveApproval(string requestId, bool allow, bool forSession = false)
     {
-        if (!_pendingApprovals.Remove(requestId, out var entry)) return;
+        if (!_approvalUi.Remove(requestId, out var entry)) return;
         entry.Block.State = allow ? (forSession ? "allowed (session)" : "allowed") : "denied";
         entry.Session.Status = "running";
         entry.Session.Activity = allow ? L("L.ApprovalGrantedContinue", entry.Block.ToolName) : L("L.ApprovalRejected", entry.Block.ToolName);
-        entry.Tcs.TrySetResult(new PermissionDecision(allow, allow ? null : L("L.PermissionDenied"), forSession));
+        _broker.Resolve(requestId, new PermissionDecision(allow, allow ? null : L("L.PermissionDenied"), forSession));
         SaveState();
     }
 
     /// <summary>턴 종료/중지 시 남은 승인 요청은 거부로 정리(엔진은 이미 종료됨).</summary>
     private void ExpirePendingApprovals(SessionViewModel s)
     {
-        foreach (var key in _pendingApprovals.Where(kv => ReferenceEquals(kv.Value.Session, s)).Select(kv => kv.Key).ToList())
+        foreach (var key in _approvalUi.Where(kv => ReferenceEquals(kv.Value.Session, s)).Select(kv => kv.Key).ToList())
         {
-            if (_pendingApprovals.Remove(key, out var entry))
+            if (_approvalUi.Remove(key, out var entry))
             {
                 entry.Block.State = "expired";
-                entry.Tcs.TrySetResult(new PermissionDecision(false, L("L.SessionEnded")));
+                _broker.Resolve(key, new PermissionDecision(false, L("L.SessionEnded")));
             }
         }
     }
 
-    // running sessions → their cancellation source (Stop)
-    private readonly Dictionary<string, CancellationTokenSource> _running = [];
+    // running sessions → their cancellation source (Stop). Owned by the Core RunRegistry so turn-loop
+    // ownership can move to Core (a closed window / CLI drives the same registry). Overhaul (a) step 5.
+    private readonly AgentManager.Core.Orchestration.RunRegistry _runs = new();
 
     // ----- commands -----
     public RelayCommand NewAgentCommand { get; }
@@ -420,27 +426,24 @@ public sealed partial class AppViewModel : ObservableObject
     public IDialogService? Dialogs { get; set; }
 
     /// <summary>동시 실행 세션 수 제한 (설정, 영속).</summary>
-    private int _maxConcurrentSessions = 3;
     public int MaxConcurrentSessions
     {
-        get => _maxConcurrentSessions;
-        set => Set(ref _maxConcurrentSessions, Math.Max(1, value));
+        get => _settings.MaxConcurrentSessions;
+        set { var v = Math.Max(1, value); if (_settings.MaxConcurrentSessions != v) { _settings.MaxConcurrentSessions = v; OnChanged(nameof(MaxConcurrentSessions)); } }
     }
 
     /// <summary>워커 전용 동시 실행 cap (메인 cap과 분리, 설정·영속).</summary>
-    private int _maxConcurrentWorkers = AgentManager.Core.Workers.WorkerDefaults.DefaultMaxConcurrentWorkers;
     public int MaxConcurrentWorkers
     {
-        get => _maxConcurrentWorkers;
-        set => Set(ref _maxConcurrentWorkers, Math.Max(1, value));
+        get => _settings.MaxConcurrentWorkers;
+        set { var v = Math.Max(1, value); if (_settings.MaxConcurrentWorkers != v) { _settings.MaxConcurrentWorkers = v; OnChanged(nameof(MaxConcurrentWorkers)); } }
     }
 
     /// <summary>새 워커 기본 행동 규칙 preamble 템플릿 (설정·영속). 빈값이면 기본 템플릿 사용.</summary>
-    private string _workerBehaviorPreamble = AgentManager.Core.Workers.WorkerDefaults.BehaviorPreamble;
     public string WorkerBehaviorPreamble
     {
-        get => _workerBehaviorPreamble;
-        set => Set(ref _workerBehaviorPreamble, value);
+        get => _settings.WorkerBehaviorPreamble;
+        set { if (_settings.WorkerBehaviorPreamble != value) { _settings.WorkerBehaviorPreamble = value; OnChanged(nameof(WorkerBehaviorPreamble)); } }
     }
 
     /// <summary>Commit-only: 에이전트 브랜치에 커밋만 하고 머지하지 않음(리뷰 보존).</summary>
@@ -454,13 +457,20 @@ public sealed partial class AppViewModel : ObservableObject
         SaveState();
     }
 
+    /// <summary>세션마다 고유한 브랜치명 — 같은 제목의 세션 둘이어도 동일 "agent/&lt;slug&gt;" 브랜치로
+    /// `git worktree add`가 "already checked out" 실패하지 않게 세션 id의 seq 접미사를 붙인다
+    /// (worktree 디렉토리는 이미 id 기반이라 따로 안 겹친다). worker/ 위임·예약 실행도 공유.</summary>
+    private static string UniqueBranch(string baseName, string id)
+        => baseName + "-" + id[(id.LastIndexOf('-') + 1)..];
+
     /// <summary>Fork: 트랜스크립트·엔진세션id를 상속한 새 세션(새 worktree). 다음 턴은 같은 대화에서 분기.</summary>
     public void ForkSession(SessionViewModel? src)
     {
         if (src is null) return;
         var engine = EngineRegistry.Get(src.AgentId);
         var title = src.Title + " (fork)";
-        var s = new SessionViewModel(NewSessionId("s"), engine, title, "agent/" + Slug(title),
+        var id = NewSessionId("s");
+        var s = new SessionViewModel(id, engine, title, UniqueBranch("agent/" + Slug(title), id),
             src.ProjectId, src.Project, src.ProjectPath, src.Model)
         {
             TranslationEnabled = src.TranslationEnabled,
@@ -509,7 +519,7 @@ public sealed partial class AppViewModel : ObservableObject
     public async Task DeleteSessionAsync(SessionViewModel? s)
     {
         if (s is null) return;
-        if (_running.TryGetValue(s.Id, out var cts)) { try { cts.Cancel(); } catch { } }
+        _runs.Cancel(s.Id);
         if (s.WorktreePath is not null)
         {
             await GitWorktree.RemoveAsync(s.ProjectPath, s.WorktreePath);
@@ -578,10 +588,7 @@ public sealed partial class AppViewModel : ObservableObject
 
         foreach (var s in sessionsToRemove)
         {
-            if (_running.TryGetValue(s.Id, out var cts))
-            {
-                try { cts.Cancel(); } catch { }
-            }
+            _runs.Cancel(s.Id);
             s.PropertyChanged -= SessionStatusWatch;
             _allSessions.Remove(s);
         }
@@ -601,19 +608,16 @@ public sealed partial class AppViewModel : ObservableObject
 
     private void StopActive()
     {
-        if (ActiveSession is { } s && _running.TryGetValue(s.Id, out var cts))
-        {
-            try { cts.Cancel(); } catch { }
-        }
+        if (ActiveSession is { } s)
+            _runs.Cancel(s.Id);
     }
 
     public string PersistencePath => AppStateStore.StatePath;
 
-    private bool _isReviewOpen = true;
     public bool IsReviewOpen
     {
-        get => _isReviewOpen;
-        set { if (Set(ref _isReviewOpen, value)) { OnChanged(nameof(ReviewPaneWidth)); SaveState(); } }
+        get => _settings.ReviewPaneOpen;
+        set { if (_settings.ReviewPaneOpen != value) { _settings.ReviewPaneOpen = value; OnChanged(nameof(IsReviewOpen)); OnChanged(nameof(ReviewPaneWidth)); SaveState(); } }
     }
     public GridLength ReviewPaneWidth => IsSessionView && IsReviewOpen ? new GridLength(420) : new GridLength(0);
 
@@ -737,13 +741,14 @@ public sealed partial class AppViewModel : ObservableObject
                 // 추론 수준 옵션/기본값 엔진별 재계산 (cc/gx/pi 노출, agy 제외)
                 OnChanged(nameof(NewAgentHasEffort));
                 OnChanged(nameof(NewAgentEffortOptions));
-                NewAgentReasoning = DefaultEffortFor(value?.Id);
+                NewAgentReasoning = SessionViewModel.RecommendedEffort(value?.Id, NewAgentModel);
             }
         }
     }
     public string[] NewAgentModels => _newEngine is { } e ? DropdownModelsFor(e.Id) : [];
     private string _newAgentModel = "";
-    public string NewAgentModel { get => _newAgentModel; set => Set(ref _newAgentModel, value); }
+    // 모델을 바꾸면 그 모델의 권장 effort로 기본값을 맞춘다(예: opus → medium). 게이팅이 아니라 스마트 기본값 — 이후 변경 가능.
+    public string NewAgentModel { get => _newAgentModel; set { if (Set(ref _newAgentModel, value)) NewAgentReasoning = SessionViewModel.RecommendedEffort(_newEngine?.Id, value); } }
 
     /// <summary>추론 수준을 소비하는 엔진(cc: --effort, gx: model_reasoning_effort, pi: --thinking)만 노출.
     /// agy만 추론 플래그가 없음. SessionViewModel.HasEffort(= not agy)와 일치.</summary>
@@ -756,7 +761,6 @@ public sealed partial class AppViewModel : ObservableObject
         "pi" => ["default", "off", "minimal", "low", "medium", "high", "xhigh"],
         _    => ["default", "low", "medium", "high", "xhigh", "max"], // cc
     };
-    private static string DefaultEffortFor(string? id) => id switch { "gx" => "medium", "cc" or "pi" => "default", _ => "" };
     private string _newAgentReasoning = "default";
     public string NewAgentReasoning { get => _newAgentReasoning; set => Set(ref _newAgentReasoning, value); }
 
@@ -818,10 +822,10 @@ public sealed partial class AppViewModel : ObservableObject
         var project = ActiveProject ?? Projects.FirstOrDefault();
         if (project is null) return;
         var engine = NewAgentSelectedEngine ?? Engines.FirstOrDefault() ?? AllEngines[0];
-        // 모달에서 고른 모델 우선 (유효할 때), 없으면 엔진 기본
-        // pi는 멀티 provider라 동적 모델("provider/id")을 자유 허용; 그 외는 엔진 정적 목록으로 검증.
-        var model = !string.IsNullOrWhiteSpace(NewAgentModel) && (engine.Id == "pi" || Array.IndexOf(engine.Models, NewAgentModel) >= 0)
-            ? NewAgentModel
+        // 모델은 자유 입력(편집 가능 콤보): 별칭(sonnet)·풀네임·새 모델 전부 그대로 통과 — 정적 목록에
+        // 가두지 않는다(새 모델마다 패치 불필요). 잘못된 값이면 엔진이 런타임에 에러로 알려준다.
+        var model = !string.IsNullOrWhiteSpace(NewAgentModel)
+            ? NewAgentModel.Trim()
             : (DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0]);
 
         // 워커로 생성: 작업 대기 풀에 추가만 하고 자동 실행하지 않음(작업 할당 시 구동).
@@ -839,10 +843,11 @@ public sealed partial class AppViewModel : ObservableObject
             return;
         }
 
-        var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} task" : NewAgentTitle.Trim();
-        var branch = "agent/" + Slug(title);
+        var title = string.IsNullOrWhiteSpace(NewAgentTitle) ? $"New {engine.Name} session" : NewAgentTitle.Trim();
+        var id = NewSessionId("s");
+        var branch = UniqueBranch("agent/" + Slug(title), id);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
-        var s = new SessionViewModel(NewSessionId("s"), engine, title, branch, project.Id, project.Name, project.Path, model)
+        var s = new SessionViewModel(id, engine, title, branch, project.Id, project.Name, project.Path, model)
         {
             TranslationEnabled = NewAgentTranslation,
             RequireApproval = reqAppr,

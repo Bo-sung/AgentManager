@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using AgentManager.Core.Workers;
+using AgentManager.Core.Agents;
 
 namespace AgentManager.ViewModels;
 
@@ -9,7 +10,7 @@ public sealed partial class AppViewModel
     public ObservableCollection<WorkerDelegationViewModel> Delegations { get; } = [];
 
     /// <summary>워커가 현재 실행 중인지(busy). UI는 busy면 "유휴 워커 없음" 흐름.</summary>
-    public bool IsWorkerBusy(SessionViewModel worker) => worker is not null && _running.ContainsKey(worker.Id);
+    public bool IsWorkerBusy(SessionViewModel worker) => worker is not null && _runs.IsRunning(worker.Id);
 
     /// <summary>지정 메인의 수신 대기(ready) 보고 건수 — "보고 수신함" 배지.</summary>
     public int ReadyReportCount(string mainSessionId)
@@ -28,7 +29,7 @@ public sealed partial class AppViewModel
         // 브랜치는 세션마다 고유해야 한다 — 같은 이름 워커 둘이면 "worker/<name>" 브랜치가 겹쳐
         // `git worktree add`가 "already checked out"로 실패(둘째 워커가 격리 워크트리를 못 받음).
         // 고유 세션 id의 seq 접미사를 붙여 분리(worktree 디렉토리는 이미 id 기반이라 따로 안 겹침).
-        var branch = "worker/" + Slug(title) + "-" + id[(id.LastIndexOf('-') + 1)..];
+        var branch = UniqueBranch("worker/" + Slug(title), id);
         var (reqAppr, sandbox) = PolicyToSession(_approvalPolicy);
         var s = new SessionViewModel(id, engine, title, branch, project.Id, project.Name, project.Path, model)
         {

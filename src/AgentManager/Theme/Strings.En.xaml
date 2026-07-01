@@ -523,11 +523,21 @@
     <sys:String x:Key="L.AgyApiBridgeMissing">The Antigravity SDK bridge script (am_agy_bridge.py) is missing. Re-run setup.</sys:String>
     <sys:String x:Key="L.AgyApiKeyMissing">No agy API key set. Enter the Gemini API key for Antigravity API mode in Settings.</sys:String>
     <sys:String x:Key="L.OpenInTerminal">Open in terminal</sys:String>
-    <sys:String x:Key="L.OpenInTerminalLaunchedWt">↗ Opened agy in an external terminal (Windows Terminal). Full TUI/auth run in that window.</sys:String>
-    <sys:String x:Key="L.OpenInTerminalLaunchedCmd">↗ Opened agy in an external console (cmd). Full TUI/auth run in that window.</sys:String>
+    <sys:String x:Key="L.OpenInTerminalLaunchedWt">↗ Opened {0} in an external terminal (Windows Terminal). The session continues there (resumed if it had started).</sys:String>
+    <sys:String x:Key="L.OpenInTerminalLaunchedCmd">↗ Opened {0} in an external console (cmd). The session continues there (resumed if it had started).</sys:String>
     <sys:String x:Key="L.OpenInTerminalFailed">Failed to open external terminal</sys:String>
     <sys:String x:Key="L.OpenInTerminalNoCwd">No working directory (cwd) — cannot open an external terminal</sys:String>
     <sys:String x:Key="L.AttachmentWarningTitle">Attachment warning</sys:String>
     <sys:String x:Key="L.AttachmentCopyFailed">Failed to copy '{0}' — referencing original path (the agent may not read it)</sys:String>
     <sys:String x:Key="L.AttachmentAgyWarning">⚠ This engine (agy) may not read '{0}' directly</sys:String>
+    <sys:String x:Key="L.LargePromptOffloaded">📎 Large prompt sent as a file the agent reads (this engine has a command-line size limit): {0}</sys:String>
+    <sys:String x:Key="L.SessionNameOptional">Session name (optional)</sys:String>
+    <sys:String x:Key="L.ResyncTranscript">Resync transcript</sys:String>
+    <sys:String x:Key="L.ResyncDone">↻ Resynced from the engine's conversation</sys:String>
+    <sys:String x:Key="L.ResyncNotFound">No engine conversation found to resync (run a turn or continue it in a terminal first)</sys:String>
+    <sys:String x:Key="L.ResyncFailed">Transcript resync failed</sys:String>
+    <sys:String x:Key="L.AddModel">Add</sys:String>
+    <sys:String x:Key="L.AddModelHint">Add a specific version (e.g. claude-opus-4-6) — aliases like 'sonnet' auto-track the latest</sys:String>
+    <sys:String x:Key="L.BranchSharedOn">{0} (shared)</sys:String>
+    <sys:String x:Key="L.SharedTreePillOn">main tree · {0}</sys:String>
 </ResourceDictionary>

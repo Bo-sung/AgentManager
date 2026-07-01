@@ -10,6 +10,7 @@ using AgentManager.Core.Observation;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -142,8 +143,8 @@ public sealed partial class AppViewModel
     private string _language = "ko";
 
     // ----- 번역 언어 쌍 (번역 전 = 사용자 언어, 번역 후 = 엔진 전달 언어) -----
-    private string _translateSource = "Korean";
-    private string _translateTarget = "English";
+    private string _translateSource { get => _settings.TranslateSourceLanguage; set => _settings.TranslateSourceLanguage = value; }
+    private string _translateTarget { get => _settings.TranslateTargetLanguage; set => _settings.TranslateTargetLanguage = value; }
     private string _settingsTranslateSource = "Korean";
     /// <summary>번역 전 언어(사용자 입력·표시). Id = 프롬프트용 영어 표기.</summary>
     public string SettingsTranslateSource { get => _settingsTranslateSource; set => Set(ref _settingsTranslateSource, value); }
@@ -160,28 +161,27 @@ public sealed partial class AppViewModel
     ];
 
     /// <summary>비-git 폴더에서 "격리 없이 실행" 안내를 띄울지 (기본 끔 — 비-git 사용이 일반 흐름인 사용자 배려).</summary>
-    private bool _warnNoWorktree;
+    private bool _warnNoWorktree { get => _settings.WarnNoWorktree; set => _settings.WarnNoWorktree = value; }
 
     /// <summary>새 세션 기본 승인 정책: ask | safe | yolo. RequireApproval + Sandbox 둘 다 시드.</summary>
-    private string _approvalPolicy = "yolo";
+    private string _approvalPolicy { get => _settings.ApprovalPolicy; set => _settings.ApprovalPolicy = value; }
     private string _settingsApprovalPolicy = "yolo";
     public string SettingsApprovalPolicy { get => _settingsApprovalPolicy; set => Set(ref _settingsApprovalPolicy, value); }
 
     // ----- orchestration -----
-    private string _worktreeBase = "";
+    private string _worktreeBase { get => _settings.WorktreeBase; set => _settings.WorktreeBase = value; }
     public string SettingsWorktreeBase { get => _settingsWorktreeBase; set => Set(ref _settingsWorktreeBase, value); }
     private string _settingsWorktreeBase = "";
-    private bool _autoStartLastSession;
+    private bool _autoStartLastSession { get => _settings.AutoStartLastSession; set => _settings.AutoStartLastSession = value; }
     public bool SettingsAutoStart { get => _settingsAutoStart; set => Set(ref _settingsAutoStart, value); }
     private bool _settingsAutoStart;
-    private bool _streamLogs = true;
     /// <summary>목록의 실시간 활동 표시 여부 (즉시 반영, 영속).</summary>
-    public bool StreamLogs { get => _streamLogs; set => Set(ref _streamLogs, value); }
+    public bool StreamLogs { get => _settings.StreamLogs; set { if (_settings.StreamLogs != value) { _settings.StreamLogs = value; OnChanged(nameof(StreamLogs)); } } }
     public bool SettingsStreamLogs { get => _settingsStreamLogs; set => Set(ref _settingsStreamLogs, value); }
     private bool _settingsStreamLogs = true;
 
     // ----- per-engine default model -----
-    private Dictionary<string, string> _defaultModels = new();
+    private Dictionary<string, string> _defaultModels { get => _settings.DefaultModels; set => _settings.DefaultModels = value; }
     public string[] CcModels => DropdownModelsFor("cc");
     public string[] GxModels => DropdownModelsFor("gx");
     public string[] AgyModels => DropdownModelsFor("agy");
@@ -189,13 +189,7 @@ public sealed partial class AppViewModel
     private string[] EngineModels(string id) => Array.Find(AllEngines, e => e.Id == id)?.Models ?? [];
 
     // ----- "주로 쓰는 모델" — 엔진별 선호 집합(설정 영속) + 체크리스트(cc/gx/agy/pi 공통) -----
-    private readonly Dictionary<string, HashSet<string>> _preferred = new()
-    {
-        ["cc"] = new(StringComparer.OrdinalIgnoreCase),
-        ["gx"] = new(StringComparer.OrdinalIgnoreCase),
-        ["agy"] = new(StringComparer.OrdinalIgnoreCase),
-        ["pi"] = new(StringComparer.OrdinalIgnoreCase),
-    };
+    private Dictionary<string, HashSet<string>> _preferred => _settings.Preferred;
     public ModelChecklistVm CcChecklist { get; private set; } = null!;
     public ModelChecklistVm GxChecklist { get; private set; } = null!;
     public ModelChecklistVm AgyChecklist { get; private set; } = null!;
@@ -242,12 +236,12 @@ public sealed partial class AppViewModel
             return _piCatalog.Count > 0 ? [.. _piCatalog] : EngineModels("pi");
         }
         var all = EngineModels(id);
-        if (pref is { Count: > 0 })
-        {
-            var picked = all.Where(pref.Contains).ToArray();   // 정적 목록 순서 보존
-            if (picked.Length > 0) return picked;
-        }
-        return all;
+        if (pref is not { Count: > 0 }) return all;
+        // custom = 사용자가 설정에서 추가한 세부 버전(정적 별칭 목록에 없는 것) → 항상 드롭다운에 더한다.
+        var custom = pref.Where(m => !all.Contains(m)).OrderBy(m => m, StringComparer.OrdinalIgnoreCase).ToArray();
+        var picked = all.Where(pref.Contains).ToArray();       // 정적 중 명시 선택(필터); 없으면 별칭 전부 유지
+        var staticPart = picked.Length > 0 ? picked : all;
+        return custom.Length > 0 ? [.. staticPart, .. custom] : staticPart;
     }
 
     // pi: 동적 모델 카탈로그(`pi --list-models`) + 연동 provider.
@@ -317,59 +311,21 @@ public sealed partial class AppViewModel
     public bool SettingsEnginePi { get => _settingsEnginePi; set => Set(ref _settingsEnginePi, value); }
     private bool _settingsEnginePi = true;
 
-    // ----- per-engine auth (subscription / api key) -----
-    private readonly Dictionary<string, string> _engineAuthMode = new();   // id → "subscription" | "api"
-    private readonly Dictionary<string, string> _engineApiKey = new();     // id → DPAPI base64
-    private readonly Dictionary<string, bool> _engineAutoApi = new();      // id → 한도 도달 시 API 자동 전환(opt-in)
-    private readonly Dictionary<string, long> _engineLimitedUntil = new(); // id → rate-limit 차단 해제(unix). 실제 실패 시 기록
+    // ----- per-engine auth (subscription / api key) → Core EngineAuthService (overhaul (a) step 2) -----
+    // 상태(4 dict)와 로직은 Core 서비스가 소유; VM은 forward만 한다(호출부 불변, 서비스가 실제로 쓰인다).
+    // DPAPI·usage는 델리게이트로 주입 → Core는 WPF/Windows-포트 비의존. usageOf는 _usageService를 lazy로 읽는다.
+    private AgentManager.Core.Settings.EngineAuthService? _engineAuthBacking;
+    private AgentManager.Core.Settings.EngineAuthService _engineAuth => _engineAuthBacking ??=
+        new(Persistence.Dpapi.Encrypt, Persistence.Dpapi.Decrypt,
+            id => _usageService.TryGet(id, out var u) ? (u.Utilization, u.ResetsAtUnix) : ((double, long)?)null);
 
-    public bool HasApiKey(string id) => !string.IsNullOrWhiteSpace(Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault(id, "")));
-    public bool AutoApiOnLimit(string id) => _engineAutoApi.GetValueOrDefault(id);
-    /// <summary>한도 소진 상태인가 — 사용량 ~100% 또는 실제 rate-limit 실패(리셋 전).</summary>
-    public bool IsEngineLimited(string id)
-    {
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        if (_engineLimitedUntil.TryGetValue(id, out var until) && until > now) return true;
-        if (_usage.TryGetValue(id, out var s) && s.Utilization >= 0.999 && s.ResetsAtUnix > now) return true;
-        return false;
-    }
-    /// <summary>소진 시 API로 자동 전환되어 계속 사용 가능한가(토글 ON + 키 보유).</summary>
-    public bool WillUseApiOnLimit(string id) => AutoApiOnLimit(id) && HasApiKey(id);
-    /// <summary>rate-limit 실제 실패를 기록 — 리셋 시각(모르면 +1h)까지 소진 처리.</summary>
-    public void MarkRateLimited(string id, long resetUnix)
-    {
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        _engineLimitedUntil[id] = resetUnix > now ? resetUnix : now + 3600;
-    }
-
-    /// <summary>엔진의 API 키 env 변수명 (cc/gx/agy). agy(API 모드)는 GEMINI_API_KEY로 SDK를 구동한다. 없으면 null.</summary>
-    private static string? ApiEnvVar(string id) => id switch
-    {
-        "cc" => "ANTHROPIC_API_KEY",
-        "gx" => "OPENAI_API_KEY",
-        "agy" => "GEMINI_API_KEY",   // Antigravity SDK 인증 (API 모드)
-        _ => null,
-    };
-    /// <summary>실행 시 주입할 env: api 모드 + 키 있음 → { 변수명: 복호화키 }.</summary>
-    private IReadOnlyDictionary<string, string> ApiEnvFor(string id)
-    {
-        if (ApiEnvVar(id) is not { } var) return EmptyEnv;
-        // 명시적 API 모드 OR (한도 소진 + 자동전환 ON + 키 보유) → API 키 주입
-        var useApi = _engineAuthMode.GetValueOrDefault(id, "subscription") == "api"
-                     || (IsEngineLimited(id) && WillUseApiOnLimit(id));
-        if (!useApi) return EmptyEnv;
-        var key = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault(id, ""));
-        return string.IsNullOrWhiteSpace(key) ? EmptyEnv : new Dictionary<string, string> { [var] = key };
-    }
-    private static readonly Dictionary<string, string> EmptyEnv = new();
-    private void SaveEngineAuth(string id, string mode, string plainKey)
-    {
-        _engineAuthMode[id] = mode == "api" ? "api" : "subscription";
-        if (!string.IsNullOrWhiteSpace(plainKey))
-            _engineApiKey[id] = Persistence.Dpapi.Encrypt(plainKey.Trim());
-        else
-            _engineApiKey.Remove(id);
-    }
+    public bool HasApiKey(string id) => _engineAuth.HasApiKey(id);
+    public bool AutoApiOnLimit(string id) => _engineAuth.AutoApiOnLimit(id);
+    public bool IsEngineLimited(string id) => _engineAuth.IsEngineLimited(id);
+    public bool WillUseApiOnLimit(string id) => _engineAuth.WillUseApiOnLimit(id);
+    public void MarkRateLimited(string id, long resetUnix) => _engineAuth.MarkRateLimited(id, resetUnix);
+    private IReadOnlyDictionary<string, string> ApiEnvFor(string id) => _engineAuth.ApiEnvFor(id);
+    private void SaveEngineAuth(string id, string mode, string plainKey) => _engineAuth.SaveEngineAuth(id, mode, plainKey);
     public string SettingsAuthCc { get => _settingsAuthCc; set => Set(ref _settingsAuthCc, value); }
     private string _settingsAuthCc = "subscription";
     public string SettingsApiKeyCc { get => _settingsApiKeyCc; set => Set(ref _settingsApiKeyCc, value); }
@@ -393,9 +349,7 @@ public sealed partial class AppViewModel
     /// <summary>이 엔진이 현재 API 모드로 동작해야 하는가 — 백엔드 분기(agy 어댑터 선택)의 단일 기준.
     /// 명시적 API 모드 + 키 보유, 또는 (한도 소진 + 자동전환 ON + 키 보유). cc/gx는 어댑터 내 크리덴셜만
     /// 바꾸지만 agy는 어댑터 클래스 자체를 바꾸므로 이 값이 AgyAdapter ↔ AgySdkAdapter를 결정한다.</summary>
-    public bool IsApiMode(string id)
-        => _engineAuthMode.GetValueOrDefault(id, "subscription") == "api" && HasApiKey(id)
-           || (IsEngineLimited(id) && WillUseApiOnLimit(id));
+    public bool IsApiMode(string id) => _engineAuth.IsApiMode(id);
 
     // ----- appearance: accent / zoom / telemetry -----
     private string _accent = "ember";
@@ -475,16 +429,11 @@ public sealed partial class AppViewModel
         _zoomSaveTimer.Stop(); _zoomSaveTimer.Start();
     }
     private void ZoomSaveTick(object? sender, EventArgs e) { _zoomSaveTimer!.Stop(); SaveState(); }
-    private bool _telemetry;
+    private bool _telemetry { get => _settings.Telemetry; set => _settings.Telemetry = value; }
     public bool SettingsTelemetry { get => _settingsTelemetry; set => Set(ref _settingsTelemetry, value); }
     private bool _settingsTelemetry;
 
-    private static (bool requireApproval, SandboxMode sandbox) PolicyToSession(string policy) => policy switch
-    {
-        "ask" => (true, SandboxMode.ReadOnly),
-        "safe" => (false, SandboxMode.WorkspaceWrite),
-        _ => (false, SandboxMode.DangerFullAccess), // yolo
-    };
+    private static (bool requireApproval, SandboxMode sandbox) PolicyToSession(string policy) => CoreHelpers.PolicyToSession(policy);
 
     // provider detection status (settings panel)
     /// <summary>엔진의 CLI를 프로젝트 경로의 새 터미널로 열어 사용자가 직접 로그인하게 한다
@@ -561,8 +510,8 @@ public sealed partial class AppViewModel
     public string SettingsStatus { get => _settingsStatus; set => Set(ref _settingsStatus, value); }
 
     // ----- 스킬 주입: Save 시 각 엔진 스킬 폴더에 SKILL.md 기록 -----
-    private string _skillContent = AgentManager.Core.SkillInjector.WorkerPromptDefault;
-    private Dictionary<string, string> _skillDirs = AgentManager.Core.SkillInjector.DefaultDirs();
+    private string _skillContent { get => _settings.SkillContent; set => _settings.SkillContent = value; }
+    private Dictionary<string, string> _skillDirs { get => _settings.SkillDirs; set => _settings.SkillDirs = value; }
 
     private string _settingsSkillContent = "";
     public string SettingsSkillContent { get => _settingsSkillContent; set => Set(ref _settingsSkillContent, value); }
@@ -627,7 +576,7 @@ public sealed partial class AppViewModel
         SettingsApprovalPolicy = _approvalPolicy;
         SettingsWorktreeBase = _worktreeBase;
         SettingsAutoStart = _autoStartLastSession;
-        SettingsStreamLogs = _streamLogs;
+        SettingsStreamLogs = _settings.StreamLogs;
         SettingsSkillContent = _skillContent;
         SettingsSkillDirCc = _skillDirs.GetValueOrDefault("cc", "");
         SettingsSkillDirGx = _skillDirs.GetValueOrDefault("gx", "");
@@ -645,15 +594,15 @@ public sealed partial class AppViewModel
         SettingsEngineGx = !_disabledEngines.Contains("gx");
         SettingsEngineAgy = !_disabledEngines.Contains("agy");
         SettingsEnginePi = !_disabledEngines.Contains("pi");
-        SettingsAuthCc = _engineAuthMode.GetValueOrDefault("cc", "subscription");
-        SettingsAuthGx = _engineAuthMode.GetValueOrDefault("gx", "subscription");
-        SettingsAuthAgy = _engineAuthMode.GetValueOrDefault("agy", "subscription");
-        SettingsAutoApiCc = _engineAutoApi.GetValueOrDefault("cc");
-        SettingsAutoApiGx = _engineAutoApi.GetValueOrDefault("gx");
-        SettingsAutoApiAgy = _engineAutoApi.GetValueOrDefault("agy");
-        SettingsApiKeyCc = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("cc", ""));
-        SettingsApiKeyGx = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("gx", ""));
-        SettingsApiKeyAgy = Persistence.Dpapi.Decrypt(_engineApiKey.GetValueOrDefault("agy", ""));
+        SettingsAuthCc = _engineAuth.GetAuthMode("cc");
+        SettingsAuthGx = _engineAuth.GetAuthMode("gx");
+        SettingsAuthAgy = _engineAuth.GetAuthMode("agy");
+        SettingsAutoApiCc = _engineAuth.GetAutoApi("cc");
+        SettingsAutoApiGx = _engineAuth.GetAutoApi("gx");
+        SettingsAutoApiAgy = _engineAuth.GetAutoApi("agy");
+        SettingsApiKeyCc = _engineAuth.GetApiKeyPlain("cc");
+        SettingsApiKeyGx = _engineAuth.GetApiKeyPlain("gx");
+        SettingsApiKeyAgy = _engineAuth.GetApiKeyPlain("agy");
         RefreshDetectLabels(); // CLI 경로 감지 라벨 + 로그인 계정 표시 갱신
     }
 
@@ -724,9 +673,9 @@ public sealed partial class AppViewModel
         SaveEngineAuth("cc", SettingsAuthCc, SettingsApiKeyCc);
         SaveEngineAuth("gx", SettingsAuthGx, SettingsApiKeyGx);
         SaveEngineAuth("agy", SettingsAuthAgy, SettingsApiKeyAgy);
-        _engineAutoApi["cc"] = SettingsAutoApiCc;
-        _engineAutoApi["gx"] = SettingsAutoApiGx;
-        _engineAutoApi["agy"] = SettingsAutoApiAgy;
+        _engineAuth.SetAutoApi("cc", SettingsAutoApiCc);
+        _engineAuth.SetAutoApi("gx", SettingsAutoApiGx);
+        _engineAuth.SetAutoApi("agy", SettingsAutoApiAgy);
         _theme = Theme.ThemePalette.Normalize(SettingsTheme); // 테마는 이미 라이브 적용됨
         var newLanguage = SettingsLanguage == "en" ? "en" : "ko";
         var languageChanged = newLanguage != _language;
@@ -739,15 +688,15 @@ public sealed partial class AppViewModel
         SaveState();
     }
 
-    private static string Clean(string value) => value.Trim().Trim('"');
+    private static string Clean(string value) => CoreHelpers.Clean(value);
 
     /// <summary>번역 언어 값을 선택지(영어 표기)로 정규화. 미상이면 기본값.</summary>
     private string NormalizeTranslationLang(string? value, string fallback)
     {
-        var v = (value ?? "").Trim();
-        return AvailableTranslationLanguages.Any(l => string.Equals(l.Id, v, StringComparison.OrdinalIgnoreCase))
-            ? AvailableTranslationLanguages.First(l => string.Equals(l.Id, v, StringComparison.OrdinalIgnoreCase)).Id
-            : fallback;
+        return CoreHelpers.NormalizeTranslationLang(
+            value,
+            fallback,
+            AvailableTranslationLanguages.Select(l => l.Id));
     }
 
 }

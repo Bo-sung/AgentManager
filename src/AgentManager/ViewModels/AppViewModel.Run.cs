@@ -8,9 +8,11 @@ using AgentManager.Persistence;
 using AgentManager.Core.Agents;
 using AgentManager.Core.Events;
 using AgentManager.Core.Observation;
+using AgentManager.Core.Orchestration;
 using AgentManager.Core.Scheduling;
 using AgentManager.Core.Session;
 using AgentManager.Core.Translation;
+using AgentManager.Core;
 using AgentManager.Core.Workspace;
 
 namespace AgentManager.ViewModels;
@@ -25,20 +27,22 @@ public sealed partial class AppViewModel
     private string BuildAttachedDocsText(SessionViewModel s, string cwd, string[]? docs)
     {
         if (docs is null || docs.Length == 0) return "";
-        List<string> textDocs = [], binaryDocs = [];
+        // Small text/code docs are inlined verbatim; binary office/PDF docs AND large text docs go by PATH
+        // PASS-THROUGH (a big inlined block bloats every turn + stalls cc's stream-json init — see PassThrough).
+        List<string> inlineDocs = [], passDocs = [];
         foreach (var d in docs)
-            (Attachments.IsBinaryDoc(d) ? binaryDocs : textDocs).Add(d);
+            (Attachments.PassThrough(d) ? passDocs : inlineDocs).Add(d);
 
         var sb = new StringBuilder();
-        var inline = Attachments.BuildDocsText(textDocs);
+        var inline = Attachments.BuildDocsText(inlineDocs);
         if (inline.Length > 0) sb.Append(inline).Append("\n\n");
 
-        if (binaryDocs.Count > 0)
+        if (passDocs.Count > 0)
         {
             var isAgy = s.AgentId == "agy";
-            foreach (var bin in binaryDocs)
+            foreach (var doc in passDocs)
             {
-                var (refPath, ok) = Attachments.CopyToAttachmentsDir(bin, cwd);
+                var (refPath, ok) = Attachments.CopyToAttachmentsDir(doc, cwd);
                 sb.Append(Attachments.BuildAttachedRef(refPath)).Append('\n');
                 if (isAgy)
                     s.Transcript.Add(new WorkingBlock(L("L.AttachmentAgyWarning", Path.GetFileName(refPath))));
@@ -196,7 +200,7 @@ public sealed partial class AppViewModel
     {
         // concurrency cap: 워커와 일반 세션은 별도 cap을 소비(워커 위임이 메인 슬롯을 굶기지 않도록)
         var cap = s.IsWorker ? MaxConcurrentWorkers : MaxConcurrentSessions;
-        var runningSameKind = _allSessions.Count(x => x.IsWorker == s.IsWorker && _running.ContainsKey(x.Id));
+        var runningSameKind = _allSessions.Count(x => x.IsWorker == s.IsWorker && _runs.IsRunning(x.Id));
         if (runningSameKind >= cap)
         {
             s.Transcript.Add(new ErrorBlock(L("L.ConcurrentLimitErrorTitle"),
@@ -214,47 +218,30 @@ public sealed partial class AppViewModel
         // agy 백엔드 분기: API 모드(GEMINI_API_KEY로 Antigravity SDK 구동)면 AgySdkAdapter + python,
         // subscription이면 기존 AgyAdapter(CLI/ConPTY)를 바이트 단위로 유지. cc/gx는 어댑터 내
         // 크리덴셜만 바꾸지만 agy는 어댑터 클래스 자체가 바뀌므로 분기를 호출점에 둔다.
-        bool agyApi = s.AgentId == "agy" && IsApiMode("agy");
-        IAgentAdapter? adapter;
-        string? exe;
-        if (agyApi)
+        // 결정 로직은 Core TurnPlanner로 추출(헤드리스); 여기선 타입 실패를 지역화된 에러 블록으로 렌더한다.
+        var resolution = TurnPlanner.ResolveEngine(new EngineResolveRequest(
+            AgentId: s.AgentId,
+            RequireApproval: s.RequireApproval,
+            ApiMode: s.AgentId == "agy" && IsApiMode("agy"),
+            HasApiKey: HasApiKey("agy"),
+            ClaudePath: _claudePath, CodexPath: _codexPath, AgyPath: _agyPath, PiPath: _piPath,
+            ResolvePython: ResolvePython));
+        if (!resolution.Ok)
         {
-            adapter = new Core.Agents.AgySdkAdapter();
-            exe = ResolvePython();
-            if (exe is null)
+            var (title, body) = resolution.Error switch
             {
-                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiPythonMissing")));
-                s.Status = "error";
-                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
-                return;
-            }
-            if (!System.IO.File.Exists(Core.Agents.AgySdkAdapter.BridgeScriptPath))
-            {
-                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiBridgeMissing")));
-                s.Status = "error";
-                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
-                return;
-            }
-            if (!HasApiKey("agy"))
-            {
-                s.Transcript.Add(new ErrorBlock(L("L.AgyApiModeTitle"), L("L.AgyApiKeyMissing")));
-                s.Status = "error";
-                s.MarkRunEnded(L("L.EngineUnavailableActivity"));
-                return;
-            }
-        }
-        else
-        {
-            adapter = EngineRegistry.CreateAdapter(s.AgentId, s.RequireApproval);
-            exe = EngineRegistry.ResolveExe(s.AgentId, _claudePath, _codexPath, _agyPath, _piPath);
-        }
-        if (adapter is null || exe is null)
-        {
-            s.Transcript.Add(new ErrorBlock(L("L.EngineUnavailableTitle"), L("L.EngineUnavailableBody", s.AgentName)));
+                EngineSetupError.AgyPythonMissing => (L("L.AgyApiModeTitle"), L("L.AgyApiPythonMissing")),
+                EngineSetupError.AgyBridgeMissing => (L("L.AgyApiModeTitle"), L("L.AgyApiBridgeMissing")),
+                EngineSetupError.AgyKeyMissing => (L("L.AgyApiModeTitle"), L("L.AgyApiKeyMissing")),
+                _ => (L("L.EngineUnavailableTitle"), L("L.EngineUnavailableBody", s.AgentName)),
+            };
+            s.Transcript.Add(new ErrorBlock(title, body));
             s.Status = "error";
             s.MarkRunEnded(L("L.EngineUnavailableActivity"));
             return;
         }
+        var adapter = resolution.Adapter!;
+        var exe = resolution.Exe!;
 
         // Worktree isolation: each session works in its own git worktree.
         s.Activity = L("L.PreparingWorktree");
@@ -286,36 +273,43 @@ public sealed partial class AppViewModel
         s.TurnBaseOut = s.TokensOut;
 
         var sessionProject = Projects.FirstOrDefault(p => p.Id == s.ProjectId);
-        var mcpPath = sessionProject?.McpConfigPath;
-        var nativeHookSpoolDirectory = NativeHookSpoolDirectoryFor(s);
-        var options = new SessionOptions
+        var options = TurnPlanner.BuildOptions(new TurnOptionsRequest(
+            AgentId: s.AgentId,
+            WorkingDirectory: cwd,
+            RequireApproval: s.RequireApproval,
+            Sandbox: s.Sandbox,
+            ResumeSessionId: s.EngineSessionId,
+            Model: s.Model,
+            McpConfigPath: sessionProject?.McpConfigPath,
+            Images: images ?? [],
+            AttachedDocsText: attachedDocsText,
+            AdditionalDirectories: sessionProject?.ExtraPaths.ToArray() ?? [],
+            ReasoningEffort: s.ReasoningEffort,
+            ApiEnv: ApiEnvFor(s.AgentId),
+            TaskSpoolDir: Path.Combine(cwd, ".am", "worker-tasks", s.Id),
+            AskSpoolDir: Path.Combine(cwd, ".am", "ask", s.Id),
+            NativeHookSpoolDirectory: NativeHookSpoolDirectoryFor(s)));
+
+        // gx/agy는 프롬프트를 명령행 인자로 받아 ~32K 한도를 넘기면 실행 자체가 실패한다 → 큰 프롬프트는
+        // 파일로 빼고 짧은 참조만 전달. cc/pi는 stdin이라 인라인 유지(대형도 빠름 — init-ack 이후 전송).
+        var sendPrompt = prompt;
+        if (s.AgentId is "gx" or "agy")
         {
-            WorkingDirectory = cwd,
-            BypassPermissions = !s.RequireApproval, // Stage 1: Claude stdio approvals; Codex falls to sandbox
-            Sandbox = s.Sandbox,
-            ResumeSessionId = s.EngineSessionId,
-            Model = string.IsNullOrWhiteSpace(s.Model) ? null : s.Model,
-            McpConfigPath = string.IsNullOrWhiteSpace(mcpPath) ? null : mcpPath,
-            Images = images ?? [],
-            AttachedDocsText = attachedDocsText,
-            AdditionalDirectories = sessionProject?.ExtraPaths.ToArray() ?? [],
-            ReasoningEffort = string.IsNullOrWhiteSpace(s.ReasoningEffort) ? null : s.ReasoningEffort,
-            ExtraEnvironment = WithTaskSpoolEnv(ApiEnvFor(s.AgentId), Path.Combine(cwd, ".am", "worker-tasks", s.Id), Path.Combine(cwd, ".am", "ask", s.Id)),
-            NativeHookSpoolDirectory = nativeHookSpoolDirectory,
-            NativeHookCommand = s.AgentId is "gx" or "cc" && nativeHookSpoolDirectory is not null
-                ? NativeHookCommandFactory.WindowsPowerShellSpoolScript(nativeHookSpoolDirectory)
-                : null,
-            BypassHookTrust = s.AgentId == "gx",
-        };
-        var cts = new CancellationTokenSource();
-        _running[s.Id] = cts;
+            var (offloaded, promptFile) = Attachments.OffloadLargePrompt(prompt, cwd);
+            if (promptFile is not null)
+            {
+                sendPrompt = offloaded;
+                s.Transcript.Add(new WorkingBlock(L("L.LargePromptOffloaded", Path.GetFileName(promptFile))));
+            }
+        }
+        var token = _runs.Start(s.Id);
         try
         {
             s.NativeWorkItems.Clear();
             ClearNativeHookSpool(options.NativeHookSpoolDirectory);
             await StartNativeObserverAsync(s, options);
             s.Activity = s.TranslationEnabled ? L("L.TranslatingStartingEngine") : L("L.StartingEngine");
-            await Task.Run(() => session.RunAsync(options, prompt, cts.Token), cts.Token);
+            await Task.Run(() => session.RunAsync(options, sendPrompt, token), token);
             if (s.Status == "running") s.Status = "done";
             if (s.Status == "done") s.MarkRunEnded(L("L.Completed"));
         }
@@ -329,7 +323,7 @@ public sealed partial class AppViewModel
         {
             // 실제 rate-limit 실패면 해당 엔진을 소진으로 기록(리셋 전까지 회색/자동전환 트리거)
             if (LooksRateLimited(ex.Message))
-                MarkRateLimited(s.AgentId, _usage.TryGetValue(s.AgentId, out var snap) ? snap.ResetsAtUnix : 0);
+                MarkRateLimited(s.AgentId, _usageService.TryGet(s.AgentId, out var snap) ? snap.ResetsAtUnix : 0);
             s.Transcript.Add(new ErrorBlock(L("L.RunFailed"), ex.Message));
             s.Status = "error";
             s.MarkRunEnded(L("L.Failed"));
@@ -340,20 +334,12 @@ public sealed partial class AppViewModel
             ExpirePendingApprovals(s);
             await RefreshReviewAsync(s);
             SaveState();
-            _running.Remove(s.Id);
-            cts.Dispose();
+            _runs.Complete(s.Id);
         }
     }
 
     /// <summary>에러 메시지가 rate-limit/사용량 한도로 보이는가(소진 기록 트리거).</summary>
-    private static bool LooksRateLimited(string? msg)
-    {
-        if (string.IsNullOrEmpty(msg)) return false;
-        var m = msg.ToLowerInvariant();
-        return m.Contains("rate limit") || m.Contains("rate_limit") || m.Contains("ratelimit")
-            || m.Contains("usage limit") || m.Contains("quota") || m.Contains("429")
-            || m.Contains("too many requests") || m.Contains("limit reached") || m.Contains("limit exceeded");
-    }
+    private static bool LooksRateLimited(string? msg) => CoreHelpers.LooksRateLimited(msg);
 
     private static string? NativeHookSpoolDirectoryFor(SessionViewModel s)
     {
@@ -538,6 +524,10 @@ public sealed partial class AppViewModel
     private async Task RefreshReviewAsync(SessionViewModel? s, bool quiet = false)
     {
         if (s is null) return;
+        // Live branch label: read from the session's cwd — the isolated worktree, or (for a shared /
+        // no-worktree session) the project root — so a shared session shows which repo branch it's on.
+        s.CurrentBranch = await GitWorktree.CurrentBranchAsync(
+            !string.IsNullOrWhiteSpace(s.WorktreePath) ? s.WorktreePath! : s.ProjectPath);
         if (string.IsNullOrWhiteSpace(s.WorktreePath))
         {
             s.Changes.Clear();
@@ -632,26 +622,45 @@ public sealed partial class AppViewModel
         SaveState();
     }
 
+    /// <summary>Reduce one engine event into transcript/state changes. The classification + streaming-replace
+    /// + stderr-suppression logic lives in the headless Core <see cref="TranscriptProjector"/> (golden-tested,
+    /// CLI-reusable); this method only APPLIES the resulting domain deltas to the WPF transcript + session
+    /// (localizing markers, firing UI side-effects). Overhaul (a) step 4.</summary>
     private void Apply(SessionViewModel s, NormalizedEvent ev, Dictionary<string, ToolBlock> tools)
     {
         s.MarkRunSignal();
-        switch (ev)
+        foreach (var delta in _projector.Project(s.Id, s.AgentId, ev))
+            ApplyDelta(s, delta, tools);
+        SaveState();
+    }
+
+    /// <summary>Apply one neutral transcript delta to the live WPF transcript + session. The UI-affine
+    /// state the projector deliberately doesn't hold (the live streaming block, the tool-by-id table, the
+    /// last user block, localized labels, attention/review/artifact actions) is realized here.</summary>
+    private void ApplyDelta(SessionViewModel s, TranscriptDelta delta, Dictionary<string, ToolBlock> tools)
+    {
+        switch (delta)
         {
-            case SessionStarted started:
-                if (!string.IsNullOrWhiteSpace(started.SessionId))
-                    s.EngineSessionId = started.SessionId;
-                if (s.AgentId == "agy")
-                    _ = StartNativeObserverAsync(s);
-                if (!string.IsNullOrWhiteSpace(started.Model))
-                    s.MarkRunSignal(L("L.ConnectedModel", started.Model));
+            case EngineSessionIdSet d:
+                s.EngineSessionId = d.SessionId;
+                break;
+            case StartNativeObserver:
+                _ = StartNativeObserverAsync(s);
+                break;
+            case ActivitySignal a:
+                var label = ActivityLabel(a);
+                // Connected/Tool reset the "quiet" timer (MarkRunSignal); streaming/receiving/thinking just
+                // update the activity text (the per-event MarkRunSignal() at the top already bumped it).
+                if (a.Kind is ActivityKind.Connected or ActivityKind.ConnectedModel or ActivityKind.ToolRunning)
+                    s.MarkRunSignal(label);
                 else
-                    s.MarkRunSignal(L("L.Connected"));
+                    s.Activity = label;
                 break;
-            case PromptTranslated pt:
+            case UserSentTextSet d:
                 if (s.Transcript.OfType<UserBlock>().LastOrDefault() is { } ub)
-                    ub.SentText = pt.SentText;
+                    ub.SentText = d.SentText;
                 break;
-            case AssistantDelta d:
+            case AssistantStreamAppend d:
                 // 스트리밍: 라이브 블록에 즉시 덧붙이고, 최종 AssistantText(번역본)가 오면 교체
                 if (!_liveText.TryGetValue(s.Id, out var live))
                 {
@@ -660,87 +669,112 @@ public sealed partial class AppViewModel
                     s.Transcript.Add(live);
                 }
                 live.Text += d.Delta;
-                s.Activity = L("L.StreamingResponse");
                 break;
-            case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
+            case AssistantStreamReplace d:
                 if (_liveText.Remove(s.Id, out var streamed))
                 {
-                    streamed.Text = at.Text;
-                    streamed.OriginalText = at.OriginalText;
+                    streamed.Text = d.Text;
+                    streamed.OriginalText = d.OriginalText;
                 }
                 else
-                    s.Transcript.Add(new AgentTextBlock(at.Text) { OriginalText = at.OriginalText, ModelUsed = s.Model });
-                s.Activity = L("L.ReceivingResponse");
+                    s.Transcript.Add(new AgentTextBlock(d.Text) { OriginalText = d.OriginalText, ModelUsed = s.Model });
                 break;
-            case Thinking th when !string.IsNullOrWhiteSpace(th.Text):
-                s.Transcript.Add(new ThinkingBlock(th.Text));
-                s.Activity = L("L.ThinkingActivity");
+            case AssistantAdd d:
+                s.Transcript.Add(new AgentTextBlock(d.Text) { OriginalText = d.OriginalText, ModelUsed = s.Model });
                 break;
-            case ToolUseStarted u:
-                var tb = new ToolBlock(u.ToolUseId, KindOf(u.Name), u.Name) { CommandText = ExtractCommand(u) };
-                tools[u.ToolUseId] = tb;
+            case AssistantStreamEnd:
+                _liveText.Remove(s.Id); // 스트리밍 잔여 해제 (최종 텍스트 미도착 시 라이브 내용 그대로 유지)
+                break;
+            case ThinkingAdd d:
+                s.Transcript.Add(new ThinkingBlock(d.Text));
+                break;
+            case ToolAdd d:
+                var tb = new ToolBlock(d.ToolUseId, d.Kind, d.Name) { CommandText = d.CommandText };
+                tools[d.ToolUseId] = tb;
                 s.Transcript.Add(tb);
-                s.MarkRunSignal(L("L.ToolRunning", u.Name));
-                if (u.Name == "TodoWrite")
-                    UpsertTaskListArtifact(s, u.InputJson);
                 break;
-            case ToolResult r:
-                if (tools.TryGetValue(r.ToolUseId, out var t))
+            case TaskListArtifactUpdate d:
+                UpsertTaskListArtifact(s, d.InputJson);
+                break;
+            case ToolFinished d:
+                if (tools.TryGetValue(d.ToolUseId, out var t))
                 {
-                    t.Body = Trim(r.Content, 2000);
-                    t.OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000);
-                    t.Stat = r.IsError ? L("L.ToolError") : L("L.ToolDone");
+                    t.Body = Trim(d.Content, 2000);
+                    t.OriginalBody = d.OriginalContent is null ? null : Trim(d.OriginalContent, 2000);
+                    t.Stat = d.IsError ? L("L.ToolError") : L("L.ToolDone");
                     if (t.CommandText is { } cmd && IsTestCommand(cmd))
-                        UpsertTestArtifact(s, cmd, r.Content, r.IsError);
+                        UpsertTestArtifact(s, cmd, d.Content, d.IsError);
                 }
                 else
                 {
-                    s.Transcript.Add(new ToolBlock(r.ToolUseId, "RUN", L("L.Result"))
+                    s.Transcript.Add(new ToolBlock(d.ToolUseId, "RUN", L("L.Result"))
                     {
-                        Body = Trim(r.Content, 2000),
-                        OriginalBody = r.OriginalContent is null ? null : Trim(r.OriginalContent, 2000),
-                        Stat = r.IsError ? L("L.ToolError") : L("L.ToolDone")
+                        Body = Trim(d.Content, 2000),
+                        OriginalBody = d.OriginalContent is null ? null : Trim(d.OriginalContent, 2000),
+                        Stat = d.IsError ? L("L.ToolError") : L("L.ToolDone")
                     });
                 }
                 // live review: a finished tool may have changed files in the worktree
                 _ = QueueLiveReviewRefreshAsync(s);
                 break;
-            case TokenUsage k:
-                // live accumulation; TurnCompleted.Usage reconciles to the turn total
-                s.TokensIn += k.InputTokens;
-                s.TokensOut += k.OutputTokens;
-                RefreshTotals();
+            case TokensAdded d:
+                // live accumulation; TurnUsageSet reconciles to the turn total
+                s.TokensIn += d.Input;
+                s.TokensOut += d.Output;
                 break;
-            case QuotaUpdate q:
-                RecordUsage(s.AgentId, q);
+            case TurnUsageSet d:
+                // reconcile: per-message usage undercounts (esp. output); result.usage is the turn total
+                s.TokensIn = s.TurnBaseIn + d.Input;
+                s.TokensOut = s.TurnBaseOut + d.Output;
                 break;
-            case EngineError e when !SuppressStderr(s, e.Message):
-                // claude can't --resume a conversation that no longer exists → the session is dead.
-                // Flag it (cc only for now; other engines have different signatures) so the error
-                // block can offer a delete action. Don't stack the prompt on repeated stderr lines.
-                var staleSession = s.AgentId == "cc"
-                    && e.Message.Contains("No conversation found with session ID", StringComparison.OrdinalIgnoreCase);
-                if (staleSession && s.Transcript.LastOrDefault() is ErrorBlock { IsStaleSession: true }) break;
-                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), e.Message) { IsStaleSession = staleSession });
+            case CostAdded d:
+                s.CostUsd += d.Usd;
                 break;
-            case TurnCompleted c:
-                _liveText.Remove(s.Id); // 스트리밍 잔여 해제 (최종 텍스트 미도착 시 라이브 내용 그대로 유지)
-                if (c.Usage is { } turnUsage)
+            case QuotaRecorded d:
+                RecordUsage(s.AgentId, d.Quota);
+                break;
+            case StatusSet d:
+                s.Status = d.Status;
+                break;
+            case ErrorAdd d:
+                // claude can't --resume a conversation that no longer exists → the session is dead (stale,
+                // delete action); don't stack repeats. Otherwise COALESCE a run of stderr lines into one
+                // block — codex/PowerShell error dumps spew many lines, one block per line was a wall.
+                if (s.Transcript.LastOrDefault() is ErrorBlock { IsStderr: true } lastErr)
                 {
-                    // reconcile: per-message usage undercounts (esp. output); result.usage is the turn total
-                    s.TokensIn = s.TurnBaseIn + turnUsage.InputTokens;
-                    s.TokensOut = s.TurnBaseOut + turnUsage.OutputTokens;
+                    if (d.IsStaleSession && lastErr.IsStaleSession) break;
+                    if (!d.IsStaleSession && !lastErr.IsStaleSession)
+                    {
+                        lastErr.Body = lastErr.Body.Length == 0 ? d.Message : lastErr.Body + "\n" + d.Message;
+                        break;
+                    }
                 }
-                if (c.CostUsd is { } turnCost) s.CostUsd += turnCost;
-                UpsertSummaryArtifact(s);
-                AttentionRequested?.Invoke(c.IsError ? "error" : "done", s);
-                s.Status = c.IsError ? "error" : "done";
-                s.MarkRunEnded(c.IsError ? L("L.Failed") : L("L.Completed"));
-                PopulateQuickReplies(s);
+                s.Transcript.Add(new ErrorBlock(L("L.Stderr"), d.Message) { IsStaleSession = d.IsStaleSession, IsStderr = true });
+                break;
+            case TotalsChanged:
                 RefreshTotals();
+                break;
+            case TurnFinished d:
+                UpsertSummaryArtifact(s);
+                AttentionRequested?.Invoke(d.IsError ? "error" : "done", s);
+                s.MarkRunEnded(d.IsError ? L("L.Failed") : L("L.Completed"));
+                PopulateQuickReplies(s);
                 break;
         }
-        SaveState();
     }
+
+    /// <summary>Localize a neutral activity marker for the run-signal/activity line.</summary>
+    private static string ActivityLabel(ActivitySignal a) => a.Kind switch
+    {
+        ActivityKind.Connected => L("L.Connected"),
+        ActivityKind.ConnectedModel => L("L.ConnectedModel", a.Arg ?? ""),
+        ActivityKind.Streaming => L("L.StreamingResponse"),
+        ActivityKind.Receiving => L("L.ReceivingResponse"),
+        ActivityKind.Thinking => L("L.ThinkingActivity"),
+        ActivityKind.ToolRunning => L("L.ToolRunning", a.Arg ?? ""),
+        _ => "",
+    };
+
+    private readonly TranscriptProjector _projector = new();
 
 }

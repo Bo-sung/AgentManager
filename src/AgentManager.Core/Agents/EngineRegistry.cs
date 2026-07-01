@@ -1,45 +1,25 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using AgentManager.Core.Agents;
 
-namespace AgentManager.ViewModels;
+namespace AgentManager.Core.Agents;
 
 public sealed record EngineDef(string Id, string Badge, string Name, string Cli, string[] Models, string Desc, bool Enabled, string InstallUrl = "");
 
 /// <summary>`pi --list-models` 결과 — provider/id 모델 목록 + 인증된(=모델이 보이는) provider 집합.</summary>
 public sealed record PiCatalog(IReadOnlyList<string> Models, IReadOnlyList<string> Providers);
 
-/// <summary>New Agent 피커 항목: 엔진 정의 + 설치 여부. Id/Name/Desc/Badge/InstallUrl을 위임 노출해
-/// 기존 템플릿·아이콘(EngineIconByDef는 {Binding Id}) 바인딩과 그대로 호환된다.</summary>
-public sealed class EngineOptionVm(EngineDef def, bool isInstalled, bool isLimited = false, bool willUseApi = false)
-{
-    public EngineDef Def { get; } = def;
-    public bool IsInstalled { get; } = isInstalled;
-    public bool IsLimited { get; } = isLimited;     // 사용량 한도 소진
-    public bool WillUseApi { get; } = willUseApi;    // 소진이어도 API 자동전환으로 사용 가능
-
-    /// <summary>선택(실행) 가능 — 설치됨 + (한도 OK 또는 API 자동전환).</summary>
-    public bool IsAvailable => IsInstalled && (!IsLimited || WillUseApi);
-    public bool Dimmed => !IsAvailable;
-    public bool ShowInstallBadge => !IsInstalled;
-    public bool ShowLimitBadge => IsInstalled && IsLimited && !WillUseApi;  // 한도 초과(회색)
-    public bool ShowApiBadge => IsInstalled && IsLimited && WillUseApi;     // API 전환(사용 가능)
-
-    public string Id => Def.Id;
-    public string Name => Def.Name;
-    public string Desc => Def.Desc;
-    public string Badge => Def.Badge;
-    public string InstallUrl => Def.InstallUrl;
-}
-
-/// <summary>Engine catalog + adapter/executable resolution.</summary>
+/// <summary>Engine catalog + adapter/executable resolution. Headless (no WPF) so a CLI frontend and the
+/// GUI both resolve engines through the same Core service. The UI picker wrapper (EngineOptionVm) lives
+/// in the WPF layer and only wraps <see cref="EngineDef"/>.</summary>
 public static class EngineRegistry
 {
     public static readonly EngineDef[] All =
     [
-        // 버전 명시 풀네임 (claude --model은 별칭/풀네임 모두 허용 — 실측; sonnet[1m] = 1M 컨텍스트 별칭)
-        new("cc", "CC", "Claude Code",     "claude",      ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5", "sonnet[1m]"], "anthropic · cli", true, "https://docs.claude.com/en/docs/claude-code/overview"),
+        // ALIASES, not pinned full names: `claude --model sonnet|opus|haiku` resolves to the LATEST of
+        // that family (verified — incl. a future Sonnet 5), so new models work with no code patch. Pinned
+        // versions can still be typed (the model field is free-form). sonnet[1m] = 1M-context alias.
+        new("cc", "CC", "Claude Code",     "claude",      ["sonnet", "opus", "haiku", "sonnet[1m]", "opus[1m]"], "anthropic · cli", true, "https://docs.claude.com/en/docs/claude-code/overview"),
         new("gx", "GX", "Codex",           "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true, "https://github.com/openai/codex"),
         // Google 계열은 agy(Antigravity)로 일원화 — 구형 Gemini CLI는 제거됨.
         // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략.

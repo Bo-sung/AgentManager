@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace AgentManager.ViewModels;
 
@@ -53,6 +54,27 @@ public sealed class ModelChecklistVm : ObservableObject
 
     private string _filter = "";
     public string Filter { get => _filter; set { if (Set(ref _filter, value)) ApplyFilter(); } }
+
+    // 설정에서 세부 버전 직접 추가 — 별칭 목록(예: cc sonnet/opus)에 없는 풀네임/핀 버전을 드롭다운에 더한다.
+    private string _newModelDraft = "";
+    public string NewModelDraft { get => _newModelDraft; set => Set(ref _newModelDraft, value); }
+
+    private RelayCommand? _addModelCommand;
+    public RelayCommand AddModelCommand => _addModelCommand ??= new RelayCommand(_ => AddCustom());
+
+    /// <summary>입력한 모델 id를 선호 집합에 추가(체크된 상태로 목록에도). 새 모델마다 코드 패치 없이 설정에서 추가.</summary>
+    public void AddCustom()
+    {
+        var m = (_newModelDraft ?? "").Trim();
+        if (m.Length == 0) return;
+        NewModelDraft = "";
+        _preferred.Add(m);
+        if (!_all.Any(c => string.Equals(c.Model, m, StringComparison.OrdinalIgnoreCase)))
+            _all.Add(new ModelChoice(m, true, Toggle));
+        ApplyFilter();
+        OnChanged(nameof(CheckedCount));
+        _onChanged();
+    }
 
     /// <summary>전체 모델 목록을 설정(정적/동적). 선호 집합 기준으로 체크 상태를 반영한다.</summary>
     public void SetModels(IEnumerable<string> models)

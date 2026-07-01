@@ -89,12 +89,20 @@
                                 </Button>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
                                         ToolTip="{StaticResource L.OpenInTerminal}"
-                                        Command="{Binding DataContext.OpenInTerminalCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Visibility="{Binding IsAgy, Converter={StaticResource BoolVis}}">
+                                        Command="{Binding DataContext.OpenInTerminalCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                                     <StackPanel Orientation="Horizontal">
                                         <controls:IconView Icon="{StaticResource IconTerminal}" Width="13" Height="13"
                                                            Foreground="{DynamicResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="{StaticResource L.OpenInTerminal}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"
+                                        ToolTip="{StaticResource L.ResyncTranscript}"
+                                        Command="{Binding DataContext.ResyncTranscriptCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:IconView Icon="{StaticResource IconRefresh}" Width="13" Height="13"
+                                                           Foreground="{DynamicResource Accent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{StaticResource L.ResyncTranscript}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Margin="0,0,8,0"

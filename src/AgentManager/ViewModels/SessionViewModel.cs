@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using AgentManager.Core.Agents;
 
 namespace AgentManager.ViewModels;
 
@@ -23,6 +24,10 @@ public sealed class SessionViewModel : ObservableObject
     /// inlined prompt text. Cleared on send; not persisted.</summary>
     public ObservableCollection<PendingAttachment> PendingAttachments { get; } = [];
 
+    private string _renameDraft = "";
+    /// <summary>Inline rename 입력(컨텍스트 메뉴) — 프로젝트의 RenameDraft와 동일 패턴. 미영속.</summary>
+    public string RenameDraft { get => _renameDraft; set => Set(ref _renameDraft, value); }
+
     /// <summary>The active choice — heuristic A/B/C detected in the last assistant message, or a
     /// structured question pushed by the ask-user skill (single/multi-select, one or more pages).
     /// Null = no choice (composer shown). Set on turn completion / ask ingest, cleared on a new turn,
@@ -31,12 +36,13 @@ public sealed class SessionViewModel : ObservableObject
     public ChoiceFlow? ActiveChoice { get => _choice; set { if (Set(ref _choice, value)) OnChanged(nameof(HasChoice)); } }
     public bool HasChoice => _choice is not null;
 
-    /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
+    /// <summary>Per-session git worktree (isolation). Null = runs in the project root (non-git folder,
+    /// creation failed, or the worktree was merged away).</summary>
     private string? _worktreePath;
     public string? WorktreePath
     {
         get => _worktreePath;
-        set { if (Set(ref _worktreePath, value)) OnChanged(nameof(WorktreeLabel)); }
+        set { if (Set(ref _worktreePath, value)) { OnChanged(nameof(WorktreeLabel)); OnChanged(nameof(IsSharedTree)); OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); } }
     }
 
     private bool _isolated;
@@ -45,12 +51,20 @@ public sealed class SessionViewModel : ObservableObject
         get => _isolated;
         set { if (Set(ref _isolated, value)) OnChanged(nameof(WorktreeLabel)); }
     }
-    public bool WorktreeAttempted { get; set; }
+
+    private bool _worktreeAttempted;
+    public bool WorktreeAttempted { get => _worktreeAttempted; set { if (Set(ref _worktreeAttempted, value)) { OnChanged(nameof(IsSharedTree)); OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); } } }
+
+    /// <summary>Whether this session is CURRENTLY working in the shared main tree (vs an isolated worktree).
+    /// Reflects the LIVE state, not the creation-time choice: true when opted out, OR when the worktree is
+    /// gone after a run (merged away / creation failed). A not-yet-run worktree session stays isolated
+    /// (pending). This is why a merged session flips from "Worktree" to "main tree" automatically.</summary>
+    public bool IsSharedTree => WorktreeOptOut || (WorktreeAttempted && WorktreePath is null);
 
     /// <summary>True면 worktree 격리를 건너뛰고 프로젝트 루트에서 작업(EnsureWorktreeAsync가 생성 생략).
     /// New Agent 모달의 "워크트리 미사용"을 켜면 설정됨. 영속됨.</summary>
     private bool _worktreeOptOut;
-    public bool WorktreeOptOut { get => _worktreeOptOut; set { if (Set(ref _worktreeOptOut, value)) { OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); OnChanged(nameof(WorktreeLabel)); } } }
+    public bool WorktreeOptOut { get => _worktreeOptOut; set { if (Set(ref _worktreeOptOut, value)) { OnChanged(nameof(IsSharedTree)); OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); OnChanged(nameof(WorktreeLabel)); } } }
 
     public SessionViewModel(
         string id,
@@ -66,7 +80,7 @@ public sealed class SessionViewModel : ObservableObject
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
         _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
         AvailableModels = engine.Models;
-        _reasoningEffort = engine.Id switch { "gx" => "medium", "cc" or "pi" => "default", _ => "" };
+        _reasoningEffort = RecommendedEffort(engine.Id, model);
         StartedAt = startedAt ?? DateTime.Now;
         NativeWorkItems.CollectionChanged += (_, _) => OnChanged(nameof(HasNativeWorkItems));
     }
@@ -101,17 +115,45 @@ public sealed class SessionViewModel : ObservableObject
     private string _reasoningEffort = "";
     public string ReasoningEffort { get => _reasoningEffort; set => Set(ref _reasoningEffort, value); }
 
+    /// <summary>Recommended DEFAULT reasoning effort for an engine+model — a smart default, NOT a gate
+    /// (the user can still pick any level). cc recommends medium for Opus (per cc's own guidance: "We
+    /// recommend medium effort for Opus"); other cc models use cc's default; gx defaults to medium.</summary>
+    public static string RecommendedEffort(string? engineId, string? model) => engineId switch
+    {
+        "cc" when model is { } m && m.Contains("opus", StringComparison.OrdinalIgnoreCase) => "medium",
+        "gx" => "medium",
+        "cc" or "pi" => "default",
+        _ => "",
+    };
+
+    /// <summary>The worktree's live current branch, read from git after each review refresh — the agent
+    /// may switch/create a branch, and the creation-time <see cref="Branch"/> would then be stale. Null
+    /// until first read; displays fall back to <see cref="Branch"/>.</summary>
+    private string? _currentBranch;
+    public string? CurrentBranch
+    {
+        get => _currentBranch;
+        set { if (Set(ref _currentBranch, value)) { OnChanged(nameof(EffectiveBranch)); OnChanged(nameof(BranchTail)); OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); } }
+    }
+
+    /// <summary>The branch to show: the live git branch when known, else the creation branch.</summary>
+    public string EffectiveBranch => string.IsNullOrEmpty(_currentBranch) ? Branch : _currentBranch!;
+
     /// <summary>Last segment of the branch, e.g. "agent/foo-bar" → "foo-bar" (composer pill).</summary>
-    public string BranchTail => Branch.Contains('/') ? Branch[(Branch.LastIndexOf('/') + 1)..] : Branch;
+    public string BranchTail => EffectiveBranch.Contains('/') ? EffectiveBranch[(EffectiveBranch.LastIndexOf('/') + 1)..] : EffectiveBranch;
 
-    /// <summary>Branch label for list/header pills. When the user opted out of a worktree, no branch is
-    /// ever created (the agent works in the project's main tree) — so showing the phantom "agent/…"
-    /// name is misleading; show a "shared tree" marker instead.</summary>
-    public string BranchDisplay => WorktreeOptOut ? AgentManager.App.L("L.BranchShared") : Branch;
+    /// <summary>Branch label for list/header pills. Isolated → the worktree's (live) branch. Shared /
+    /// no-worktree → the project repo's LIVE current branch (so you can see which branch it's working on),
+    /// marked "(shared)"; falls back to a plain "shared tree" marker before the branch is read / non-git.</summary>
+    public string BranchDisplay => IsSharedTree
+        ? (string.IsNullOrEmpty(_currentBranch) ? AgentManager.App.L("L.BranchShared") : AgentManager.App.L("L.BranchSharedOn", _currentBranch))
+        : EffectiveBranch;
 
-    /// <summary>Composer worktree pill: "Worktree · &lt;tail&gt;" when isolated, "main tree (shared)"
-    /// when opted out (no worktree is created).</summary>
-    public string WorktreePill => WorktreeOptOut ? AgentManager.App.L("L.SharedTreePill") : AgentManager.App.L("L.WorktreePrefix") + BranchTail;
+    /// <summary>Composer worktree pill: "Worktree · &lt;tail&gt;" when isolated; for a shared/no-worktree
+    /// session, "main tree · &lt;live branch&gt;" (or plain "main tree (shared)" before the branch is read).</summary>
+    public string WorktreePill => IsSharedTree
+        ? (string.IsNullOrEmpty(_currentBranch) ? AgentManager.App.L("L.SharedTreePill") : AgentManager.App.L("L.SharedTreePillOn", _currentBranch))
+        : AgentManager.App.L("L.WorktreePrefix") + BranchTail;
 
     /// <summary>Archived sessions are hidden from the Active/Project groups (kept in storage).</summary>
     private bool _isArchived;
