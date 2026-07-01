@@ -160,12 +160,12 @@ public sealed partial class AppViewModel
         var source = block.TranslationSource;
         if (string.IsNullOrWhiteSpace(source)) return;
 
-        // Use the session's language pair (workers pin their own) or the global translator.
+        // Use the session's language pair (workers pin their own) or the global translator — via the selected provider.
         var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
-            ? CreateTranslator(_ollamaEndpoint, _ollamaModel, src, tgt)
+            ? BuildTranslator(src, tgt)
             : _translator;
         if (translator is null) return;
-        if (!await OllamaTranslator.PingAsync(_ollamaEndpoint, 1500)) return; // Ollama down — composer ⚠ already flags it
+        if (!await IsTranslatorReadyAsync()) return; // provider down/missing — composer ⚠ already flags it
 
         block.IsRetranslating = true;
         try
@@ -257,12 +257,12 @@ public sealed partial class AppViewModel
         var attachedDocsText = BuildAttachedDocsText(s, cwd, docs);
 
         var tools = new Dictionary<string, ToolBlock>();
-        // 워커는 생성 시 고정된 번역 언어쌍을 사용(일반 세션은 전역 번역기).
+        // 워커는 생성 시 고정된 번역 언어쌍을 사용(일반 세션은 전역 번역기) — 선택된 provider 경유.
         var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
-            ? CreateTranslator(_ollamaEndpoint, _ollamaModel, src, tgt)
+            ? BuildTranslator(src, tgt)
             : _translator;
-        // 번역 ON 가능 조건: 유저가 켬 && Ollama 활성. 다운이면 번역 레이어 없이 패스스루.
-        var translateOn = s.TranslationEnabled && await Core.Translation.OllamaTranslator.PingAsync(_ollamaEndpoint, 1500);
+        // 번역 ON 가능 조건: 유저가 켬 && 선택된 provider 사용 가능. 다운/미설치면 번역 레이어 없이 패스스루.
+        var translateOn = s.TranslationEnabled && await IsTranslatorReadyAsync();
         var session = new AgentSession(adapter, exe, translator, translateOn);
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
         if (s.RequireApproval)

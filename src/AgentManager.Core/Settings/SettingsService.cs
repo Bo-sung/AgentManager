@@ -1,3 +1,5 @@
+using AgentManager.Core.Translation;
+
 namespace AgentManager.Core.Settings;
 
 /// <summary>Headless machine-local app configuration (settings.json) owned by Core, so a CLI and the GUI
@@ -13,12 +15,24 @@ public sealed class SettingsService
     public string AgyPath { get; set; } = "";
     public string PiPath { get; set; } = "";
 
-    // ----- local translation (Ollama) + language pair -----
-    public string OllamaEndpoint { get; set; } = "http://localhost:11434";
-    public string OllamaModel { get; set; } = "exaone3.5:7.8b";
+    // ----- translation: language pair + selected provider -----
     public bool TranslationEnabled { get; set; } = true;
     public string TranslateSourceLanguage { get; set; } = "Korean";
     public string TranslateTargetLanguage { get; set; } = "English";
+
+    /// <summary>Which translation provider is active. Built-in ids: <c>"ollama"</c> (uses <see cref="OllamaEndpoint"/>/
+    /// <see cref="OllamaModel"/>) and <c>"agent:cc"|"agent:gx"|"agent:pi"</c> (reuse an installed engine); a custom
+    /// OpenAI-compatible entry uses its own <see cref="TranslationCustomProvider.Id"/>. Defaults to Ollama so existing
+    /// users are unchanged.</summary>
+    public string TranslationSelectedId { get; set; } = "ollama";
+
+    // Ollama built-in config (kept for back-compat + the "ollama" provider).
+    public string OllamaEndpoint { get; set; } = "http://localhost:11434";
+    public string OllamaModel { get; set; } = "exaone3.5:7.8b";
+
+    /// <summary>User-added OpenAI-compatible / cloud endpoints (the "+ Add custom" list). API keys are stored
+    /// DPAPI-encrypted by the frontend (<see cref="TranslationCustomProvider.ApiKeyEnc"/> is opaque to Core).</summary>
+    public List<TranslationCustomProvider> TranslationCustomProviders { get; set; } = new();
 
     // ----- orchestration / behavior flags -----
     public bool WarnNoWorktree { get; set; }

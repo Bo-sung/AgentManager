@@ -26,7 +26,7 @@ public enum MainViewKind
 
 public sealed partial class AppViewModel : ObservableObject
 {
-    private OllamaTranslator _translator = CreateTranslator("http://localhost:11434", "exaone3.5:7.8b");
+    private Core.Translation.ITranslator _translator = CreateTranslator("http://localhost:11434", "exaone3.5:7.8b");
     private static string L(string key, params object?[] args) => AgentManager.App.L(key, args);
     private readonly List<SessionViewModel> _allSessions = [];
     /// <summary>사용자가 삭제한 CLI 세션 id — CLI History 재발견에서 영구 제외(삭제가 재시작 후에도 유지).</summary>

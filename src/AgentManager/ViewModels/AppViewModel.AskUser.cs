@@ -84,9 +84,9 @@ public partial class AppViewModel
         if (!s.TranslationEnabled) { flow.RevertDisplay(); return; }
         try
         {
-            if (!await Core.Translation.OllamaTranslator.PingAsync(_ollamaEndpoint, 1500)) return; // down → leave raw
+            if (!await IsTranslatorReadyAsync()) return; // provider down/missing → leave raw
             var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
-                ? CreateTranslator(_ollamaEndpoint, _ollamaModel, src, tgt) : _translator;
+                ? BuildTranslator(src, tgt) : _translator;
             if (translator is null) return;
             foreach (var item in flow.Items)
             {

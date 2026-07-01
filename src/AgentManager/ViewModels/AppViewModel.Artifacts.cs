@@ -81,4 +81,21 @@ public sealed partial class AppViewModel
 
     private static OllamaTranslator CreateTranslator(string endpoint, string model, string sourceLang = "Korean", string targetLang = "English") =>
         CoreHelpers.CreateTranslator(endpoint, model, sourceLang, targetLang);
+
+    // ---- pluggable translation provider (Ollama / installed agent / custom OpenAI-compat) ----
+
+    private string? ResolveTranslatorExe(string agentId) =>
+        Core.Agents.EngineRegistry.ResolveExe(agentId, _claudePath, _codexPath, _agyPath, _piPath);
+
+    /// <summary>Build the active (or per-worker) translator from settings via the provider factory. Falls back to
+    /// Ollama if the selected provider can't be built (e.g. an agent whose exe isn't found), so translation never
+    /// hard-fails. <paramref name="src"/>/<paramref name="tgt"/> let a worker pin its own language pair.</summary>
+    private Core.Translation.ITranslator BuildTranslator(string? src = null, string? tgt = null) =>
+        Core.Translation.TranslatorFactory.Create(_settings, ResolveTranslatorExe, Persistence.Dpapi.Decrypt, providerId: null, sourceOverride: src, targetOverride: tgt)
+        ?? CreateTranslator(_ollamaEndpoint, _ollamaModel, src ?? _translateSource, tgt ?? _translateTarget);
+
+    /// <summary>Is the selected translation provider reachable/installed? Gates translation per turn — a down
+    /// provider passes the text through unchanged instead of blocking.</summary>
+    private Task<bool> IsTranslatorReadyAsync() =>
+        Core.Translation.TranslatorFactory.IsAvailableAsync(_settings, ResolveTranslatorExe, Persistence.Dpapi.Decrypt);
 }

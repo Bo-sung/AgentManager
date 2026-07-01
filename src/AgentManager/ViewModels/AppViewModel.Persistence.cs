@@ -63,7 +63,7 @@ public sealed partial class AppViewModel
         _language = s.Language == "en" ? "en" : "ko";
         _translateSource = NormalizeTranslationLang(s.TranslateSourceLanguage, "Korean");
         _translateTarget = NormalizeTranslationLang(s.TranslateTargetLanguage, "English");
-        _translator = CreateTranslator(_ollamaEndpoint, _ollamaModel, _translateSource, _translateTarget);
+        _translator = BuildTranslator();
         Theme.ThemePalette.Apply(_theme);
         Theme.AccentPalette.Apply(_accent);
     }
