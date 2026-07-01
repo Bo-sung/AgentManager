@@ -36,12 +36,13 @@ public sealed class SessionViewModel : ObservableObject
     public ChoiceFlow? ActiveChoice { get => _choice; set { if (Set(ref _choice, value)) OnChanged(nameof(HasChoice)); } }
     public bool HasChoice => _choice is not null;
 
-    /// <summary>Per-session git worktree (isolation). Null = ran directly (non-git folder).</summary>
+    /// <summary>Per-session git worktree (isolation). Null = runs in the project root (non-git folder,
+    /// creation failed, or the worktree was merged away).</summary>
     private string? _worktreePath;
     public string? WorktreePath
     {
         get => _worktreePath;
-        set { if (Set(ref _worktreePath, value)) OnChanged(nameof(WorktreeLabel)); }
+        set { if (Set(ref _worktreePath, value)) { OnChanged(nameof(WorktreeLabel)); OnChanged(nameof(IsSharedTree)); OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); } }
     }
 
     private bool _isolated;
@@ -50,12 +51,20 @@ public sealed class SessionViewModel : ObservableObject
         get => _isolated;
         set { if (Set(ref _isolated, value)) OnChanged(nameof(WorktreeLabel)); }
     }
-    public bool WorktreeAttempted { get; set; }
+
+    private bool _worktreeAttempted;
+    public bool WorktreeAttempted { get => _worktreeAttempted; set { if (Set(ref _worktreeAttempted, value)) { OnChanged(nameof(IsSharedTree)); OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); } } }
+
+    /// <summary>Whether this session is CURRENTLY working in the shared main tree (vs an isolated worktree).
+    /// Reflects the LIVE state, not the creation-time choice: true when opted out, OR when the worktree is
+    /// gone after a run (merged away / creation failed). A not-yet-run worktree session stays isolated
+    /// (pending). This is why a merged session flips from "Worktree" to "main tree" automatically.</summary>
+    public bool IsSharedTree => WorktreeOptOut || (WorktreeAttempted && WorktreePath is null);
 
     /// <summary>True면 worktree 격리를 건너뛰고 프로젝트 루트에서 작업(EnsureWorktreeAsync가 생성 생략).
     /// New Agent 모달의 "워크트리 미사용"을 켜면 설정됨. 영속됨.</summary>
     private bool _worktreeOptOut;
-    public bool WorktreeOptOut { get => _worktreeOptOut; set { if (Set(ref _worktreeOptOut, value)) { OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); OnChanged(nameof(WorktreeLabel)); } } }
+    public bool WorktreeOptOut { get => _worktreeOptOut; set { if (Set(ref _worktreeOptOut, value)) { OnChanged(nameof(IsSharedTree)); OnChanged(nameof(BranchDisplay)); OnChanged(nameof(WorktreePill)); OnChanged(nameof(WorktreeLabel)); } } }
 
     public SessionViewModel(
         string id,
@@ -136,13 +145,13 @@ public sealed class SessionViewModel : ObservableObject
     /// <summary>Branch label for list/header pills. Isolated → the worktree's (live) branch. Shared /
     /// no-worktree → the project repo's LIVE current branch (so you can see which branch it's working on),
     /// marked "(shared)"; falls back to a plain "shared tree" marker before the branch is read / non-git.</summary>
-    public string BranchDisplay => WorktreeOptOut
+    public string BranchDisplay => IsSharedTree
         ? (string.IsNullOrEmpty(_currentBranch) ? AgentManager.App.L("L.BranchShared") : AgentManager.App.L("L.BranchSharedOn", _currentBranch))
         : EffectiveBranch;
 
     /// <summary>Composer worktree pill: "Worktree · &lt;tail&gt;" when isolated; for a shared/no-worktree
     /// session, "main tree · &lt;live branch&gt;" (or plain "main tree (shared)" before the branch is read).</summary>
-    public string WorktreePill => WorktreeOptOut
+    public string WorktreePill => IsSharedTree
         ? (string.IsNullOrEmpty(_currentBranch) ? AgentManager.App.L("L.SharedTreePill") : AgentManager.App.L("L.SharedTreePillOn", _currentBranch))
         : AgentManager.App.L("L.WorktreePrefix") + BranchTail;
 
