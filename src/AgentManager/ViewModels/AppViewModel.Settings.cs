@@ -574,9 +574,11 @@ public sealed partial class AppViewModel
     /// <summary>True when the selected provider is an installed agent (agent:&lt;id&gt;) — gates the agent model picker.</summary>
     public bool IsAgentProviderSelected => _settingsTranslationSelectedId?.StartsWith("agent:", StringComparison.Ordinal) == true;
 
-    /// <summary>Models offered by the selected agent (for the translation-model picker); empty for non-agent providers.</summary>
+    /// <summary>Models offered by the selected agent for the translation-model picker — the SAME list the rest of
+    /// the app uses (<see cref="DropdownModelsFor"/>: built-in + the user's custom-added / preferred versions), so
+    /// it stays consistent with the composer / new-session model menus. Empty for non-agent providers.</summary>
     public string[] TranslationAgentModels =>
-        IsAgentProviderSelected ? Core.Agents.EngineRegistry.Get(_settingsTranslationSelectedId["agent:".Length..]).Models : [];
+        IsAgentProviderSelected ? DropdownModelsFor(_settingsTranslationSelectedId["agent:".Length..]) : [];
 
     private string _settingsTranslationAgentModel = "";
     /// <summary>Chosen translation model for the agent provider (blank = engine default).</summary>
