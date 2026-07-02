@@ -28,8 +28,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
-    <!-- 1.18.0: 플러그인형 번역 provider — Ollama(로컬) · 설치된 에이전트(cc/gx/pi) · 커스텀 OpenAI-호환/클라우드 엔드포인트 · 에이전트 번역 모델 선택 + 보안: 원격 엔드포인트 평문 유출 차단(loopback/HTTPS만) · 스풀/상태 읽기 크기 캡 -->
-    <Version>1.18.0</Version>
+    <!-- 1.18.1: 배포 인프라 — Velopack 설치기(Setup.exe, 런타임 번들) + 인앱 자동 업데이터(GitHub Releases 피드) + 앱 아이콘(exe/창/설치기). 서명 옵션(release.ps1 -Sign). 앱 기능 변화 없는 패키징 패치. -->
+    <Version>1.18.1</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

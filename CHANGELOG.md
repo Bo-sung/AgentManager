@@ -2,6 +2,13 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.18.1
+end-user 배포 인프라 — 설치기 + 자동 업데이트 + 앱 아이콘. (앱 기능 변화 없는 패키징 패치)
+- **Velopack 설치기 (`Setup.exe`)**: 런타임 번들(self-contained) → 타겟에 .NET 설치 불필요. 사용자별 설치(관리자 불필요). `scripts\release.ps1`로 생성(self-contained publish → `vpk pack` → `Releases\` = Setup.exe + 업데이트 피드).
+- **인앱 자동 업데이터**: 설치본은 GitHub Releases 피드를 확인해 full/delta 패키지를 받아 재시작 시 적용(About > Update). 개발 클론은 기존 git-pull 방식 유지.
+- **앱 아이콘**: exe(탐색기/작업표시줄) · 창 제목표시줄 · 설치기/시작메뉴 바로가기에 적용.
+- **코드 서명(선택)**: `release.ps1 -Sign "<signtool 인자>"` — 서명 시 SmartScreen 경고 완화 + 업데이트 무결성(이전에 보류한 업데이트-서명 항목의 해결 경로).
+
 ## 1.18.0
 플러그인형 번역 provider (로컬 모델에 고정 X) + 번역 유출 차단.
 - **번역 provider 플러그인화**: 번역을 로컬 Ollama에만 묶지 않고 설정에서 선택 — **Ollama(로컬)** · **설치된 에이전트(cc/gx/pi 재사용, 추가 설정 0)** · **커스텀 OpenAI-호환 엔드포인트**(base URL + model + 선택적 API 키; LM Studio·llama.cpp·vLLM + OpenAI·Groq·OpenRouter 등). provider-무관 전략(코드/@file 마스킹·스크립트 스킵·프롬프트 프레이밍)은 `TranslatorBase`로 공유. 기본값은 Ollama라 기존 사용자 체감 변화 없음.
