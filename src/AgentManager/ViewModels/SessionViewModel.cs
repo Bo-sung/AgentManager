@@ -110,8 +110,32 @@ public sealed class SessionViewModel : ObservableObject
     {
         "gx" => ["none", "minimal", "low", "medium", "high", "xhigh"],
         "pi" => ["default", "off", "minimal", "low", "medium", "high", "xhigh"],
-        _    => ["default", "low", "medium", "high", "xhigh", "max"], // cc
+        _    => CcEffortOptions(Model), // cc — model-aware (ultracode only on xhigh-capable models)
     };
+
+    /// <summary>cc effort options for <paramref name="model"/>. Effort availability is model-dependent
+    /// (Claude Code model-config): xhigh-capable models (Opus 4.8/4.7 · Sonnet 5 · Fable 5) additionally
+    /// offer <c>ultracode</c> — a Claude Code *setting* (not an --effort value) that sends xhigh to the model
+    /// AND orchestrates dynamic workflows for substantive tasks. It is delivered via
+    /// <c>--settings {"ultracode":true}</c> (see ClaudeAdapter.AddSettings). xhigh stays in the list
+    /// for every cc model (it downgrades to high on Opus 4.6/Sonnet 4.6); only the ultracode entry is gated,
+    /// matching cc's own /effort menu.</summary>
+    public static string[] CcEffortOptions(string? model) =>
+        CcSupportsUltracode(model)
+            ? ["default", "low", "medium", "high", "xhigh", "max", "ultracode"]
+            : ["default", "low", "medium", "high", "xhigh", "max"];
+
+    /// <summary>True if a cc model supports xhigh effort (⇒ ultracode). Aliases (sonnet/opus/fable/best) and
+    /// current full names resolve true; the two known non-xhigh models (Opus 4.6 · Sonnet 4.6) and Haiku
+    /// (no effort support) resolve false; unknown/newer models default to true.</summary>
+    public static bool CcSupportsUltracode(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model)) return true;
+        var m = model.ToLowerInvariant();
+        if (m.Contains("haiku")) return false;
+        if (m.Contains("opus-4-6") || m.Contains("sonnet-4-6")) return false;
+        return true;
+    }
     private string _reasoningEffort = "";
     public string ReasoningEffort { get => _reasoningEffort; set => Set(ref _reasoningEffort, value); }
 
@@ -297,7 +321,7 @@ public sealed class SessionViewModel : ObservableObject
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
 
     private string _model;
-    public string Model { get => _model; set => Set(ref _model, value); }
+    public string Model { get => _model; set { if (Set(ref _model, value)) OnChanged(nameof(EffortOptions)); } } // effort list is model-aware (ultracode)
 
     private bool _translationEnabled = true;
     public bool TranslationEnabled

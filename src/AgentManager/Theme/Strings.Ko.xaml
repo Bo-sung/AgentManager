@@ -279,7 +279,8 @@
     <sys:String x:Key="L.ModelLower">model</sys:String>
     <sys:String x:Key="L.DotModel"> · model</sys:String>
     <sys:String x:Key="L.ReasoningEffort">reasoning effort</sys:String>
-    <sys:String x:Key="L.EffortTip">추론 강도 (claude: default~max 6단계 / codex: low~xhigh 4단계)</sys:String>
+    <sys:String x:Key="L.EffortTip">추론 강도 (claude: 모델별 low~max, xhigh 모델은 ultracode / codex: low~xhigh)</sys:String>
+    <sys:String x:Key="L.EffortUltracodeNote">ultracode = xhigh + 동적 워크플로우(다중 에이전트) · 토큰↑·느림</sys:String>
     <sys:String x:Key="L.StopTip">중지</sys:String>
     <sys:String x:Key="L.SendTip">보내기 (Enter)</sys:String>
     <sys:String x:Key="L.DictateTip">음성 입력 - Windows 받아쓰기(Win+H)를 입력창에 연결</sys:String>

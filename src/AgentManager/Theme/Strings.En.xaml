@@ -279,7 +279,8 @@
     <sys:String x:Key="L.ModelLower">model</sys:String>
     <sys:String x:Key="L.DotModel"> · model</sys:String>
     <sys:String x:Key="L.ReasoningEffort">reasoning effort</sys:String>
-    <sys:String x:Key="L.EffortTip">Reasoning effort (claude: default-max 6 levels / codex: low-xhigh 4 levels)</sys:String>
+    <sys:String x:Key="L.EffortTip">Reasoning effort (claude: per-model low-max, ultracode on xhigh models / codex: low-xhigh)</sys:String>
+    <sys:String x:Key="L.EffortUltracodeNote">ultracode = xhigh + dynamic workflows (multi-agent) · high tokens, slower</sys:String>
     <sys:String x:Key="L.StopTip">Stop</sys:String>
     <sys:String x:Key="L.SendTip">Send (Enter)</sys:String>
     <sys:String x:Key="L.DictateTip">Voice input - connect Windows dictation (Win+H) to the composer</sys:String>

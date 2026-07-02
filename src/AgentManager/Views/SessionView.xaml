@@ -636,6 +636,11 @@
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
                                                                 </ItemsControl>
+                                                                <!-- ultracode는 cc 전용 + 비용 큼(다중 에이전트 워크플로우) → cc 세션에서만 주의 문구 노출 -->
+                                                                <TextBlock Visibility="{Binding IsClaude, Converter={StaticResource BoolVis}}"
+                                                                           Margin="9,4,9,3" MaxWidth="190" TextWrapping="Wrap"
+                                                                           FontSize="10" Foreground="{DynamicResource Txt1}"
+                                                                           Text="{StaticResource L.EffortUltracodeNote}"/>
                                                             </StackPanel>
                                                         </Border>
                                                     </Popup>

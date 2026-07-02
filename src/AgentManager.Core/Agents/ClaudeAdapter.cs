@@ -29,7 +29,7 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
         psi.ArgumentList.Add("--output-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--input-format"); psi.ArgumentList.Add("stream-json");
         psi.ArgumentList.Add("--verbose");
-        AddNativeHookSettings(psi, options);
+        AddSettings(psi, options);
         if (options.Sandbox == SandboxMode.ReadOnly)
         {
             // No approval broker yet: read-only maps to plan mode (no edits/commands).
@@ -39,8 +39,15 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
             psi.ArgumentList.Add("--dangerously-skip-permissions");
         else { psi.ArgumentList.Add("--permission-prompt-tool"); psi.ArgumentList.Add("stdio"); }
         if (!string.IsNullOrWhiteSpace(options.Model)) { psi.ArgumentList.Add("--model"); psi.ArgumentList.Add(options.Model); }
-        if (!string.IsNullOrWhiteSpace(options.ReasoningEffort) && options.ReasoningEffort != "default")
-        { psi.ArgumentList.Add("--effort"); psi.ArgumentList.Add(options.ReasoningEffort); }
+        // cc's --effort flag accepts low|medium|high|xhigh|max only. "default"/"auto" mean "use the model
+        // default" → omit the flag. "ultracode" is NOT an --effort value; it's a Claude Code setting delivered
+        // via --settings (see AddSettings) which itself sends xhigh, so it must not go on --effort either.
+        var effort = options.ReasoningEffort;
+        if (!string.IsNullOrWhiteSpace(effort)
+            && !effort.Equals("default", StringComparison.OrdinalIgnoreCase)
+            && !effort.Equals("auto", StringComparison.OrdinalIgnoreCase)
+            && !effort.Equals("ultracode", StringComparison.OrdinalIgnoreCase))
+        { psi.ArgumentList.Add("--effort"); psi.ArgumentList.Add(effort); }
         if (!string.IsNullOrWhiteSpace(options.ResumeSessionId)) { psi.ArgumentList.Add("--resume"); psi.ArgumentList.Add(options.ResumeSessionId); }
         if (!string.IsNullOrWhiteSpace(options.McpConfigPath) && File.Exists(options.McpConfigPath))
         { psi.ArgumentList.Add("--mcp-config"); psi.ArgumentList.Add(options.McpConfigPath); }
@@ -49,12 +56,22 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
         return psi;
     }
 
-    private static void AddNativeHookSettings(ProcessStartInfo psi, SessionOptions options)
+    /// <summary>Emits a single <c>--settings</c> JSON blob carrying (a) native SubagentStart/Stop hooks when a
+    /// hook command is configured, and (b) <c>"ultracode": true</c> when the effort picker selected ultracode.
+    /// Ultracode is a Claude Code setting (not an --effort value): it sends xhigh to the model and, on paid
+    /// plans with dynamic workflows enabled (v2.1.154+), orchestrates multi-agent workflows for substantive
+    /// tasks. Docs: model-config#adjust-effort-level. Nothing to carry → no --settings flag at all.</summary>
+    private static void AddSettings(ProcessStartInfo psi, SessionOptions options)
     {
-        if (string.IsNullOrWhiteSpace(options.NativeHookCommand)) return;
-        var settings = JsonSerializer.Serialize(new
+        bool ultracode = string.Equals(options.ReasoningEffort, "ultracode", StringComparison.OrdinalIgnoreCase);
+        bool hasHook = !string.IsNullOrWhiteSpace(options.NativeHookCommand);
+        if (!ultracode && !hasHook) return;
+
+        var settings = new Dictionary<string, object>();
+        if (ultracode) settings["ultracode"] = true;
+        if (hasHook)
         {
-            hooks = new Dictionary<string, object[]>
+            settings["hooks"] = new Dictionary<string, object[]>
             {
                 ["SubagentStart"] =
                 [
@@ -72,10 +89,10 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
                         hooks = new object[] { new { type = "command", command = options.NativeHookCommand, timeout = 5 } }
                     }
                 ]
-            }
-        });
+            };
+        }
         psi.ArgumentList.Add("--settings");
-        psi.ArgumentList.Add(settings);
+        psi.ArgumentList.Add(JsonSerializer.Serialize(settings));
     }
 
     public override IReadOnlyList<string> InitialStdinLines(string prompt, SessionOptions options)
