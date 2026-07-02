@@ -2,6 +2,14 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.18.0
+플러그인형 번역 provider (로컬 모델에 고정 X) + 번역 유출 차단.
+- **번역 provider 플러그인화**: 번역을 로컬 Ollama에만 묶지 않고 설정에서 선택 — **Ollama(로컬)** · **설치된 에이전트(cc/gx/pi 재사용, 추가 설정 0)** · **커스텀 OpenAI-호환 엔드포인트**(base URL + model + 선택적 API 키; LM Studio·llama.cpp·vLLM + OpenAI·Groq·OpenRouter 등). provider-무관 전략(코드/@file 마스킹·스크립트 스킵·프롬프트 프레이밍)은 `TranslatorBase`로 공유. 기본값은 Ollama라 기존 사용자 체감 변화 없음.
+- **에이전트 번역 모델 선택**: 에이전트 provider 선택 시 번역용 모델을 지정(비우면 엔진 기본; haiku 등 싸고 빠른 모델 권장). 목록은 컴포저/새 세션과 동일(내장 + 커스텀 추가 + 선호).
+- **커스텀 엔드포인트 API 키는 DPAPI 암호화**(CurrentUser) 저장.
+- **보안 — 번역 유출 차단**: 번역은 프롬프트+코드를 전송하므로, **비-loopback 평문 HTTP 엔드포인트로는 전송 거부**(원문 패스스루, 유출 0) — loopback(모든 스킴) 또는 HTTPS만 허용. 손편집/오타/악성 엔드포인트의 평문 탈취 방지 + 원격 입력 시 UI 경고.
+- **보안 — 스풀/상태 읽기 크기 캡**: `.am/worker-tasks`·`.am/ask`·state.json 등을 16MB 캡으로 읽어 대용량 파일 투척 로컬 메모리 DoS 차단(첨부는 기존 512KB 캡).
+
 ## 1.17.0
 헤드리스 Core 추출(phase a) + CLI 프론트엔드 · cc 대용량 프롬프트 stall 근본수정 · 트랜스크립트 재동기화 · 워크트리 라이브 브랜치 추적 · 모델 별칭 · 모델별 기본 effort · 세션 UX.
 - **헤드리스 Core 추출 (구조 개편 phase a)**: 오케스트레이션을 WPF ViewModel에서 `AgentManager.Core`로 분리 — EngineRegistry · EngineAuthService · SettingsService · ProjectStore(저장 코디네이터) · TurnPlanner(턴 셋업) · UsageService · TranscriptProjector(이벤트→중립 델타 리듀서) · RunRegistry · ApprovalBroker. UI/디스패처 비의존 → 프론트엔드 교체 가능.

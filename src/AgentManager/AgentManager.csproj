@@ -21,8 +21,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- 1.17.0: 헤드리스 Core 추출(phase a) + AgentManager.Cli · cc 대용량 프롬프트 stall 근본수정 · 트랜스크립트 재동기화 · 워크트리 라이브 브랜치 추적 · 모델 별칭/설정추가 · 모델별 기본 effort · 세션 UX(리네임/터미널열기/stderr) -->
-    <Version>1.17.0</Version>
+    <!-- 1.18.0: 플러그인형 번역 provider — Ollama(로컬) · 설치된 에이전트(cc/gx/pi) · 커스텀 OpenAI-호환/클라우드 엔드포인트 · 에이전트 번역 모델 선택 + 보안: 원격 엔드포인트 평문 유출 차단(loopback/HTTPS만) · 스풀/상태 읽기 크기 캡 -->
+    <Version>1.18.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
