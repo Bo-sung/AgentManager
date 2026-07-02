@@ -38,6 +38,7 @@ vpk pack `
   --packVersion $Version `
   --packDir $pub `
   --mainExe AgentManager.exe `
+  --icon "$root\src\AgentManager\Resources\AppIcon.ico" `
   --outputDir $rel `
   @signArgs
 if ($LASTEXITCODE -ne 0) { throw "vpk pack failed" }

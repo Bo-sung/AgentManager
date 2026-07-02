@@ -8,7 +8,7 @@
         xmlns:sys="clr-namespace:System;assembly=System.Runtime"
         xmlns:views="clr-namespace:AgentManager.Views"
         x:Name="Root"
-        Title="AgentManager" Height="760" Width="1380" WindowStyle="None"
+        Title="AgentManager" Icon="Resources/AppIcon.png" Height="760" Width="1380" WindowStyle="None"
         Background="{DynamicResource Bg1}" Foreground="{DynamicResource Txt0}"
         FontFamily="{StaticResource Sans}" FontSize="13">
 

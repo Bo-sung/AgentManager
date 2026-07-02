@@ -9,6 +9,8 @@
     <Resource Include="Resources\Fonts\*.ttf" />
     <!-- Install/setup guide content (rendered by MarkdownViewer → theme-matched). -->
     <Resource Include="Resources\Guide.*.md" />
+    <!-- App icon (window/taskbar at runtime); the exe icon is set via <ApplicationIcon> below. -->
+    <Resource Include="Resources\AppIcon.png" />
     <!-- Antigravity SDK bridge (agy API mode): plain Python helper shipped next to the app so the
          AgySdkAdapter can spawn it. AgySdkAdapter.BridgeScriptPath resolves this copy at runtime. -->
     <None Include="..\..\tools\am_agy_bridge.py" CopyToOutputDirectory="PreserveNewest" Link="am_agy_bridge.py" />
@@ -25,6 +27,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
     <!-- 1.18.0: 플러그인형 번역 provider — Ollama(로컬) · 설치된 에이전트(cc/gx/pi) · 커스텀 OpenAI-호환/클라우드 엔드포인트 · 에이전트 번역 모델 선택 + 보안: 원격 엔드포인트 평문 유출 차단(loopback/HTTPS만) · 스풀/상태 읽기 크기 캡 -->
     <Version>1.18.0</Version>
     <Product>AgentManager</Product>
