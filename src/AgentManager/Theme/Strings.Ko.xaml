@@ -478,6 +478,7 @@
     <sys:String x:Key="L.AboutDescription">Claude Code, Codex, Antigravity를 각자의 격리된 git worktree에서 나란히 실행하고 하나의 클라이언트에서 조율합니다.</sys:String>
     <sys:String x:Key="L.CheckUpdate">업데이트 확인</sys:String>
     <sys:String x:Key="L.UpdateChecking">확인 중…</sys:String>
+    <sys:String x:Key="L.UpdateDownloading">업데이트 다운로드 중…</sys:String>
     <sys:String x:Key="L.UpToDate">최신 버전입니다</sys:String>
     <sys:String x:Key="L.UpdateAvailable">v{0} 사용 가능</sys:String>
     <sys:String x:Key="L.UpdateNow">업데이트</sys:String>

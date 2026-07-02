@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows;
+using Velopack;
 
 namespace AgentManager;
 
@@ -48,6 +49,10 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Velopack: handle install/update/uninstall hooks (the installer/updater relaunches us with special args).
+        // MUST run before any real startup work; on a hook it does its job and exits, so normal launch continues below.
+        VelopackApp.Build().Run();
+
         SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
         // 전역 예외 가드 — 처리되지 않은 UI/AppDomain 예외(=크래시)는 오류 로그 팝업을 띄우고 종료한다.

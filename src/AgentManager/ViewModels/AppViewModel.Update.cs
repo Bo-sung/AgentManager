@@ -6,12 +6,20 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using AgentManager.Core;
+using Velopack;
+using Velopack.Sources;
 
 namespace AgentManager.ViewModels;
 
 public sealed partial class AppViewModel
 {
     readonly UpdateService _updater = new();
+
+    // Velopack updater: functional for INSTALLED builds (checks the GitHub Releases feed, downloads a full/delta
+    // package, applies on restart). No-op in a dev checkout (IsInstalled == false → the git-pull path is used).
+    UpdateManager? _vpk;
+    UpdateManager Vpk => _vpk ??= new UpdateManager(new GithubSource($"https://github.com/{UpdateService.Owner}/{UpdateService.Repo}", null, false));
+    Velopack.UpdateInfo? _vpkPending; // cached from the last CheckForUpdatesAsync
 
     bool _updateBusy;
     string _updateStatusText = "";
@@ -33,8 +41,8 @@ public sealed partial class AppViewModel
 
     public bool CanCheckUpdate => !UpdateBusy;
 
-    /// <summary>Self-update only works when running from the local git checkout (so it can pull + rebuild).</summary>
-    public bool UpdaterAvailable => UpdateService.FindRepoRoot(AppContext.BaseDirectory) != null;
+    /// <summary>Self-update is available for a Velopack-INSTALLED build (feed download) or a dev git checkout (pull+rebuild).</summary>
+    public bool UpdaterAvailable => Vpk.IsInstalled || UpdateService.FindRepoRoot(AppContext.BaseDirectory) != null;
 
     public bool CanApplyUpdate => IsUpdateAvailable && !UpdateBusy && UpdaterAvailable;
 
@@ -55,6 +63,23 @@ public sealed partial class AppViewModel
         UpdateStatusText = App.L("L.UpdateChecking");
         try
         {
+            // Installed build → check the Velopack release feed.
+            if (Vpk.IsInstalled)
+            {
+                _vpkPending = await Vpk.CheckForUpdatesAsync();
+                if (_vpkPending is not null)
+                {
+                    IsUpdateAvailable = true;
+                    UpdateStatusText = App.L("L.UpdateAvailable", _vpkPending.TargetFullRelease.Version.ToString());
+                }
+                else
+                {
+                    UpdateStatusText = App.L("L.UpToDate");
+                }
+                return;
+            }
+
+            // Dev checkout → the git tag check.
             var cur = Assembly.GetEntryAssembly()?.GetName().Version
                       ?? Assembly.GetExecutingAssembly().GetName().Version
                       ?? new Version(1, 0, 0);
@@ -92,6 +117,9 @@ public sealed partial class AppViewModel
     /// </summary>
     void ApplyUpdate()
     {
+        // Installed build → download the Velopack package and apply on restart.
+        if (Vpk.IsInstalled) { _ = ApplyVelopackUpdateAsync(); return; }
+
         var root = UpdateService.FindRepoRoot(AppContext.BaseDirectory);
         if (root == null) { UpdateStatusText = App.L("L.UpdateError"); return; }
 
@@ -118,6 +146,24 @@ public sealed partial class AppViewModel
         catch
         {
             UpdateStatusText = App.L("L.UpdateError");
+        }
+    }
+
+    /// <summary>Download the pending Velopack package and apply it, then relaunch (the call exits the process).</summary>
+    async Task ApplyVelopackUpdateAsync()
+    {
+        if (_vpkPending is null || UpdateBusy) return;
+        UpdateBusy = true;
+        UpdateStatusText = App.L("L.UpdateDownloading");
+        try
+        {
+            await Vpk.DownloadUpdatesAsync(_vpkPending);
+            Vpk.ApplyUpdatesAndRestart(_vpkPending); // applies + restarts the app (does not return)
+        }
+        catch
+        {
+            UpdateStatusText = App.L("L.UpdateError");
+            UpdateBusy = false;
         }
     }
 }
