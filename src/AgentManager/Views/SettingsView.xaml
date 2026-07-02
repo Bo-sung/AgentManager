@@ -436,6 +436,16 @@
                                                     <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding DisplayName}"/></DataTemplate></ComboBox.ItemTemplate>
                                                 </ComboBox>
                                                 <TextBlock Text="{StaticResource L.TranslationProviderDesc}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{StaticResource L.CustomProviderWarning}" FontSize="9.5" Foreground="{DynamicResource Warn}" TextWrapping="Wrap" Margin="0,4,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsCustomProviderSelected}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
 
                                                 <!-- Ollama config — visible only when the Ollama provider is selected -->
                                                 <StackPanel Margin="0,12,0,0">

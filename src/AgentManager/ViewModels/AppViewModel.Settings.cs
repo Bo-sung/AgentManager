@@ -568,11 +568,14 @@ public sealed partial class AppViewModel
     public string SettingsTranslationSelectedId
     {
         get => _settingsTranslationSelectedId;
-        set { if (Set(ref _settingsTranslationSelectedId, value)) { OnChanged(nameof(IsAgentProviderSelected)); OnChanged(nameof(TranslationAgentModels)); } }
+        set { if (Set(ref _settingsTranslationSelectedId, value)) { OnChanged(nameof(IsAgentProviderSelected)); OnChanged(nameof(IsCustomProviderSelected)); OnChanged(nameof(TranslationAgentModels)); } }
     }
 
     /// <summary>True when the selected provider is an installed agent (agent:&lt;id&gt;) — gates the agent model picker.</summary>
     public bool IsAgentProviderSelected => _settingsTranslationSelectedId?.StartsWith("agent:", StringComparison.Ordinal) == true;
+
+    /// <summary>True when the selected provider is a custom (non-local) endpoint — shows the egress warning.</summary>
+    public bool IsCustomProviderSelected => _settingsTranslationSelectedId?.StartsWith("custom:", StringComparison.Ordinal) == true;
 
     /// <summary>Models offered by the selected agent for the translation-model picker — the SAME list the rest of
     /// the app uses (<see cref="DropdownModelsFor"/>: built-in + the user's custom-added / preferred versions), so
