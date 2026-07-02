@@ -75,6 +75,7 @@ public sealed class HookSpoolNativeWorkObserver(string engineId, string spoolDir
         try
         {
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            if (stream.Length > JsonFile.MaxReadBytes) return; // size-capped (SEC: spool DoS guard)
             using var reader = new StreamReader(stream);
             json = reader.ReadToEnd();
         }

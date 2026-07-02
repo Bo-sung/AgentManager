@@ -75,7 +75,7 @@ public static class TaskSpool
     {
         try
         {
-            var json = File.ReadAllText(path).Trim();
+            var json = (JsonFile.ReadCapped(path) ?? "").Trim(); // size-capped read (SEC: spool DoS guard)
             if (json.Length == 0) return [];
             var raw = json[0] == '['
                 ? JsonSerializer.Deserialize<List<SpoolTask>>(json) ?? []

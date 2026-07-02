@@ -56,7 +56,8 @@ public partial class AppViewModel
             List<ChoiceItem> items;
             try
             {
-                using var doc = JsonDocument.Parse(File.ReadAllText(path));
+                if (Core.JsonFile.ReadCapped(path) is not { } text) return; // missing/oversized (SEC: spool DoS guard)
+                using var doc = JsonDocument.Parse(text);
                 items = ParseChoiceItems(doc.RootElement);
             }
             catch { return; } // partial/invalid write — leave file, a later event retries

@@ -12,6 +12,24 @@ public static class JsonFile
 {
     public static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
 
+    /// <summary>Upper bound on the bytes read for a config/spool JSON. Legit state/settings/task/ask files are
+    /// KB-scale; a cap guards against a hostile or accidental oversized file forcing a huge string/parse
+    /// allocation (local memory DoS). 16 MB is far above any real case. (SEC: spool/state read cap)</summary>
+    public const long MaxReadBytes = 16 * 1024 * 1024;
+
+    /// <summary>Read a file's text only when it exists and is within <paramref name="maxBytes"/>; otherwise null
+    /// (missing, too large, or unreadable). Use for any file whose size isn't fully under our control.</summary>
+    public static string? ReadCapped(string path, long maxBytes = MaxReadBytes)
+    {
+        try
+        {
+            var fi = new FileInfo(path);
+            if (!fi.Exists || fi.Length > maxBytes) return null;
+            return File.ReadAllText(path);
+        }
+        catch { return null; }
+    }
+
     /// <summary>temp 파일에 쓴 뒤 Move(overwrite)로 교체 — 쓰기 중 중단돼도 원본이 깨지지 않는다.
     /// 일시적 파일 잠금(백신/백업 도구/다른 인스턴스)에 대비해 IO 실패 시 짧게 백오프하며 재시도하고,
     /// 모두 실패하면 마지막 예외를 다시 던진다(호출부가 기록/처리). 직렬화는 루프 밖에서 한 번만 한다
@@ -44,8 +62,8 @@ public static class JsonFile
     {
         try
         {
-            if (File.Exists(path))
-                return JsonSerializer.Deserialize<T>(File.ReadAllText(path), options ?? Indented) ?? fallback();
+            if (ReadCapped(path) is { } text)
+                return JsonSerializer.Deserialize<T>(text, options ?? Indented) ?? fallback();
         }
         catch { /* 손상/파싱 실패 → fallback */ }
         return fallback();
