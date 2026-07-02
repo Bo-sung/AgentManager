@@ -1434,6 +1434,18 @@ static void AssertSandboxAndModelArgs()
     var cd = new ClaudeAdapter().BuildStartInfo("claude",
         new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, ReasoningEffort = "default" }, "p").ArgumentList.ToArray();
     Assert(!cd.Contains("--effort"), "Claude default effort omitted");
+    // ultracode is a Claude Code SETTING (not an --effort value) → delivered via --settings {"ultracode":true}
+    var cu = new ClaudeAdapter().BuildStartInfo("claude",
+        new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, ReasoningEffort = "ultracode" }, "p").ArgumentList.ToArray();
+    Assert(!cu.Contains("--effort"), "Claude ultracode: no --effort");
+    var cuSettings = cu.SkipWhile(a => a != "--settings").Skip(1).FirstOrDefault() ?? "";
+    Assert(cuSettings.Contains("\"ultracode\":true"), "Claude ultracode → --settings {\"ultracode\":true}");
+    // auto = reset-to-model-default → omit the flag (the --effort flag rejects "auto")
+    var ca = new ClaudeAdapter().BuildStartInfo("claude",
+        new SessionOptions { WorkingDirectory = cwd, BypassPermissions = true, ReasoningEffort = "auto" }, "p").ArgumentList.ToArray();
+    Assert(!ca.Contains("--effort"), "Claude auto effort omitted");
+    // Fable 5 model forwards as a plain --model alias
+    Assert(ClaudeArgs(SandboxMode.DangerFullAccess, "fable").Contains("fable"), "Claude --model fable");
 
     // MCP passthrough: existing file → --mcp-config; missing file → omitted
     var mcpFile = Path.GetTempFileName();
