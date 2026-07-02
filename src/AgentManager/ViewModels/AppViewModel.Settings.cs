@@ -589,7 +589,11 @@ public sealed partial class AppViewModel
 
     private string _newCustomName = "", _newCustomEndpoint = "", _newCustomModel = "", _newCustomKey = "";
     public string NewCustomName { get => _newCustomName; set => Set(ref _newCustomName, value); }
-    public string NewCustomEndpoint { get => _newCustomEndpoint; set => Set(ref _newCustomEndpoint, value); }
+    public string NewCustomEndpoint { get => _newCustomEndpoint; set { if (Set(ref _newCustomEndpoint, value)) OnChanged(nameof(IsNewCustomEndpointRemote)); } }
+
+    /// <summary>True when the entered endpoint is non-loopback (prompts would leave this machine) — shows a warning.
+    /// The Core egress guard additionally REFUSES to send to a non-loopback plaintext-HTTP endpoint.</summary>
+    public bool IsNewCustomEndpointRemote => Core.Translation.TranslationEndpointPolicy.IsRemote(_newCustomEndpoint);
     public string NewCustomModel { get => _newCustomModel; set => Set(ref _newCustomModel, value); }
     public string NewCustomKey { get => _newCustomKey; set => Set(ref _newCustomKey, value); }
 

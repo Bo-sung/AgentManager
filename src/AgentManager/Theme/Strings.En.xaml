@@ -549,4 +549,5 @@
     <sys:String x:Key="L.CustomKeyHint">API key (optional; blank for local)</sys:String>
     <sys:String x:Key="L.RemoveCustom">Remove</sys:String>
     <sys:String x:Key="L.AgentTranslationModel">Translation model (blank = engine default; a cheap/fast model is recommended)</sys:String>
+    <sys:String x:Key="L.RemoteEndpointWarning">⚠ Remote endpoint — your prompts and code are sent off this machine. Plaintext HTTP to a remote host is refused; use HTTPS.</sys:String>
 </ResourceDictionary>

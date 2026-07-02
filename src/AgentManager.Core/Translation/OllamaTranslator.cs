@@ -65,6 +65,9 @@ public sealed class OllamaTranslator(OllamaOptions options, HttpClient? http = n
 
     protected override async Task<string?> GenerateAsync(string prompt, CancellationToken ct)
     {
+        // Egress guard: never POST prompt/code to a non-loopback plaintext-HTTP endpoint (SEC: translation egress).
+        if (!TranslationEndpointPolicy.AllowsSend(_opt.Endpoint)) return null;
+
         // 유휴 후 첫 호출은 모델 콜드로드(수십 초)로 타임아웃이 나기 쉽다 — 한 번 더, 더 길게 재시도.
         for (var attempt = 0; attempt < 2; attempt++)
         {

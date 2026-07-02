@@ -83,6 +83,8 @@ public sealed class OpenAiCompatTranslator(OpenAiCompatOptions options, HttpClie
 
     protected override async Task<string?> GenerateAsync(string prompt, CancellationToken ct)
     {
+        // Egress guard: never POST prompt/code to a non-loopback plaintext-HTTP endpoint (SEC: translation egress).
+        if (!TranslationEndpointPolicy.AllowsSend(_opt.Endpoint)) return null;
         try
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);

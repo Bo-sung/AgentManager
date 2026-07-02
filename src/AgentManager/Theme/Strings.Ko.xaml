@@ -549,4 +549,5 @@
     <sys:String x:Key="L.CustomKeyHint">API 키 (선택; 로컬은 비움)</sys:String>
     <sys:String x:Key="L.RemoveCustom">삭제</sys:String>
     <sys:String x:Key="L.AgentTranslationModel">번역 모델 (비우면 엔진 기본; 싸고 빠른 모델 권장)</sys:String>
+    <sys:String x:Key="L.RemoteEndpointWarning">⚠ 원격 엔드포인트 — 프롬프트와 코드가 이 PC 밖으로 전송됩니다. 원격 평문 HTTP는 거부되며 HTTPS를 사용하세요.</sys:String>
 </ResourceDictionary>

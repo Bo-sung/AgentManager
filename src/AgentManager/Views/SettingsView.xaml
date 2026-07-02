@@ -520,7 +520,17 @@
                                                         <TextBlock Text="{StaticResource L.CustomNameHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}"/>
                                                         <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewCustomName, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
                                                         <TextBlock Text="{StaticResource L.CustomEndpointHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}"/>
-                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewCustomEndpoint, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+                                                        <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewCustomEndpoint, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,4"/>
+                                                        <TextBlock Text="{StaticResource L.RemoteEndpointWarning}" FontSize="9.5" Foreground="{DynamicResource Warn}" TextWrapping="Wrap" Margin="0,0,0,6">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsNewCustomEndpointRemote}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
                                                         <TextBlock Text="{StaticResource L.CustomModelHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}"/>
                                                         <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewCustomModel, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
                                                         <TextBlock Text="{StaticResource L.CustomKeyHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}"/>
