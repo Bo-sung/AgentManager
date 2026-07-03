@@ -2,6 +2,15 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.19.0
+Claude Code 네이티브 역량 확장 — Fable 모델 · ultracode 워크플로우.
+- **Fable/opusplan 모델**: cc 모델 피커에 `fable`(Claude Fable 5, cc 최강 모델) · `best` · `opusplan`(Plan=opus / 실행=sonnet 하이브리드) 별칭 추가. 별칭이라 최신 버전 자동 추적.
+- **ultracode effort**: effort 피커에 `ultracode` 추가 — xhigh 지원 모델(Opus·Sonnet·Fable)에서만 노출. cc의 **동적 워크플로우**(다중 서브에이전트 자동 조율)를 구동한다. `--effort` 값이 아니라 `--settings {"ultracode":true}`로 전달되며, 비용 주의 문구를 함께 표시.
+- **워크플로우 = 단일 턴 완료**: ultracode 워크플로우가 스트림상 "런치 턴 + 리포트 턴" 2개로 도착하던 것을 **1턴으로 접어** 최종 답만 완료로 표시(조기완료·중복 메시지 제거). 런치가 에러면 즉시 실패로 마감해 무한 대기 방지.
+- **워크플로우 서브에이전트 관측**: 워크플로우가 생성한 서브에이전트가 **네이티브 작업자** 탭에 실시간 표시(Hook 관측, `workflow-subagent`).
+- **번역 유지**: 위 전부 헤드리스 stream-json 경로라 KO↔EN 번역 레이어가 그대로 적용된다.
+- (내부) `am` CLI에 effort 인자 추가 · 솔루션에 CLI 포함 · 3중 QA(cc 심층 + 전체 앱 헤드리스 + computer-use 비주얼) 통과.
+
 ## 1.18.1
 end-user 배포 인프라 — 설치기 + 자동 업데이트 + 앱 아이콘. (앱 기능 변화 없는 패키징 패치)
 - **Velopack 설치기 (`Setup.exe`)**: 런타임 번들(self-contained) → 타겟에 .NET 설치 불필요. 사용자별 설치(관리자 불필요). `scripts\release.ps1`로 생성(self-contained publish → `vpk pack` → `Releases\` = Setup.exe + 업데이트 피드).

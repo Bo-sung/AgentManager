@@ -28,8 +28,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
-    <!-- 1.18.1: 배포 인프라 — Velopack 설치기(Setup.exe, 런타임 번들) + 인앱 자동 업데이터(GitHub Releases 피드) + 앱 아이콘(exe/창/설치기). 서명 옵션(release.ps1 -Sign). 앱 기능 변화 없는 패키징 패치. -->
-    <Version>1.18.1</Version>
+    <!-- 1.19.0: cc 네이티브 역량 — Fable/opusplan 모델 별칭 + ultracode effort(xhigh + 동적 워크플로우; 2턴 스트림을 1턴으로 접음; 워크플로우 서브에이전트 네이티브 관측). am CLI effort 인자. -->
+    <Version>1.19.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

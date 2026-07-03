@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.18.1
+`WPF · .NET 10 · Windows` · v1.19.0
 
 ---
 
@@ -16,12 +16,14 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 
 | ID | 이름 | CLI | 구동 방식 | 모델(예) |
 |----|------|-----|-----------|----------|
-| `cc` | **Claude Code** | `claude` | stream-json (단발 + `--resume`) | claude-sonnet-4-6 · claude-opus-4-8 · claude-haiku-4-5 · sonnet[1m] |
+| `cc` | **Claude Code** | `claude` | stream-json (단발 + `--resume`) | opus · sonnet · haiku · **fable** · opusplan · sonnet[1m] · opus[1m] |
 | `gx` | **Codex** | `codex` | `exec --json` / 승인 시 app-server | gpt-5.5 · gpt-5.4 · gpt-5.4-mini |
 | `agy` | **Antigravity** (badge `AG`) | `agy` | **구독**=TTY 전용 ConPTY(텍스트) · **API**=Antigravity SDK(Python 브리지, 구조화) — 설정에서 모드 전환 | default · gemini-3.5-flash · gemini-3.1-pro · claude-* · gpt-oss-120b |
 | `pi` | **Pi** (pi.dev) | `pi` (node) | `--mode rpc` (JSONL, thin-proxy) | `pi --list-models`로 동적 조회 (멀티 provider: Anthropic·OpenAI·Google·zai 등) |
 
 > Google 계열은 `agy` 엔진으로 일원화되었습니다(구형 standalone Gemini CLI 어댑터는 제거). **Pi**는 여러 provider를 하나로 묶는 멀티 provider 에이전트 — provider 추가·인증은 pi가 자체 관리(`~/.pi`)하고 앱은 호출·표시만 합니다. 각 엔진은 사이드바·New Agent에서 식별색으로 구분됩니다.
+
+> **추론 강도(effort)** — 컴포저/New Agent에서 엔진별 effort 선택: cc `low~max` + **`ultracode`**(xhigh 지원 모델 한정 — Opus·Sonnet·Fable). ultracode는 `--effort` 값이 아니라 `--settings {"ultracode":true}`로 전달되어 **동적 워크플로우**(다중 서브에이전트 조율)를 구동하며, 스트림상 2턴(런치→리포트)을 **1턴으로 접어** 최종 답만 완료로 표시하고 워크플로우 서브에이전트는 **네이티브 작업자**에 관측됩니다. gx `none~xhigh` · pi `off~xhigh` · agy는 모델 label에 내장.
 
 ---
 
