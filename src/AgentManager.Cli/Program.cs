@@ -50,7 +50,7 @@ static async Task<int> Run(string[] args)
         Images: Array.Empty<string>(),
         AttachedDocsText: "",
         AdditionalDirectories: Array.Empty<string>(),
-        ReasoningEffort: null,
+        ReasoningEffort: opts.Effort,
         ApiEnv: new Dictionary<string, string>(),
         TaskSpoolDir: Path.Combine(cwd, ".am", "worker-tasks", sessionId),
         AskSpoolDir: Path.Combine(cwd, ".am", "ask", sessionId),
@@ -133,7 +133,7 @@ static void Usage()
 }
 
 /// <summary>Parsed CLI invocation.</summary>
-sealed record CliOptions(string Engine, string? Cwd, string? Model, bool RequireApproval, string Prompt)
+sealed record CliOptions(string Engine, string? Cwd, string? Model, string? Effort, bool RequireApproval, string Prompt)
 {
     static readonly string[] Engines = ["cc", "gx", "agy", "pi"];
 
@@ -143,7 +143,7 @@ sealed record CliOptions(string Engine, string? Cwd, string? Model, bool Require
         var engine = args[0];
         if (!Engines.Contains(engine)) return null;
 
-        string? cwd = null, model = null;
+        string? cwd = null, model = null, effort = null;
         var requireApproval = false;
         var rest = new List<string>();
         for (var i = 1; i < args.Length; i++)
@@ -152,6 +152,7 @@ sealed record CliOptions(string Engine, string? Cwd, string? Model, bool Require
             {
                 case "--cwd" when i + 1 < args.Length: cwd = args[++i]; break;
                 case "--model" when i + 1 < args.Length: model = args[++i]; break;
+                case "--effort" when i + 1 < args.Length: effort = args[++i]; break;
                 case "--approve": requireApproval = true; break;
                 case "-": rest.Add(Console.In.ReadToEnd()); break;
                 default: rest.Add(args[i]); break;
@@ -159,7 +160,7 @@ sealed record CliOptions(string Engine, string? Cwd, string? Model, bool Require
         }
 
         var prompt = string.Join(' ', rest).Trim();
-        return string.IsNullOrWhiteSpace(prompt) ? null : new CliOptions(engine, cwd, model, requireApproval, prompt);
+        return string.IsNullOrWhiteSpace(prompt) ? null : new CliOptions(engine, cwd, model, effort, requireApproval, prompt);
     }
 }
 

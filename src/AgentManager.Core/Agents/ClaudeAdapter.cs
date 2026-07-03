@@ -23,6 +23,14 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
     /// state (a fresh adapter is created per turn).</summary>
     private string? _pendingUserMessage;
 
+    // ultracode dynamic workflows run as a background task PLUS a follow-up "report" turn: cc streams an
+    // intermediate result ("Workflow launched — I'll report when it completes"), then a SECOND system/init
+    // and a real answer turn. Without special handling the adapter would emit TWO TurnCompleted (finalizing
+    // the turn on the "launched" message) and a duplicate SessionStarted. These flags keep an ultracode turn
+    // single + open until the workflow's report turn actually completes. Per-turn state (fresh adapter/turn).
+    private bool _sawInit;
+    private bool _workflowActive;
+
     public override ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
     {
         var psi = NewStdioStartInfo(executablePath, options.WorkingDirectory);
@@ -167,13 +175,30 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
                 foreach (var ev in FlushPendingUser()) yield return ev;
                 break;
 
-            case "system" when Str(root, "subtype") == "init":
-                yield return new SessionStarted(
-                    Str(root, "session_id") ?? "",
-                    Str(root, "model"),
-                    root.TryGetProperty("tools", out var t) && t.ValueKind == JsonValueKind.Array ? t.GetArrayLength() : 0,
-                    Str(root, "cwd"));
-                foreach (var ev in FlushPendingUser()) yield return ev; // fallback if no control_response arrived first
+            case "system":
+                var subtype = Str(root, "subtype");
+                if (subtype == "init")
+                {
+                    // A dynamic workflow's report turn re-emits system/init; surface SessionStarted only once
+                    // so the UI doesn't reset the session mid-turn.
+                    if (!_sawInit)
+                    {
+                        _sawInit = true;
+                        yield return new SessionStarted(
+                            Str(root, "session_id") ?? "",
+                            Str(root, "model"),
+                            root.TryGetProperty("tools", out var t) && t.ValueKind == JsonValueKind.Array ? t.GetArrayLength() : 0,
+                            Str(root, "cwd"));
+                    }
+                    foreach (var ev in FlushPendingUser()) yield return ev; // fallback if no control_response arrived first
+                }
+                else
+                {
+                    // task_started marks a dynamic workflow (ultracode) launch → the imminent `result` is just
+                    // "launched", not the answer. Flag it so we don't finalize the turn early.
+                    if (subtype == "task_started") _workflowActive = true;
+                    yield return new RawUnknown(type ?? "system", line);
+                }
                 break;
 
             case "rate_limit_event":
@@ -235,6 +260,14 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
                 break;
 
             case "result":
+                // ultracode: the workflow-launch turn emits an intermediate result ("launched, will report").
+                // Suppress its TurnCompleted so AgentSession keeps the stream open for the workflow's report
+                // turn (the real answer); the NEXT result finalizes. Non-workflow turns are unaffected.
+                if (_workflowActive)
+                {
+                    _workflowActive = false;
+                    break;
+                }
                 // result.usage is the authoritative turn total (per-message usage undercounts output).
                 TokenUsage? turnUsage = null;
                 if (root.TryGetProperty("usage", out var ru) && ru.ValueKind == JsonValueKind.Object)

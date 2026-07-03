@@ -1188,6 +1188,7 @@ Run("Codex exec --json", new CodexAdapter(), codexLines);
 Run("Pi RPC", new PiAdapter(), piLines);
 AssertResumeArgs();
 AssertSandboxAndModelArgs();
+AssertUltracodeWorkflowLifecycle();
 AssertPermissionResponse();
 AssertAppServerAdapter();
 AssertAgySdkAdapter();
@@ -1397,6 +1398,34 @@ static void AssertPermissionResponse()
     Assert(((IAgentAdapter)new CodexAdapter()).BuildPermissionResponse(req, new PermissionDecision(true)) is null,
         "Codex has no approval protocol (null)");
     Console.WriteLine("permission response asserts OK");
+}
+
+// ultracode runs as TWO stream-json turns in one invocation: a launch turn (system/task_started +
+// intermediate "workflow launched" result) then a report turn (a SECOND system/init + the real answer +
+// final result). The adapter must collapse this into ONE turn — exactly one SessionStarted and one
+// TurnCompleted — or the GUI finalizes on the "launched" non-answer and shows a duplicate completion.
+static void AssertUltracodeWorkflowLifecycle()
+{
+    string[] lines =
+    [
+        """{"type":"system","subtype":"init","session_id":"wf-1","model":"claude-opus-4-8","tools":[1],"cwd":"C:\\x"}""",
+        """{"type":"system","subtype":"task_started"}""",
+        """{"type":"assistant","message":{"content":[{"type":"text","text":"Workflow launched; will report when done."}]}}""",
+        """{"type":"result","subtype":"success","is_error":false,"result":"Workflow launched; will report when done.","num_turns":2}""",
+        """{"type":"system","subtype":"init","session_id":"wf-1","model":"claude-opus-4-8","tools":[1],"cwd":"C:\\x"}""",
+        """{"type":"assistant","message":{"content":[{"type":"text","text":"Done. alpha beta"}]}}""",
+        """{"type":"result","subtype":"success","is_error":false,"result":"Done. alpha beta","total_cost_usd":0.3,"num_turns":1}""",
+    ];
+    var adapter = new ClaudeAdapter();
+    var events = new List<NormalizedEvent>();
+    foreach (var line in lines) events.AddRange(adapter.ParseLine(line));
+    var starts = events.Count(e => e is SessionStarted);
+    var dones = events.OfType<TurnCompleted>().ToList();
+    var texts = events.OfType<AssistantText>().Select(a => a.Text).ToList();
+    Assert(starts == 1, $"ultracode: single SessionStarted (got {starts})");
+    Assert(dones.Count == 1 && !dones[0].IsError, $"ultracode: single non-error TurnCompleted (got {dones.Count})");
+    Assert(texts.Count == 2 && texts.Any(t => t.Contains("Done")), "ultracode: both launch + final answer surfaced");
+    Console.WriteLine("ultracode workflow lifecycle asserts OK");
 }
 
 static void AssertSandboxAndModelArgs()
