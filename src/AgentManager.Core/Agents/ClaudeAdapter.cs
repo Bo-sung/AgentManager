@@ -260,14 +260,18 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
                 break;
 
             case "result":
-                // ultracode: the workflow-launch turn emits an intermediate result ("launched, will report").
-                // Suppress its TurnCompleted so AgentSession keeps the stream open for the workflow's report
-                // turn (the real answer); the NEXT result finalizes. Non-workflow turns are unaffected.
-                if (_workflowActive)
+                var resultIsError = root.TryGetProperty("is_error", out var reErr) && reErr.ValueKind == JsonValueKind.True;
+                // ultracode: the workflow-LAUNCH turn emits an intermediate result ("launched, will report").
+                // Suppress its TurnCompleted ONLY when the launch SUCCEEDED, so AgentSession keeps the stream
+                // open for the workflow's report turn (the real answer). If the launch itself ERRORED there is
+                // no report turn coming — fall through and finalize now (as failed) so the turn can't hang.
+                // Non-workflow turns are unaffected.
+                if (_workflowActive && !resultIsError)
                 {
                     _workflowActive = false;
                     break;
                 }
+                _workflowActive = false;
                 // result.usage is the authoritative turn total (per-message usage undercounts output).
                 TokenUsage? turnUsage = null;
                 if (root.TryGetProperty("usage", out var ru) && ru.ValueKind == JsonValueKind.Object)
@@ -276,7 +280,7 @@ public sealed class ClaudeAdapter : StdioJsonAdapter
                         Lng(ru, "cache_read_input_tokens"), Lng(ru, "cache_creation_input_tokens"));
                 yield return new TurnCompleted(
                     Str(root, "result"),
-                    root.TryGetProperty("is_error", out var re) && re.ValueKind == JsonValueKind.True,
+                    resultIsError,
                     root.TryGetProperty("total_cost_usd", out var cost) && cost.ValueKind == JsonValueKind.Number ? cost.GetDouble() : null,
                     root.TryGetProperty("num_turns", out var nt) && nt.ValueKind == JsonValueKind.Number ? nt.GetInt32() : null,
                     turnUsage);

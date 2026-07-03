@@ -1425,6 +1425,19 @@ static void AssertUltracodeWorkflowLifecycle()
     Assert(starts == 1, $"ultracode: single SessionStarted (got {starts})");
     Assert(dones.Count == 1 && !dones[0].IsError, $"ultracode: single non-error TurnCompleted (got {dones.Count})");
     Assert(texts.Count == 2 && texts.Any(t => t.Contains("Done")), "ultracode: both launch + final answer surfaced");
+    // Robustness (QA finding): if the workflow LAUNCH result is an error, no report turn follows — the
+    // adapter must finalize immediately (one error TurnCompleted), NOT suppress it and hang.
+    string[] errLines =
+    [
+        """{"type":"system","subtype":"init","session_id":"wf-e","model":"claude-opus-4-8","tools":[1],"cwd":"C:\\x"}""",
+        """{"type":"system","subtype":"task_started"}""",
+        """{"type":"result","subtype":"error","is_error":true,"result":"workflow failed to launch"}""",
+    ];
+    var errAdapter = new ClaudeAdapter();
+    var errEvents = new List<NormalizedEvent>();
+    foreach (var line in errLines) errEvents.AddRange(errAdapter.ParseLine(line));
+    var errDones = errEvents.OfType<TurnCompleted>().ToList();
+    Assert(errDones.Count == 1 && errDones[0].IsError, $"ultracode: errored launch finalizes as one error turn (got {errDones.Count})");
     Console.WriteLine("ultracode workflow lifecycle asserts OK");
 }
 
