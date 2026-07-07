@@ -147,7 +147,7 @@ public sealed partial class AppViewModel : ObservableObject
         OpenIdeCommand = new RelayCommand(_ => OpenIde(ActiveSession), _ => ActiveSession is not null);
         OpenInTerminalCommand = new RelayCommand(_ => OpenInTerminal(ActiveSession), _ => ActiveSession is not null);
         ResyncTranscriptCommand = new RelayCommand(_ => _ = ResyncTranscriptAsync(ActiveSession),
-            _ => ActiveSession is { AgentId: "cc" or "gx" } s && !string.IsNullOrEmpty(s.EngineSessionId));
+            _ => ActiveSession is { AgentId: "cc" or "gx" or "pi" } s && !string.IsNullOrEmpty(s.EngineSessionId));
         CheckUsageCommand = new RelayCommand(_ => _ = CheckUsageAsync(), _ => !_checkingUsage);
         RefreshScheduledJobsCommand = new RelayCommand(_ => LoadScheduledJobs());
         NewScheduleCommand = new RelayCommand(_ => OpenNewSchedule(), _ => ActiveProject is not null);

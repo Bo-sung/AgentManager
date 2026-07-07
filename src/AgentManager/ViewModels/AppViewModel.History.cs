@@ -189,7 +189,7 @@ public sealed partial class AppViewModel
     }
 
     /// <summary>Re-read this session's engine conversation file (after the user continued it in an external
-    /// terminal via "open in terminal") and rebuild the transcript from it. cc/gx only — those have
+    /// terminal via "open in terminal") and rebuild the transcript from it. cc/gx/pi only — those have
     /// discoverable session files keyed by EngineSessionId. The engine file is authoritative for the full
     /// conversation, so the transcript is replaced.</summary>
     private async Task ResyncTranscriptAsync(SessionViewModel? s)
