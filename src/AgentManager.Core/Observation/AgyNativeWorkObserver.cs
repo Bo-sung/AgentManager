@@ -29,8 +29,8 @@ public sealed class AgyNativeWorkObserver(string? userProfile = null) : INativeW
         _systemGeneratedPath = Path.Combine(_home, ".gemini", "antigravity", "brain", _conversationId, ".system_generated");
         if (!Directory.Exists(_systemGeneratedPath)) return Task.CompletedTask;
 
-        IngestTranscript();
-        WatchIfExists(Path.Combine(_systemGeneratedPath, "logs"), "transcript.jsonl", IngestTranscript);
+        IngestAllTranscripts();
+        WatchIfExists(Path.Combine(_systemGeneratedPath, "logs"), "*.jsonl", IngestAllTranscripts);
         WatchIfExists(Path.Combine(_systemGeneratedPath, "messages"), "*.json", IngestMessages);
         WatchIfExists(Path.Combine(_systemGeneratedPath, "tasks"), "*.log", IngestTaskLog);
         return Task.CompletedTask;
@@ -75,17 +75,20 @@ public sealed class AgyNativeWorkObserver(string? userProfile = null) : INativeW
         _watchers.Add(watcher);
     }
 
-    private void IngestTranscript()
+    private void IngestAllTranscripts()
     {
         if (_systemGeneratedPath is null || _target is null || _conversationId is null) return;
-        var transcript = Path.Combine(_systemGeneratedPath, "logs", "transcript.jsonl");
-        if (!File.Exists(transcript)) return;
-
-        foreach (var line in ReadLinesShared(transcript))
+        var logsDir = Path.Combine(_systemGeneratedPath, "logs");
+        if (!Directory.Exists(logsDir)) return;
+        foreach (var file in Directory.EnumerateFiles(logsDir, "*.jsonl"))
         {
-            if (!line.Contains("SUBAGENT", StringComparison.OrdinalIgnoreCase)
-                && !line.Contains("conversationId", StringComparison.OrdinalIgnoreCase)) continue;
-            TryIngestTranscriptLine(line, File.GetLastWriteTimeUtc(transcript));
+            var lastWrite = File.GetLastWriteTimeUtc(file);
+            foreach (var line in ReadLinesShared(file))
+            {
+                if (!line.Contains("SUBAGENT", StringComparison.OrdinalIgnoreCase)
+                    && !line.Contains("conversationId", StringComparison.OrdinalIgnoreCase)) continue;
+                TryIngestTranscriptLine(line, lastWrite);
+            }
         }
     }
 
