@@ -2,6 +2,11 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.19.1
+트랜스크립트 재동기화·관측 확장 — pi 재동기화 + agy 전체 로그 수집. (기능 패치)
+- **pi 트랜스크립트 재동기화**: "트랜스크립트 재동기화"가 pi(pi.dev) 엔진을 지원(기존 cc/gx 전용 → cc/gx/pi). pi 세션 파일(`~/.pi/agent/sessions/<cwd 인코딩>/*.jsonl`)에서 전체 대화를 복원해 최근 tail을 GUI 트랜스크립트에 채운다. 디렉토리명 인코딩·세션 id·메시지(text/thinking/toolCall) 복원 파서를 `CliSessionDiscovery`에 추가했고, 재동기화 버튼도 pi에 활성화.
+- **agy 트랜스크립트 전체 수집**: Antigravity 관측자가 `.system_generated/logs`의 **모든 `*.jsonl`** 트랜스크립트를 수집(기존 `transcript.jsonl` 단일 파일)한다. 다중 서브에이전트 트랜스크립트까지 놓치지 않으며, 리네임 미적용으로 빌드가 깨지던 호출점도 함께 수정.
+
 ## 1.19.0
 Claude Code 네이티브 역량 확장 — Fable 모델 · ultracode 워크플로우.
 - **Fable/opusplan 모델**: cc 모델 피커에 `fable`(Claude Fable 5, cc 최강 모델) · `best` · `opusplan`(Plan=opus / 실행=sonnet 하이브리드) 별칭 추가. 별칭이라 최신 버전 자동 추적.

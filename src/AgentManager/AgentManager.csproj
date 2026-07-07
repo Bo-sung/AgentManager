@@ -28,8 +28,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
-    <!-- 1.19.0: cc 네이티브 역량 — Fable/opusplan 모델 별칭 + ultracode effort(xhigh + 동적 워크플로우; 2턴 스트림을 1턴으로 접음; 워크플로우 서브에이전트 네이티브 관측). am CLI effort 인자. -->
-    <Version>1.19.0</Version>
+    <!-- 1.19.1: 트랜스크립트 재동기화/관측 확장 — pi(pi.dev) 세션 파일 재동기화(cc/gx/pi) + agy 모든 *.jsonl 트랜스크립트 수집. -->
+    <Version>1.19.1</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
