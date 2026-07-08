@@ -2,6 +2,14 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.19.6
+타이틀바 우상단 호스트 자원 모니터 추가 — CPU/GPU/RAM/이더넷 실시간 표시. (기능 추가)
+- **자원 모니터 스트립**: 타이틀바 우측(상태 카운터 좌측 Col 2)에 CPU·GPU·RAM·이더넷 송수신 속도를 1초 간격으로 표시하는 컴팩트 모노 스트립 추가. 예: `CPU 12% · GPU 5% · RAM 6.2/32G · ↑1.2 ↓0.3`.
+- **측정 소스**: CPU=`Processor(_Total)\% Processor Time`, GPU=`GPU Engine` 성능카운터(첫 물리 GPU 엔진 합산, 0-100 클램프), RAM=`GlobalMemoryStatusEx`(사용/전체), 이더넷=`Network Interface` Bytes Recv/Sent per sec. GPU 카운터가 없으면 `—`로 폴백(예외 X).
+- **헤드리스 Core 서비스**: `AgentManager.Core.Monitoring.ResourceMonitor`로 분리(`UsageService` 패턴) — 백그라운드 1Hz 샘플링, UI는 포맷만. Core에 둬 스모크 하네스가 테스트 가능. Windows 전용(Core의 `ConPtyHost`와 동일한 위치).
+- **스모크 테스트**: `--resource-monitor-check` 추가 — 카운터 오픈 + 스냅샷 형식 검증. 실측 PASS(cpu/gpu/ram/net 전부 정상).
+- **비용**: 1Hz 백그라운드 틱 1회(P/Invoke 1회 + 성능카운터 수 회 읽기)로 1% 미만 CPU·수 KB 상태. `System.Diagnostics.PerformanceCounter`는 net10.0-windows에 내장이라 UI엔 NuGet 불필요, plain net10.0 Core에만 패키지 추가.
+
 ## 1.19.5
 bash 블록이 비어 보이는 문제 해소 — 명령 표시 + 중단 tool 마감. (기능 패치)
 - **bash 명령 표시**: tool 블록 헤더에 실제 shell 명령(`CommandText`)을 서브라인으로 항상 표시(펼치지 않아도 보임). 기존엔 명령은 캡처만 하고 렌더하지 않아, 출력(Body)이 도착 전이거나 없으면 블록에 볼 게 없어 "빈 bash"로 보였다.

@@ -29,7 +29,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
     <!-- 1.19.5: bash tool 블록에 명령 표시 + 결과 못 받은 tool "중단됨" 마감(빈 블록 방지). -->
-    <Version>1.19.5</Version>
+    <Version>1.19.6</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
