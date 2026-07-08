@@ -1,13 +1,17 @@
 # AgentManager release packer (Velopack).
 # Self-contained publish (bundles the .NET runtime — no .NET needed on the target) -> vpk pack ->
 # Releases\AgentManager-win-Setup.exe + the update feed (RELEASES + full/delta .nupkg).
-# Usage:  scripts\release.ps1            # version from the csproj
+# Usage:  scripts\release.ps1            # version from the csproj (pack only)
 #         scripts\release.ps1 1.18.0     # explicit version
 #         scripts\release.ps1 1.18.0 -Sign "/a /f cert.pfx /p pass"   # optional Authenticode signing
+#         scripts\release.ps1 -Upload    # pack, then publish the feed to the GitHub Release (needs $env:GITHUB_TOKEN)
 param(
   [string]$Version = "",
-  [string]$Sign = ""     # vpk --signParams value (signtool args); empty = unsigned
+  [string]$Sign = "",    # vpk --signParams value (signtool args); empty = unsigned
+  [switch]$Upload        # after packing, upload+publish Releases\ to the GitHub Release for tag v$Version
 )
+
+$repoUrl = "https://github.com/Bo-sung/AgentManager"
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
@@ -45,4 +49,22 @@ if ($LASTEXITCODE -ne 0) { throw "vpk pack failed" }
 
 Write-Host "`nDone -> $rel" -ForegroundColor Green
 Get-ChildItem $rel | Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,1)}} | Format-Table
-Write-Host "Ship: upload the whole Releases\ folder to the GitHub Release (Setup.exe + RELEASES + *.nupkg)." -ForegroundColor Yellow
+
+# 3) Optional: publish the feed to the GitHub Release so installed builds actually see the update.
+#    Token comes ONLY from the environment (never a literal) — needs `repo` (classic) or contents:write (fine-grained).
+if ($Upload) {
+  if (-not $env:GITHUB_TOKEN) { throw "Upload requested but `$env:GITHUB_TOKEN is not set. Set it (User scope) and restart, then re-run." }
+  Write-Host "`n[3/3] vpk upload github (tag v$Version, publish)..." -ForegroundColor Cyan
+  vpk upload github `
+    --outputDir $rel `
+    --repoUrl $repoUrl `
+    --tag "v$Version" `
+    --targetCommitish master `
+    --publish true `
+    --merge true `
+    --token $env:GITHUB_TOKEN
+  if ($LASTEXITCODE -ne 0) { throw "vpk upload github failed" }
+  Write-Host "Published -> $repoUrl/releases/tag/v$Version" -ForegroundColor Green
+} else {
+  Write-Host "Ship: re-run with -Upload (or upload Releases\ to the GitHub Release manually: Setup.exe + RELEASES + *.nupkg)." -ForegroundColor Yellow
+}
