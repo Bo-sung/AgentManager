@@ -129,8 +129,11 @@ public sealed class ToolBlock : TranscriptItem
     public string DisplayBody => ShowOriginal && HasOriginal ? _originalBody! : _body;
     public bool IsOpen { get => _isOpen; set => Set(ref _isOpen, value); }
 
-    /// <summary>Shell command text (Bash/shell tools) — used for artifact derivation (test runs).</summary>
+    /// <summary>Shell command text (Bash/shell tools) — used for artifact derivation (test runs) AND shown as the
+    /// block subtitle so a bash block is never blank while it's still running or if its result never arrives.</summary>
     public string? CommandText { get; set; }
+    /// <summary>Whether there's a shell command to show in the header (Bash/shell only).</summary>
+    public bool HasCommand => !string.IsNullOrWhiteSpace(CommandText);
 }
 
 public sealed class ErrorBlock : TranscriptItem

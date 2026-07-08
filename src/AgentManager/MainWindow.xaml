@@ -223,18 +223,24 @@
                         <ToggleButton.Template>
                             <ControlTemplate TargetType="ToggleButton">
                                 <Border Background="Transparent" Padding="11,8">
-                                    <DockPanel>
-                                        <TextBlock DockPanel.Dock="Left" Text="{Binding Kind}" FontFamily="{StaticResource Mono}"
-                                                   FontSize="10" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,9,0"/>
-                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Stat}" FontFamily="{StaticResource Mono}"
-                                                   FontSize="10" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
-                                        <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.Original}"
-                                                      IsChecked="{Binding ShowOriginal, Mode=TwoWay}"
-                                                      Visibility="{Binding HasOriginal, Converter={StaticResource BoolVis}}"
-                                                      Margin="0,0,9,0" ToolTip="{StaticResource L.OriginalOutputTip}"/>
-                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource Mono}" FontSize="11.5"
-                                                   Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                    </DockPanel>
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Left" Text="{Binding Kind}" FontFamily="{StaticResource Mono}"
+                                                       FontSize="10" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Stat}" FontFamily="{StaticResource Mono}"
+                                                       FontSize="10" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center"/>
+                                            <ToggleButton DockPanel.Dock="Right" Style="{StaticResource TogglePillButton}" Content="{StaticResource L.Original}"
+                                                          IsChecked="{Binding ShowOriginal, Mode=TwoWay}"
+                                                          Visibility="{Binding HasOriginal, Converter={StaticResource BoolVis}}"
+                                                          Margin="0,0,9,0" ToolTip="{StaticResource L.OriginalOutputTip}"/>
+                                            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource Mono}" FontSize="11.5"
+                                                       Foreground="{DynamicResource Txt0}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <!-- bash/shell 명령 서브라인: 출력이 아직/영영 없어도 무슨 명령인지 항상 보이게 -->
+                                        <TextBlock Text="{Binding CommandText}" Visibility="{Binding HasCommand, Converter={StaticResource BoolVis}}"
+                                                   FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{DynamicResource Txt2}"
+                                                   TextTrimming="CharacterEllipsis" Margin="22,3,0,0"/>
+                                    </StackPanel>
                                 </Border>
                             </ControlTemplate>
                         </ToggleButton.Template>

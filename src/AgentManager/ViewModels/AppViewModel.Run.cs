@@ -812,6 +812,9 @@ public sealed partial class AppViewModel
                 RefreshTotals();
                 break;
             case TurnFinished d:
+                // 결과를 못 받고 남은 tool 블록(정지/크래시/미도착)을 "중단됨"으로 마감 — 빈 "…" 상태로 방치하지 않는다.
+                foreach (var pendingTool in tools.Values)
+                    if (pendingTool.Stat == "…") pendingTool.Stat = L("L.ToolInterrupted");
                 UpsertSummaryArtifact(s);
                 AttentionRequested?.Invoke(d.IsError ? "error" : "done", s);
                 s.MarkRunEnded(d.IsError ? L("L.Failed") : L("L.Completed"));

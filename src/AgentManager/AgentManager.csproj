@@ -28,8 +28,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
-    <!-- 1.19.4: 컴포저 모델 셀렉터를 전 엔진(cc/gx/agy/pi)에서 설정 피커와 일치(체크 부분집합+custom). -->
-    <Version>1.19.4</Version>
+    <!-- 1.19.5: bash tool 블록에 명령 표시 + 결과 못 받은 tool "중단됨" 마감(빈 블록 방지). -->
+    <Version>1.19.5</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

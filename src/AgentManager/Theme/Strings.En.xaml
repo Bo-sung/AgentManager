@@ -472,6 +472,7 @@
     <sys:String x:Key="L.DeleteDeadSession">Delete this session</sys:String>
     <sys:String x:Key="L.ToolDone">done</sys:String>
     <sys:String x:Key="L.ToolError">error</sys:String>
+    <sys:String x:Key="L.ToolInterrupted">interrupted</sys:String>
     <sys:String x:Key="L.Result">result</sys:String>
     <sys:String x:Key="L.TaskList">Task List</sys:String>
     <sys:String x:Key="L.Summary">Summary</sys:String>
