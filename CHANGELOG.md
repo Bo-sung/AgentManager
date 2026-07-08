@@ -2,6 +2,12 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.19.2
+Ollama 번역 타임아웃을 설정에서 선택 가능. (기능 패치)
+- **번역 타임아웃 선택**: 설정 › 번역·언어 › Ollama에 "번역 타임아웃" 드롭다운 추가(30·60·120·180·300·600초, 기본 60초 = 기존 동작 유지). 선택값이 `OllamaOptions.Timeout`으로 전달되며, 첫 시도 실패 시 재시도는 이 값의 2배까지 늘어난다.
+- **배경**: 큰 모델(예: 12B)은 콜드로드·긴 응답에서 기본 60초를 넘기면 `OllamaTranslator.GenerateAsync`가 null을 반환 → 번역이 **조용히 원문으로 폴백**(에러/로그 없음)되어 "번역이 안 되는" 것처럼 보였다. 타임아웃을 올리면 큰 모델도 정상 번역된다. (실측: gemma 12B는 정상 번역·마스크 토큰 보존·GPU 적재까지 문제 없었고 유일한 원인은 속도였음.)
+- **배선**: 모델/엔드포인트와 동일 경로(SettingsService → TranslatorFactory → OllamaOptions) · settings.json 영속(10~600초 클램프) · ko/en 문구 포함.
+
 ## 1.19.1
 트랜스크립트 재동기화·관측 확장 — pi 재동기화 + agy 전체 로그 수집. (기능 패치)
 - **pi 트랜스크립트 재동기화**: "트랜스크립트 재동기화"가 pi(pi.dev) 엔진을 지원(기존 cc/gx 전용 → cc/gx/pi). pi 세션 파일(`~/.pi/agent/sessions/<cwd 인코딩>/*.jsonl`)에서 전체 대화를 복원해 최근 tail을 GUI 트랜스크립트에 채운다. 디렉토리명 인코딩·세션 id·메시지(text/thinking/toolCall) 복원 파서를 `CliSessionDiscovery`에 추가했고, 재동기화 버튼도 pi에 활성화.

@@ -77,6 +77,8 @@
     <sys:String x:Key="L.SecRuntimes">Runtimes</sys:String>
     <sys:String x:Key="L.SecTranslation">Translation &amp; Language</sys:String>
     <sys:String x:Key="L.TranslationModel">Translation model (Ollama)</sys:String>
+    <sys:String x:Key="L.TranslationTimeout">Translation timeout</sys:String>
+    <sys:String x:Key="L.TranslationTimeoutTip">Large models (e.g. 12B) can exceed the default 60s on cold-load or long responses — translation then silently falls back to the untranslated text. Retries extend up to 2× this value.</sys:String>
     <sys:String x:Key="L.QueryModels">Query installed</sys:String>
     <sys:String x:Key="L.Querying">Querying…</sys:String>
     <sys:String x:Key="L.ModelsFound">{0} installed</sys:String>

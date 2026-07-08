@@ -77,6 +77,8 @@
     <sys:String x:Key="L.SecRuntimes">런타임</sys:String>
     <sys:String x:Key="L.SecTranslation">번역 · 언어</sys:String>
     <sys:String x:Key="L.TranslationModel">번역 모델 (Ollama)</sys:String>
+    <sys:String x:Key="L.TranslationTimeout">번역 타임아웃</sys:String>
+    <sys:String x:Key="L.TranslationTimeoutTip">큰 모델(예: 12B)은 콜드로드나 긴 응답에서 기본 60초를 넘길 수 있고, 그러면 번역이 조용히 원문 그대로 표시됩니다. 재시도는 이 값의 2배까지 늘어납니다.</sys:String>
     <sys:String x:Key="L.QueryModels">설치 모델 조회</sys:String>
     <sys:String x:Key="L.Querying">조회 중…</sys:String>
     <sys:String x:Key="L.ModelsFound">{0}개 설치됨</sys:String>

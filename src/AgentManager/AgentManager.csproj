@@ -28,8 +28,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
-    <!-- 1.19.1: 트랜스크립트 재동기화/관측 확장 — pi(pi.dev) 세션 파일 재동기화(cc/gx/pi) + agy 모든 *.jsonl 트랜스크립트 수집. -->
-    <Version>1.19.1</Version>
+    <!-- 1.19.2: Ollama 번역 타임아웃을 설정에서 선택(30~600초). 큰 모델의 조용한 원문 폴백(타임아웃) 해소. -->
+    <Version>1.19.2</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

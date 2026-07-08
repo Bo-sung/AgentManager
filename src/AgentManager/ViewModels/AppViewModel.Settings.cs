@@ -35,6 +35,11 @@ public sealed partial class AppViewModel
     public string SettingsOllamaEndpoint { get => _settingsOllamaEndpoint; set => Set(ref _settingsOllamaEndpoint, value); }
     private string _settingsOllamaModel = "";
     public string SettingsOllamaModel { get => _settingsOllamaModel; set => Set(ref _settingsOllamaModel, value); }
+    private int _settingsOllamaTimeoutSeconds = 60;
+    /// <summary>Ollama 번역 타임아웃(초) — 편집기 값. 큰 모델이 60초를 넘겨 조용히 원문 폴백되는 문제를 위해 선택 가능.</summary>
+    public int SettingsOllamaTimeoutSeconds { get => _settingsOllamaTimeoutSeconds; set => Set(ref _settingsOllamaTimeoutSeconds, value); }
+    /// <summary>타임아웃 선택지(초) — 설정 ComboBox 바인딩용. 재시도는 선택값의 2배까지 늘어남.</summary>
+    public int[] OllamaTimeoutOptions { get; } = [30, 60, 120, 180, 300, 600];
 
     /// <summary>"설치 모델 조회"로 채워지는 Ollama 모델 목록(드롭다운).</summary>
     public ObservableCollection<string> OllamaModels { get; } = [];
@@ -660,6 +665,7 @@ public sealed partial class AppViewModel
         SettingsPiPath = _piPath;
         SettingsOllamaEndpoint = _ollamaEndpoint;
         SettingsOllamaModel = _ollamaModel;
+        SettingsOllamaTimeoutSeconds = _settings.OllamaTimeoutSeconds;
         LoadCustomProvidersEditor();
         RebuildTranslationProviders();
         SettingsTranslationSelectedId = _settings.TranslationSelectedId;
@@ -743,6 +749,7 @@ public sealed partial class AppViewModel
         RefreshDetectLabels();
         _ollamaEndpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint.Trim();
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();
+        _settings.OllamaTimeoutSeconds = Math.Clamp(SettingsOllamaTimeoutSeconds, 10, 600);
         TranslationEnabled = SettingsDefaultTranslationEnabled;
         _warnNoWorktree = SettingsWarnNoWorktree;
         _approvalPolicy = SettingsApprovalPolicy is "ask" or "safe" ? SettingsApprovalPolicy : "yolo";

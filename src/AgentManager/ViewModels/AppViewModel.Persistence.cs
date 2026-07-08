@@ -30,6 +30,7 @@ public sealed partial class AppViewModel
             if (_preferred.TryGetValue(kv.Key, out var set)) { set.Clear(); foreach (var m in kv.Value) set.Add(m); }
         _ollamaEndpoint = string.IsNullOrWhiteSpace(s.OllamaEndpoint) ? _ollamaEndpoint : s.OllamaEndpoint;
         _ollamaModel = string.IsNullOrWhiteSpace(s.OllamaModel) ? _ollamaModel : s.OllamaModel;
+        _settings.OllamaTimeoutSeconds = s.OllamaTimeoutSeconds is >= 10 and <= 600 ? s.OllamaTimeoutSeconds : 60;
         TranslationEnabled = s.TranslationEnabled;
         MaxConcurrentSessions = s.MaxConcurrentSessions;
         MaxConcurrentWorkers = s.MaxConcurrentWorkers < 1 ? AgentManager.Core.Workers.WorkerDefaults.DefaultMaxConcurrentWorkers : s.MaxConcurrentWorkers;
@@ -78,6 +79,7 @@ public sealed partial class AppViewModel
         PreferredModels = _preferred.Where(kv => kv.Value.Count > 0).ToDictionary(kv => kv.Key, kv => kv.Value.ToArray()),
         OllamaEndpoint = _ollamaEndpoint,
         OllamaModel = _ollamaModel,
+        OllamaTimeoutSeconds = _settings.OllamaTimeoutSeconds,
         TranslationEnabled = TranslationEnabled,
         MaxConcurrentSessions = MaxConcurrentSessions,
         MaxConcurrentWorkers = MaxConcurrentWorkers,

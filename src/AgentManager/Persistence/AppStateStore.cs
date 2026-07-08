@@ -26,6 +26,8 @@ public sealed record AppSettingsDto
     public Dictionary<string, string[]> PreferredModels { get; init; } = new();   // 엔진별 "주로 쓰는 모델" 체크 집합(cc/gx/agy/pi)
     public string OllamaEndpoint { get; init; } = "http://localhost:11434";
     public string OllamaModel { get; init; } = "exaone3.5:7.8b";
+    /// <summary>Ollama 번역 타임아웃(초). 큰 모델은 기본 60초를 넘겨 번역이 조용히 원문으로 폴백되므로 설정에서 선택. 재시도는 2배.</summary>
+    public int OllamaTimeoutSeconds { get; init; } = 60;
     public bool TranslationEnabled { get; init; } = true;
     public int MaxConcurrentSessions { get; init; } = 3;
     /// <summary>워커 전용 동시 실행 cap(메인 cap과 분리). 워커 위임 병렬성.</summary>

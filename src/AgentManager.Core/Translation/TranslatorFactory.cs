@@ -55,7 +55,14 @@ public static class TranslatorFactory
         var id = string.IsNullOrWhiteSpace(providerId) ? s.TranslationSelectedId : providerId!;
 
         if (string.IsNullOrWhiteSpace(id) || id == "ollama")
-            return new OllamaTranslator(new OllamaOptions { Endpoint = s.OllamaEndpoint, Model = s.OllamaModel, SourceLanguage = src, TargetLanguage = tgt });
+            return new OllamaTranslator(new OllamaOptions
+            {
+                Endpoint = s.OllamaEndpoint,
+                Model = s.OllamaModel,
+                Timeout = TimeSpan.FromSeconds(Math.Clamp(s.OllamaTimeoutSeconds, 10, 600)),
+                SourceLanguage = src,
+                TargetLanguage = tgt,
+            });
 
         if (id.StartsWith("agent:", StringComparison.Ordinal))
         {
