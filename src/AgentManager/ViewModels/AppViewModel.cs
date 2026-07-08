@@ -94,6 +94,7 @@ public sealed partial class AppViewModel : ObservableObject
         NewProjectPath = WorkingDirectory;
         _runtimeTimer.Tick += (_, _) => { RefreshRunningSessions(); RefreshQuotaText(); };
         _runtimeTimer.Start();
+        StartResourceMonitor(); // 1 Hz host CPU/GPU/RAM/Ethernet strip in the titlebar (background-sampled).
 
         NewAgentCommand = new RelayCommand(_ => ShowNewAgent = true);
         CancelNewAgentCommand = new RelayCommand(_ => ShowNewAgent = false);
@@ -195,6 +196,7 @@ public sealed partial class AppViewModel : ObservableObject
         _scheduler.JobDue -= Scheduler_JobDue;
         _scheduler.Dispose();
         _runtimeTimer.Stop();
+        _resourceMonitor.Dispose();
     }
 
     /// <summary>IDE 핸드오프: 활성 세션의 worktree(없으면 프로젝트 폴더)를 VS Code로 연다.

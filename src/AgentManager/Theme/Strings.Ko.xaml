@@ -559,4 +559,13 @@
     <sys:String x:Key="L.AgentTranslationModel">번역 모델 (비우면 엔진 기본; 싸고 빠른 모델 권장)</sys:String>
     <sys:String x:Key="L.RemoteEndpointWarning">⚠ 원격 엔드포인트 — 프롬프트와 코드가 이 PC 밖으로 전송됩니다. HTTPS 권장(평문 HTTP는 암호화되지 않음).</sys:String>
     <sys:String x:Key="L.CustomProviderWarning">⚠ 로컬이 아닌 번역기(커스텀 엔드포인트) 사용 — 프롬프트와 코드가 해당 엔드포인트로 전송됩니다. 보안 문제가 발생할 수 있으니 신뢰하는 엔드포인트만 사용하세요.</sys:String>
+
+    <!-- Resource monitor strip (titlebar upper-right): labels + tooltips. Neutral in KO/EN. -->
+    <sys:String x:Key="L.ResCpu">CPU</sys:String>
+    <sys:String x:Key="L.ResGpu">GPU</sys:String>
+    <sys:String x:Key="L.ResMem">RAM</sys:String>
+    <sys:String x:Key="L.ResCpuTip">호스트 CPU 사용량</sys:String>
+    <sys:String x:Key="L.ResGpuTip">첫 번째 물리 GPU 사용량 (성능 카운터)</sys:String>
+    <sys:String x:Key="L.ResMemTip">사용 / 전체 실제 메모리</sys:String>
+    <sys:String x:Key="L.ResNetTip">이더넷/Wi-Fi 송수신 속도 (초당 바이트)</sys:String>
 </ResourceDictionary>
