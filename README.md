@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.19.3
+`WPF · .NET 10 · Windows` · v1.19.4
 
 ---
 

@@ -28,8 +28,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
-    <!-- 1.19.3: 번역 실패 가시화(토스트) + pi 모델 목록 설정과 일치 + 재동기화/토글 자동 번역. -->
-    <Version>1.19.3</Version>
+    <!-- 1.19.4: 컴포저 모델 셀렉터를 전 엔진(cc/gx/agy/pi)에서 설정 피커와 일치(체크 부분집합+custom). -->
+    <Version>1.19.4</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 

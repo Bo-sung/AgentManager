@@ -91,16 +91,18 @@ public sealed class SessionViewModel : ObservableObject
     public string Title { get => _title; set => Set(ref _title, value); }
 
     private readonly string[] _staticModels;
-    /// <summary>App VM installs this so pi sessions read the LIVE <c>pi --list-models</c> catalog (same source as
-    /// the settings / New-Agent picker). pi's static <see cref="EngineDef.Models"/> are only placeholder guesses,
-    /// so without this the composer menu wouldn't match the model actually selected in settings. Non-pi ignore it.</summary>
-    public static Func<string[]>? PiComposerModelsProvider;
-    /// <summary>Models offered in the composer model menu. pi = live catalog (falls back to the static list until
-    /// the catalog loads); other engines = static alias list. <see cref="RaiseAvailableModelsChanged"/> refreshes
-    /// the binding once the pi catalog arrives.</summary>
+    /// <summary>App VM installs this so the composer model menu shows the SAME list as the settings / New-Agent
+    /// picker for EVERY engine — the engine's dynamic catalog (pi) and/or the user's "주로 쓰는 모델" checked subset
+    /// + custom models. Without it the composer used the raw static <see cref="EngineDef.Models"/>, which mismatched
+    /// the picker (pi showed placeholder guesses; cc/gx/agy ignored the checked subset and hid custom models). Takes
+    /// the engine id; falls back to the static alias list if unset/empty.</summary>
+    public static Func<string, string[]>? ComposerModelsProvider;
+    /// <summary>Models offered in the composer model menu — the picker's list for this engine (see
+    /// <see cref="ComposerModelsProvider"/>), else the static alias list. <see cref="RaiseAvailableModelsChanged"/>
+    /// refreshes the binding when that list changes (pi catalog load, or a "주로 쓰는 모델" check toggle).</summary>
     public string[] AvailableModels =>
-        AgentId == "pi" && PiComposerModelsProvider?.Invoke() is { Length: > 0 } dyn ? dyn : _staticModels;
-    /// <summary>App VM calls this on all pi sessions after the catalog (re)loads so open composer menus refresh.</summary>
+        ComposerModelsProvider?.Invoke(AgentId) is { Length: > 0 } dyn ? dyn : _staticModels;
+    /// <summary>App VM calls this on an engine's sessions when its model list changes so open composer menus refresh.</summary>
     internal void RaiseAvailableModelsChanged() => OnChanged(nameof(AvailableModels));
 
     /// <summary>엔진별 컴포저 분기: 코덱스만 추론 강도 선택 노출 + 보라 테두리.</summary>

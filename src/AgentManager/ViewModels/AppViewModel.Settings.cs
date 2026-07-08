@@ -225,9 +225,10 @@ public sealed partial class AppViewModel
             case "cc": Coerce(SettingsModelCc, v => SettingsModelCc = v); OnChanged(nameof(CcModels)); break;
             case "gx": Coerce(SettingsModelGx, v => SettingsModelGx = v); OnChanged(nameof(GxModels)); break;
             case "agy": Coerce(SettingsModelAgy, v => SettingsModelAgy = v); OnChanged(nameof(AgyModels)); break;
-            default: Coerce(SettingsModelPi, v => SettingsModelPi = v); OnChanged(nameof(PiModels)); NotifyPiSessionsModelsChanged(); break;
+            default: Coerce(SettingsModelPi, v => SettingsModelPi = v); OnChanged(nameof(PiModels)); break;
         }
         OnChanged(nameof(NewAgentModels));
+        NotifySessionModelsChanged(id); // 이 엔진 세션들의 컴포저 모델 목록도 즉시 갱신(체크 변경 반영)
     }
 
     /// <summary>드롭다운(피커/설정)에 노출할 엔진 모델 — 체크된 게 있으면 그 부분집합, 없으면 전체.
@@ -278,13 +279,13 @@ public sealed partial class AppViewModel
         OnChanged(nameof(PiModels));
         OnChanged(nameof(PiConnectedProviders));
         OnChanged(nameof(NewAgentModels));
-        NotifyPiSessionsModelsChanged();
+        NotifySessionModelsChanged("pi");
     }
 
-    /// <summary>pi 카탈로그가 (재)로드/필터되면 열려있는 컴포저 모델 메뉴가 새 목록을 반영하도록 pi 세션 바인딩을 갱신.</summary>
-    private void NotifyPiSessionsModelsChanged()
+    /// <summary>엔진의 모델 목록이 (재)로드/필터되면 열려있는 컴포저 모델 메뉴가 새 목록을 반영하도록 그 엔진 세션 바인딩을 갱신.</summary>
+    private void NotifySessionModelsChanged(string engineId)
     {
-        foreach (var s in _allSessions.Where(s => s.AgentId == "pi")) s.RaiseAvailableModelsChanged();
+        foreach (var s in _allSessions.Where(s => s.AgentId == engineId)) s.RaiseAvailableModelsChanged();
     }
 
     /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>

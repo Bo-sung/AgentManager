@@ -76,8 +76,9 @@ public sealed partial class AppViewModel : ObservableObject
     public AppViewModel()
     {
         InitModelChecklists();
-        // pi 세션 컴포저 모델 메뉴가 정적 placeholder가 아니라 설정 피커와 동일한 동적 카탈로그를 읽게 한다.
-        SessionViewModel.PiComposerModelsProvider = () => DropdownModelsFor("pi");
+        // 모든 엔진의 컴포저 모델 메뉴가 설정/New-Agent 피커와 동일한 목록(DropdownModelsFor: 동적 카탈로그 +
+        // "주로 쓰는 모델" 체크 부분집합 + custom)을 쓰게 한다 — 정적 목록과의 불일치 제거.
+        SessionViewModel.ComposerModelsProvider = id => DropdownModelsFor(id);
         NewAgentSelectedEngine = AllEngines[0];
         RestoreState();
         // 복원된 pi 세션이 있으면 실제 카탈로그를 로드해 컴포저 목록을 채운다(설정을 열지 않아도).
