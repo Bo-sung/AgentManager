@@ -156,32 +156,87 @@ public sealed partial class AppViewModel
     private async Task RetranslateAsync(AgentTextBlock block)
     {
         var s = ActiveSession;
-        if (s is null || block.IsRetranslating) return;
-        var source = block.TranslationSource;
-        if (string.IsNullOrWhiteSpace(source)) return;
+        if (s is null || block.IsRetranslating || string.IsNullOrWhiteSpace(block.TranslationSource)) return;
+        var translator = ResolveSessionTranslator(s);
+        if (translator is null) return;
+        if (!await IsTranslatorReadyAsync()) { FlashTranslateToast(L("L.TranslateProviderDown")); return; }
+        var status = await TranslateAgentBlockAsync(block, translator);
+        if (status == Core.Translation.TranslateStatus.Failed) FlashTranslateToast(L("L.TranslateFailed"));
+        else if (status == Core.Translation.TranslateStatus.Translated) SaveState();
+    }
 
-        // Use the session's language pair (workers pin their own) or the global translator — via the selected provider.
-        var translator = s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
+    /// <summary>The session's translator — a worker's pinned language pair, else the global one (selected provider).</summary>
+    private Core.Translation.ITranslator? ResolveSessionTranslator(SessionViewModel s) =>
+        s.TranslateSourceLanguage is { } src && s.TranslateTargetLanguage is { } tgt
             ? BuildTranslator(src, tgt)
             : _translator;
-        if (translator is null) return;
-        if (!await IsTranslatorReadyAsync()) return; // provider down/missing — composer ⚠ already flags it
 
+    /// <summary>Translate one assistant block's engine-language text into the user's language and swap it in,
+    /// keeping the original for the "원문 보기" toggle. Returns the outcome (Translated/Skipped/Failed) so callers
+    /// can persist or surface a failure. Shared by the ↻ button and the bulk resync/import/translate-toggle path.</summary>
+    private async Task<Core.Translation.TranslateStatus> TranslateAgentBlockAsync(AgentTextBlock block, Core.Translation.ITranslator translator)
+    {
+        var source = block.TranslationSource;
+        if (string.IsNullOrWhiteSpace(source) || block.IsRetranslating) return Core.Translation.TranslateStatus.Skipped;
         block.IsRetranslating = true;
         try
         {
-            var translated = await translator.TranslateAsync(source, TranslationDirection.TargetToSource);
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                block.OriginalText = string.Equals(translated, source, StringComparison.Ordinal) ? null : source;
-                block.Text = translated;
-                block.ShowOriginal = false;
-            });
-            SaveState();
+            var outcome = await translator.TranslateWithOutcomeAsync(source, TranslationDirection.TargetToSource);
+            if (outcome.Status == Core.Translation.TranslateStatus.Translated)
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    block.OriginalText = string.Equals(outcome.Text, source, StringComparison.Ordinal) ? null : source;
+                    block.Text = outcome.Text;
+                    block.ShowOriginal = false;
+                });
+            return outcome.Status;
         }
-        catch { /* leave the message unchanged on failure */ }
+        catch { return Core.Translation.TranslateStatus.Failed; } // never block the user — leave the message unchanged
         finally { block.IsRetranslating = false; }
     }
+
+    /// <summary>Background, progressive translation of a transcript's still-untranslated assistant blocks into the
+    /// user's language. Resync / CLI-import build blocks straight from the engine file (raw engine language), and the
+    /// translate toggle previously only affected FUTURE turns — so those transcripts stayed untranslated no matter the
+    /// timeout. Gated on the session's translation toggle + provider readiness; one message at a time so it never
+    /// blocks the UI, and it stops if the session is closed or translation is toggled back off mid-run. Surfaces a
+    /// toast when a message fails (timeout/error) so failure isn't silent; bails on the first failure with no success
+    /// (a dead/too-slow provider) instead of hammering every message.</summary>
+    private async Task TranslatePendingBlocksAsync(SessionViewModel s)
+    {
+        if (s is null || !s.TranslationEnabled) return;
+        var translator = ResolveSessionTranslator(s);
+        if (translator is null) return;
+        if (!await IsTranslatorReadyAsync()) { FlashTranslateToast(L("L.TranslateProviderDown")); return; }
+        var pending = s.Transcript.OfType<AgentTextBlock>().Where(b => !b.HasOriginal && !b.IsRetranslating).ToList();
+        var any = false; var failed = 0;
+        foreach (var block in pending)
+        {
+            if (!_allSessions.Contains(s) || !s.TranslationEnabled) break; // session closed or toggled back off
+            var status = await TranslateAgentBlockAsync(block, translator);
+            if (status == Core.Translation.TranslateStatus.Translated) any = true;
+            else if (status == Core.Translation.TranslateStatus.Failed) { failed++; if (!any) break; } // provider/model bad → stop
+            await Task.Delay(1); // yield between messages
+        }
+        if (any) SaveState();
+        if (failed > 0) FlashTranslateToast(L("L.TranslateFailedCount", failed));
+    }
+
+    // ----- 번역 실패 토스트 (타임아웃/provider 미준비를 무음으로 넘기지 않고 사유를 잠깐 표시) -----
+    private string _translateToastText = "";
+    public string TranslateToastText { get => _translateToastText; private set => Set(ref _translateToastText, value); }
+    private bool _showTranslateToast;
+    public bool ShowTranslateToast { get => _showTranslateToast; private set => Set(ref _showTranslateToast, value); }
+    private System.Windows.Threading.DispatcherTimer? _translateToastTimer;
+    private void FlashTranslateToast(string message)
+    {
+        TranslateToastText = message;
+        ShowTranslateToast = true;
+        _translateToastTimer ??= new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4.5) };
+        _translateToastTimer.Tick -= TranslateToastTick; _translateToastTimer.Tick += TranslateToastTick;
+        _translateToastTimer.Stop(); _translateToastTimer.Start();
+    }
+    private void TranslateToastTick(object? sender, EventArgs e) { _translateToastTimer!.Stop(); ShowTranslateToast = false; }
 
     private async Task SendAsync()
     {
@@ -265,6 +320,8 @@ public sealed partial class AppViewModel
         var translateOn = s.TranslationEnabled && await IsTranslatorReadyAsync();
         var session = new AgentSession(adapter, exe, translator, translateOn);
         session.EventReceived += ev => dispatcher.Invoke(() => Apply(s, ev, tools));
+        // 스트리밍 번역이 타임아웃/에러로 실패하면 무음으로 원문을 흘리지 말고 사유를 토스트로 알린다(토스트가 코얼레싱).
+        session.TranslationFailed += () => dispatcher.BeginInvoke(() => FlashTranslateToast(L("L.TranslateFailed")));
         if (s.RequireApproval)
             session.PermissionHandler = pr => HandlePermissionAsync(s, pr);
 

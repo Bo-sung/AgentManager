@@ -24,18 +24,21 @@ public abstract partial class TranslatorBase(string sourceLanguage, string targe
     protected abstract Task<string?> GenerateAsync(string prompt, CancellationToken ct);
 
     public async Task<string> TranslateAsync(string text, TranslationDirection direction, CancellationToken ct = default)
+        => (await TranslateWithOutcomeAsync(text, direction, ct)).Text;
+
+    public async Task<TranslateOutcome> TranslateWithOutcomeAsync(string text, TranslationDirection direction, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(text)) return text;
+        if (string.IsNullOrWhiteSpace(text)) return new(text, TranslateStatus.Skipped);
 
         // Skip when the script proves the text is already in the wanted language (Latin↔Latin can't be told apart → always translate).
         var script = ScriptFor(SourceLanguage);
         if (script is not null)
         {
             // input→engine: no source-language characters at all → already the target language → skip.
-            if (direction == TranslationDirection.SourceToTarget && !script.IsMatch(text)) return text;
+            if (direction == TranslationDirection.SourceToTarget && !script.IsMatch(text)) return new(text, TranslateStatus.Skipped);
             // engine→user: skip only when the response is MOSTLY the source language (a few Korean names/quotes/paths
             // in an English answer must not block translating the whole message) — decide by letter share, not presence.
-            if (direction == TranslationDirection.TargetToSource && SourceScriptShare(text, script) >= 0.5) return text;
+            if (direction == TranslationDirection.TargetToSource && SourceScriptShare(text, script) >= 0.5) return new(text, TranslateStatus.Skipped);
         }
 
         var (masked, tokens) = Mask(text);
@@ -44,8 +47,9 @@ public abstract partial class TranslatorBase(string sourceLanguage, string targe
         string? outText;
         try { outText = await GenerateAsync(prompt, ct); }
         catch { outText = null; } // never block the user — fall back to the original
-        if (string.IsNullOrWhiteSpace(outText)) return text;
-        return Restore(outText!.Trim(), tokens);
+        // null/empty completion = timeout or provider error (GenerateAsync owns retry) → FAILED, not a skip.
+        if (string.IsNullOrWhiteSpace(outText)) return new(text, TranslateStatus.Failed);
+        return new(Restore(outText!.Trim(), tokens), TranslateStatus.Translated);
     }
 
     /// <summary>Frame the masked text with source/target language labels for the resolved direction.</summary>

@@ -225,7 +225,7 @@ public sealed partial class AppViewModel
             case "cc": Coerce(SettingsModelCc, v => SettingsModelCc = v); OnChanged(nameof(CcModels)); break;
             case "gx": Coerce(SettingsModelGx, v => SettingsModelGx = v); OnChanged(nameof(GxModels)); break;
             case "agy": Coerce(SettingsModelAgy, v => SettingsModelAgy = v); OnChanged(nameof(AgyModels)); break;
-            default: Coerce(SettingsModelPi, v => SettingsModelPi = v); OnChanged(nameof(PiModels)); break;
+            default: Coerce(SettingsModelPi, v => SettingsModelPi = v); OnChanged(nameof(PiModels)); NotifyPiSessionsModelsChanged(); break;
         }
         OnChanged(nameof(NewAgentModels));
     }
@@ -278,7 +278,15 @@ public sealed partial class AppViewModel
         OnChanged(nameof(PiModels));
         OnChanged(nameof(PiConnectedProviders));
         OnChanged(nameof(NewAgentModels));
+        NotifyPiSessionsModelsChanged();
     }
+
+    /// <summary>pi 카탈로그가 (재)로드/필터되면 열려있는 컴포저 모델 메뉴가 새 목록을 반영하도록 pi 세션 바인딩을 갱신.</summary>
+    private void NotifyPiSessionsModelsChanged()
+    {
+        foreach (var s in _allSessions.Where(s => s.AgentId == "pi")) s.RaiseAvailableModelsChanged();
+    }
+
     /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
     private string DefaultModelFor(string id) =>
         _defaultModels.TryGetValue(id, out var m) && !string.IsNullOrWhiteSpace(m) ? m : (EngineModels(id).FirstOrDefault() ?? "");

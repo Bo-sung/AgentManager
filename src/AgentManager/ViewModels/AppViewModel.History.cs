@@ -186,6 +186,8 @@ public sealed partial class AppViewModel
             await Task.Delay(16); // 한 프레임 양보
         }
         SaveState();
+        // 임포트한 과거 대화도 엔진 원문 그대로 — 번역 ON이면 백그라운드로 번역.
+        _ = TranslatePendingBlocksAsync(s);
     }
 
     /// <summary>Re-read this session's engine conversation file (after the user continued it in an external
@@ -235,6 +237,8 @@ public sealed partial class AppViewModel
             s.EngineSessionId = entry.SessionId;
         s.Transcript.Add(new WorkingBlock(L("L.ResyncDone")));
         SaveState();
+        // 재동기화 블록은 엔진 원문(영어) 그대로다 — 번역 ON이면 백그라운드로 사용자 언어로 번역.
+        _ = TranslatePendingBlocksAsync(s);
     }
 
 }

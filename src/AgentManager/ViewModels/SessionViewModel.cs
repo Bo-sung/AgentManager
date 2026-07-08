@@ -79,7 +79,7 @@ public sealed class SessionViewModel : ObservableObject
     {
         Id = id; AgentId = engine.Id; Badge = engine.Badge; AgentName = engine.Name; Cli = engine.Cli;
         _title = title; Branch = branch; ProjectId = projectId; Project = project; ProjectPath = projectPath; _model = model;
-        AvailableModels = engine.Models;
+        _staticModels = engine.Models;
         _reasoningEffort = RecommendedEffort(engine.Id, model);
         StartedAt = startedAt ?? DateTime.Now;
         NativeWorkItems.CollectionChanged += (_, _) => OnChanged(nameof(HasNativeWorkItems));
@@ -90,8 +90,18 @@ public sealed class SessionViewModel : ObservableObject
     private string _title;
     public string Title { get => _title; set => Set(ref _title, value); }
 
-    /// <summary>Models offered by this session's engine (for the composer model menu).</summary>
-    public string[] AvailableModels { get; private set; } = [];
+    private readonly string[] _staticModels;
+    /// <summary>App VM installs this so pi sessions read the LIVE <c>pi --list-models</c> catalog (same source as
+    /// the settings / New-Agent picker). pi's static <see cref="EngineDef.Models"/> are only placeholder guesses,
+    /// so without this the composer menu wouldn't match the model actually selected in settings. Non-pi ignore it.</summary>
+    public static Func<string[]>? PiComposerModelsProvider;
+    /// <summary>Models offered in the composer model menu. pi = live catalog (falls back to the static list until
+    /// the catalog loads); other engines = static alias list. <see cref="RaiseAvailableModelsChanged"/> refreshes
+    /// the binding once the pi catalog arrives.</summary>
+    public string[] AvailableModels =>
+        AgentId == "pi" && PiComposerModelsProvider?.Invoke() is { Length: > 0 } dyn ? dyn : _staticModels;
+    /// <summary>App VM calls this on all pi sessions after the catalog (re)loads so open composer menus refresh.</summary>
+    internal void RaiseAvailableModelsChanged() => OnChanged(nameof(AvailableModels));
 
     /// <summary>엔진별 컴포저 분기: 코덱스만 추론 강도 선택 노출 + 보라 테두리.</summary>
     public bool IsCodex => AgentId == "gx";

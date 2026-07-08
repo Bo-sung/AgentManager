@@ -2294,5 +2294,16 @@
             <TextBlock Text="{Binding ZoomToastText}" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
         </Border>
 
+        <!-- ===================== Translation-failure toast (never fail silently) ===================== -->
+        <Border Grid.RowSpan="2" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,44"
+                Background="#EE241012" BorderBrush="{DynamicResource Err}" BorderThickness="1" CornerRadius="8" Padding="16,10" IsHitTestVisible="False"
+                MaxWidth="560" Visibility="{Binding ShowTranslateToast, Converter={StaticResource BoolVis}}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="⚠" FontSize="13" Foreground="{DynamicResource Err}" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding TranslateToastText}" FontSize="12.5" Foreground="{DynamicResource Txt0}"
+                           TextWrapping="Wrap" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
     </Grid>
 </Window>

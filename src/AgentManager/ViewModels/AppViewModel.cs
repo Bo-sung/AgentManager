@@ -76,8 +76,12 @@ public sealed partial class AppViewModel : ObservableObject
     public AppViewModel()
     {
         InitModelChecklists();
+        // pi 세션 컴포저 모델 메뉴가 정적 placeholder가 아니라 설정 피커와 동일한 동적 카탈로그를 읽게 한다.
+        SessionViewModel.PiComposerModelsProvider = () => DropdownModelsFor("pi");
         NewAgentSelectedEngine = AllEngines[0];
         RestoreState();
+        // 복원된 pi 세션이 있으면 실제 카탈로그를 로드해 컴포저 목록을 채운다(설정을 열지 않아도).
+        if (_allSessions.Any(s => s.AgentId == "pi")) _ = QueryPiModelsAsync();
         Theme.AccentPalette.Apply(_accent);
         LoadScheduledJobs();
         CurrentView = MainViewKind.Orchestrator;
@@ -944,11 +948,12 @@ public sealed partial class AppViewModel : ObservableObject
         }
         else if (e.PropertyName == nameof(SessionViewModel.TranslationEnabled))
         {
-            // Ollama 꺼짐이면 번역을 켤 수 없음 — 다시 OFF로 되돌린다(⚠ 아이콘이 사유 안내).
-            if (sender is SessionViewModel ses && ses.TranslationEnabled && !OllamaRunning)
+            if (sender is SessionViewModel ses)
             {
-                ses.TranslationEnabled = false;
-                return;
+                // Ollama 꺼짐이면 번역을 켤 수 없음 — 다시 OFF로 되돌린다(⚠ 아이콘이 사유 안내).
+                if (ses.TranslationEnabled && !OllamaRunning) { ses.TranslationEnabled = false; return; }
+                // 토글을 켜면 아직 원문(영어)인 기존 블록도 번역한다(재동기화·임포트·번역 OFF로 받은 과거 turn 포함).
+                if (ses.TranslationEnabled) _ = TranslatePendingBlocksAsync(ses);
             }
             SaveState();
         }

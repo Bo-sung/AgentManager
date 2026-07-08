@@ -22,6 +22,10 @@ public sealed class AgentSession(
     /// <summary>Raised for every normalized event (translation already applied).</summary>
     public event Action<NormalizedEvent>? EventReceived;
 
+    /// <summary>Raised (best-effort) when an EN→KO translation of streamed output FAILS (timeout/provider error) so
+    /// the UI can surface it instead of silently showing the untranslated text. May fire more than once per turn.</summary>
+    public event Action? TranslationFailed;
+
     /// <summary>Answers engine permission requests (approval broker). Null = auto-deny.
     /// The engine blocks until the returned task resolves, so this may wait on the user.</summary>
     public Func<PermissionRequest, Task<PermissionDecision>>? PermissionHandler { get; set; }
@@ -138,21 +142,23 @@ public sealed class AgentSession(
             {
                 case AssistantText at when !string.IsNullOrWhiteSpace(at.Text):
                     var originalText = at.Text;
-                    var translatedText = await translator.TranslateAsync(originalText, TranslationDirection.TargetToSource, ct);
+                    var outcome = await translator.TranslateWithOutcomeAsync(originalText, TranslationDirection.TargetToSource, ct);
+                    if (outcome.Status == TranslateStatus.Failed) TranslationFailed?.Invoke();
                     ev = at with
                     {
-                        Text = translatedText,
-                        OriginalText = string.Equals(translatedText, originalText, StringComparison.Ordinal) ? null : originalText
+                        Text = outcome.Text,
+                        OriginalText = string.Equals(outcome.Text, originalText, StringComparison.Ordinal) ? null : originalText
                     };
                     break;
                 // Only subagent (Task) results are natural language worth translating.
                 case ToolResult { FromSubagent: true, IsError: false } tr when !string.IsNullOrWhiteSpace(tr.Content):
                     var originalContent = tr.Content;
-                    var translatedContent = await translator.TranslateAsync(originalContent, TranslationDirection.TargetToSource, ct);
+                    var outcome2 = await translator.TranslateWithOutcomeAsync(originalContent, TranslationDirection.TargetToSource, ct);
+                    if (outcome2.Status == TranslateStatus.Failed) TranslationFailed?.Invoke();
                     ev = tr with
                     {
-                        Content = translatedContent,
-                        OriginalContent = string.Equals(translatedContent, originalContent, StringComparison.Ordinal) ? null : originalContent
+                        Content = outcome2.Text,
+                        OriginalContent = string.Equals(outcome2.Text, originalContent, StringComparison.Ordinal) ? null : originalContent
                     };
                     break;
             }
