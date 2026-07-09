@@ -2,6 +2,12 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.19.8
+VRAM 표시 버그 수정 — 다중 어댑터 합산 → 주 GPU만 표시. (버그 패치)
+- **버그**: v1.19.7에서 VRAM 사용량을 모든 어댑터(NVIDIA dGPU + AMD iGPU + 가상 모니터)의 `Dedicated Usage`를 **합산**해 Task Manager의 GPU별 값보다 과대 집계됨.
+- **수정**: 가장 큰 `Dedicated Usage` 인스턴스(주 GPU=dGPU)만 표시하고 전용 비디오 메모리 전체(레지스트리 최대 `qwMemorySize`)와 짝맞춤 → Task Manager “Dedicated GPU memory” 및 `nvidia-smi`와 일치(실측 `13.0/16.0G` = `nvidia-smi 13,304/16,376 MB`).
+- **참고**: “전용 GPU 메모리 사용량”은 드라이버·데스크톱 합성·브라우저·캐시 할당을 포함해 유휴 상태에서도 높게 나타날 수 있음(정상).
+
 ## 1.19.7
 자원 모니터에 GPU VRAM 사용량/전체 추가. (기능 패치)
 - **VRAM 표시**: 타이틀바 자원 스트립에 GPU VRAM(사용/전체) 추가 → `CPU · GPU · VRAM · RAM · NET`. 예: `VRAM 4.5/16.0G`.
