@@ -20,6 +20,9 @@ public sealed partial class AppViewModel
     private string _memLabel = "—";
     public string MemLabel { get => _memLabel; private set => Set(ref _memLabel, value); }
 
+    private string _vramLabel = "—";
+    public string VramLabel { get => _vramLabel; private set => Set(ref _vramLabel, value); }
+
     private string _netLabel = "";
     public string NetLabel { get => _netLabel; private set => Set(ref _netLabel, value); }
 
@@ -36,6 +39,7 @@ public sealed partial class AppViewModel
         CpuLabel = s.CpuPercent < 0 ? "—" : $"{s.CpuPercent:F0}%";
         GpuLabel = s.GpuAvailable ? $"{s.GpuPercent:F0}%" : "—";
         MemLabel = $"{BytesToGiB(s.MemoryUsedBytes):0.0}/{BytesToGiB(s.MemoryTotalBytes):0.0}G";
+        VramLabel = !s.VramAvailable ? "—" : $"{BytesToGiB(s.VramUsedBytes):0.0}/{BytesToGiB(s.VramTotalBytes):0.0}G";
         NetLabel = $"↑{NetRate(s.NetSentBytesPerSec)} ↓{NetRate(s.NetRecvBytesPerSec)}";
     }
 

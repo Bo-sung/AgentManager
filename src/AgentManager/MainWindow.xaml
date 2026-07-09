@@ -455,6 +455,8 @@
                     <TextBlock Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,4,0"
                                ToolTip="{StaticResource L.ResGpuTip}"><Run Text="{StaticResource L.ResGpu}"/><Run Text=" " /><Run Text="{Binding GpuLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
                     <TextBlock Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,4,0"
+                               ToolTip="{StaticResource L.ResVramTip}"><Run Text="{StaticResource L.ResVram}"/><Run Text=" " /><Run Text="{Binding VramLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
+                    <TextBlock Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,4,0"
                                ToolTip="{StaticResource L.ResMemTip}"><Run Text="{StaticResource L.ResMem}"/><Run Text=" " /><Run Text="{Binding MemLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
                     <TextBlock Foreground="{DynamicResource Accent}" VerticalAlignment="Center"
                                ToolTip="{StaticResource L.ResNetTip}"><Run Text="{Binding NetLabel, Mode=OneWay}"/></TextBlock>

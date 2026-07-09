@@ -564,8 +564,10 @@
     <sys:String x:Key="L.ResCpu">CPU</sys:String>
     <sys:String x:Key="L.ResGpu">GPU</sys:String>
     <sys:String x:Key="L.ResMem">RAM</sys:String>
+    <sys:String x:Key="L.ResVram">VRAM</sys:String>
     <sys:String x:Key="L.ResCpuTip">호스트 CPU 사용량</sys:String>
     <sys:String x:Key="L.ResGpuTip">첫 번째 물리 GPU 사용량 (성능 카운터)</sys:String>
     <sys:String x:Key="L.ResMemTip">사용 / 전체 실제 메모리</sys:String>
+    <sys:String x:Key="L.ResVramTip">주 GPU 전용 비디오 메모리 사용량 / 전용 (DXGI)</sys:String>
     <sys:String x:Key="L.ResNetTip">이더넷/Wi-Fi 송수신 속도 (초당 바이트)</sys:String>
 </ResourceDictionary>
