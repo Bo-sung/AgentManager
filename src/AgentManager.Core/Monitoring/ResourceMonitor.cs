@@ -32,8 +32,9 @@ public sealed record ResourceSnapshot(
 ///
 /// VRAM total is read once from the registry (<c>HardwareInformation.qwMemorySize</c>, the largest adapter
 /// = the dGPU; a QWORD so it does not wrap at 4 GiB like <c>Win32_VideoController.AdapterRAM</c>), and
-/// VRAM used is summed from the <c>GPU Adapter Memory\Dedicated Usage</c> perf counters — both target the
-/// primary GPU, so no LUID matching is needed.
+/// VRAM used is the largest single <c>GPU Adapter Memory\Dedicated Usage</c> instance (the primary GPU,
+/// which dominates usage) — both target the same GPU, so no LUID matching is needed and it matches
+/// Task Manager's per-GPU "Dedicated GPU memory" (verified equal to nvidia-smi).
 ///
 /// Cost: a single ~1 Hz threadpool tick doing one <c>% Processor Time</c> read, a handful of GPU engine
 /// counter reads (summed for the first physical GPU), a few GPU Adapter Memory reads, a few network-adapter
@@ -95,9 +96,9 @@ public sealed class ResourceMonitor : IDisposable
                 gpu = Math.Clamp(sum, 0, 100);
             }
 
-            var vramUsedRaw = 0.0;
-            foreach (var c in _vramCounters) vramUsedRaw += c.NextValue();
-            var vramAvailable = _vramCounters.Count > 0 && _vramTotalBytes > 0;
+            var vramUsedRaw = -1.0;
+            foreach (var c in _vramCounters) { var v = c.NextValue(); if (v > vramUsedRaw) vramUsedRaw = v; } // largest single adapter = the primary GPU
+            var vramAvailable = vramUsedRaw >= 0 && _vramTotalBytes > 0;
             var vramUsed = vramAvailable ? (ulong)Math.Max(0, vramUsedRaw) : 0;
 
             ReadMemoryStatus(out var mem);
@@ -175,7 +176,7 @@ public sealed class ResourceMonitor : IDisposable
     }
 
     /// <summary>Resolve VRAM once: total from the registry (largest adapter's qwMemorySize), used from the
-    /// summed <c>GPU Adapter Memory\Dedicated Usage</c> of each <c>phys_0</c> adapter instance.</summary>
+    /// largest <c>GPU Adapter Memory\Dedicated Usage</c> <c>phys_0</c> instance (the primary GPU).</summary>
     private void EnsureVram()
     {
         if (_vramChecked) return;
