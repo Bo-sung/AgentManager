@@ -2,6 +2,12 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.19.7
+자원 모니터에 GPU VRAM 사용량/전체 추가. (기능 패치)
+- **VRAM 표시**: 타이틀바 자원 스트립에 GPU VRAM(사용/전체) 추가 → `CPU · GPU · VRAM · RAM · NET`. 예: `VRAM 4.5/16.0G`.
+- **측정 소스**: VRAM 전체 = 레지스트리 `HardwareInformation.qwMemorySize`(가장 큰 어댑터=dGPU, QWORD라 4GiB 이상도 정상), VRAM 사용 = `GPU Adapter Memory\Dedicated Usage` 합산(phys_0). 어댑터 식별 불가 시 `—`로 폴백(예외 X).
+- **구현**: DXGI raw vtable `GetDesc`가 환경 의존 AV를 일으켜 회귀 → advapi32 레지스트리 P/Invoke로 전용 비디오 메모리를 읽어 의존성·안정성 개선(신규 NuGet 없음). Core `ResourceSnapshot`에 VRAM 필드 추가, 스모크 `--resource-monitor-check`에 VRAM 검증 추가(실측 `vram=4.5/16.0G` PASS).
+
 ## 1.19.6
 타이틀바 우상단 호스트 자원 모니터 추가 — CPU/GPU/RAM/이더넷 실시간 표시. (기능 추가)
 - **자원 모니터 스트립**: 타이틀바 우측(상태 카운터 좌측 Col 2)에 CPU·GPU·RAM·이더넷 송수신 속도를 1초 간격으로 표시하는 컴팩트 모노 스트립 추가. 예: `CPU 12% · GPU 5% · RAM 6.2/32G · ↑1.2 ↓0.3`.
