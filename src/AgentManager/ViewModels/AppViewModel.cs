@@ -40,6 +40,7 @@ public sealed partial class AppViewModel : ObservableObject
     private string _codexPath { get => _settings.CodexPath; set => _settings.CodexPath = value; }
     private string _agyPath { get => _settings.AgyPath; set => _settings.AgyPath = value; }
     private string _piPath { get => _settings.PiPath; set => _settings.PiPath = value; }
+    private string _piWorkerPath { get => _settings.PiWorkerPath; set => _settings.PiWorkerPath = value; }
     private string _ollamaEndpoint { get => _settings.OllamaEndpoint; set => _settings.OllamaEndpoint = value; }
     private string _ollamaModel { get => _settings.OllamaModel; set => _settings.OllamaModel = value; }
 

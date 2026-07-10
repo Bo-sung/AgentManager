@@ -14,6 +14,10 @@ public sealed class SettingsService
     public string CodexPath { get; set; } = "";
     public string AgyPath { get; set; } = "";
     public string PiPath { get; set; } = "";
+    /// <summary>Override path to the pi-worker launcher (harness <c>dist/cli/index.js</c> or a real
+    /// executable). Empty = auto-detect (npm-global @agentmanager/pi-worker-harness). Only used for
+    /// Worker-role pi sessions; General/Main pi keeps using <see cref="PiPath"/>.</summary>
+    public string PiWorkerPath { get; set; } = "";
 
     // ----- translation: language pair + selected provider -----
     public bool TranslationEnabled { get; set; } = true;

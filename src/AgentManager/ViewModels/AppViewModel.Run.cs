@@ -280,7 +280,8 @@ public sealed partial class AppViewModel
             ApiMode: s.AgentId == "agy" && IsApiMode("agy"),
             HasApiKey: HasApiKey("agy"),
             ClaudePath: _claudePath, CodexPath: _codexPath, AgyPath: _agyPath, PiPath: _piPath,
-            ResolvePython: ResolvePython));
+            ResolvePython: ResolvePython,
+            Worker: s.IsWorker, PiWorkerPath: _piWorkerPath));
         if (!resolution.Ok)
         {
             var (title, body) = resolution.Error switch
@@ -302,7 +303,7 @@ public sealed partial class AppViewModel
         s.Activity = L("L.PreparingWorktree");
         await EnsureWorktreeAsync(s);
         var cwd = s.WorktreePath ?? s.ProjectPath;
-        WatchSessionTaskSpool(cwd, s.ProjectId, s.Id); // skill fallback (.am/worker-tasks/) → backlog; report back to s
+        if (!s.IsWorker) WatchSessionTaskSpool(cwd, s.ProjectId, s.Id); // Main-only skill fallback (.am/worker-tasks/) → backlog; workers don't delegate (depth 0)
         WatchSessionAskSpool(cwd, s.Id);               // ask-user skill (.am/ask/) → structured choice panel
 
         // Attachment docs: text/code are inlined verbatim; binary office/PDF docs go by PATH
@@ -345,7 +346,10 @@ public sealed partial class AppViewModel
             ApiEnv: ApiEnvFor(s.AgentId),
             TaskSpoolDir: Path.Combine(cwd, ".am", "worker-tasks", s.Id),
             AskSpoolDir: Path.Combine(cwd, ".am", "ask", s.Id),
-            NativeHookSpoolDirectory: NativeHookSpoolDirectoryFor(s)));
+            NativeHookSpoolDirectory: NativeHookSpoolDirectoryFor(s),
+            Worker: s.IsWorker,
+            SessionId: s.Id,
+            ProjectId: s.ProjectId));
 
         // gx/agy는 프롬프트를 명령행 인자로 받아 ~32K 한도를 넘기면 실행 자체가 실패한다 → 큰 프롬프트는
         // 파일로 빼고 짧은 참조만 전달. cc/pi는 stdin이라 인라인 유지(대형도 빠름 — init-ack 이후 전송).

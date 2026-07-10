@@ -31,6 +31,9 @@ public sealed partial class AppViewModel
     public string SettingsAgyPath { get => _settingsAgyPath; set => Set(ref _settingsAgyPath, value); }
     private string _settingsPiPath = "";
     public string SettingsPiPath { get => _settingsPiPath; set => Set(ref _settingsPiPath, value); }
+    private string _settingsPiWorkerPath = "";
+    /// <summary>pi-worker 런처 경로(편집기 값). 빈 값 = 자동 탐지. Worker 역할 pi 세션에만 적용.</summary>
+    public string SettingsPiWorkerPath { get => _settingsPiWorkerPath; set => Set(ref _settingsPiWorkerPath, value); }
     private string _settingsOllamaEndpoint = "";
     public string SettingsOllamaEndpoint { get => _settingsOllamaEndpoint; set => Set(ref _settingsOllamaEndpoint, value); }
     private string _settingsOllamaModel = "";
@@ -482,6 +485,17 @@ public sealed partial class AppViewModel
     public string CodexDetectLabel => DetectLabel("gx", _codexPath);
     public string AgyDetectLabel => DetectLabel("agy", _agyPath);
     public string PiDetectLabel => DetectLabel("pi", _piPath);
+    /// <summary>pi-worker 경로 상태 라벨(설정 화면). worker 해석 경로를 그대로 반영.</summary>
+    public string PiWorkerDetectLabel
+    {
+        get
+        {
+            var exe = EngineRegistry.ResolveExe("pi", piWorker: true, piWorkerPath: _piWorkerPath);
+            if (exe is null) return AgentManager.App.L("L.DetectMissing");
+            if (File.Exists(exe)) return AgentManager.App.L("L.DetectPathPrefix", exe);
+            return AgentManager.App.L("L.DetectPathDependent", exe);
+        }
+    }
     private static string DetectLabel(string id, string? overridePath)
     {
         var exe = EngineRegistry.ResolveExe(id,
@@ -508,10 +522,19 @@ public sealed partial class AppViewModel
         }
         SettingsStatus = AgentManager.App.L("L.DetectFound", found);
     }
+
+    /// <summary>'탐지' 버튼(pi-worker) — npm 전역 하네스만 오토 탐지해 경로란에 채운다(못 찾으면 입력값 보존).</summary>
+    public void DetectPiWorkerPath()
+    {
+        var found = EngineRegistry.DetectPiWorkerExe();
+        if (found is null) { SettingsStatus = AgentManager.App.L("L.DetectFailed"); return; }
+        SettingsPiWorkerPath = found;
+        SettingsStatus = AgentManager.App.L("L.DetectFound", found);
+    }
     private void RefreshDetectLabels()
     {
         OnChanged(nameof(ClaudeDetectLabel)); OnChanged(nameof(CodexDetectLabel));
-        OnChanged(nameof(AgyDetectLabel)); OnChanged(nameof(PiDetectLabel));
+        OnChanged(nameof(AgyDetectLabel)); OnChanged(nameof(PiDetectLabel)); OnChanged(nameof(PiWorkerDetectLabel));
         OnChanged(nameof(CcAccount)); OnChanged(nameof(GxAccount));
         OnChanged(nameof(AgyAccount));
     }
@@ -672,6 +695,7 @@ public sealed partial class AppViewModel
         SettingsCodexPath = _codexPath;
         SettingsAgyPath = _agyPath;
         SettingsPiPath = _piPath;
+        SettingsPiWorkerPath = _piWorkerPath;
         SettingsOllamaEndpoint = _ollamaEndpoint;
         SettingsOllamaModel = _ollamaModel;
         SettingsOllamaTimeoutSeconds = _settings.OllamaTimeoutSeconds;
@@ -755,6 +779,7 @@ public sealed partial class AppViewModel
         _codexPath = Clean(SettingsCodexPath);
         _agyPath = Clean(SettingsAgyPath);
         _piPath = Clean(SettingsPiPath);
+        _piWorkerPath = Clean(SettingsPiWorkerPath);
         RefreshDetectLabels();
         _ollamaEndpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint.Trim();
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();

@@ -1,0 +1,108 @@
+# AgentManager Pi Worker Handoff
+
+## Last Updated
+- 2026-07-10 (KST) — 작성 에이전트: Claude (Opus 4.8)
+- 상태: Step 1 검증 + Step 2–5 launch binding + Step 8 launch 특성화 테스트 **구현·빌드·테스트 green**. 다음: Step 6/7(session discovery + skill 격리).
+- 브랜치: `feature/pi-worker-integration` (master에서 분기, GitFlow). push 안 함.
+
+## Repository State
+- Path: `J:\prj\AgentManager`
+- Branch: `master`  (착수 시점 clean)
+- HEAD(착수): `c64660f` — release: v1.19.5
+- 외부 참고 저장소:
+  - `H:\Git\Bosung_PI\pi-worker-harness` — **완성된 Worker 런타임**. 단, git 브랜치 `feature/pi-worker-harness`에 **커밋 0개(전부 uncommitted working tree)**. dist/ 빌드 산출물 존재. AgentManager 작업과 **다른 커밋**으로 취급(섞지 말 것). 결함 확인 시에만 별도 수정.
+  - `H:\Git\Bosung_PI\pi-upstream` — Pi 원본, **읽기 전용**.
+
+## Original Goal
+기존 공식 `pi`는 Main/General 그대로 두고, Worker 역할일 때만 `pi-worker`(harness)로 실행하도록 AgentManager를 연동한다.
+- `pi-worker`를 **별도 엔진으로 등록하지 않음**. 기존 `pi` 엔진 하나 유지, 세션 Role(Worker)로 실행 파일만 분기.
+- 범용 Profile 시스템 신설 금지. Pi 코어/`pi-upstream` 수정 금지. cc/gx/agy 실행 구조 재설계 금지.
+- 공통 Worker queue·Task Contract·worktree·report routing 유지.
+
+## 확정 아키텍처 (핵심 사실, 실측 기반)
+- **실행 계약**(harness `docs/AGENTMANAGER_PI_WORKER_INTEGRATION_KO.md`):
+  `pi-worker --mode rpc` + 공식 pi 플래그 pass-through(`--model`, `--thinking`, `--session`). stdin/stdout은 공식 Pi RPC JSONL 그대로(pi-worker는 가공 안 함).
+- **배포 형태(Step 1 실측)**: harness `package.json` bin = `pi-worker → dist/cli/index.js`. 아직 `npm i -g`/`npm link` 안 됨 → PATH에 `pi-worker` 없음. **`node <harness>/dist/cli/index.js`로 직접 구동 가능**(검증 완료).
+  - `node dist/cli/index.js --version` → `pi-worker 0.1.0 (wraps official pi 0.80.3)`
+  - `node dist/cli/index.js doctor` → All checks passed. Worker config root `C:\Users\sbss0\.pi-worker`, `PI_CODING_AGENT_DIR=~/.pi-worker/agent`, `PI_CODING_AGENT_SESSION_DIR=~/.pi-worker/agent/sessions`, `~/.pi/agent`와 격리 확인. worker-guard/worker-task skill present. 알려진 leak: `~/.agents/skills`는 pi/pi-worker 공유.
+- **공식 pi 설치 위치**: `C:\Users\sbss0\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\dist\cli.js` (Node v24.18.0).
+- **AgentManager 실행 경로**:
+  - Role 트리거: `SessionViewModel.Role == SessionRole.Worker` (`src/AgentManager.Core/Workers/WorkerTypes.cs`). 워커 생성: `AppViewModel.Delegation.cs: CreateWorkerSession` (Role=Worker 세팅).
+  - 엔진 해석: `AppViewModel.Run.cs:277` → `TurnPlanner.ResolveEngine(EngineResolveRequest)` → `EngineRegistry.ResolveExe(id, ..., piPath)`. pi는 `ResolvePi()`가 `@earendil-works .../dist/cli.js` 반환 → `PiAdapter`가 `node cli.js --mode rpc`.
+  - 옵션 조립: `AppViewModel.Run.cs:333` → `TurnPlanner.BuildOptions(TurnOptionsRequest)` → `SessionOptions.ExtraEnvironment`에 env 주입.
+
+## 설계 결정 (Decisions)
+1. **엔진 그대로, 경로만 분기**: `EngineRegistry.ResolveExe`에 worker 여부 + `piWorkerPath`를 넘겨, `id=="pi" && worker`이면 pi-worker(index.js) 경로를 반환. Main/Plain pi는 기존 그대로.
+2. **pi-worker 경로 해석 우선순위**: (a) 설정 `PiWorkerPath` 오버라이드 → (b) PATH의 `pi-worker` → (c) npm-global `@agentmanager/pi-worker-harness/dist/cli/index.js` 자동탐지. 못 찾으면 typed error(EngineUnavailable, 프론트가 지역화).
+3. **PiAdapter node-vs-direct 분기**: `executablePath`가 `.js`로 끝나면 `node <path>`, 아니면(예: `pi-worker` shim/.cmd) 직접 실행. → **어댑터 1개로 pi/pi-worker 공용**(별도 엔진 안 만듦 제약 충족).
+4. **Worker env**: worker-role 세션에 `AGENTMANAGER_ROLE=worker`, `_SESSION_ID`, `_TASK_ID`(있으면), `_PROJECT_ID`, `_DELEGATION_DEPTH=0`, 필요 시 `PIWORKER_HOME` 주입. `TurnPlanner.BuildOptions`에서 조립.
+5. **Skill/Spool 격리(Step 7)**: worker에는 Main 오케스트레이션 스킬(worker-prompt)·`AGENTMANAGER_TASK_SPOOL`을 **주지 않는다**(delegation depth 0 강제). harness가 worker-task 스킬을 이미 주입.
+6. **Session discovery(Step 6/10)**: `CliSessionDiscovery.DiscoverPi`가 `~/.pi/agent/sessions` 하드코딩 → worker는 `~/.pi-worker/agent/sessions`도 탐색해야 함.
+7. **RPC 완료 상태 머신(Step 9)**: 현재 `PiAdapter`가 `agent_end` 단일 이벤트에서 즉시 `TurnCompleted`→kill(`KillAfterTurnCompleted=true`), `willRetry` 미파싱. pi/pi-worker 공통 RPC라 위험 동일. **실측 이벤트 캡처 후** 근거 기반으로만 수정. 근거 부족 시 측정값+차단원인 기록.
+
+### 폐기한 대안
+- pi-worker를 별도 EngineDef/adapter로 등록 → 제약 위반(별도 엔진 금지), report/queue 재작업 유발. 폐기.
+- 범용 Profile 시스템 → 제약 위반. 폐기.
+- pi-worker를 `.cmd` shim으로만 구동 → Windows RedirectStdin arg-escaping 리스크. index.js+node를 1순위로. 폐기(단, 직접실행 경로는 fallback으로 유지).
+
+## Completed
+- **Step 1 (pi-worker 배포 형태 검증)** — 완료. `node dist/cli/index.js`로 `--version`/`doctor` green. 위 "확정 아키텍처" 참조.
+- **Step 2–5 (launch binding + path config + env)** — 완료(빌드 green).
+  - `SettingsService.PiWorkerPath` 신설 + persistence(`AppStateStore.AppSettingsDto.PiWorkerPath`, `AppViewModel.Persistence` load/save, `AppViewModel._piWorkerPath` 위임, `AppViewModel.Settings` editor/detect/pull/save).
+  - `EngineRegistry.ResolveExe(..., piWorker, piWorkerPath)` + `ResolvePiWorker()`(npm-global `@agentmanager/pi-worker-harness/dist/cli/index.js` 자동탐지) + `DetectPiWorkerExe()`/`IsPiWorkerInstalled()`.
+  - `PiAdapter.BuildStartInfo`: exe가 `.js`면 `node <path>`, 아니면 직접 실행(pi/pi-worker 공용, 별도 엔진 아님).
+  - `TurnPlanner`: `EngineResolveRequest.Worker/PiWorkerPath`, `TurnOptionsRequest.Worker/SessionId/ProjectId/TaskId/PiWorkerHome`. `BuildOptions`가 worker에 `AGENTMANAGER_ROLE/SESSION_ID/PROJECT_ID/DELEGATION_DEPTH(+TASK_ID/PIWORKER_HOME)` 주입, **worker엔 `AGENTMANAGER_TASK_SPOOL` 미주입**(delegation depth 0).
+  - `AppViewModel.Run.cs`: `EngineResolveRequest`/`TurnOptionsRequest`에 `Worker=s.IsWorker` 등 전달, worker엔 `WatchSessionTaskSpool` 미설정.
+- **Step 8 (launch 특성화 테스트)** — 완료. `AgentManager.Smoke/Program.cs: AssertPiWorkerLaunch()` — node/direct 분기, 모델 pass-through, worker env 주입, TASK_SPOOL 격리, ResolveExe 역할별 해석을 검증. `dotnet run --project src/AgentManager.Smoke -c Release` → `pi/pi-worker launch + env asserts OK`, 전체 스모크 green.
+
+## In Progress
+- (없음) — 다음 단위(Step 6/7) 착수 예정.
+
+## Remaining (우선순위 순)
+1. Step 2–5 launch binding (진행 중)
+2. Step 6 session discovery + Step 7/10 skill·spool 격리
+3. Step 8 PiAdapter characterization test
+4. Step 9 RPC 완료 상태 머신 + Step 11 abort/timeout/cleanup (실측 캡처 선행)
+5. Step 12 extension_ui_request
+6. Step 12–14 E2E + 기존 엔진 회귀 + 도그푸딩
+7. Step 15 문서/테스트 보고 마무리
+
+## Worker Tasks
+- (아직 없음) AgentManager Pi Worker 통합이 안정되기 전까지 `pi-worker`는 `node dist/cli/index.js`로 직접 구동해 조사/캡처에 사용. 통합 안정 후 AgentManager 경유 위임으로 전환.
+
+## Validation
+- `node H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js --version` → exit 0, `wraps official pi 0.80.3`.
+- `node ... doctor` → exit 0, All checks passed.
+- `dotnet build AgentManager.slnx -c Release` → 경고 0/오류 0 (Step 2–5 후 재확인 green).
+- `dotnet run --project src/AgentManager.Smoke -c Release` → exit 0, `pi/pi-worker launch + env asserts OK` + 전체 스모크 green(기존 엔진 회귀 없음).
+
+## Known Failures
+- (없음) 현재까지 재현되는 실패 없음.
+
+## Files Changed
+- `src/AgentManager.Core/Settings/SettingsService.cs` — `PiWorkerPath` 설정. (완료)
+- `src/AgentManager.Core/Agents/EngineRegistry.cs` — `ResolveExe` worker 인자 + `ResolvePiWorker/DetectPiWorkerExe/IsPiWorkerInstalled`. (완료)
+- `src/AgentManager.Core/Agents/PiAdapter.cs` — node/direct 분기. (완료)
+- `src/AgentManager.Core/Orchestration/TurnPlanner.cs` — worker 역할·env·spool 격리. (완료)
+- `src/AgentManager/Persistence/AppStateStore.cs` — DTO `PiWorkerPath`. (완료)
+- `src/AgentManager/ViewModels/AppViewModel.cs` / `.Persistence.cs` / `.Settings.cs` — VM 위임·load/save·detect. (완료)
+- `src/AgentManager/ViewModels/AppViewModel.Run.cs` — worker 전달 + task-spool 격리. (완료)
+- `src/AgentManager.Smoke/Program.cs` — `AssertPiWorkerLaunch()` 특성화 테스트. (완료)
+- `docs/HANDOFF_AGENTMANAGER_PI_WORKER_KO.md` — 본 인계 문서. (계속 갱신)
+
+## Next Action
+- Step 6: `src/AgentManager.Core/Workspace/CliSessionDiscovery.cs`의 `DiscoverPi`(`~/.pi/agent/sessions` 하드코딩)를 worker일 때 `~/.pi-worker/agent/sessions`도 탐색하도록 확장(또는 role 인자 추가). 이어서 Step 7 skill 격리 점검.
+
+## Do Not Repeat
+- Step 1(pi-worker 배포형태/버전/isolation) 재검증 불필요 — 위 실측값 사용.
+- 저장소 상태 복구(clean, master, HEAD c64660f) 재조사 불필요.
+- harness 내부 구조 재탐색 불필요 — bin=`dist/cli/index.js`, 계약 문서 = `docs/AGENTMANAGER_PI_WORKER_INTEGRATION_KO.md`.
+- Step 2–5 launch binding 재구현 금지 — 위 파일들에 완료(빌드+스모크 green).
+- pi/pi-worker 실행 분기는 `PiAdapter`(exe .js 여부)와 `EngineRegistry.ResolveExe`(role)에 이미 있음.
+
+## Safety Notes
+- 사용자 승인 없이 push/release/커밋 강제 금지. 커밋은 논리 단위로만, 기존 변경과 섞지 않기(현재는 clean이라 충돌 없음).
+- `~/.pi`(공식 pi 설정) 절대 변경 금지 — worker는 `~/.pi-worker`만 사용.
+- `pi-upstream` 읽기 전용, Pi 코어 수정 금지.
+- harness 커밋은 AgentManager와 분리(다른 저장소).
+- 커밋 메시지에 Co-Authored-By/모델명/AI 생성 문구/로봇 이모지 넣지 않기(지시서 17절).

@@ -32,9 +32,13 @@ public sealed class PiAdapter : StdioJsonAdapter
 
     public override ProcessStartInfo BuildStartInfo(string executablePath, SessionOptions options, string prompt)
     {
-        // executablePath = pi의 dist/cli.js 경로(EngineRegistry가 해석). node로 구동한다.
-        var psi = NewStdioStartInfo("node", options.WorkingDirectory);
-        psi.ArgumentList.Add(executablePath);
+        // executablePath = EngineRegistry가 해석한 실행 대상:
+        //   General/Main pi → pi의 dist/cli.js,  Worker pi → pi-worker의 dist/cli/index.js.
+        // 둘 다 node 스크립트(.js)라 `node <path>`로 구동. pi-worker를 실제 실행파일/shim(.exe 등)으로
+        // 오버라이드한 경우에만 직접 실행한다(하네스 계약: `pi-worker --mode rpc`, argv는 공식 pi로 pass-through).
+        var viaNode = executablePath.EndsWith(".js", StringComparison.OrdinalIgnoreCase);
+        var psi = NewStdioStartInfo(viaNode ? "node" : executablePath, options.WorkingDirectory);
+        if (viaNode) psi.ArgumentList.Add(executablePath);
         psi.ArgumentList.Add("--mode"); psi.ArgumentList.Add("rpc");
         // 모델은 "provider/id[:thinking]" — ~/.pi 기본값을 덮으려면 명시해야 함(PHASE0 §5).
         if (!string.IsNullOrWhiteSpace(options.Model) && options.Model != "default")

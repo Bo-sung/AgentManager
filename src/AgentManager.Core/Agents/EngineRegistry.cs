@@ -55,12 +55,15 @@ public static class EngineRegistry
 
     private static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-    public static string? ResolveExe(string id, string? claudePath = null, string? codexPath = null, string? agyPath = null, string? piPath = null) => id switch
+    public static string? ResolveExe(string id, string? claudePath = null, string? codexPath = null, string? agyPath = null, string? piPath = null,
+        bool piWorker = false, string? piWorkerPath = null) => id switch
     {
         "cc" => ResolveOverride(claudePath) ?? ResolveClaude(),
         "gx" => ResolveOverride(codexPath) ?? ResolveCodex(),
         "agy" => ResolveOverride(agyPath) ?? ResolveAgy(),
-        "pi" => ResolveOverride(piPath) ?? ResolvePi(),
+        // Worker-role pi launches the pi-worker harness (isolated ~/.pi-worker root); General/Main pi
+        // keeps the official pi. Same "pi" engine/adapter — only the resolved executable differs.
+        "pi" => piWorker ? (ResolveOverride(piWorkerPath) ?? ResolvePiWorker()) : (ResolveOverride(piPath) ?? ResolvePi()),
         _ => null,
     };
 
@@ -121,6 +124,29 @@ public static class EngineRegistry
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), // %APPDATA%
             "npm", "node_modules", "@earendil-works", "pi-coding-agent", "dist", "cli.js");
         return File.Exists(p) ? p : null;
+    }
+
+    /// <summary>pi-worker 런처(@agentmanager/pi-worker-harness) 자동 탐지 — npm 전역 설치/`npm link`가
+    /// 만드는 <c>dist/cli/index.js</c>(node로 구동). 미설치면 null → 사용자가 설정에서 경로 지정.
+    /// (harness는 private 패키지라 npm registry엔 없고, `npm i -g &lt;tarball&gt;`/`npm link`로만 깔린다.)</summary>
+    private static string? ResolvePiWorker()
+    {
+        var p = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), // %APPDATA%
+            "npm", "node_modules", "@agentmanager", "pi-worker-harness", "dist", "cli", "index.js");
+        return File.Exists(p) ? p : null;
+    }
+
+    /// <summary>pi-worker 오토 탐지만(수동 경로 무시) — 설정의 '탐지' 버튼용. 실제 존재하는 파일만 반환.</summary>
+    public static string? DetectPiWorkerExe() => RealFile(ResolvePiWorker());
+
+    /// <summary>Worker-role pi가 실제 실행 가능한가 — 수동 경로(파일 존재) 또는 오토 탐지가 잡히면 true.</summary>
+    public static bool IsPiWorkerInstalled(string? piWorkerPath = null)
+    {
+        var over = ResolveOverride(piWorkerPath);
+        if (over is not null && File.Exists(over)) return true;
+        var exe = ResolvePiWorker();
+        return exe is not null && File.Exists(exe);
     }
 
     /// <summary>`pi --list-models`로 사용 가능한 모델/인증 provider를 조회한다.

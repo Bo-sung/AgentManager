@@ -1194,6 +1194,7 @@ AssertAppServerAdapter();
 AssertAgySdkAdapter();
 AssertQuickReplyParser();
 AssertMarkdownFenceSplit();
+AssertPiWorkerLaunch();
 
 static void AssertQuickReplyParser()
 {
@@ -1518,6 +1519,82 @@ static void AssertSandboxAndModelArgs()
     }
     finally { Directory.Delete(extra); }
     Console.WriteLine("sandbox/model/mcp/add-dir arg asserts OK");
+}
+
+// Pi Worker launch binding characterization (Step 8): the ONE pi adapter serves both General pi
+// (dist/cli.js) and Worker pi-worker (dist/cli/index.js) by node-vs-direct branching; ResolveExe
+// picks the executable by role; BuildOptions injects the worker identity and withholds the
+// delegation task-spool from workers (delegation depth 0). Locks behavior before the RPC state
+// machine change. Pure arg/env assertions — zero tokens, no process spawned.
+static void AssertPiWorkerLaunch()
+{
+    var cwd = Environment.CurrentDirectory;
+
+    // 1) General pi: .js executable → `node <cli.js> --mode rpc` + model pass-through.
+    var pi = new PiAdapter().BuildStartInfo(@"C:\x\pi-coding-agent\dist\cli.js",
+        new SessionOptions { WorkingDirectory = cwd, Model = "zai/glm-4.7" }, "p");
+    Assert(pi.FileName == "node", "pi: cli.js runs via node");
+    Assert(pi.ArgumentList.Contains(@"C:\x\pi-coding-agent\dist\cli.js"), "pi: cli.js path passed to node");
+    Assert(pi.ArgumentList.Contains("--mode") && pi.ArgumentList.Contains("rpc"), "pi: --mode rpc");
+    Assert(pi.ArgumentList.Contains("--model") && pi.ArgumentList.Contains("zai/glm-4.7"), "pi: --model pass-through");
+
+    // 2) Worker pi-worker: .js launcher → `node <index.js> --mode rpc`, same adapter, worker env forwarded.
+    var pw = new PiAdapter().BuildStartInfo(@"C:\x\pi-worker-harness\dist\cli\index.js",
+        new SessionOptions
+        {
+            WorkingDirectory = cwd,
+            ExtraEnvironment = new Dictionary<string, string>
+            {
+                ["AGENTMANAGER_ROLE"] = "worker",
+                ["AGENTMANAGER_SESSION_ID"] = "w1",
+                ["AGENTMANAGER_DELEGATION_DEPTH"] = "0",
+            },
+        }, "p");
+    Assert(pw.FileName == "node", "pi-worker: index.js runs via node");
+    Assert(pw.ArgumentList[0].EndsWith("index.js"), "pi-worker: launcher path passed to node");
+    Assert(pw.ArgumentList.Contains("--mode") && pw.ArgumentList.Contains("rpc"), "pi-worker: --mode rpc");
+    Assert(pw.Environment["AGENTMANAGER_ROLE"] == "worker", "pi-worker: worker env injected");
+    Assert(pw.Environment["AGENTMANAGER_DELEGATION_DEPTH"] == "0", "pi-worker: delegation depth 0");
+
+    // 3) Override to a real (non-.js) executable/shim → run directly (contract: `pi-worker --mode rpc`).
+    var direct = new PiAdapter().BuildStartInfo(@"C:\tools\pi-worker.exe",
+        new SessionOptions { WorkingDirectory = cwd }, "p");
+    Assert(direct.FileName == @"C:\tools\pi-worker.exe", "pi-worker: non-.js override runs directly");
+    Assert(!direct.ArgumentList.Contains(@"C:\tools\pi-worker.exe"), "pi-worker: direct exe not re-passed as arg");
+    Assert(direct.ArgumentList[0] == "--mode" && direct.ArgumentList[1] == "rpc", "pi-worker: direct --mode rpc");
+
+    // 4) ResolveExe picks executable by role.
+    var mainExe = EngineRegistry.ResolveExe("pi", piPath: @"C:\pi\dist\cli.js", piWorker: false);
+    Assert(mainExe == @"C:\pi\dist\cli.js", "ResolveExe pi (General) → piPath");
+    var workerExe = EngineRegistry.ResolveExe("pi", piPath: @"C:\pi\dist\cli.js",
+        piWorker: true, piWorkerPath: @"C:\pw\dist\cli\index.js");
+    Assert(workerExe == @"C:\pw\dist\cli\index.js", "ResolveExe pi (Worker) → piWorkerPath");
+
+    // 5) BuildOptions: worker withholds TASK_SPOOL + injects identity; non-worker keeps TASK_SPOOL, no ROLE.
+    var tmp = Path.Combine(Path.GetTempPath(), "am_pw_" + Guid.NewGuid().ToString("N")[..8]);
+    TurnOptionsRequest Req(bool worker) => new(
+        AgentId: "pi", WorkingDirectory: cwd, RequireApproval: false, Sandbox: SandboxMode.DangerFullAccess,
+        ResumeSessionId: null, Model: null, McpConfigPath: null, Images: [], AttachedDocsText: "",
+        AdditionalDirectories: [], ReasoningEffort: null, ApiEnv: new Dictionary<string, string>(),
+        TaskSpoolDir: Path.Combine(tmp, "ts"), AskSpoolDir: Path.Combine(tmp, "ask"), NativeHookSpoolDirectory: null,
+        Worker: worker, SessionId: worker ? "w1" : "", ProjectId: worker ? "proj1" : "");
+    try
+    {
+        var mainOpts = TurnPlanner.BuildOptions(Req(false));
+        Assert(mainOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_TASK_SPOOL"), "main: TASK_SPOOL present");
+        Assert(!mainOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_ROLE"), "main: no worker ROLE");
+
+        var workerOpts = TurnPlanner.BuildOptions(Req(true));
+        Assert(!workerOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_TASK_SPOOL"), "worker: TASK_SPOOL withheld");
+        Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_ROLE"] == "worker", "worker: ROLE=worker");
+        Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_SESSION_ID"] == "w1", "worker: SESSION_ID");
+        Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_PROJECT_ID"] == "proj1", "worker: PROJECT_ID");
+        Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_DELEGATION_DEPTH"] == "0", "worker: DELEGATION_DEPTH=0");
+        Assert(workerOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_ASK_SPOOL"), "worker: ASK_SPOOL present");
+    }
+    finally { try { Directory.Delete(tmp, true); } catch { } }
+
+    Console.WriteLine("pi/pi-worker launch + env asserts OK");
 }
 
 static async Task TestGitWorktreeAsync()
