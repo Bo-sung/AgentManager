@@ -171,12 +171,27 @@ public static class CliSessionDiscovery
         return "--" + core + "--";
     }
 
-    /// <summary>~/.pi/agent/sessions/&lt;PiSessionDirName&gt;/*.jsonl — 첫 줄은 type:"session" 헤더이고
-    /// 그 id 가 resume 에 쓰는 세션 id 이다. 제목은 첫 user 메시지.</summary>
-    public static List<CliHistoryEntry> DiscoverPi(string projectPath, int max = 30)
+    /// <summary>pi 세션 루트. General/Main pi = <c>~/.pi/agent/sessions</c>,
+    /// Worker(pi-worker) = <c>~/.pi-worker/agent/sessions</c>(PIWORKER_HOME 오버라이드 반영).
+    /// 세션 경로 규칙을 한 곳에만 두어 <c>.pi</c>/<c>.pi-worker</c> 하드코딩을 반복하지 않는다.</summary>
+    public static string PiSessionsRoot(bool worker = false)
+    {
+        if (worker)
+        {
+            var home = Environment.GetEnvironmentVariable("PIWORKER_HOME");
+            var root = string.IsNullOrWhiteSpace(home) ? Path.Combine(Home, ".pi-worker") : home!.Trim();
+            return Path.Combine(root, "agent", "sessions");
+        }
+        return Path.Combine(Home, ".pi", "agent", "sessions");
+    }
+
+    /// <summary>&lt;PiSessionsRoot&gt;/&lt;PiSessionDirName&gt;/*.jsonl — 첫 줄은 type:"session" 헤더이고
+    /// 그 id 가 resume 에 쓰는 세션 id 이다. 제목은 첫 user 메시지.
+    /// <paramref name="worker"/>=true 면 pi-worker 세션 루트(~/.pi-worker)를 스캔한다.</summary>
+    public static List<CliHistoryEntry> DiscoverPi(string projectPath, int max = 30, bool worker = false)
     {
         var entries = new List<CliHistoryEntry>();
-        var dir = Path.Combine(Home, ".pi", "agent", "sessions", PiSessionDirName(projectPath));
+        var dir = Path.Combine(PiSessionsRoot(worker), PiSessionDirName(projectPath));
         if (!Directory.Exists(dir)) return entries;
 
         foreach (var file in new DirectoryInfo(dir).GetFiles("*.jsonl").OrderByDescending(f => f.LastWriteTimeUtc).Take(max))

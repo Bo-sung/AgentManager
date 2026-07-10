@@ -55,8 +55,15 @@
   - `AppViewModel.Run.cs`: `EngineResolveRequest`/`TurnOptionsRequest`에 `Worker=s.IsWorker` 등 전달, worker엔 `WatchSessionTaskSpool` 미설정.
 - **Step 8 (launch 특성화 테스트)** — 완료. `AgentManager.Smoke/Program.cs: AssertPiWorkerLaunch()` — node/direct 분기, 모델 pass-through, worker env 주입, TASK_SPOOL 격리, ResolveExe 역할별 해석을 검증. `dotnet run --project src/AgentManager.Smoke -c Release` → `pi/pi-worker launch + env asserts OK`, 전체 스모크 green.
 
+- **Step 6 (session discovery) + Step 7/10 (skill 격리)** — 완료(빌드+스모크 green).
+  - `CliSessionDiscovery.PiSessionsRoot(worker)` 신설 → `.pi`/`.pi-worker` 하드코딩 단일화. `DiscoverPi(projectPath, max, worker)` 역할 인자. Worker는 `~/.pi-worker/agent/sessions`(+`PIWORKER_HOME` 반영), General은 `~/.pi/agent/sessions`.
+  - `AppViewModel.History.ResyncTranscriptAsync`: pi 세션이면 `DiscoverPi(cwd, worker: s.IsWorker)`로 역할별 루트 스캔(Worker transcript resync가 이제 동작).
+  - **Resume는 이미 역할 무관하게 동작** — live `EngineSessionId`→`--session` 플래그(pi-worker가 자기 루트에서 resolve). 경로 지식 불필요.
+  - **Skill 격리는 구성상 성립**: AM은 skill을 `~/.pi/agent/skills`(Main)에만 주입, 절대 worker 루트/`~/.agents`에 안 씀. pi-worker는 harness의 worker-task 스킬을 package로 로드. worker엔 `AGENTMANAGER_TASK_SPOOL` 미주입(Step 2-5)이라 delegation 스킬이 보여도 쓸 대상 없음. 스모크 가드 추가(`skill inject dir = ~/.pi`).
+  - 알려진 한계: `~/.agents/skills`는 pi/pi-worker 공유(harness doctor가 명시). AM 기본값은 이 경로를 안 쓰므로 AM발 leak 없음. 사용자가 pi skill dir을 `~/.agents/skills`로 바꾸면 leak 가능 → 문서화.
+
 ## In Progress
-- (없음) — 다음 단위(Step 6/7) 착수 예정.
+- (없음) — 다음 단위(Step 9 RPC 완료 상태 머신) 착수 예정. 실측 이벤트 캡처 선행 필요.
 
 ## Remaining (우선순위 순)
 1. Step 2–5 launch binding (진행 중)
@@ -87,11 +94,13 @@
 - `src/AgentManager/Persistence/AppStateStore.cs` — DTO `PiWorkerPath`. (완료)
 - `src/AgentManager/ViewModels/AppViewModel.cs` / `.Persistence.cs` / `.Settings.cs` — VM 위임·load/save·detect. (완료)
 - `src/AgentManager/ViewModels/AppViewModel.Run.cs` — worker 전달 + task-spool 격리. (완료)
-- `src/AgentManager.Smoke/Program.cs` — `AssertPiWorkerLaunch()` 특성화 테스트. (완료)
+- `src/AgentManager.Smoke/Program.cs` — `AssertPiWorkerLaunch()` 특성화 테스트(launch+env+session root+skill 격리). (완료)
+- `src/AgentManager.Core/Workspace/CliSessionDiscovery.cs` — `PiSessionsRoot(worker)` + `DiscoverPi(worker)`. (완료)
+- `src/AgentManager/ViewModels/AppViewModel.History.cs` — resync 역할별 pi 루트. (완료)
 - `docs/HANDOFF_AGENTMANAGER_PI_WORKER_KO.md` — 본 인계 문서. (계속 갱신)
 
 ## Next Action
-- Step 6: `src/AgentManager.Core/Workspace/CliSessionDiscovery.cs`의 `DiscoverPi`(`~/.pi/agent/sessions` 하드코딩)를 worker일 때 `~/.pi-worker/agent/sessions`도 탐색하도록 확장(또는 role 인자 추가). 이어서 Step 7 skill 격리 점검.
+- Step 9(고위험, Main 담당): 실측 pi 0.80.3 RPC 이벤트 캡처. `pi-worker --mode rpc`에 간단 prompt를 stdin JSONL로 주고 stdout 이벤트 순서를 캡처(willRetry, agent_end 다중, compaction, queue). 캡처 근거로 `PiAdapter`의 `agent_end 즉시 kill`을 완료조건 기반으로 교체. 근거 부족 시 측정값+차단원인만 기록(임의 구현 금지).
 
 ## Do Not Repeat
 - Step 1(pi-worker 배포형태/버전/isolation) 재검증 불필요 — 위 실측값 사용.

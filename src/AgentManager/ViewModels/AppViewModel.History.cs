@@ -202,7 +202,11 @@ public sealed partial class AppViewModel
         CliHistoryEntry? entry;
         try
         {
-            var entries = await Task.Run(() => CliSessionDiscovery.Discover(cwd));
+            // Worker pi writes under ~/.pi-worker (not ~/.pi), so scan the role-correct pi root; other
+            // engines use the aggregate discovery unchanged.
+            var entries = await Task.Run(() => s.AgentId == "pi"
+                ? CliSessionDiscovery.DiscoverPi(cwd, worker: s.IsWorker)
+                : CliSessionDiscovery.Discover(cwd));
             // Prefer the MOST RECENT conversation for this cwd+engine, not the originally-recorded id: a
             // terminal `claude --resume` continues into a NEW session file (new id), so matching the old id
             // misses the terminal's new turns. The newest file for this cwd is what the terminal just wrote.

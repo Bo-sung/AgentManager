@@ -1594,6 +1594,30 @@ static void AssertPiWorkerLaunch()
     }
     finally { try { Directory.Delete(tmp, true); } catch { } }
 
+    // 6) Session discovery root is role-aware: General pi → ~/.pi, Worker pi → ~/.pi-worker
+    //    (PIWORKER_HOME override honored). Same PiSessionDirName encoding for both.
+    var mainRoot = CliSessionDiscovery.PiSessionsRoot(worker: false);
+    var workerRoot = CliSessionDiscovery.PiSessionsRoot(worker: true);
+    Assert(mainRoot.Replace('\\', '/').EndsWith(".pi/agent/sessions"), "pi session root → ~/.pi");
+    Assert(workerRoot.Replace('\\', '/').EndsWith(".pi-worker/agent/sessions"), "pi-worker session root → ~/.pi-worker");
+    var prev = Environment.GetEnvironmentVariable("PIWORKER_HOME");
+    try
+    {
+        Environment.SetEnvironmentVariable("PIWORKER_HOME", @"C:\custom\wh");
+        var overridden = CliSessionDiscovery.PiSessionsRoot(worker: true).Replace('\\', '/');
+        Assert(overridden == "C:/custom/wh/agent/sessions", "pi-worker session root honors PIWORKER_HOME");
+    }
+    finally { Environment.SetEnvironmentVariable("PIWORKER_HOME", prev); }
+    Assert(CliSessionDiscovery.PiSessionDirName(@"J:\prj\AgentManager") == "--J--prj-AgentManager--",
+        "PiSessionDirName encoding unchanged for both roles");
+
+    // 7) Skill isolation by construction: AgentManager injects user skills into the MAIN pi config
+    //    (~/.pi/agent/skills), never the worker root or the shared ~/.agents root. pi-worker loads
+    //    its worker-task skill from the harness package, so no Main/delegation skill reaches it.
+    var piSkillDir = AgentManager.Core.SkillInjector.DefaultDirs()["pi"].Replace('\\', '/');
+    Assert(piSkillDir.EndsWith(".pi/agent/skills"), "skill inject dir = main pi (~/.pi)");
+    Assert(!piSkillDir.Contains(".pi-worker") && !piSkillDir.Contains(".agents/"), "skill inject dir avoids worker/shared root");
+
     Console.WriteLine("pi/pi-worker launch + env asserts OK");
 }
 
