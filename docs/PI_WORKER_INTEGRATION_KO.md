@@ -67,11 +67,12 @@ pi (Worker)              →  EngineRegistry.ResolvePiWorker() → ~/AppData/Roa
 - `AssertPiWorkerLaunch` — node/direct 분기, 모델 pass-through, worker env 주입, TASK_SPOOL 격리, ResolveExe 역할 해석, 세션 루트 역할별, skill 주입 dir(~/.pi) 격리.
 - `AssertPiCompletionStateMachine` — willRetry:true 미완료 / false 완료 / 회복 retry 성공 / 비재시도 오류 errored / willRetry 필드 없음 완료.
 - `AssertPiExtensionUi` — blocking cancel writeback / fire-and-forget 무시.
-- 라이브(무료): `pi-worker --mode rpc`에 `get_state` → 응답 envelope·세션 isolation 확인.
+- **라이브 E2E(opt-in, 무료 로컬 모델)**: `AM_PIWORKER_PATH=… AM_PIWORKER_MODEL=dgx-spark/qwen3-30b-a3b dotnet run --project src/AgentManager.Smoke -- --pi-worker-live`. 실제 `PiAdapter+AgentSession`이 실제 `pi-worker` 프로세스+모델 구동 → SessionStarted/TurnCompleted(isError=false)/assistant text 검증. 실측 통과(15s, text="OK", orphan 0).
 
 ## 10. 알려진 한계 / 후속
-- **유료 라이브 E2E 미실행**: 실제 model 턴은 provider 키 필요(유료). 코드/무료검증은 완료.
+- 라이브 E2E는 로컬 dgx-spark 모델로 통과. 다른 provider(zai/anthropic 등) 실턴은 워커 루트 인증 또는 env 키 주입 필요(§10 아래).
 - `~/.agents/skills`는 pi/pi-worker 공유(하네스 doctor 명시). AM 기본값은 이 경로를 안 써서 AM발 leak 없음. 사용자가 pi skill dir을 그리로 바꾸면 leak 가능.
 - 설정 화면 pi-worker 경로 **XAML UI 행**은 미추가(VM/자동탐지/settings.json으로 동작). 후속 UI 작업.
 - graceful `{"type":"abort"}`는 미구현(하드 트리 kill로 충분 — pi가 세션 증분 저장). 선택적 후속.
 - 비-pi(cc/gx/agy) 워커도 이제 task-spool 미수령(일반 워커 정책). pi-only로 좁히려면 HANDOFF "주의" 참조.
+- **워커 provider 인증**: pi-worker는 격리 루트 `~/.pi-worker`를 쓰므로 공식 `pi`의 `~/.pi` 인증이 안 넘어감. 현재 `CoreHelpers.ApiEnvVar("pi")`는 null이라 AM이 pi에 provider 키를 env로 주입하지 않는다(cc/gx/agy만 주입). 따라서 워커가 원격 provider(zai/anthropic 등)로 실턴하려면 (a) 워커 루트에 인증 설정을 넣거나(예: models.json/auth.json), (b) `ApiEnvFor("pi")`가 선택 모델의 provider에 맞는 키(ZAI_API_KEY 등)를 주입하도록 확장해야 함. 로컬 dgx-spark는 models.json에 endpoint+key가 있어 별도 주입 없이 동작(라이브 E2E로 확인). — **후속 작업 후보**.

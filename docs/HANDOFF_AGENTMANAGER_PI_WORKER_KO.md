@@ -75,13 +75,15 @@
   - fire-and-forget(notify/setStatus/setWidget/setTitle/set_editor_text)은 무시. WPF 재설계 없음.
   - 테스트: `AssertPiExtensionUi()`.
 
-- **Step 12-14 (E2E) — 부분 완료(무료 프로토콜 E2E 통과), 유료 턴 미실행.**
-  - **무료 라이브 E2E 통과**: 실제 `pi-worker --mode rpc`에 `{"type":"get_state"}` 주입(worker env 세팅) → `{"type":"response","command":"get_state","success":true,"data":{sessionId,model:{id}}}` 수신. PiAdapter의 `response/get_state→SessionStarted` 매핑이 0.80.3에서 유효. `sessionFile`=`~/.pi-worker/agent/sessions/...`(isolation 라이브 확인, `~/.pi` 미사용). worker env로 exit 0, RPC 모드 배너 억제(stdout 청정).
-  - **미실행(유료/크레덴셜)**: 실제 model 턴(위임→툴 실행→최종 보고). provider API 키 주입 필요 → 유료 호출. **사용자 승인 지점**.
-  - **회귀**: cc/gx/agy/General-pi arg/파싱 매트릭스는 스모크 green. 공유 코드 변경 영향은 아래 "주의" 참조.
+- **Step 12-14 (E2E + 회귀 + 도그푸딩)** — **완료(무료 로컬 모델로 실제 턴 통과)**.
+  - **실제 C# 파이프라인 라이브 E2E 통과**: `AgentManager.Smoke -- --pi-worker-live`가 실제 `PiAdapter+AgentSession`으로 실제 `pi-worker` 프로세스 + 실제 모델(dgx-spark/qwen3-30b-a3b, 사용자 자가 서버 = 무료)을 구동. 결과: `sessionId` 캡처, `TurnCompleted isError=False`, assistant text `"OK"`, 15s. worker env ROLE=worker + TASK_SPOOL 미주입 확인.
+  - **완료 판정 라이브 검증**: 실제 이벤트열 `response,response,agent_start,turn_start,message_start,message_end,message_start,message_update×N,message_end,turn_end,agent_end(willRetry=false)` → willRetry:false 완료 로직이 실제와 일치.
+  - **프로세스 정리 라이브 검증**: RunAsync 종료 후 orphan node/cmd/pi 프로세스 0(`entireProcessTree` kill이 자식 official pi까지 도달).
+  - **회귀**: 전체 스모크(codex app-server/antigravity/claude/quick-reply/approval broker + 모든 pi/pi-worker) 동시 green(RUN_EXIT=0). General pi(non-worker)는 경로/스풀 불변.
+  - **GUI 도그푸딩**: AgentManager GUI에서 pi 엔진 Worker 세션으로의 위임 도그푸딩은 사용자 몫(2번째 AM 인스턴스 금지 원칙). pi-worker 런타임 자체는 위 라이브 E2E로 반복 도그푸딩됨.
 
 ## In Progress
-- (없음) — 유료 라이브 E2E는 사용자 승인 대기. 코드/무료검증/문서는 완료.
+- (없음) — Step 1~15 모두 완료. 남은 것은 선택적 후속(설정 XAML 행, graceful abort, ApiEnvVar("pi") 멀티 provider 키 주입).
 
 ## Remaining (우선순위 순)
 1. Step 2–5 launch binding (진행 중)
@@ -134,6 +136,8 @@
   - 영향: 기존 cc/gx/agy 워커도 이제 하위 위임(task-spool)을 못 함. 엔진 실행 구조(adapter/launch)는 안 건드림 → "cc/gx/agy 재설계 금지"에는 저촉 안 된다고 판단. 다만 **비-pi 워커 동작 변경**이므로, pi 워커로만 한정하고 싶으면 `BuildOptions`의 `if (!r.Worker)` 게이트를 `if (!r.Worker || r.AgentId != "pi")`류로 좁히면 됨. (현재는 일반 적용.)
 
 ## Safety Notes
+- **워커 루트 변경(사용자 승인함)**: 라이브 E2E를 위해 `~/.pi/agent/models.json` → `~/.pi-worker/agent/models.json` 복사(= 워커에 dgx-spark 로컬 provider + 그 apiKey 설정). 워커가 이제 dgx-spark로 실제 응답 가능. 원치 않으면 `~/.pi-worker/agent/models.json` 삭제(기존 백업은 `.bak.*`가 있으면 그것). `~/.pi`는 **불변**.
+- **provider 키**: `dgx-spark`는 사용자 자가 서버(`http://8eh1ndy0u.iptime.org:8083/v1`, llama-swap)라 무료. models.json에 그 서버용 apiKey 포함(자기 서버 키).
 - 사용자 승인 없이 push/release/커밋 강제 금지. 커밋은 논리 단위로만, 기존 변경과 섞지 않기(현재는 clean이라 충돌 없음).
 - `~/.pi`(공식 pi 설정) 절대 변경 금지 — worker는 `~/.pi-worker`만 사용.
 - `pi-upstream` 읽기 전용, Pi 코어 수정 금지.

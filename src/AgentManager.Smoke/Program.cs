@@ -43,6 +43,17 @@ if (args.Contains("--worker-task-run"))
     return;
 }
 
+// Live pi-worker E2E (Step 13) — drives the REAL PiAdapter + AgentSession against a real pi-worker
+// process + model. Costs one real turn, so it is OPT-IN (not in the default run). Run in YOUR terminal:
+//   AM_PIWORKER_PATH="H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js" \
+//   AM_PIWORKER_MODEL="dgx-spark/qwen3-30b-a3b" \
+//   dotnet run --project src/AgentManager.Smoke -- --pi-worker-live
+if (args.Contains("--pi-worker-live"))
+{
+    await PiWorkerLiveCheckAsync();
+    return;
+}
+
 if (args.Contains("--sched-create-check"))
 {
     RunSchedCreateCheck();
@@ -1691,6 +1702,64 @@ static void AssertPiExtensionUi()
     Assert(!notify.OfType<EngineWriteback>().Any(), "pi: notify is fire-and-forget (no response)");
 
     Console.WriteLine("pi extension_ui_request asserts OK");
+}
+
+// Live E2E: real PiAdapter + AgentSession + real pi-worker process + real (local/free) model.
+// Exercises the FULL pipeline: node spawn -> RPC framing -> get_state->SessionStarted -> prompt ->
+// streaming deltas -> agent_end(willRetry:false) -> TurnCompleted -> process-tree cleanup. Confirms
+// the worker env is injected and the delegation task-spool is withheld. Opt-in (see dispatch above).
+static async Task PiWorkerLiveCheckAsync()
+{
+    var piWorkerPath = Environment.GetEnvironmentVariable("AM_PIWORKER_PATH") ?? "";
+    var model = Environment.GetEnvironmentVariable("AM_PIWORKER_MODEL") ?? "dgx-spark/qwen3-30b-a3b";
+    var exe = EngineRegistry.ResolveExe("pi", piWorker: true, piWorkerPath: piWorkerPath);
+    if (exe is null || !File.Exists(exe))
+    {
+        Console.WriteLine($"SKIP pi-worker-live: pi-worker not resolvable (set AM_PIWORKER_PATH; got '{piWorkerPath}').");
+        return;
+    }
+    Console.WriteLine($"pi-worker-live: exe={exe}\n                model={model}");
+
+    var cwd = Path.Combine(Path.GetTempPath(), "am_pw_live_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(cwd);
+    try
+    {
+        var options = TurnPlanner.BuildOptions(new TurnOptionsRequest(
+            AgentId: "pi", WorkingDirectory: cwd, RequireApproval: false, Sandbox: SandboxMode.DangerFullAccess,
+            ResumeSessionId: null, Model: model, McpConfigPath: null, Images: [], AttachedDocsText: "",
+            AdditionalDirectories: [], ReasoningEffort: null, ApiEnv: new Dictionary<string, string>(),
+            TaskSpoolDir: Path.Combine(cwd, "ts"), AskSpoolDir: Path.Combine(cwd, "ask"), NativeHookSpoolDirectory: null,
+            Worker: true, SessionId: "live-1", ProjectId: "proj-live"));
+
+        Assert(options.ExtraEnvironment.TryGetValue("AGENTMANAGER_ROLE", out var role) && role == "worker", "live: worker env ROLE=worker");
+        Assert(!options.ExtraEnvironment.ContainsKey("AGENTMANAGER_TASK_SPOOL"), "live: worker TASK_SPOOL withheld");
+
+        var events = new List<NormalizedEvent>();
+        var session = new AgentSession(new PiAdapter(), exe);
+        session.EventReceived += ev => { lock (events) events.Add(ev); };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(180));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        await session.RunAsync(options, "Reply with exactly: OK", cts.Token);
+        sw.Stop();
+
+        List<NormalizedEvent> snap; lock (events) snap = [.. events];
+        var started = snap.OfType<SessionStarted>().FirstOrDefault();
+        var completed = snap.OfType<TurnCompleted>().FirstOrDefault();
+        var text = string.Concat(snap.OfType<AssistantText>().Select(t => t.Text));
+        var errs = snap.OfType<EngineError>().Select(e => e.Message).ToList();
+
+        Console.WriteLine($"live: elapsed={sw.ElapsedMilliseconds}ms sessionId={started?.SessionId} completed={completed is not null} isError={completed?.IsError} text=\"{Trunc(text)}\"");
+        if (errs.Count > 0) Console.WriteLine("live: engine errors: " + string.Join(" | ", errs));
+
+        Assert(started is not null && !string.IsNullOrWhiteSpace(started.SessionId), "live: SessionStarted with sessionId");
+        Assert(started!.SessionId.Length > 0, "live: session id captured (get_state)");
+        Assert(completed is not null, "live: TurnCompleted emitted (agent_end willRetry:false)");
+        Assert(completed!.IsError == false, "live: turn completed WITHOUT error");
+        Assert(!string.IsNullOrWhiteSpace(text), "live: assistant produced text");
+        Console.WriteLine("pi-worker LIVE E2E asserts OK");
+    }
+    finally { try { Directory.Delete(cwd, true); } catch { } }
 }
 
 static async Task TestGitWorktreeAsync()
