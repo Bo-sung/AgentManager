@@ -75,8 +75,13 @@
   - fire-and-forget(notify/setStatus/setWidget/setTitle/set_editor_text)은 무시. WPF 재설계 없음.
   - 테스트: `AssertPiExtensionUi()`.
 
+- **Step 12-14 (E2E) — 부분 완료(무료 프로토콜 E2E 통과), 유료 턴 미실행.**
+  - **무료 라이브 E2E 통과**: 실제 `pi-worker --mode rpc`에 `{"type":"get_state"}` 주입(worker env 세팅) → `{"type":"response","command":"get_state","success":true,"data":{sessionId,model:{id}}}` 수신. PiAdapter의 `response/get_state→SessionStarted` 매핑이 0.80.3에서 유효. `sessionFile`=`~/.pi-worker/agent/sessions/...`(isolation 라이브 확인, `~/.pi` 미사용). worker env로 exit 0, RPC 모드 배너 억제(stdout 청정).
+  - **미실행(유료/크레덴셜)**: 실제 model 턴(위임→툴 실행→최종 보고). provider API 키 주입 필요 → 유료 호출. **사용자 승인 지점**.
+  - **회귀**: cc/gx/agy/General-pi arg/파싱 매트릭스는 스모크 green. 공유 코드 변경 영향은 아래 "주의" 참조.
+
 ## In Progress
-- (없음) — 다음 단위(Step 12-14 실제 E2E + 회귀 + 도그푸딩) 착수 예정. **실제 pi-worker 실행/토큰 소모 가능성** → 사용자 승인/비용 고려 지점.
+- (없음) — 유료 라이브 E2E는 사용자 승인 대기. 코드/무료검증/문서는 완료.
 
 ## Remaining (우선순위 순)
 1. Step 2–5 launch binding (진행 중)
@@ -122,6 +127,11 @@
 - harness 내부 구조 재탐색 불필요 — bin=`dist/cli/index.js`, 계약 문서 = `docs/AGENTMANAGER_PI_WORKER_INTEGRATION_KO.md`.
 - Step 2–5 launch binding 재구현 금지 — 위 파일들에 완료(빌드+스모크 green).
 - pi/pi-worker 실행 분기는 `PiAdapter`(exe .js 여부)와 `EngineRegistry.ResolveExe`(role)에 이미 있음.
+
+## 주의 — 공유 코드 동작 변경 (검토 지점)
+- `TurnPlanner.BuildOptions`가 이제 **모든 Worker 역할 세션**(cc/gx/agy/pi 무관)에 `AGENTMANAGER_TASK_SPOOL`을 주지 않고, `AGENTMANAGER_ROLE/SESSION_ID/PROJECT_ID/DELEGATION_DEPTH`를 준다. `AppViewModel.Run`도 worker엔 `WatchSessionTaskSpool` 미설정.
+  - 근거: 지시서 "Worker delegation depth=0, Worker에게 Main용 task spool·delegation Skill 미제공"(일반 워커 원칙).
+  - 영향: 기존 cc/gx/agy 워커도 이제 하위 위임(task-spool)을 못 함. 엔진 실행 구조(adapter/launch)는 안 건드림 → "cc/gx/agy 재설계 금지"에는 저촉 안 된다고 판단. 다만 **비-pi 워커 동작 변경**이므로, pi 워커로만 한정하고 싶으면 `BuildOptions`의 `if (!r.Worker)` 게이트를 `if (!r.Worker || r.AgentId != "pi")`류로 좁히면 됨. (현재는 일반 적용.)
 
 ## Safety Notes
 - 사용자 승인 없이 push/release/커밋 강제 금지. 커밋은 논리 단위로만, 기존 변경과 섞지 않기(현재는 clean이라 충돌 없음).
