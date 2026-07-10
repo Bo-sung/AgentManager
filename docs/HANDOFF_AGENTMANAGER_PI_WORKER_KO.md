@@ -2,8 +2,9 @@
 
 ## Last Updated
 - 2026-07-10 (KST) — 작성 에이전트: Claude (Opus 4.8)
-- 상태: Step 1 검증 + Step 2–5 launch binding + Step 8 launch 특성화 테스트 **구현·빌드·테스트 green**. 다음: Step 6/7(session discovery + skill 격리).
-- 브랜치: `feature/pi-worker-integration` (master에서 분기, GitFlow). push 안 함.
+- 상태: **Step 1~15 전부 완료**. 빌드 green, 전체 스모크 green, 실제 pi-worker 라이브 E2E(로컬 모델, 무료) 통과, orphan 0.
+- 브랜치: `feature/pi-worker-integration` (master에서 분기, GitFlow). **push/머지 안 함**(사용자 승인 대기).
+- 커밋(6): e3670a5 launch binding · a011d1a session discovery · 37cbc7f willRetry 완료판정 · 2e59f87 extension_ui cancel · 58bed05 design doc · 2709ff3 live E2E harness.
 
 ## Repository State
 - Path: `J:\prj\AgentManager`
@@ -120,8 +121,11 @@
 - `src/AgentManager.Core/Agents/PiAdapter.cs` — willRetry 완료 판정 + extension_ui_request cancel + 헤더 doc. (완료)
 - `docs/HANDOFF_AGENTMANAGER_PI_WORKER_KO.md` — 본 인계 문서. (계속 갱신)
 
-## Next Action
-- Step 12-14 실제 E2E: (1) `pi-worker`를 `npm link`(H:\Git\Bosung_PI\pi-worker-harness)해 PATH/npm-global에 올리거나, AM 설정 `PiWorkerPath`를 `H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js`로 지정. (2) provider API 키(예: `ZAI_API_KEY`/`ANTHROPIC_API_KEY`)를 AM ExtraEnvironment로 주입해야 실제 응답 — **유료 호출/승인 지점**. (3) AM에서 pi 엔진 Worker 세션 생성→위임→최종 보고 캡처, abort, `~/.pi` 미변경, orphan 프로세스 없음 확인. (4) cc/gx/agy/General-pi 회귀는 스모크로 이미 green(추가 수동 확인은 선택).
+## Next Action (모두 선택적 후속 — 핵심 통합은 완료)
+- (a) 사용자 승인 시 `feature/pi-worker-integration` → develop/master 머지 + README 갱신(master 머지 전 규칙).
+- (b) 설정 화면에 pi-worker 경로 입력 **XAML 행** 추가(VM `SettingsPiWorkerPath`/`PiWorkerDetectLabel`/`DetectPiWorkerPath` 이미 존재 — 바인딩만). 로컬라이즈 문자열 중복 x:Key 주의.
+- (c) 원격 provider 워커 실턴 지원: `CoreHelpers.ApiEnvVar("pi")` 확장 또는 워커 루트 인증 흐름(설계doc §10). 로컬 dgx-spark는 이미 동작.
+- (d) 사용자 배포 편의를 위해 `pi-worker`를 `npm i -g`/`npm link` → `ResolvePiWorker()` 자동탐지가 잡힘(현재 미설치라 `PiWorkerPath` 지정 필요).
 
 ## Do Not Repeat
 - Step 1(pi-worker 배포형태/버전/isolation) 재검증 불필요 — 위 실측값 사용.
