@@ -87,7 +87,8 @@ Worker 세션         : Task spool 미제공 · 다른 Worker 생성 불가 · A
 - `AssertPiWorkerLaunch` — node/direct 분기, 모델 pass-through, worker env 주입, TASK_SPOOL 격리, ResolveExe 역할 해석, 세션 루트 역할별, skill 주입 dir(~/.pi) 격리.
 - `AssertPiCompletionStateMachine` — willRetry:true 미완료 / false 완료 / 회복 retry 성공 / 비재시도 오류 errored / willRetry 필드 없음 완료.
 - `AssertPiExtensionUi` — blocking cancel writeback / fire-and-forget 무시.
-- **라이브 E2E(opt-in, 무료 로컬 모델)**: `AM_PIWORKER_PATH=… AM_PIWORKER_MODEL=dgx-spark/qwen3-30b-a3b dotnet run --project src/AgentManager.Smoke -- --pi-worker-live`. 실제 `PiAdapter+AgentSession`이 실제 `pi-worker` 프로세스+모델 구동 → SessionStarted/TurnCompleted(isError=false)/assistant text 검증. 실측 통과(15s, text="OK", orphan 0).
+- **라이브 E2E(opt-in, 무료 로컬 모델)**: `AM_PIWORKER_PATH=… AM_PIWORKER_MODEL=dgx-spark/qwen3-30b-a3b dotnet run --project src/AgentManager.Smoke -- --pi-worker-live`. 실제 `PiAdapter+AgentSession`이 실제 `pi-worker` 프로세스+모델 구동 → SessionStarted/TurnCompleted(isError=false)/assistant text 검증. 실측 통과(text="OK", orphan 0).
+- **검증용 로컬 Publish + GUI 시작(2026-07-11)**: `dotnet publish …AgentManager.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts\publish\pi-worker-gui-e2e`(exit 0). Published `AgentManager.exe` 실행 → WPF 창 ~2s 생성·무크래시·자동세션 없음·graceful close·orphan 0. **상호작용 위임 GUI E2E는 앱 상태(state.json) 변경 수반 + 픽셀 자동화 신뢰성 문제로 에이전트 미수행** → HANDOFF의 사용자 체크리스트로 인계(런타임은 위 헤드리스 E2E가 커버).
 
 ## 10. 알려진 한계 / 후속
 - 라이브 E2E는 로컬 dgx-spark 모델로 통과. 다른 provider(zai/anthropic 등) 실턴은 워커 루트 인증 또는 env 키 주입 필요(§10 아래).

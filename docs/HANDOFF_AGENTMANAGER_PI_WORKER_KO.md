@@ -113,9 +113,9 @@ d67ef2c docs(pi): pin fixed harness dep, finalize common worker policy, reconcil
 (이 목록을 갱신하는 최종 doc 커밋 1건이 뒤따름.)
 
 ## Merge Readiness
-- **머지 준비 상태**: 코드/문서/검증 완료. **push/merge 미수행**(사용자 승인 대기).
+- **머지 준비 상태**: 코드/문서/자동검증/검증-publish/GUI-시작검증 완료. **push/merge 미수행**(사용자 승인 대기).
 - **권장 대상**: `feature/pi-worker-integration` → `develop`(현재 `develop`==`master`==c64660f). GitFlow상 이후 release 검증 → `master`.
-- **머지 전 남은 필수**: (1) GUI 수동 E2E 1회(위 절차) · (2) master 머지 직전 README 최신 확인(프로젝트 관례). build/smoke/live-E2E 회귀는 green.
+- **머지 전 남은 필수**: (1) **상호작용 위임 GUI E2E 1회**(위 체크리스트 — 사용자 실제 인스턴스에서, 앱 상태 변경 수반이라 에이전트 미수행) · (2) master 머지 직전 README 최신 확인. build/smoke/live-E2E + 검증 publish + GUI 시작은 green.
 - **충돌 위험**: base(c64660f) 이후 feature만 진행 — develop/master가 그 자리에 있으면 fast-forward 가능.
 - **비저장소 변경**: `~/.pi-worker/agent/models.json`(dgx-spark, E2E용, 저장소 밖). 원치 않으면 삭제 가능. `~/.pi` 불변.
 
@@ -198,15 +198,23 @@ Worker 세션 (cc · gx · agy · pi 무관)
 - 이유: 무제한 재귀 위임 방지, 비용·동시성 예측 가능, `WorkerTaskStore` 경쟁 감소, 보고 경로 단순화, 엔진 native subagent와 AM Worker 혼합 방지.
 - cc/gx/agy Adapter 자체는 재설계하지 않음(정책은 role 레벨, 엔진 실행구조 불변).
 
-## GUI Verification (수동 E2E)
-- **자동 실행 안 함**: 메모리 원칙 "Single AgentManager instance only" — 사용자 프로젝트에 2번째 AM 인스턴스를 띄우면 consume-once spool + 공유 state.json이 워커 백로그를 손상시킴. 그래서 **에이전트가 GUI를 띄우지 않음**. 동일 런타임 경로(`PiAdapter+AgentSession`+실제 pi-worker)는 헤드리스 `--pi-worker-live`로 이미 검증됨.
-- **사용자 수동 절차** (한 번):
-  1. AgentManager 실행(기존 사용자 인스턴스).
-  2. 설정에서 `PiWorkerPath` = `H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js` 지정(또는 harness를 `npm link`).
-  3. Main/General 세션 생성 → Pi 엔진으로 Worker 세션 생성(위임).
-  4. 위임 프롬프트(예: "이 저장소의 README 위치를 찾아 첫 제목만 보고. 파일 수정 금지."), 모델 `dgx-spark/qwen3-30b-a3b`.
-  5. 확인: 실행 파일이 pi-worker인지 · 최종 Markdown 보고 반환 · `WorkerTaskStore`에 done+report · Main 세션에 결과 전달 · 종료 후 orphan 없음 · `~/.pi/agent` 불변 · 세션은 `~/.pi-worker`에만 생성.
-  6. 결과를 본 문서 + PI_WORKER_INTEGRATION_KO.md에 기록(일시/AM commit/harness commit/모델/결과/시간/report routing/isolation/orphan).
+## GUI Verification (검증용 로컬 Publish + 시작 검증)
+### 검증 Publish (2026-07-11)
+- command: `dotnet publish src\AgentManager\AgentManager.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts\publish\pi-worker-gui-e2e` (기존 `scripts/publish.ps1` 정책 그대로, 출력만 검증 경로로).
+- output: `artifacts\publish\pi-worker-gui-e2e\AgentManager.exe`(3.14MB, framework-dependent single-file) + `am_agy_bridge.py`. exit 0.
+- `artifacts/`는 `.gitignore`에 포함 → git 미추적(working tree clean 유지). 기존 `dist/`·설치본 **미변경**.
+### GUI 시작 검증 (에이전트 수행)
+- 실행 전 확인: 실행 중 AgentManager 프로세스 **0**(단일 인스턴스 안전).
+- 검증 exe 실행 → **~2초에 WPF 창 생성**(MainWindowHandle 유효, Title "AgentManager"), 시작 크래시 없음, 자동 시작된 세션 없음(node child 1개는 시작 시 엔진 프로브 = `pi --list-models`류, 세션 아님).
+- graceful close(WM_CLOSE) → 정상 종료, 잔여 AgentManager/pi-worker/pi 프로세스 **0**.
+- 스크린샷: 검증 exe는 설치본(`...\current\agentmanager.exe`)과 경로가 달라 screenshot 마스킹됨 → 창 존재는 확인, 내용 시각 캡처는 마스크. (시작 성공은 창 핸들/타이틀/무크래시로 확정.)
+### 상호작용 위임 E2E — 에이전트 미수행(의도적), 사용자 수동 절차로 인계
+- **미수행 사유**: (1) AM 앱 상태는 `%LocalAppData%\AgentManager\state.json`(하드코딩, env 격리 불가 — `GetFolderPath`가 env 무시)이라, GUI에서 위임을 만들면 **사용자 실제 프로젝트/세션/워커 백로그를 변경**함. (2) 다중 단계 WPF 흐름의 신뢰성 있는 픽셀 자동화가 이 환경에서 불가(창 foregrounding/마스킹 제약, 메모리 원칙). (3) 동일 런타임 경로(`PiAdapter+AgentSession`+실제 pi-worker+모델+완료판정+정리+격리)는 **헤드리스 `--pi-worker-live`로 이미 통과**(잔여 GUI 표면 = VM/WorkerTaskStore/report-routing 계층).
+- **사용자 수동 절차/체크리스트** (한 번, 사용자 실제 AM 인스턴스에서):
+  1. `PiWorkerPath` = `H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js`(또는 harness `npm link`).
+  2. Main/General 세션 → Pi 엔진 Worker 세션 위임. 모델 `dgx-spark/qwen3-30b-a3b`. 프롬프트 예: "이 저장소의 README 위치를 찾아 첫 제목만 보고. 파일 수정 금지."
+  3. 체크: ☐ Worker 세션 Role=Worker ☐ 실행 파일 pi-worker(node index.js) ☐ 상태 Queued→Running→Completed(무한 Running/중복 완료 없음) ☐ 표준 보고서 반환(Files Changed 없음) ☐ WorkerTaskStore done+report ☐ Main으로 report routing ☐ 종료 후 orphan 없음 ☐ `~/.pi/agent` 불변 ☐ 세션은 `~/.pi-worker`에만 생성.
+  4. 결과를 본 문서 + PI_WORKER_INTEGRATION_KO.md에 기록.
 
 ## 공유 코드 동작 변경 (확정 — 위 "Worker Delegation Policy" 참조)
 - `TurnPlanner.BuildOptions`가 **모든 Worker 역할 세션**(cc/gx/agy/pi 무관)에 `AGENTMANAGER_TASK_SPOOL`을 주지 않고 `AGENTMANAGER_ROLE/SESSION_ID/PROJECT_ID/DELEGATION_DEPTH=0`을 준다. `AppViewModel.Run`도 worker엔 `WatchSessionTaskSpool` 미설정. **코드=문서 일치 확인함**(`if (!r.Worker)` / `if (!s.IsWorker)`).
