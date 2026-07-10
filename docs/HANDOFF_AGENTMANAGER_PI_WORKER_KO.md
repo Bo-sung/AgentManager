@@ -62,8 +62,15 @@
   - **Skill 격리는 구성상 성립**: AM은 skill을 `~/.pi/agent/skills`(Main)에만 주입, 절대 worker 루트/`~/.agents`에 안 씀. pi-worker는 harness의 worker-task 스킬을 package로 로드. worker엔 `AGENTMANAGER_TASK_SPOOL` 미주입(Step 2-5)이라 delegation 스킬이 보여도 쓸 대상 없음. 스모크 가드 추가(`skill inject dir = ~/.pi`).
   - 알려진 한계: `~/.agents/skills`는 pi/pi-worker 공유(harness doctor가 명시). AM 기본값은 이 경로를 안 쓰므로 AM발 leak 없음. 사용자가 pi skill dir을 `~/.agents/skills`로 바꾸면 leak 가능 → 문서화.
 
+- **Step 9 (RPC 완료 상태 머신) + Step 11(abort/timeout/cleanup)** — 완료(빌드+스모크 green). **근거: 버전 정확 소스**(pi 0.80.3 `dist/core/agent-session.d.ts` + `.js`), 라이브 retry 캡처가 아님(retry는 provider 일시 오류가 있어야 관찰 가능 — 재현 불안정. 소스가 결정적).
+  - **완료 판정**: `agent_end.willRetry`(= `_willRetryAfterAgentEnd` = retry enabled ∧ attempt<maxRetries ∧ last-assistant-가-retryable-error). `agent_end`는 **시도마다 1회** 발생. `willRetry:true`면 auto-retry가 이어지므로 완료 아님 → **`willRetry:false`일 때만 `TurnCompleted`**. willRetry는 maxRetries로 bounded → 항상 종료.
+  - `PiAdapter`: `agent_end`에서 willRetry:true면 `break`(완료 안 함, 프로세스 유지). willRetry 필드 없으면 false로 간주(방어). 성공 assistant message_end면 `_turnErrored=false` 리셋(회복된 retry가 오류로 보고되지 않게).
+  - **abort/cleanup**: `AgentSession`이 취소 및 TurnCompleted 시 `proc.Kill(entireProcessTree:true)`. 하네스 spawn(`shell:true`, tree=node→cmd.exe→node, detached 아님)이라 트리 kill이 자식 official pi까지 도달 → **orphan 없음**(E2E에서 재확인 예정). graceful `{"type":"abort"}`는 선택적 후속(pi가 세션을 증분 저장하므로 hard kill로도 안전).
+  - **timeout**: 일반 턴 타임아웃 없음. 무기한 대기 위험은 blocking `extension_ui_request` → Step 12에서 즉시 deny/cancel로 차단.
+  - 테스트: `AssertPiCompletionStateMachine()` — willRetry:true 미완료, willRetry:false 완료, 회복 retry=성공, 비재시도 오류=errored, willRetry 필드 없음=완료.
+
 ## In Progress
-- (없음) — 다음 단위(Step 9 RPC 완료 상태 머신) 착수 예정. 실측 이벤트 캡처 선행 필요.
+- (없음) — 다음 단위(Step 12 extension_ui_request) 착수 예정.
 
 ## Remaining (우선순위 순)
 1. Step 2–5 launch binding (진행 중)
@@ -100,7 +107,7 @@
 - `docs/HANDOFF_AGENTMANAGER_PI_WORKER_KO.md` — 본 인계 문서. (계속 갱신)
 
 ## Next Action
-- Step 9(고위험, Main 담당): 실측 pi 0.80.3 RPC 이벤트 캡처. `pi-worker --mode rpc`에 간단 prompt를 stdin JSONL로 주고 stdout 이벤트 순서를 캡처(willRetry, agent_end 다중, compaction, queue). 캡처 근거로 `PiAdapter`의 `agent_end 즉시 kill`을 완료조건 기반으로 교체. 근거 부족 시 측정값+차단원인만 기록(임의 구현 금지).
+- Step 12: `PiAdapter`에서 `extension_ui_request`를 무시하지 말고 처리. 스키마 = pi 0.80.3 `dist/modes/rpc/rpc-types.d.ts` L374-441(`RpcExtensionUIRequest` 9종 + `RpcExtensionUIResponse`). headless worker 정책: 지원 요청은 ApprovalBroker 연결, 미지원 blocking 요청은 즉시 cancel/deny(무기한 대기 차단), abort/exit 시 pending 정리. WPF 전체 재설계 금지.
 
 ## Do Not Repeat
 - Step 1(pi-worker 배포형태/버전/isolation) 재검증 불필요 — 위 실측값 사용.

@@ -137,12 +137,26 @@ public sealed class PiAdapter : StdioJsonAdapter
                         _turnErrored = true;
                         yield return new EngineError(Str(msg, "errorMessage") ?? "pi turn error");
                     }
-                    else if (AssistantTextOf(msg) is { Length: > 0 } text)
-                        yield return new AssistantText(text.Trim());
+                    else
+                    {
+                        // A successful assistant step clears a prior (retryable) error so a recovered
+                        // auto-retry is reported as a completed turn — not a failure — at the final
+                        // agent_end. Mirrors pi's own last-assistant-message check in _willRetryAfterAgentEnd.
+                        _turnErrored = false;
+                        if (AssistantTextOf(msg) is { Length: > 0 } text)
+                            yield return new AssistantText(text.Trim());
+                    }
                 }
                 break;
 
             case "agent_end":
+                // pi 0.80.3: agent_end fires once PER attempt and carries willRetry (auto-retry pending —
+                // core/agent-session.d.ts, _willRetryAfterAgentEnd = retryEnabled && attempt<max &&
+                // last-assistant-is-retryable-error). Completing on a willRetry:true agent_end would let
+                // AgentSession kill the process mid-retry. Only willRetry:false is the real turn boundary;
+                // it always arrives eventually (the retry counter is bounded by maxRetries).
+                if (root.TryGetProperty("willRetry", out var willRetry) && willRetry.ValueKind == JsonValueKind.True)
+                    break; // retry pending — keep the process alive for the next attempt
                 yield return new TurnCompleted(null, _turnErrored, null, null, _lastUsage);
                 break;
 

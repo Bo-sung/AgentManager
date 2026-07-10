@@ -1195,6 +1195,7 @@ AssertAgySdkAdapter();
 AssertQuickReplyParser();
 AssertMarkdownFenceSplit();
 AssertPiWorkerLaunch();
+AssertPiCompletionStateMachine();
 
 static void AssertQuickReplyParser()
 {
@@ -1619,6 +1620,42 @@ static void AssertPiWorkerLaunch()
     Assert(!piSkillDir.Contains(".pi-worker") && !piSkillDir.Contains(".agents/"), "skill inject dir avoids worker/shared root");
 
     Console.WriteLine("pi/pi-worker launch + env asserts OK");
+}
+
+// Pi RPC completion state machine (Step 9): only a willRetry:false agent_end completes the turn —
+// completing on willRetry:true would let AgentSession kill the process mid auto-retry. A recovered
+// retry must report success, not the transient error. Evidence: pi 0.80.3 core/agent-session.d.ts
+// agent_end.willRetry + _willRetryAfterAgentEnd. Pure parse assertions — zero tokens.
+static void AssertPiCompletionStateMachine()
+{
+    // Sequence 1 (same adapter instance = one turn): retryable error → agent_end willRetry:true → NO
+    // completion; retry succeeds → agent_end willRetry:false → completes, not errored.
+    var a = new PiAdapter();
+    List<NormalizedEvent> Feed(string line) => a.ParseLine(line).ToList();
+
+    Feed("{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"stopReason\":\"error\",\"errorMessage\":\"429 rate limited\"}}");
+    var mid = Feed("{\"type\":\"agent_end\",\"messages\":[],\"willRetry\":true}");
+    Assert(!mid.Any(e => e is TurnCompleted), "pi: agent_end willRetry:true does NOT complete the turn");
+
+    Feed("{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"stopReason\":\"stop\",\"content\":[{\"type\":\"text\",\"text\":\"done\"}]}}");
+    var done = Feed("{\"type\":\"agent_end\",\"messages\":[],\"willRetry\":false}");
+    var tc = done.OfType<TurnCompleted>().FirstOrDefault();
+    Assert(tc is not null, "pi: agent_end willRetry:false completes the turn");
+    Assert(tc!.IsError == false, "pi: recovered auto-retry completes WITHOUT error");
+
+    // Sequence 2 (fresh adapter): non-retryable error → agent_end willRetry:false → completes errored.
+    var b = new PiAdapter();
+    b.ParseLine("{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"stopReason\":\"error\",\"errorMessage\":\"400 bad request\"}}").ToList();
+    var errDone = b.ParseLine("{\"type\":\"agent_end\",\"messages\":[],\"willRetry\":false}").ToList();
+    var etc = errDone.OfType<TurnCompleted>().FirstOrDefault();
+    Assert(etc is not null && etc.IsError, "pi: non-retryable error completes as an errored turn");
+
+    // agent_end with no willRetry field (defensive) completes the turn (treated as false).
+    var c = new PiAdapter();
+    var legacyDone = c.ParseLine("{\"type\":\"agent_end\",\"messages\":[]}").ToList();
+    Assert(legacyDone.OfType<TurnCompleted>().Any(), "pi: agent_end without willRetry completes (default false)");
+
+    Console.WriteLine("pi RPC completion state-machine asserts OK");
 }
 
 static async Task TestGitWorktreeAsync()
