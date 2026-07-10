@@ -1,18 +1,32 @@
 # AgentManager Pi Worker Handoff
 
 ## Last Updated
-- 2026-07-10 (KST) — 작성 에이전트: Claude (Opus 4.8)
-- 상태: **Step 1~15 전부 완료**. 빌드 green, 전체 스모크 green, 실제 pi-worker 라이브 E2E(로컬 모델, 무료) 통과, orphan 0.
-- 브랜치: `feature/pi-worker-integration` (master에서 분기, GitFlow). **push/머지 안 함**(사용자 승인 대기).
-- 커밋(6): e3670a5 launch binding · a011d1a session discovery · 37cbc7f willRetry 완료판정 · 2e59f87 extension_ui cancel · 58bed05 design doc · 2709ff3 live E2E harness.
+- 2026-07-11 (KST) — 작성 에이전트: Claude (Opus 4.8)
+- 상태: **핵심 Pi Worker 통합 완료 + 최종 정리(문서 정합성·정책 확정·머지 준비)**. 빌드 green, 전체 스모크 green, 실제 pi-worker 라이브 E2E(로컬 모델, 무료) 통과, orphan 0. **push/머지 안 함**(사용자 승인 대기).
 
 ## Repository State
+### Base (분기 시점)
+- Base branch: `master` (= `develop`, 둘 다 `c64660f`)
+- Base HEAD: `c64660f` — release: v1.19.5
+### Current
 - Path: `J:\prj\AgentManager`
-- Branch: `master`  (착수 시점 clean)
-- HEAD(착수): `c64660f` — release: v1.19.5
-- 외부 참고 저장소:
-  - `H:\Git\Bosung_PI\pi-worker-harness` — **완성된 Worker 런타임**. 단, git 브랜치 `feature/pi-worker-harness`에 **커밋 0개(전부 uncommitted working tree)**. dist/ 빌드 산출물 존재. AgentManager 작업과 **다른 커밋**으로 취급(섞지 말 것). 결함 확인 시에만 별도 수정.
-  - `H:\Git\Bosung_PI\pi-upstream` — Pi 원본, **읽기 전용**.
+- Current branch: `feature/pi-worker-integration`
+- Current HEAD: `ae1b5e5`(정리 커밋 추가 시 갱신됨 — 아래 Commits 섹션이 SSOT)
+- Working tree: clean(정리 작업 중 커밋마다 확인)
+- Push status: **미push**
+- Merge status: **미merge** (대상: `develop`, 이후 release→`master`)
+
+## Fixed Pi Worker Harness Dependency (고정)
+```
+Package:            @agentmanager/pi-worker-harness
+Version:            0.1.0
+Commit:             6e49dbd0f6b2858dc4d946311843ebc2ba6dde10   (H:\Git\Bosung_PI\pi-worker-harness)
+Branch:            develop   (tag 없음)
+Supported Pi:       0.80.3 (pinned; package.json pinnedSupportedPiVersion)
+Runtime entrypoint: dist/cli/index.js  (bin: pi-worker)
+```
+- harness는 **커밋 완료된 고정 외부 런타임**(이전 인계의 "커밋 0개/uncommitted" 기술은 폐기 — 이제 6e49dbd로 고정). 이번 작업에서 harness는 **읽기/버전확인만**, 수정 금지.
+- 외부 참고: `H:\Git\Bosung_PI\pi-upstream` — Pi 원본, 읽기 전용, 수정 금지.
 
 ## Original Goal
 기존 공식 `pi`는 Main/General 그대로 두고, Worker 역할일 때만 `pi-worker`(harness)로 실행하도록 AgentManager를 연동한다.
@@ -83,20 +97,37 @@
   - **회귀**: 전체 스모크(codex app-server/antigravity/claude/quick-reply/approval broker + 모든 pi/pi-worker) 동시 green(RUN_EXIT=0). General pi(non-worker)는 경로/스풀 불변.
   - **GUI 도그푸딩**: AgentManager GUI에서 pi 엔진 Worker 세션으로의 위임 도그푸딩은 사용자 몫(2번째 AM 인스턴스 금지 원칙). pi-worker 런타임 자체는 위 라이브 E2E로 반복 도그푸딩됨.
 
+## Commits (feature/pi-worker-integration, SSOT)
+`c64660f`(base master/develop) 이후:
+```
+e3670a5 feat(pi): launch pi-worker for Worker-role pi sessions
+a011d1a feat(pi): role-aware pi session discovery for worker resync
+37cbc7f fix(pi): complete turn only on agent_end willRetry:false
+2e59f87 feat(pi): cancel blocking extension_ui_request to prevent turn hang
+58bed05 docs(pi): AM-side Pi Worker integration design + handoff update
+2709ff3 test(pi): opt-in live pi-worker E2E harness + record results
+ae1b5e5 docs(pi): finalize handoff — all steps complete, follow-ups listed
+```
+(2026-07-11 정리 커밋은 이 목록 뒤에 추가됨 — 최신 목록은 `git log --oneline c64660f..HEAD`.)
+
 ## In Progress
-- (없음) — Step 1~15 모두 완료. 남은 것은 선택적 후속(설정 XAML 행, graceful abort, ApiEnvVar("pi") 멀티 provider 키 주입).
+- 없음. (핵심 통합 완료. 진행 중인 코드 작업 없음.)
 
-## Remaining (우선순위 순)
-1. Step 2–5 launch binding (진행 중)
-2. Step 6 session discovery + Step 7/10 skill·spool 격리
-3. Step 8 PiAdapter characterization test
-4. Step 9 RPC 완료 상태 머신 + Step 11 abort/timeout/cleanup (실측 캡처 선행)
-5. Step 12 extension_ui_request
-6. Step 12–14 E2E + 기존 엔진 회귀 + 도그푸딩
-7. Step 15 문서/테스트 보고 마무리
+## Remaining
+핵심 Pi Worker 통합 작업 없음.
 
-## Worker Tasks
-- (아직 없음) AgentManager Pi Worker 통합이 안정되기 전까지 `pi-worker`는 `node dist/cli/index.js`로 직접 구동해 조사/캡처에 사용. 통합 안정 후 AgentManager 경유 위임으로 전환.
+### Merge 전 필수
+1. GUI 수동 E2E 검증 (아래 "GUI Verification" 참조 — 절차 기록됨)
+2. 최종 전체 회귀 테스트 (build + smoke + 가능 시 live E2E)
+3. 문서 정합성 확인 (본 문서 + PI_WORKER_INTEGRATION_KO.md + README)
+4. README 설치 안내 갱신
+5. 사용자 승인 후 merge (`feature/pi-worker-integration` → `develop`)
+
+### 선택적 후속 (핵심 완료와 분리)
+1. Settings XAML의 Pi Worker 경로 입력 행 (VM/자동탐지/settings.json으로 이미 동작)
+2. 원격 provider 인증 환경변수 지원 (`CoreHelpers.ApiEnvVar("pi")` 확장) — 로컬 dgx-spark는 동작
+3. graceful RPC abort (`{"type":"abort"}`) — 현재 트리 kill로 안전
+4. Linux/macOS 검증 (현재 Windows 1차 대상)
 
 ## Validation
 - `node H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js --version` → exit 0, `wraps official pi 0.80.3`.
@@ -119,25 +150,54 @@
 - `src/AgentManager.Core/Workspace/CliSessionDiscovery.cs` — `PiSessionsRoot(worker)` + `DiscoverPi(worker)`. (완료)
 - `src/AgentManager/ViewModels/AppViewModel.History.cs` — resync 역할별 pi 루트. (완료)
 - `src/AgentManager.Core/Agents/PiAdapter.cs` — willRetry 완료 판정 + extension_ui_request cancel + 헤더 doc. (완료)
+- `src/AgentManager.Smoke/Program.cs` — 특성화 3종 + `--pi-worker-live` 하네스. (완료)
+- `docs/PI_WORKER_INTEGRATION_KO.md` — AM 측 설계 기록(고정 harness dep 포함). (완료)
 - `docs/HANDOFF_AGENTMANAGER_PI_WORKER_KO.md` — 본 인계 문서. (계속 갱신)
+- `README.md` — Pi Worker 설치/활성화 안내. (정리 작업에서 추가)
 
-## Next Action (모두 선택적 후속 — 핵심 통합은 완료)
-- (a) 사용자 승인 시 `feature/pi-worker-integration` → develop/master 머지 + README 갱신(master 머지 전 규칙).
-- (b) 설정 화면에 pi-worker 경로 입력 **XAML 행** 추가(VM `SettingsPiWorkerPath`/`PiWorkerDetectLabel`/`DetectPiWorkerPath` 이미 존재 — 바인딩만). 로컬라이즈 문자열 중복 x:Key 주의.
-- (c) 원격 provider 워커 실턴 지원: `CoreHelpers.ApiEnvVar("pi")` 확장 또는 워커 루트 인증 흐름(설계doc §10). 로컬 dgx-spark는 이미 동작.
-- (d) 사용자 배포 편의를 위해 `pi-worker`를 `npm i -g`/`npm link` → `ResolvePiWorker()` 자동탐지가 잡힘(현재 미설치라 `PiWorkerPath` 지정 필요).
+## Next Action
+1. (사용자) 위 "GUI Verification" 수동 절차 1회 실행 → 결과 기록.
+2. (사용자 승인 후) `feature/pi-worker-integration` → `develop` 머지. GitFlow상 이후 release 검증 → `master`. master 머지 전 README 최신화 확인.
+3. (선택) 위 "선택적 후속" 항목은 별도 이슈/브랜치로.
 
-## Do Not Repeat
-- Step 1(pi-worker 배포형태/버전/isolation) 재검증 불필요 — 위 실측값 사용.
-- 저장소 상태 복구(clean, master, HEAD c64660f) 재조사 불필요.
-- harness 내부 구조 재탐색 불필요 — bin=`dist/cli/index.js`, 계약 문서 = `docs/AGENTMANAGER_PI_WORKER_INTEGRATION_KO.md`.
-- Step 2–5 launch binding 재구현 금지 — 위 파일들에 완료(빌드+스모크 green).
-- pi/pi-worker 실행 분기는 `PiAdapter`(exe .js 여부)와 `EngineRegistry.ResolveExe`(role)에 이미 있음.
+## Do Not Repeat (완료 — 재구현 금지)
+- **Pi Worker launch binding** — `EngineRegistry.ResolveExe`(role) + `PiAdapter`(exe .js 여부 node/direct).
+- **역할별 session discovery** — `CliSessionDiscovery.PiSessionsRoot(worker)` + resync.
+- **Skill 및 spool 격리** — AM은 `~/.pi`에만 skill 주입, worker엔 TASK_SPOOL 미주입.
+- **willRetry 완료 판정** — `agent_end.willRetry==false`일 때만 완료(pi 0.80.3 소스 근거).
+- **extension_ui_request 즉시 cancel** — blocking은 `{cancelled:true}` writeback.
+- **프로세스 트리 cleanup** — `Kill(entireProcessTree:true)`가 자식 pi까지.
+- **로컬 모델 live E2E** — `--pi-worker-live`로 dgx-spark 통과(재실행은 회귀 확인용만).
+- harness 내부 구조/배포형태 재탐색 불필요 — bin=`dist/cli/index.js`, 고정 커밋 6e49dbd, 계약=`docs/AGENTMANAGER_PI_WORKER_INTEGRATION_KO.md`.
 
-## 주의 — 공유 코드 동작 변경 (검토 지점)
-- `TurnPlanner.BuildOptions`가 이제 **모든 Worker 역할 세션**(cc/gx/agy/pi 무관)에 `AGENTMANAGER_TASK_SPOOL`을 주지 않고, `AGENTMANAGER_ROLE/SESSION_ID/PROJECT_ID/DELEGATION_DEPTH`를 준다. `AppViewModel.Run`도 worker엔 `WatchSessionTaskSpool` 미설정.
-  - 근거: 지시서 "Worker delegation depth=0, Worker에게 Main용 task spool·delegation Skill 미제공"(일반 워커 원칙).
-  - 영향: 기존 cc/gx/agy 워커도 이제 하위 위임(task-spool)을 못 함. 엔진 실행 구조(adapter/launch)는 안 건드림 → "cc/gx/agy 재설계 금지"에는 저촉 안 된다고 판단. 다만 **비-pi 워커 동작 변경**이므로, pi 워커로만 한정하고 싶으면 `BuildOptions`의 `if (!r.Worker)` 게이트를 `if (!r.Worker || r.AgentId != "pi")`류로 좁히면 됨. (현재는 일반 적용.)
+## Worker Delegation Policy (확정 — AgentManager 공통)
+Pi 전용이 아니라 **모든 Worker 역할 세션의 공통 정책**이다.
+```
+Main / General 세션
+  → Task spool 사용 가능 (AGENTMANAGER_TASK_SPOOL)
+  → Worker 생성 가능
+Worker 세션 (cc · gx · agy · pi 무관)
+  → Task spool 미제공
+  → 다른 Worker 생성 불가
+  → AGENTMANAGER_DELEGATION_DEPTH = 0
+```
+- 구현: `TurnPlanner.BuildOptions`가 `!r.Worker`일 때만 `AGENTMANAGER_TASK_SPOOL` 주입, worker엔 `AGENTMANAGER_ROLE/SESSION_ID/PROJECT_ID/DELEGATION_DEPTH=0` 주입. `AppViewModel.Run`이 worker엔 `WatchSessionTaskSpool` 미설정.
+- 이유: 무제한 재귀 위임 방지, 비용·동시성 예측 가능, `WorkerTaskStore` 경쟁 감소, 보고 경로 단순화, 엔진 native subagent와 AM Worker 혼합 방지.
+- cc/gx/agy Adapter 자체는 재설계하지 않음(정책은 role 레벨, 엔진 실행구조 불변).
+
+## GUI Verification (수동 E2E)
+- **자동 실행 안 함**: 메모리 원칙 "Single AgentManager instance only" — 사용자 프로젝트에 2번째 AM 인스턴스를 띄우면 consume-once spool + 공유 state.json이 워커 백로그를 손상시킴. 그래서 **에이전트가 GUI를 띄우지 않음**. 동일 런타임 경로(`PiAdapter+AgentSession`+실제 pi-worker)는 헤드리스 `--pi-worker-live`로 이미 검증됨.
+- **사용자 수동 절차** (한 번):
+  1. AgentManager 실행(기존 사용자 인스턴스).
+  2. 설정에서 `PiWorkerPath` = `H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js` 지정(또는 harness를 `npm link`).
+  3. Main/General 세션 생성 → Pi 엔진으로 Worker 세션 생성(위임).
+  4. 위임 프롬프트(예: "이 저장소의 README 위치를 찾아 첫 제목만 보고. 파일 수정 금지."), 모델 `dgx-spark/qwen3-30b-a3b`.
+  5. 확인: 실행 파일이 pi-worker인지 · 최종 Markdown 보고 반환 · `WorkerTaskStore`에 done+report · Main 세션에 결과 전달 · 종료 후 orphan 없음 · `~/.pi/agent` 불변 · 세션은 `~/.pi-worker`에만 생성.
+  6. 결과를 본 문서 + PI_WORKER_INTEGRATION_KO.md에 기록(일시/AM commit/harness commit/모델/결과/시간/report routing/isolation/orphan).
+
+## 공유 코드 동작 변경 (확정 — 위 "Worker Delegation Policy" 참조)
+- `TurnPlanner.BuildOptions`가 **모든 Worker 역할 세션**(cc/gx/agy/pi 무관)에 `AGENTMANAGER_TASK_SPOOL`을 주지 않고 `AGENTMANAGER_ROLE/SESSION_ID/PROJECT_ID/DELEGATION_DEPTH=0`을 준다. `AppViewModel.Run`도 worker엔 `WatchSessionTaskSpool` 미설정. **코드=문서 일치 확인함**(`if (!r.Worker)` / `if (!s.IsWorker)`).
+- 이것은 **AgentManager 공통 Worker 정책으로 확정**된 것이며 Pi 전용 임시 변경이 아니다. 엔진 어댑터(cc/gx/agy) 실행 구조는 불변(정책은 role 레벨). 만약 향후 특정 엔진만 예외 처리하려면 `BuildOptions`의 `!r.Worker` 게이트를 조정하면 되지만, 현재 결정은 **전 엔진 공통 적용**이다.
 
 ## Safety Notes
 - **워커 루트 변경(사용자 승인함)**: 라이브 E2E를 위해 `~/.pi/agent/models.json` → `~/.pi-worker/agent/models.json` 복사(= 워커에 dgx-spark 로컬 provider + 그 apiKey 설정). 워커가 이제 dgx-spark로 실제 응답 가능. 원치 않으면 `~/.pi-worker/agent/models.json` 삭제(기존 백업은 `.bak.*`가 있으면 그것). `~/.pi`는 **불변**.
