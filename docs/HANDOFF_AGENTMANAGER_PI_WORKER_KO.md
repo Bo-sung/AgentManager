@@ -69,8 +69,14 @@
   - **timeout**: 일반 턴 타임아웃 없음. 무기한 대기 위험은 blocking `extension_ui_request` → Step 12에서 즉시 deny/cancel로 차단.
   - 테스트: `AssertPiCompletionStateMachine()` — willRetry:true 미완료, willRetry:false 완료, 회복 retry=성공, 비재시도 오류=errored, willRetry 필드 없음=완료.
 
+- **Step 12 (extension_ui_request)** — 완료(빌드+스모크 green). 스키마: pi 0.80.3 `rpc-types.d.ts` + `rpc-mode.js`(pendingExtensionRequests).
+  - Blocking(select/confirm/input/editor)은 응답 없으면 턴 무기한 hang → `PiAdapter`가 **즉시 `{type:extension_ui_response,id,cancelled:true}`를 stdin writeback**(EngineWriteback, UI엔 노출 안 됨). 확장은 안전 기본값(undefined/false=deny)으로 resolve.
+  - 수신 즉시 취소 → pending이 절대 안 남음 → abort/exit 시 정리할 pending 없음(무해).
+  - fire-and-forget(notify/setStatus/setWidget/setTitle/set_editor_text)은 무시. WPF 재설계 없음.
+  - 테스트: `AssertPiExtensionUi()`.
+
 ## In Progress
-- (없음) — 다음 단위(Step 12 extension_ui_request) 착수 예정.
+- (없음) — 다음 단위(Step 12-14 실제 E2E + 회귀 + 도그푸딩) 착수 예정. **실제 pi-worker 실행/토큰 소모 가능성** → 사용자 승인/비용 고려 지점.
 
 ## Remaining (우선순위 순)
 1. Step 2–5 launch binding (진행 중)
@@ -104,10 +110,11 @@
 - `src/AgentManager.Smoke/Program.cs` — `AssertPiWorkerLaunch()` 특성화 테스트(launch+env+session root+skill 격리). (완료)
 - `src/AgentManager.Core/Workspace/CliSessionDiscovery.cs` — `PiSessionsRoot(worker)` + `DiscoverPi(worker)`. (완료)
 - `src/AgentManager/ViewModels/AppViewModel.History.cs` — resync 역할별 pi 루트. (완료)
+- `src/AgentManager.Core/Agents/PiAdapter.cs` — willRetry 완료 판정 + extension_ui_request cancel + 헤더 doc. (완료)
 - `docs/HANDOFF_AGENTMANAGER_PI_WORKER_KO.md` — 본 인계 문서. (계속 갱신)
 
 ## Next Action
-- Step 12: `PiAdapter`에서 `extension_ui_request`를 무시하지 말고 처리. 스키마 = pi 0.80.3 `dist/modes/rpc/rpc-types.d.ts` L374-441(`RpcExtensionUIRequest` 9종 + `RpcExtensionUIResponse`). headless worker 정책: 지원 요청은 ApprovalBroker 연결, 미지원 blocking 요청은 즉시 cancel/deny(무기한 대기 차단), abort/exit 시 pending 정리. WPF 전체 재설계 금지.
+- Step 12-14 실제 E2E: (1) `pi-worker`를 `npm link`(H:\Git\Bosung_PI\pi-worker-harness)해 PATH/npm-global에 올리거나, AM 설정 `PiWorkerPath`를 `H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js`로 지정. (2) provider API 키(예: `ZAI_API_KEY`/`ANTHROPIC_API_KEY`)를 AM ExtraEnvironment로 주입해야 실제 응답 — **유료 호출/승인 지점**. (3) AM에서 pi 엔진 Worker 세션 생성→위임→최종 보고 캡처, abort, `~/.pi` 미변경, orphan 프로세스 없음 확인. (4) cc/gx/agy/General-pi 회귀는 스모크로 이미 green(추가 수동 확인은 선택).
 
 ## Do Not Repeat
 - Step 1(pi-worker 배포형태/버전/isolation) 재검증 불필요 — 위 실측값 사용.

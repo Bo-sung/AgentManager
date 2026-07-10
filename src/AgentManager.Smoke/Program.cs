@@ -1196,6 +1196,7 @@ AssertQuickReplyParser();
 AssertMarkdownFenceSplit();
 AssertPiWorkerLaunch();
 AssertPiCompletionStateMachine();
+AssertPiExtensionUi();
 
 static void AssertQuickReplyParser()
 {
@@ -1656,6 +1657,40 @@ static void AssertPiCompletionStateMachine()
     Assert(legacyDone.OfType<TurnCompleted>().Any(), "pi: agent_end without willRetry completes (default false)");
 
     Console.WriteLine("pi RPC completion state-machine asserts OK");
+}
+
+// Pi extension_ui_request handling (Step 12): blocking dialogs (select/confirm/input/editor) would
+// hang the turn forever with no responder, so the adapter cancels them immediately via an
+// extension_ui_response writeback (to stdin, never surfaced to the user); fire-and-forget methods
+// (notify/setStatus/setWidget/setTitle/set_editor_text) are ignored. Schema: pi 0.80.3 rpc-types.d.ts.
+static void AssertPiExtensionUi()
+{
+    // blocking confirm → immediate {cancelled:true} writeback for the same id; no error/complete.
+    var confirm = new PiAdapter()
+        .ParseLine("{\"type\":\"extension_ui_request\",\"id\":\"u1\",\"method\":\"confirm\",\"title\":\"t\",\"message\":\"m\"}")
+        .ToList();
+    var wb = confirm.OfType<EngineWriteback>().FirstOrDefault();
+    Assert(wb is not null, "pi: blocking confirm produces a writeback response");
+    Assert(wb!.Line.Contains("\"extension_ui_response\"") && wb.Line.Contains("\"id\":\"u1\"") && wb.Line.Contains("\"cancelled\":true"),
+        "pi: confirm → cancelled response for the same id");
+    Assert(!confirm.Any(e => e is TurnCompleted or EngineError), "pi: extension UI request neither errors nor completes the turn");
+
+    // select / input / editor are also blocking → cancelled.
+    foreach (var m in new[] { "select", "input", "editor" })
+    {
+        var r = new PiAdapter()
+            .ParseLine($"{{\"type\":\"extension_ui_request\",\"id\":\"x\",\"method\":\"{m}\",\"title\":\"t\"}}")
+            .ToList();
+        Assert(r.OfType<EngineWriteback>().Any(w => w.Line.Contains("\"cancelled\":true")), $"pi: {m} → cancelled");
+    }
+
+    // notify is fire-and-forget → no writeback (no indefinite wait to break).
+    var notify = new PiAdapter()
+        .ParseLine("{\"type\":\"extension_ui_request\",\"id\":\"n1\",\"method\":\"notify\",\"message\":\"hi\"}")
+        .ToList();
+    Assert(!notify.OfType<EngineWriteback>().Any(), "pi: notify is fire-and-forget (no response)");
+
+    Console.WriteLine("pi extension_ui_request asserts OK");
 }
 
 static async Task TestGitWorktreeAsync()

@@ -8,14 +8,18 @@ using static AgentManager.Core.Agents.AdapterJson;
 namespace AgentManager.Core.Agents;
 
 /// <summary>
-/// pi (pi.dev) RPC 모드 어댑터 — 골격. 실측: docs/PHASE0_PI_RPC_KO.md (pi 0.74.2).
+/// pi (pi.dev) RPC 모드 어댑터. 실측: docs/PHASE0_PI_RPC_KO.md + pi 0.80.3 dist/core·modes/rpc 타입.
 ///
-/// pi는 네이티브 exe가 아니라 node 스크립트라 <c>node dist/cli.js --mode rpc</c>로 구동한다.
+/// General/Main pi는 <c>node dist/cli.js --mode rpc</c>, Worker pi는 pi-worker의
+/// <c>node dist/cli/index.js --mode rpc</c>로 구동한다(같은 엔진/어댑터 — 실행 파일만 다름).
 /// 핸드셰이크 없음: 시작 시 stdin으로 get_state(세션 id 확보) + prompt 를 보내고,
 /// stdout JSONL 이벤트를 정규화한다. RPC 서버는 턴 후에도 살아있으므로
-/// agent_end 수신 후 AgentSession이 종료(<see cref="KillAfterTurnCompleted"/>).
+/// 완료 시 AgentSession이 종료(<see cref="KillAfterTurnCompleted"/>).
 ///
-/// 미구현/추후(실측 happy-path 검증 후): 승인(extension_ui_request) 처리, tool 스트리밍 세부.
+/// 완료 판정: <c>agent_end</c>는 시도마다 발생하며 <c>willRetry</c>가 true면 auto-retry가
+/// 이어지므로, willRetry:false일 때만 <see cref="TurnCompleted"/>를 낸다(pi 0.80.3).
+/// extension_ui_request: blocking(select/confirm/input/editor)은 즉시 cancel 응답(무기한 대기 차단),
+/// 나머지는 fire-and-forget이라 무시.
 /// </summary>
 public sealed class PiAdapter : StdioJsonAdapter
 {
@@ -164,13 +168,31 @@ public sealed class PiAdapter : StdioJsonAdapter
                 yield return new EngineError(Str(root, "error") ?? "pi extension error");
                 break;
 
+            case "extension_ui_request":
+            {
+                // pi 0.80.3 rpc-mode: select/confirm/input/editor BLOCK the turn until an
+                // extension_ui_response with the matching id arrives (dist/modes/rpc/rpc-types.d.ts +
+                // rpc-mode.js pendingExtensionRequests). A worker is headless (no user to answer) and
+                // pi's interactive dialog UI is not wired (Capabilities.Permissions=false), so an
+                // unanswered blocking request hangs the turn forever. Policy: cancel blocking requests
+                // IMMEDIATELY — the extension then resolves to its safe default (undefined/false, i.e.
+                // deny/no-op). Cancelling on receipt means nothing is ever left pending, so abort/exit
+                // cleanup is a no-op. notify/setStatus/setWidget/setTitle/set_editor_text are
+                // fire-and-forget (rpc-mode "no response needed") → ignore.
+                var method = Str(root, "method");
+                if (method is "select" or "confirm" or "input" or "editor"
+                    && Str(root, "id") is { Length: > 0 } reqId)
+                    yield return new EngineWriteback(
+                        JsonSerializer.Serialize(new { type = "extension_ui_response", id = reqId, cancelled = true }));
+                break;
+            }
+
             // 무시: agent_start, turn_start, turn_end, message_start, tool_execution_update,
-            //       queue_update, compaction_*, auto_retry_*, extension_ui_request(v1 미지원)
+            //       queue_update(steering/follow-up는 우리 단일턴 모델에서 미사용), compaction_*, auto_retry_*
             case "agent_start" or "turn_start" or "turn_end" or "message_start"
                 or "tool_execution_update" or "queue_update"
                 or "compaction_start" or "compaction_end"
-                or "auto_retry_start" or "auto_retry_end"
-                or "extension_ui_request":
+                or "auto_retry_start" or "auto_retry_end":
                 break;
 
             default:
