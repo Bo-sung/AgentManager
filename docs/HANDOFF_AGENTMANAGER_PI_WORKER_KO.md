@@ -129,11 +129,15 @@ ae1b5e5 docs(pi): finalize handoff — all steps complete, follow-ups listed
 3. graceful RPC abort (`{"type":"abort"}`) — 현재 트리 kill로 안전
 4. Linux/macOS 검증 (현재 Windows 1차 대상)
 
-## Validation
-- `node H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js --version` → exit 0, `wraps official pi 0.80.3`.
-- `node ... doctor` → exit 0, All checks passed.
-- `dotnet build AgentManager.slnx -c Release` → 경고 0/오류 0 (Step 2–5 후 재확인 green).
-- `dotnet run --project src/AgentManager.Smoke -c Release` → exit 0, `pi/pi-worker launch + env asserts OK` + 전체 스모크 green(기존 엔진 회귀 없음).
+## Validation (2026-07-11 최종)
+| command | exit | result |
+|---|---|---|
+| `dotnet build AgentManager.slnx -c Release` | 0 | 경고 0 / 오류 0 |
+| `dotnet run --project src/AgentManager.Smoke -c Release` | 0 | 전체 스모크 green — General Pi/Pi Worker(launch·env·session root·skill 격리)·willRetry 상태머신·extension UI cancel + cc/gx/agy(codex app-server/antigravity/claude)·quick-reply·approval broker 모두 통과(회귀 없음) |
+| `… --pi-worker-live` (AM_PIWORKER_PATH=harness index.js, MODEL=dgx-spark/qwen3-30b-a3b) | 0 | 실제 PiAdapter+AgentSession+pi-worker: sessionId 캡처, TurnCompleted isError=false, text="OK", 18s |
+| orphan check (Win32_Process) | — | pi-worker/pi 잔여 프로세스 0 |
+| `~/.pi/agent/auth.json` mtime | — | Jul 7(작업 전) 그대로 — **~/.pi 불변**. 세션은 `~/.pi-worker`에만 생성(get_state 실측) |
+- harness 확인: `node …/dist/cli/index.js --version` → `wraps official pi 0.80.3`; `doctor` → All checks passed(이전 실측, 고정 커밋 6e49dbd).
 
 ## Known Failures
 - (없음) 현재까지 재현되는 실패 없음.

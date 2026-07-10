@@ -23,6 +23,12 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 
 > Google 계열은 `agy` 엔진으로 일원화되었습니다(구형 standalone Gemini CLI 어댑터는 제거). **Pi**는 여러 provider를 하나로 묶는 멀티 provider 에이전트 — provider 추가·인증은 pi가 자체 관리(`~/.pi`)하고 앱은 호출·표시만 합니다. 각 엔진은 사이드바·New Agent에서 식별색으로 구분됩니다.
 
+> **Pi Worker (선택)** — Pi 엔진의 **Worker 역할** 세션은 공식 `pi` 대신 격리 런처 **pi-worker**(`@agentmanager/pi-worker-harness` 0.1.0, 공식 Pi `0.80.3` 래핑)로 실행됩니다. General/Main Pi는 그대로 `pi`를 씁니다(같은 Pi 엔진 — 별도 엔진 아님, 실행 파일만 분기).
+> - **설치**: `pi-worker-harness`를 빌드(`npm install && npm run build`) 후 전역 등록(`npm install -g <pack>` 또는 `npm link`)하거나, 빌드 산출물 `dist/cli/index.js` 경로를 직접 지정.
+> - **경로 지정**: Settings의 **PiWorkerPath**(또는 `settings.json`의 `PiWorkerPath`)에 `pi-worker` 런처/`dist/cli/index.js` 경로. **빈 값이면 자동 탐지**(전역 설치 위치).
+> - **격리**: Worker 인증·세션은 `~/.pi-worker` 기준(공식 `~/.pi` 설정은 **변경되지 않음**). Worker는 **delegation depth 0**(하위 워커 생성·task-spool 없음).
+> - 자세한 내용: [`docs/PI_WORKER_INTEGRATION_KO.md`](docs/PI_WORKER_INTEGRATION_KO.md).
+
 > **추론 강도(effort)** — 컴포저/New Agent에서 엔진별 effort 선택: cc `low~max` + **`ultracode`**(xhigh 지원 모델 한정 — Opus·Sonnet·Fable). ultracode는 `--effort` 값이 아니라 `--settings {"ultracode":true}`로 전달되어 **동적 워크플로우**(다중 서브에이전트 조율)를 구동하며, 스트림상 2턴(런치→리포트)을 **1턴으로 접어** 최종 답만 완료로 표시하고 워크플로우 서브에이전트는 **네이티브 작업자**에 관측됩니다. gx `none~xhigh` · pi `off~xhigh` · agy는 모델 label에 내장.
 
 ---
