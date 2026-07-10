@@ -98,7 +98,7 @@ Runtime entrypoint: dist/cli/index.js  (bin: pi-worker)
   - **GUI 도그푸딩**: AgentManager GUI에서 pi 엔진 Worker 세션으로의 위임 도그푸딩은 사용자 몫(2번째 AM 인스턴스 금지 원칙). pi-worker 런타임 자체는 위 라이브 E2E로 반복 도그푸딩됨.
 
 ## Commits (feature/pi-worker-integration, SSOT)
-`c64660f`(base master/develop) 이후:
+`c64660f`(base master/develop) 이후 (구현 7 + 최종정리 2, 최신 목록은 `git log --oneline c64660f..HEAD`):
 ```
 e3670a5 feat(pi): launch pi-worker for Worker-role pi sessions
 a011d1a feat(pi): role-aware pi session discovery for worker resync
@@ -107,8 +107,17 @@ a011d1a feat(pi): role-aware pi session discovery for worker resync
 58bed05 docs(pi): AM-side Pi Worker integration design + handoff update
 2709ff3 test(pi): opt-in live pi-worker E2E harness + record results
 ae1b5e5 docs(pi): finalize handoff — all steps complete, follow-ups listed
+d67ef2c docs(pi): pin fixed harness dep, finalize common worker policy, reconcile handoff
+1dfbc54 docs(pi): README Pi Worker install/enablement + record final validation
 ```
-(2026-07-11 정리 커밋은 이 목록 뒤에 추가됨 — 최신 목록은 `git log --oneline c64660f..HEAD`.)
+(이 목록을 갱신하는 최종 doc 커밋 1건이 뒤따름.)
+
+## Merge Readiness
+- **머지 준비 상태**: 코드/문서/검증 완료. **push/merge 미수행**(사용자 승인 대기).
+- **권장 대상**: `feature/pi-worker-integration` → `develop`(현재 `develop`==`master`==c64660f). GitFlow상 이후 release 검증 → `master`.
+- **머지 전 남은 필수**: (1) GUI 수동 E2E 1회(위 절차) · (2) master 머지 직전 README 최신 확인(프로젝트 관례). build/smoke/live-E2E 회귀는 green.
+- **충돌 위험**: base(c64660f) 이후 feature만 진행 — develop/master가 그 자리에 있으면 fast-forward 가능.
+- **비저장소 변경**: `~/.pi-worker/agent/models.json`(dgx-spark, E2E용, 저장소 밖). 원치 않으면 삭제 가능. `~/.pi` 불변.
 
 ## In Progress
 - 없음. (핵심 통합 완료. 진행 중인 코드 작업 없음.)
