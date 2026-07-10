@@ -208,13 +208,12 @@ Worker 세션 (cc · gx · agy · pi 무관)
 - 검증 exe 실행 → **~2초에 WPF 창 생성**(MainWindowHandle 유효, Title "AgentManager"), 시작 크래시 없음, 자동 시작된 세션 없음(node child 1개는 시작 시 엔진 프로브 = `pi --list-models`류, 세션 아님).
 - graceful close(WM_CLOSE) → 정상 종료, 잔여 AgentManager/pi-worker/pi 프로세스 **0**.
 - 스크린샷: 검증 exe는 설치본(`...\current\agentmanager.exe`)과 경로가 달라 screenshot 마스킹됨 → 창 존재는 확인, 내용 시각 캡처는 마스크. (시작 성공은 창 핸들/타이틀/무크래시로 확정.)
-### 상호작용 위임 E2E — 에이전트 미수행(의도적), 사용자 수동 절차로 인계
-- **미수행 사유**: (1) AM 앱 상태는 `%LocalAppData%\AgentManager\state.json`(하드코딩, env 격리 불가 — `GetFolderPath`가 env 무시)이라, GUI에서 위임을 만들면 **사용자 실제 프로젝트/세션/워커 백로그를 변경**함. (2) 다중 단계 WPF 흐름의 신뢰성 있는 픽셀 자동화가 이 환경에서 불가(창 foregrounding/마스킹 제약, 메모리 원칙). (3) 동일 런타임 경로(`PiAdapter+AgentSession`+실제 pi-worker+모델+완료판정+정리+격리)는 **헤드리스 `--pi-worker-live`로 이미 통과**(잔여 GUI 표면 = VM/WorkerTaskStore/report-routing 계층).
-- **사용자 수동 절차/체크리스트** (한 번, 사용자 실제 AM 인스턴스에서):
-  1. `PiWorkerPath` = `H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js`(또는 harness `npm link`).
-  2. Main/General 세션 → Pi 엔진 Worker 세션 위임. 모델 `dgx-spark/qwen3-30b-a3b`. 프롬프트 예: "이 저장소의 README 위치를 찾아 첫 제목만 보고. 파일 수정 금지."
-  3. 체크: ☐ Worker 세션 Role=Worker ☐ 실행 파일 pi-worker(node index.js) ☐ 상태 Queued→Running→Completed(무한 Running/중복 완료 없음) ☐ 표준 보고서 반환(Files Changed 없음) ☐ WorkerTaskStore done+report ☐ Main으로 report routing ☐ 종료 후 orphan 없음 ☐ `~/.pi/agent` 불변 ☐ 세션은 `~/.pi-worker`에만 생성.
-  4. 결과를 본 문서 + PI_WORKER_INTEGRATION_KO.md에 기록.
+### 상호작용 GUI E2E — **수행 완료(2026-07-11)** — 상세: [PI_WORKER_GUI_E2E_TEST_REPORT_KO.md](PI_WORKER_GUI_E2E_TEST_REPORT_KO.md)
+- 사용자 승인 하에 설치본을 사용자가 종료 → 검증 publish를 단일 인스턴스로 구동 → Published GUI에서 Pi Worker E2E 육안 검증.
+- **핵심 PASS**: New Agent→Pi+`워커로 생성`으로 Worker 세션 생성 시 **실제로 `pi-worker`(harness index.js)를 구동**(프로세스 트리 실측: AgentManager→node(pi-worker)→cmd→node(공식 pi); worker-guard 확장 주입). 상태 대기→실행중→완료(willRetry:false), 표준 보고서 + `PI_WORKER_GUI_E2E_PASS` 마커, DIFF "No changes"(읽기전용), 종료 후 orphan 0, Worker 세션은 `~/.pi-worker`에만 생성, 공식 `~/.pi` auth/settings/models 불변, 저장소 clean.
+- **모델 한계 관찰**(통합 결함 아님): 소형 로컬 qwen3-30b-a3b가 상세/모호 프롬프트에선 빈 bash만 실행 → 명시적 command-list 프롬프트로 정상 보고서 생성.
+- **미실행 1건**: TC-07 원본 Main으로의 report routing — 워커에 직접 태스킹해서 Main-위임 흐름 미사용(Main→위임 UI 제스처 미특정). routing 메커니즘 자체는 코드/스모크로 검증됨. (후속: Main-위임 1회.)
+- **비저장소 변경(사용자 승인, 백업 있음)**: `settings.json`에 PiWorkerPath 추가(백업 `.bak`), 검증용 세션 E2E-Main/E2E-PiWorker가 `state.json`에 잔존. state.json 백업 `state.json.pi-worker-gui-e2e.*.bak`. 복원은 사용자 승인 후.
 
 ## 공유 코드 동작 변경 (확정 — 위 "Worker Delegation Policy" 참조)
 - `TurnPlanner.BuildOptions`가 **모든 Worker 역할 세션**(cc/gx/agy/pi 무관)에 `AGENTMANAGER_TASK_SPOOL`을 주지 않고 `AGENTMANAGER_ROLE/SESSION_ID/PROJECT_ID/DELEGATION_DEPTH=0`을 준다. `AppViewModel.Run`도 worker엔 `WatchSessionTaskSpool` 미설정. **코드=문서 일치 확인함**(`if (!r.Worker)` / `if (!s.IsWorker)`).
