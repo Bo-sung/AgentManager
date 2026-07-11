@@ -135,8 +135,8 @@
     <sys:String x:Key="L.Privacy">Privacy</sys:String>
     <sys:String x:Key="L.OpenSettingsJson">Open settings.json</sys:String>
     <sys:String x:Key="L.OpenSettingsJsonTip">Edit settings as JSON; external changes apply live.</sys:String>
-    <sys:String x:Key="L.OpenModelsJson">Open models.json</sys:String>
-    <sys:String x:Key="L.OpenModelsJsonTip">Edit the per-engine model &amp; reasoning (effort) list as JSON; applies on restart.</sys:String>
+    <sys:String x:Key="L.OpenModelsJson">Open engines folder</sys:String>
+    <sys:String x:Key="L.OpenModelsJsonTip">engines/&lt;id&gt;.json — edit each engine's models, reasoning, path &amp; auth as JSON (one file per engine); applies on restart.</sys:String>
     <sys:String x:Key="L.ReloadSettingsJson">Reload settings</sys:String>
     <sys:String x:Key="L.ReloadSettingsJsonTip">Re-read settings.json from disk (ignored if it fails to parse; current settings kept).</sys:String>
     <sys:String x:Key="L.SettingsReloaded">Settings reloaded from disk.</sys:String>

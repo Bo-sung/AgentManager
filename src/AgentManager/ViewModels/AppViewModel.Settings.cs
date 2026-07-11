@@ -914,16 +914,15 @@ public sealed partial class AppViewModel
         catch { }
     }
 
-    /// <summary>Open the model/effort catalog (models.json) in the default editor, seeding it first if absent.
-    /// Edits apply on next app start (the catalog is loaded once at startup).</summary>
+    /// <summary>Open the per-engine config folder (engines/*.json) in the file manager. This is the source for each
+    /// engine's models/efforts/path/auth (it replaced models.json). Edits apply on next app start.</summary>
     private void OpenModelsFile()
     {
         try
         {
-            var path = AgentManager.Core.Models.ModelCatalog.DefaultPath;
-            if (!System.IO.File.Exists(path))
-                _modelCatalog.Save();
-            Shell.Open(path);
+            var dir = AgentManager.Core.Engines.EngineConfigStore.DefaultDir;
+            System.IO.Directory.CreateDirectory(dir);
+            Shell.Open(dir);
         }
         catch { }
     }
