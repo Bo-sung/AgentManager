@@ -21,6 +21,7 @@ public enum MainViewKind
     History,
     Scheduled,
     Settings,
+    ModelManager,
     Session,
 }
 
@@ -673,6 +674,7 @@ public sealed partial class AppViewModel : ObservableObject
             OnChanged(nameof(IsHistoryView));
             OnChanged(nameof(IsScheduledView));
             OnChanged(nameof(IsSettingsView));
+            OnChanged(nameof(IsModelManagerView));
             OnChanged(nameof(IsSessionView));
             OnChanged(nameof(ShowSessionPane));
             OnChanged(nameof(ShowSessionEmpty));
