@@ -2,6 +2,13 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.0
+모델 카탈로그 파일(`models.json`) + settings.json 리로드/유실 수정. (기능)
+- **모델 카탈로그 `models.json`**: 엔진별 **지원 모델 목록**과 **모델별 추론(effort) 옵션·기본값**을 사용자 편집 파일(`%LOCALAPPDATA%\AgentManager\models.json`)로 관리 → 기존 하드코딩 목록을 대체. **설정파일에 모델을 직접 추가하면 필터/드롭다운/New-Agent 피커에 그대로 뜬다**(이전엔 목록이 코드에 박혀 있어 직접 추가가 반영 안 되던 문제 해결). 모델 항목은 문자열(엔진 기본 effort 상속) 또는 `{id, efforts?, defaultEffort?}` 객체 — 추론 단계가 모델마다 다른 현실 반영(gx `gpt-5.6-luna`의 `max`, cc `ultracode` 모델 게이팅 등). pi/agy 모델 조회 시 파일 자동 갱신(기존 per-model effort 보존, 빈 결과는 덮어쓰지 않음), **선호(preferred) 모델은 settings.json 그대로 유지**. 손상/부재 시 기본값으로 재생성. 실제 GUI New-Agent 드롭다운에서 손편집 반영 E2E 확인. 진단: `dotnet run --project src/AgentManager.Smoke -- --dump-model-catalog <파일>`. 문서: `docs/MODEL_CATALOG_KO.md`.
+- **설정 UI 버튼**: `models.json 열기`(설정 폴더의 카탈로그를 기본 편집기로) · `설정 새로고침`(디스크의 settings.json 수동 리로드 — 감시가 놓쳤거나 즉시 반영 원할 때).
+- **settings.json 라이브 리로드 견고화 + 유실 버그 수정**: 손편집 중 **파싱 실패/파일 잠금 시 `Load()`가 조용히 기본값을 반환**해 감시기가 그 기본값으로 메모리의 실제 설정을 **통째로 덮어써 유실**(다음 자동저장이 확정)되던 버그 수정 — `SettingsStore.TryLoad()`가 실패를 신호(null)하고, 리로드는 **실패 시 적용하지 않고 기존 설정 유지**. `FileSystemWatcher.Error` 재무장(버퍼 오버플로 시 조용히 죽던 것 복구). 설정 화면을 열지 않아도 **전체 라이브 반영**(`OnChanged("")` — 언어만 리소스 사전 교체로 재시작 반영, 저장 경로와 동일).
+- (검증) 빌드 green · 전체 스모크 green(15 assert groups, 신규 `model catalog` 포함) · GUI E2E(모델 직접 편집 반영).
+
 ## 1.20.1
 Pi Worker 런타임 번들 + 모델 목록/커스텀 모델 개선. (기능 패치)
 - **Pi Worker 런타임 번들**: `pi-worker` 하네스 런타임을 설치본에 포함(`engines/pi-worker/` vendor → publish 출력 `runtimes/pi-worker/`) → **글로벌 npm 설치나 별도 경로 지정 없이 Pi Worker 사용 가능**. 탐지 우선순위: 사용자 override → 번들 → 글로벌 npm(레거시). vendor 소스: `@agentmanager/pi-worker-harness` 0.1.0(MIT, upstream `6e49dbd`, 런타임 npm deps 0 — 순수 node 실행). framework-dependent single-file · self-contained(Velopack) 모두 번들 포함(실측). ADR: `docs/PI_WORKER_BUNDLING_KO.md`. (참고: Custom Engine 플랫폼의 Phase A — 나머지 B~H는 후속.)
