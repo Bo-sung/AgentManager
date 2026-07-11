@@ -345,24 +345,53 @@ public sealed partial class AppViewModel
         NotifySessionModelsChanged("agy");
     }
 
-    /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
-    private string DefaultModelFor(string id) =>
-        _defaultModels.TryGetValue(id, out var m) && !string.IsNullOrWhiteSpace(m) ? m : (EngineModels(id).FirstOrDefault() ?? "");
-    /// <summary>유효한 모델만 저장 (엔진 모델 목록에 있을 때).</summary>
+    /// <summary>엔진의 기본 모델 (engines/&lt;id&gt;.json → 없으면 첫 모델; 스토어 미로드 시 레거시 폴백).</summary>
+    private string DefaultModelFor(string id)
+    {
+        var m = _engineConfig?.Get(id) is { } c ? c.DefaultModel
+            : (_defaultModels.TryGetValue(id, out var lm) ? lm : null);
+        return !string.IsNullOrWhiteSpace(m) ? m! : (EngineModels(id).FirstOrDefault() ?? "");
+    }
+    /// <summary>기본 모델을 engines/&lt;id&gt;.json에 저장 (유효한 모델만; pi는 "provider/id" 자유형식).</summary>
     private void SetDefaultModel(string id, string model)
     {
-        // pi는 멀티 provider — "provider/id" 자유형식 허용("default"/빈값은 ~/.pi 기본값 사용).
-        if (id == "pi")
-        {
-            if (!string.IsNullOrWhiteSpace(model) && model != "default") _defaultModels[id] = model;
-            else _defaultModels.Remove(id);
-            return;
-        }
-        if (!string.IsNullOrWhiteSpace(model) && Array.IndexOf(EngineModels(id), model) >= 0)
-            _defaultModels[id] = model;
-        else
-            _defaultModels.Remove(id);
+        // pi는 멀티 provider — 자유형식 허용("default"/빈값은 ~/.pi 기본값 사용); 그 외는 목록에 있을 때만.
+        string? val = id == "pi"
+            ? (!string.IsNullOrWhiteSpace(model) && model != "default" ? model : null)
+            : (!string.IsNullOrWhiteSpace(model) && Array.IndexOf(EngineModels(id), model) >= 0 ? model : null);
+        if (_engineConfig?.Get(id) is { } c) _engineConfig.Upsert(c with { DefaultModel = val });
+        else if (val is null) _defaultModels.Remove(id);
+        else _defaultModels[id] = val;
     }
+    private static readonly string[] PreferredEngines = ["cc", "gx", "agy", "pi"];
+
+    /// <summary>Load the checklist working set (_preferred[id]) from the engine config's preferred flags — engines/*.json
+    /// is authoritative. Called once the store is loaded; the checklists bind to these same HashSets.</summary>
+    private void SyncPreferredFromStore()
+    {
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig?.Get(id) is not { } c || !_preferred.TryGetValue(id, out var set)) continue;
+            set.Clear();
+            foreach (var m in c.PreferredModelIds()) set.Add(m);
+        }
+    }
+
+    /// <summary>Persist the checklist working set (_preferred[id]) back to engines/&lt;id&gt;.json — flips each model's
+    /// preferred flag and adds any custom (checklist-typed) model not yet in the list.</summary>
+    private void SyncPreferredToStore()
+    {
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig?.Get(id) is not { } c) continue;
+            var pref = _preferred.GetValueOrDefault(id) ?? [];
+            var models = c.ModelList.Select(m => m with { Preferred = pref.Contains(m.Id) }).ToList();
+            var known = new HashSet<string>(models.Select(m => m.Id), StringComparer.OrdinalIgnoreCase);
+            foreach (var m in pref) if (!known.Contains(m)) models.Add(new AgentManager.Core.Engines.EngineModelConfig(m, Preferred: true));
+            _engineConfig.Upsert(c with { Models = models });
+        }
+    }
+
     public string SettingsModelCc { get => _settingsModelCc; set => Set(ref _settingsModelCc, value); }
     private string _settingsModelCc = "";
     public string SettingsModelGx { get => _settingsModelGx; set => Set(ref _settingsModelGx, value); }
@@ -863,6 +892,7 @@ public sealed partial class AppViewModel
         SetDefaultModel("gx", SettingsModelGx);
         SetDefaultModel("agy", SettingsModelAgy);
         SetDefaultModel("pi", SettingsModelPi);
+        SyncPreferredToStore(); // "주로 쓰는 모델" 체크 상태를 engines/*.json에 반영(+ 커스텀 모델 추가)
         _accent = Theme.AccentPalette.Normalize(SettingsAccent);
         _telemetry = SettingsTelemetry;
         // 엔진 비활성 집합 재구성 — 단, 최소 1개는 활성으로 유지
