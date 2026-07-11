@@ -43,6 +43,17 @@ if (args.Contains("--worker-task-run"))
     return;
 }
 
+// Live pi-worker E2E (Step 13) — drives the REAL PiAdapter + AgentSession against a real pi-worker
+// process + model. Costs one real turn, so it is OPT-IN (not in the default run). Run in YOUR terminal:
+//   AM_PIWORKER_PATH="H:\Git\Bosung_PI\pi-worker-harness\dist\cli\index.js" \
+//   AM_PIWORKER_MODEL="dgx-spark/qwen3-30b-a3b" \
+//   dotnet run --project src/AgentManager.Smoke -- --pi-worker-live
+if (args.Contains("--pi-worker-live"))
+{
+    await PiWorkerLiveCheckAsync();
+    return;
+}
+
 if (args.Contains("--sched-create-check"))
 {
     RunSchedCreateCheck();
@@ -1194,6 +1205,9 @@ AssertAppServerAdapter();
 AssertAgySdkAdapter();
 AssertQuickReplyParser();
 AssertMarkdownFenceSplit();
+AssertPiWorkerLaunch();
+AssertPiCompletionStateMachine();
+AssertPiExtensionUi();
 
 static void AssertQuickReplyParser()
 {
@@ -1518,6 +1532,234 @@ static void AssertSandboxAndModelArgs()
     }
     finally { Directory.Delete(extra); }
     Console.WriteLine("sandbox/model/mcp/add-dir arg asserts OK");
+}
+
+// Pi Worker launch binding characterization (Step 8): the ONE pi adapter serves both General pi
+// (dist/cli.js) and Worker pi-worker (dist/cli/index.js) by node-vs-direct branching; ResolveExe
+// picks the executable by role; BuildOptions injects the worker identity and withholds the
+// delegation task-spool from workers (delegation depth 0). Locks behavior before the RPC state
+// machine change. Pure arg/env assertions — zero tokens, no process spawned.
+static void AssertPiWorkerLaunch()
+{
+    var cwd = Environment.CurrentDirectory;
+
+    // 1) General pi: .js executable → `node <cli.js> --mode rpc` + model pass-through.
+    var pi = new PiAdapter().BuildStartInfo(@"C:\x\pi-coding-agent\dist\cli.js",
+        new SessionOptions { WorkingDirectory = cwd, Model = "zai/glm-4.7" }, "p");
+    Assert(pi.FileName == "node", "pi: cli.js runs via node");
+    Assert(pi.ArgumentList.Contains(@"C:\x\pi-coding-agent\dist\cli.js"), "pi: cli.js path passed to node");
+    Assert(pi.ArgumentList.Contains("--mode") && pi.ArgumentList.Contains("rpc"), "pi: --mode rpc");
+    Assert(pi.ArgumentList.Contains("--model") && pi.ArgumentList.Contains("zai/glm-4.7"), "pi: --model pass-through");
+
+    // 2) Worker pi-worker: .js launcher → `node <index.js> --mode rpc`, same adapter, worker env forwarded.
+    var pw = new PiAdapter().BuildStartInfo(@"C:\x\pi-worker-harness\dist\cli\index.js",
+        new SessionOptions
+        {
+            WorkingDirectory = cwd,
+            ExtraEnvironment = new Dictionary<string, string>
+            {
+                ["AGENTMANAGER_ROLE"] = "worker",
+                ["AGENTMANAGER_SESSION_ID"] = "w1",
+                ["AGENTMANAGER_DELEGATION_DEPTH"] = "0",
+            },
+        }, "p");
+    Assert(pw.FileName == "node", "pi-worker: index.js runs via node");
+    Assert(pw.ArgumentList[0].EndsWith("index.js"), "pi-worker: launcher path passed to node");
+    Assert(pw.ArgumentList.Contains("--mode") && pw.ArgumentList.Contains("rpc"), "pi-worker: --mode rpc");
+    Assert(pw.Environment["AGENTMANAGER_ROLE"] == "worker", "pi-worker: worker env injected");
+    Assert(pw.Environment["AGENTMANAGER_DELEGATION_DEPTH"] == "0", "pi-worker: delegation depth 0");
+
+    // 3) Override to a real (non-.js) executable/shim → run directly (contract: `pi-worker --mode rpc`).
+    var direct = new PiAdapter().BuildStartInfo(@"C:\tools\pi-worker.exe",
+        new SessionOptions { WorkingDirectory = cwd }, "p");
+    Assert(direct.FileName == @"C:\tools\pi-worker.exe", "pi-worker: non-.js override runs directly");
+    Assert(!direct.ArgumentList.Contains(@"C:\tools\pi-worker.exe"), "pi-worker: direct exe not re-passed as arg");
+    Assert(direct.ArgumentList[0] == "--mode" && direct.ArgumentList[1] == "rpc", "pi-worker: direct --mode rpc");
+
+    // 4) ResolveExe picks executable by role.
+    var mainExe = EngineRegistry.ResolveExe("pi", piPath: @"C:\pi\dist\cli.js", piWorker: false);
+    Assert(mainExe == @"C:\pi\dist\cli.js", "ResolveExe pi (General) → piPath");
+    var workerExe = EngineRegistry.ResolveExe("pi", piPath: @"C:\pi\dist\cli.js",
+        piWorker: true, piWorkerPath: @"C:\pw\dist\cli\index.js");
+    Assert(workerExe == @"C:\pw\dist\cli\index.js", "ResolveExe pi (Worker) → piWorkerPath");
+
+    // 5) BuildOptions: worker withholds TASK_SPOOL + injects identity; non-worker keeps TASK_SPOOL, no ROLE.
+    var tmp = Path.Combine(Path.GetTempPath(), "am_pw_" + Guid.NewGuid().ToString("N")[..8]);
+    TurnOptionsRequest Req(bool worker) => new(
+        AgentId: "pi", WorkingDirectory: cwd, RequireApproval: false, Sandbox: SandboxMode.DangerFullAccess,
+        ResumeSessionId: null, Model: null, McpConfigPath: null, Images: [], AttachedDocsText: "",
+        AdditionalDirectories: [], ReasoningEffort: null, ApiEnv: new Dictionary<string, string>(),
+        TaskSpoolDir: Path.Combine(tmp, "ts"), AskSpoolDir: Path.Combine(tmp, "ask"), NativeHookSpoolDirectory: null,
+        Worker: worker, SessionId: worker ? "w1" : "", ProjectId: worker ? "proj1" : "");
+    try
+    {
+        var mainOpts = TurnPlanner.BuildOptions(Req(false));
+        Assert(mainOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_TASK_SPOOL"), "main: TASK_SPOOL present");
+        Assert(!mainOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_ROLE"), "main: no worker ROLE");
+
+        var workerOpts = TurnPlanner.BuildOptions(Req(true));
+        Assert(!workerOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_TASK_SPOOL"), "worker: TASK_SPOOL withheld");
+        Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_ROLE"] == "worker", "worker: ROLE=worker");
+        Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_SESSION_ID"] == "w1", "worker: SESSION_ID");
+        Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_PROJECT_ID"] == "proj1", "worker: PROJECT_ID");
+        Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_DELEGATION_DEPTH"] == "0", "worker: DELEGATION_DEPTH=0");
+        Assert(workerOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_ASK_SPOOL"), "worker: ASK_SPOOL present");
+    }
+    finally { try { Directory.Delete(tmp, true); } catch { } }
+
+    // 6) Session discovery root is role-aware: General pi → ~/.pi, Worker pi → ~/.pi-worker
+    //    (PIWORKER_HOME override honored). Same PiSessionDirName encoding for both.
+    var mainRoot = CliSessionDiscovery.PiSessionsRoot(worker: false);
+    var workerRoot = CliSessionDiscovery.PiSessionsRoot(worker: true);
+    Assert(mainRoot.Replace('\\', '/').EndsWith(".pi/agent/sessions"), "pi session root → ~/.pi");
+    Assert(workerRoot.Replace('\\', '/').EndsWith(".pi-worker/agent/sessions"), "pi-worker session root → ~/.pi-worker");
+    var prev = Environment.GetEnvironmentVariable("PIWORKER_HOME");
+    try
+    {
+        Environment.SetEnvironmentVariable("PIWORKER_HOME", @"C:\custom\wh");
+        var overridden = CliSessionDiscovery.PiSessionsRoot(worker: true).Replace('\\', '/');
+        Assert(overridden == "C:/custom/wh/agent/sessions", "pi-worker session root honors PIWORKER_HOME");
+    }
+    finally { Environment.SetEnvironmentVariable("PIWORKER_HOME", prev); }
+    Assert(CliSessionDiscovery.PiSessionDirName(@"J:\prj\AgentManager") == "--J--prj-AgentManager--",
+        "PiSessionDirName encoding unchanged for both roles");
+
+    // 7) Skill isolation by construction: AgentManager injects user skills into the MAIN pi config
+    //    (~/.pi/agent/skills), never the worker root or the shared ~/.agents root. pi-worker loads
+    //    its worker-task skill from the harness package, so no Main/delegation skill reaches it.
+    var piSkillDir = AgentManager.Core.SkillInjector.DefaultDirs()["pi"].Replace('\\', '/');
+    Assert(piSkillDir.EndsWith(".pi/agent/skills"), "skill inject dir = main pi (~/.pi)");
+    Assert(!piSkillDir.Contains(".pi-worker") && !piSkillDir.Contains(".agents/"), "skill inject dir avoids worker/shared root");
+
+    Console.WriteLine("pi/pi-worker launch + env asserts OK");
+}
+
+// Pi RPC completion state machine (Step 9): only a willRetry:false agent_end completes the turn —
+// completing on willRetry:true would let AgentSession kill the process mid auto-retry. A recovered
+// retry must report success, not the transient error. Evidence: pi 0.80.3 core/agent-session.d.ts
+// agent_end.willRetry + _willRetryAfterAgentEnd. Pure parse assertions — zero tokens.
+static void AssertPiCompletionStateMachine()
+{
+    // Sequence 1 (same adapter instance = one turn): retryable error → agent_end willRetry:true → NO
+    // completion; retry succeeds → agent_end willRetry:false → completes, not errored.
+    var a = new PiAdapter();
+    List<NormalizedEvent> Feed(string line) => a.ParseLine(line).ToList();
+
+    Feed("{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"stopReason\":\"error\",\"errorMessage\":\"429 rate limited\"}}");
+    var mid = Feed("{\"type\":\"agent_end\",\"messages\":[],\"willRetry\":true}");
+    Assert(!mid.Any(e => e is TurnCompleted), "pi: agent_end willRetry:true does NOT complete the turn");
+
+    Feed("{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"stopReason\":\"stop\",\"content\":[{\"type\":\"text\",\"text\":\"done\"}]}}");
+    var done = Feed("{\"type\":\"agent_end\",\"messages\":[],\"willRetry\":false}");
+    var tc = done.OfType<TurnCompleted>().FirstOrDefault();
+    Assert(tc is not null, "pi: agent_end willRetry:false completes the turn");
+    Assert(tc!.IsError == false, "pi: recovered auto-retry completes WITHOUT error");
+
+    // Sequence 2 (fresh adapter): non-retryable error → agent_end willRetry:false → completes errored.
+    var b = new PiAdapter();
+    b.ParseLine("{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"stopReason\":\"error\",\"errorMessage\":\"400 bad request\"}}").ToList();
+    var errDone = b.ParseLine("{\"type\":\"agent_end\",\"messages\":[],\"willRetry\":false}").ToList();
+    var etc = errDone.OfType<TurnCompleted>().FirstOrDefault();
+    Assert(etc is not null && etc.IsError, "pi: non-retryable error completes as an errored turn");
+
+    // agent_end with no willRetry field (defensive) completes the turn (treated as false).
+    var c = new PiAdapter();
+    var legacyDone = c.ParseLine("{\"type\":\"agent_end\",\"messages\":[]}").ToList();
+    Assert(legacyDone.OfType<TurnCompleted>().Any(), "pi: agent_end without willRetry completes (default false)");
+
+    Console.WriteLine("pi RPC completion state-machine asserts OK");
+}
+
+// Pi extension_ui_request handling (Step 12): blocking dialogs (select/confirm/input/editor) would
+// hang the turn forever with no responder, so the adapter cancels them immediately via an
+// extension_ui_response writeback (to stdin, never surfaced to the user); fire-and-forget methods
+// (notify/setStatus/setWidget/setTitle/set_editor_text) are ignored. Schema: pi 0.80.3 rpc-types.d.ts.
+static void AssertPiExtensionUi()
+{
+    // blocking confirm → immediate {cancelled:true} writeback for the same id; no error/complete.
+    var confirm = new PiAdapter()
+        .ParseLine("{\"type\":\"extension_ui_request\",\"id\":\"u1\",\"method\":\"confirm\",\"title\":\"t\",\"message\":\"m\"}")
+        .ToList();
+    var wb = confirm.OfType<EngineWriteback>().FirstOrDefault();
+    Assert(wb is not null, "pi: blocking confirm produces a writeback response");
+    Assert(wb!.Line.Contains("\"extension_ui_response\"") && wb.Line.Contains("\"id\":\"u1\"") && wb.Line.Contains("\"cancelled\":true"),
+        "pi: confirm → cancelled response for the same id");
+    Assert(!confirm.Any(e => e is TurnCompleted or EngineError), "pi: extension UI request neither errors nor completes the turn");
+
+    // select / input / editor are also blocking → cancelled.
+    foreach (var m in new[] { "select", "input", "editor" })
+    {
+        var r = new PiAdapter()
+            .ParseLine($"{{\"type\":\"extension_ui_request\",\"id\":\"x\",\"method\":\"{m}\",\"title\":\"t\"}}")
+            .ToList();
+        Assert(r.OfType<EngineWriteback>().Any(w => w.Line.Contains("\"cancelled\":true")), $"pi: {m} → cancelled");
+    }
+
+    // notify is fire-and-forget → no writeback (no indefinite wait to break).
+    var notify = new PiAdapter()
+        .ParseLine("{\"type\":\"extension_ui_request\",\"id\":\"n1\",\"method\":\"notify\",\"message\":\"hi\"}")
+        .ToList();
+    Assert(!notify.OfType<EngineWriteback>().Any(), "pi: notify is fire-and-forget (no response)");
+
+    Console.WriteLine("pi extension_ui_request asserts OK");
+}
+
+// Live E2E: real PiAdapter + AgentSession + real pi-worker process + real (local/free) model.
+// Exercises the FULL pipeline: node spawn -> RPC framing -> get_state->SessionStarted -> prompt ->
+// streaming deltas -> agent_end(willRetry:false) -> TurnCompleted -> process-tree cleanup. Confirms
+// the worker env is injected and the delegation task-spool is withheld. Opt-in (see dispatch above).
+static async Task PiWorkerLiveCheckAsync()
+{
+    var piWorkerPath = Environment.GetEnvironmentVariable("AM_PIWORKER_PATH") ?? "";
+    var model = Environment.GetEnvironmentVariable("AM_PIWORKER_MODEL") ?? "dgx-spark/qwen3-30b-a3b";
+    var exe = EngineRegistry.ResolveExe("pi", piWorker: true, piWorkerPath: piWorkerPath);
+    if (exe is null || !File.Exists(exe))
+    {
+        Console.WriteLine($"SKIP pi-worker-live: pi-worker not resolvable (set AM_PIWORKER_PATH; got '{piWorkerPath}').");
+        return;
+    }
+    Console.WriteLine($"pi-worker-live: exe={exe}\n                model={model}");
+
+    var cwd = Path.Combine(Path.GetTempPath(), "am_pw_live_" + Guid.NewGuid().ToString("N")[..8]);
+    Directory.CreateDirectory(cwd);
+    try
+    {
+        var options = TurnPlanner.BuildOptions(new TurnOptionsRequest(
+            AgentId: "pi", WorkingDirectory: cwd, RequireApproval: false, Sandbox: SandboxMode.DangerFullAccess,
+            ResumeSessionId: null, Model: model, McpConfigPath: null, Images: [], AttachedDocsText: "",
+            AdditionalDirectories: [], ReasoningEffort: null, ApiEnv: new Dictionary<string, string>(),
+            TaskSpoolDir: Path.Combine(cwd, "ts"), AskSpoolDir: Path.Combine(cwd, "ask"), NativeHookSpoolDirectory: null,
+            Worker: true, SessionId: "live-1", ProjectId: "proj-live"));
+
+        Assert(options.ExtraEnvironment.TryGetValue("AGENTMANAGER_ROLE", out var role) && role == "worker", "live: worker env ROLE=worker");
+        Assert(!options.ExtraEnvironment.ContainsKey("AGENTMANAGER_TASK_SPOOL"), "live: worker TASK_SPOOL withheld");
+
+        var events = new List<NormalizedEvent>();
+        var session = new AgentSession(new PiAdapter(), exe);
+        session.EventReceived += ev => { lock (events) events.Add(ev); };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(180));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        await session.RunAsync(options, "Reply with exactly: OK", cts.Token);
+        sw.Stop();
+
+        List<NormalizedEvent> snap; lock (events) snap = [.. events];
+        var started = snap.OfType<SessionStarted>().FirstOrDefault();
+        var completed = snap.OfType<TurnCompleted>().FirstOrDefault();
+        var text = string.Concat(snap.OfType<AssistantText>().Select(t => t.Text));
+        var errs = snap.OfType<EngineError>().Select(e => e.Message).ToList();
+
+        Console.WriteLine($"live: elapsed={sw.ElapsedMilliseconds}ms sessionId={started?.SessionId} completed={completed is not null} isError={completed?.IsError} text=\"{Trunc(text)}\"");
+        if (errs.Count > 0) Console.WriteLine("live: engine errors: " + string.Join(" | ", errs));
+
+        Assert(started is not null && !string.IsNullOrWhiteSpace(started.SessionId), "live: SessionStarted with sessionId");
+        Assert(started!.SessionId.Length > 0, "live: session id captured (get_state)");
+        Assert(completed is not null, "live: TurnCompleted emitted (agent_end willRetry:false)");
+        Assert(completed!.IsError == false, "live: turn completed WITHOUT error");
+        Assert(!string.IsNullOrWhiteSpace(text), "live: assistant produced text");
+        Console.WriteLine("pi-worker LIVE E2E asserts OK");
+    }
+    finally { try { Directory.Delete(cwd, true); } catch { } }
 }
 
 static async Task TestGitWorktreeAsync()

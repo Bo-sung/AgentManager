@@ -35,7 +35,11 @@ public sealed record EngineResolveRequest(
     string? CodexPath,
     string? AgyPath,
     string? PiPath,
-    Func<string?> ResolvePython);
+    Func<string?> ResolvePython,
+    // Worker-role pi resolves the pi-worker harness instead of official pi (same engine/adapter).
+    // For any other engine/role these are ignored.
+    bool Worker = false,
+    string? PiWorkerPath = null);
 
 /// <summary>Inputs to assemble a turn's <see cref="SessionOptions"/>. Pure data — a CLI frontend would
 /// fill the same record. The spool dirs are created and pointed at via env; the native-hook command is
@@ -55,7 +59,14 @@ public sealed record TurnOptionsRequest(
     IReadOnlyDictionary<string, string> ApiEnv,
     string TaskSpoolDir,
     string AskSpoolDir,
-    string? NativeHookSpoolDirectory);
+    string? NativeHookSpoolDirectory,
+    // Worker-role identity forwarded to the engine (pi-worker's worker-guard reads AGENTMANAGER_*).
+    // When Worker is true the delegation task-spool is withheld (workers have delegation depth 0).
+    bool Worker = false,
+    string SessionId = "",
+    string ProjectId = "",
+    string? TaskId = null,
+    string? PiWorkerHome = null);
 
 /// <summary>Headless turn-setup: the engine-resolution decision tree and the <see cref="SessionOptions"/>
 /// assembly lifted out of the WPF run loop (<c>AppViewModel.Run.cs:RunTurnAsync</c>). No UI types, no
@@ -80,7 +91,8 @@ public static class TurnPlanner
         }
 
         var adapter = EngineRegistry.CreateAdapter(r.AgentId, r.RequireApproval);
-        var exePath = EngineRegistry.ResolveExe(r.AgentId, r.ClaudePath, r.CodexPath, r.AgyPath, r.PiPath);
+        var exePath = EngineRegistry.ResolveExe(r.AgentId, r.ClaudePath, r.CodexPath, r.AgyPath, r.PiPath,
+            piWorker: r.AgentId == "pi" && r.Worker, piWorkerPath: r.PiWorkerPath);
         return adapter is null || exePath is null
             ? EngineResolution.Fail(EngineSetupError.EngineUnavailable)
             : new EngineResolution(adapter, exePath, EngineSetupError.None);
@@ -92,13 +104,29 @@ public static class TurnPlanner
     /// command for gx/cc. Mirrors the original SessionOptions initializer + WithTaskSpoolEnv exactly.</summary>
     public static SessionOptions BuildOptions(TurnOptionsRequest r)
     {
-        try { Directory.CreateDirectory(r.TaskSpoolDir); } catch { }
         try { Directory.CreateDirectory(r.AskSpoolDir); } catch { }
         var env = new Dictionary<string, string>(r.ApiEnv)
         {
-            ["AGENTMANAGER_TASK_SPOOL"] = r.TaskSpoolDir,
             ["AGENTMANAGER_ASK_SPOOL"] = r.AskSpoolDir,
         };
+        // Delegation (task) spool is a Main capability — a worker must not spawn further tasks
+        // (delegation depth = 0). Only non-worker sessions get AGENTMANAGER_TASK_SPOOL.
+        if (!r.Worker)
+        {
+            try { Directory.CreateDirectory(r.TaskSpoolDir); } catch { }
+            env["AGENTMANAGER_TASK_SPOOL"] = r.TaskSpoolDir;
+        }
+        else
+        {
+            // Worker identity for pi-worker's worker-guard (harness contract). Harmless extra env for
+            // cc/gx/agy workers. TASK_ID is optional (best-effort); the rest are always set.
+            env["AGENTMANAGER_ROLE"] = "worker";
+            env["AGENTMANAGER_SESSION_ID"] = r.SessionId;
+            env["AGENTMANAGER_PROJECT_ID"] = r.ProjectId;
+            env["AGENTMANAGER_DELEGATION_DEPTH"] = "0";
+            if (!string.IsNullOrWhiteSpace(r.TaskId)) env["AGENTMANAGER_TASK_ID"] = r.TaskId!;
+            if (!string.IsNullOrWhiteSpace(r.PiWorkerHome)) env["PIWORKER_HOME"] = r.PiWorkerHome!;
+        }
 
         return new SessionOptions
         {

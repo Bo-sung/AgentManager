@@ -26,6 +26,7 @@ public sealed partial class AppViewModel
         _codexPath = s.CodexPath;
         _agyPath = s.AgyPath;
         _piPath = s.PiPath;
+        _piWorkerPath = s.PiWorkerPath;
         foreach (var kv in s.PreferredModels ?? new())
             if (_preferred.TryGetValue(kv.Key, out var set)) { set.Clear(); foreach (var m in kv.Value) set.Add(m); }
         _ollamaEndpoint = string.IsNullOrWhiteSpace(s.OllamaEndpoint) ? _ollamaEndpoint : s.OllamaEndpoint;
@@ -76,6 +77,7 @@ public sealed partial class AppViewModel
         CodexPath = _codexPath,
         AgyPath = _agyPath,
         PiPath = _piPath,
+        PiWorkerPath = _piWorkerPath,
         PreferredModels = _preferred.Where(kv => kv.Value.Count > 0).ToDictionary(kv => kv.Key, kv => kv.Value.ToArray()),
         OllamaEndpoint = _ollamaEndpoint,
         OllamaModel = _ollamaModel,
