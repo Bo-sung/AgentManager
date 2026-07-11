@@ -2,6 +2,15 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.1
+자기 업데이트가 스스로 막히던 버그 수정 — 설치 폴더(`current\`) 잠금. (버그 패치)
+- **버그**: Velopack은 앱을 **설치 폴더(`…\current\`)를 작업 디렉터리로** 실행한다. 그래서 앱, 그리고 그 cwd를 **상속한 자식**(특히 장수 서버 `ollama serve`)이 `current\`를 붙들면, 업데이트 때 Velopack이 그 폴더를 교체하지 못하고("파일 사용 중", code 32) **이전 버전으로 롤백**된다. 특히 설정의 **`실행(serve)` 버튼**으로 띄운 ollama가 앱 종료 후 **고아로 남아 폴더를 무기한 잠가** 모든 자기 업데이트가 실패했다(실측: 고아 `ollama.exe`의 cwd = `…\current\`).
+- **수정**:
+  - 앱 시작 시 작업 디렉터리를 `…\current\` **밖(안정적 데이터 폴더)** 으로 이동 → 앱도, cwd를 상속한 자식도 설치 폴더를 잠그지 않음(우리 파일 접근은 절대경로/`AppContext.BaseDirectory` 사용).
+  - `실행` 버튼의 ollama에 **명시적 작업 디렉터리** 지정.
+  - 앱이 **직접 띄운** ollama만 참조를 기억해 **앱 종료/업데이트 직전에 그것만** 정리(트리 종료). **사용자가 직접(데스크톱·서비스·터미널) 켠 외부 ollama는 HTTP로만 통신하며 절대 건드리지 않음.**
+- **적용 시점**: 이 수정은 **이 버전 이상을 설치한 뒤부터** 효과가 있다. 기존 1.20.x/1.21.0에서 이미 폴더가 잠겨 업데이트가 막혔다면, **PC 재부팅**(또는 해당 고아 ollama 종료)으로 잠금을 한 번 푼 뒤 `업데이트 확인 → 적용`으로 넘어오면 **이후로는 재발하지 않는다**.
+
 ## 1.21.0
 모델 카탈로그 파일(`models.json`) + settings.json 리로드/유실 수정. (기능)
 - **모델 카탈로그 `models.json`**: 엔진별 **지원 모델 목록**과 **모델별 추론(effort) 옵션·기본값**을 사용자 편집 파일(`%LOCALAPPDATA%\AgentManager\models.json`)로 관리 → 기존 하드코딩 목록을 대체. **설정파일에 모델을 직접 추가하면 필터/드롭다운/New-Agent 피커에 그대로 뜬다**(이전엔 목록이 코드에 박혀 있어 직접 추가가 반영 안 되던 문제 해결). 모델 항목은 문자열(엔진 기본 effort 상속) 또는 `{id, efforts?, defaultEffort?}` 객체 — 추론 단계가 모델마다 다른 현실 반영(gx `gpt-5.6-luna`의 `max`, cc `ultracode` 모델 게이팅 등). pi/agy 모델 조회 시 파일 자동 갱신(기존 per-model effort 보존, 빈 결과는 덮어쓰지 않음), **선호(preferred) 모델은 settings.json 그대로 유지**. 손상/부재 시 기본값으로 재생성. 실제 GUI New-Agent 드롭다운에서 손편집 반영 E2E 확인. 진단: `dotnet run --project src/AgentManager.Smoke -- --dump-model-catalog <파일>`. 문서: `docs/MODEL_CATALOG_KO.md`.
