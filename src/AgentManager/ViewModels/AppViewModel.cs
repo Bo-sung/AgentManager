@@ -750,9 +750,16 @@ public sealed partial class AppViewModel : ObservableObject
     /// <summary>New Agent 엔진 피커용 — 각 엔진 + 설치 여부(수동 경로/PATH 반영). 폼 열 때 새로 계산.</summary>
     public IReadOnlyList<EngineOptionVm> NewAgentEngineOptions =>
         Engines.Select(d => new EngineOptionVm(d,
-            EngineRegistry.IsInstalled(d.Id, _claudePath, _codexPath, _agyPath, _piPath),
+            IsEngineInstalled(d.Id),
             IsEngineLimited(d.Id),
             WillUseApiOnLimit(d.Id))).ToList();
+
+    /// <summary>Whether an engine is runnable in the picker. Built-ins: the CLI auto-detects. Custom engines have
+    /// no CLI detection — they are "installed" when their manifest defines a launch exe (so the tile is selectable).</summary>
+    private bool IsEngineInstalled(string id) =>
+        _engineConfig?.Get(id) is { Source: "custom" } c
+            ? !string.IsNullOrWhiteSpace(c.Launch?.Exe)
+            : EngineRegistry.IsInstalled(id, _claudePath, _codexPath, _agyPath, _piPath);
 
     // ----- 설치 & 세팅 가이드 모달 (Resources/Guide.<lang>.md를 MarkdownViewer로 렌더) -----
     private bool _showInstallGuide;
