@@ -11,16 +11,8 @@ namespace AgentManager.Core.Engines;
 /// </summary>
 public static class DefaultEngineConfig
 {
-    /// <summary>Protocol/adapter kind for each built-in engine (drives the future AdapterFactory in Phase B; stored
-    /// now so the schema is stable). Kept in sync with <see cref="EngineRegistry.CreateAdapter"/>.</summary>
-    public static string AdapterKindFor(string id) => id switch
-    {
-        "cc" => "claude-stream-json",
-        "gx" => "codex-json",
-        "agy" => "agy-pty",
-        "pi" => "pi-rpc",
-        _ => "",
-    };
+    /// <summary>Protocol/adapter kind for each built-in engine — single source is <see cref="EngineRegistry.BuiltinAdapterKind"/>.</summary>
+    public static string AdapterKindFor(string id) => EngineRegistry.BuiltinAdapterKind(id);
 
     public static IReadOnlyList<EngineConfig> Build()
     {

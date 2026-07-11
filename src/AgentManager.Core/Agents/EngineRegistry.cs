@@ -43,15 +43,21 @@ public static class EngineRegistry
 
     public static EngineDef Get(string id) => Array.Find(All, e => e.Id == id) ?? All[0];
 
-    /// <summary>requireApproval인 codex는 app-server 경로(Stage 2 승인 게이트), 아니면 기존 exec --json.</summary>
-    public static IAgentAdapter? CreateAdapter(string id, bool requireApproval = false) => id switch
+    /// <summary>Adapter kind (protocol) for a built-in engine id. Single source of truth, also used to seed
+    /// engines/&lt;id&gt;.json (DefaultEngineConfig). Empty = unknown/custom (resolved from its manifest instead).</summary>
+    public static string BuiltinAdapterKind(string id) => id switch
     {
-        "cc" => new ClaudeAdapter(),
-        "gx" => requireApproval ? new CodexAppServerAdapter() : new CodexAdapter(),
-        "agy" => new AgyAdapter(),
-        "pi" => new PiAdapter(),
-        _ => null,
+        "cc" => "claude-stream-json",
+        "gx" => "codex-json",
+        "agy" => "agy-pty",
+        "pi" => "pi-rpc",
+        _ => "",
     };
+
+    /// <summary>Create the adapter for a BUILT-IN engine id (resolves its kind, then delegates to
+    /// <see cref="AdapterFactory"/>). Custom engines create their adapter from the manifest's adapterKind directly.</summary>
+    public static IAgentAdapter? CreateAdapter(string id, bool requireApproval = false) =>
+        AdapterFactory.Create(BuiltinAdapterKind(id), requireApproval);
 
     private static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 

@@ -1910,6 +1910,16 @@ static void AssertEngineConfig()
         Assert(edited.Remove("qwen-local"), "engine-cfg: custom engine removable");
         Assert(!File.Exists(Path.Combine(dir, "qwen-local.json")), "engine-cfg: removed custom file deleted");
 
+        // 5) AdapterFactory dispatches on adapterKind (P3); built-in id wrapper still resolves
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("claude-stream-json") is AgentManager.Core.Agents.ClaudeAdapter, "adapter-factory: claude-stream-json");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("codex-json", false) is AgentManager.Core.Agents.CodexAdapter, "adapter-factory: codex-json → exec");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("codex-json", true) is AgentManager.Core.Agents.CodexAppServerAdapter, "adapter-factory: codex-json+approval → app-server");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("agy-pty") is AgentManager.Core.Agents.AgyAdapter, "adapter-factory: agy-pty");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("pi-rpc") is AgentManager.Core.Agents.PiAdapter, "adapter-factory: pi-rpc");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("nope") is null, "adapter-factory: unknown → null");
+        Assert(AgentManager.Core.Agents.EngineRegistry.CreateAdapter("gx", true) is AgentManager.Core.Agents.CodexAppServerAdapter, "engine-registry: gx id wrapper still works");
+        Assert(AgentManager.Core.Agents.EngineRegistry.BuiltinAdapterKind("cc") == "claude-stream-json", "engine-registry: builtin adapterKind map");
+
         Console.WriteLine("engine config asserts OK");
     }
     finally { try { Directory.Delete(dir, recursive: true); } catch { } }
