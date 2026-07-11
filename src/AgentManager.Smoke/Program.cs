@@ -1256,6 +1256,7 @@ AssertPiWorkerLaunch();
 AssertPiCompletionStateMachine();
 AssertPiExtensionUi();
 AssertModelCatalog();
+AssertEngineConfig();
 
 static void AssertQuickReplyParser()
 {
@@ -1853,6 +1854,57 @@ static void AssertModelCatalog()
         Console.WriteLine("model catalog asserts OK");
     }
     finally { try { File.Delete(tmp); } catch { } }
+}
+
+static void AssertEngineConfig()
+{
+    var dir = Path.Combine(Path.GetTempPath(), "am_ec_" + Guid.NewGuid().ToString("N")[..8]);
+    try
+    {
+        var defaults = AgentManager.Core.Engines.DefaultEngineConfig.Build();
+
+        // 1) fresh dir -> seed one file per built-in engine
+        var store = AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir);
+        Assert(File.Exists(Path.Combine(dir, "cc.json")), "engine-cfg: seeds engines/cc.json when missing");
+        Assert(store.All.Count >= 4, "engine-cfg: built-ins seeded (cc/gx/agy/pi)");
+        Assert(store.All[0].Id == "cc", "engine-cfg: stable order, cc first");
+        var cc = store.Get("cc")!;
+        Assert(cc.Source == "builtin" && cc.AdapterKind == "claude-stream-json", "engine-cfg: cc identity/adapterKind seeded");
+        Assert(cc.ModelIds().Contains("opus"), "engine-cfg: cc models seeded");
+        Assert(cc.EffortsFor("opus").Contains("ultracode"), "engine-cfg: cc opus per-model efforts include ultracode");
+        Assert(cc.DefaultEffortFor("opus") == "medium", "engine-cfg: cc opus default effort");
+        Assert(!store.Get("agy")!.HasEfforts && cc.HasEfforts, "engine-cfg: HasEfforts agy=false, cc=true");
+
+        // 2) Upsert a CUSTOM engine -> saved + reload sees it
+        var custom = new AgentManager.Core.Engines.EngineConfig(
+            Id: "qwen-local", Name: "Qwen (local)", Source: "custom", AdapterKind: "one-shot-text",
+            Launch: new AgentManager.Core.Engines.EngineLaunchConfig("ollama", ["run", "qwen2.5-coder"]),
+            DefaultEfforts: [],
+            Models: [new AgentManager.Core.Engines.EngineModelConfig("qwen2.5-coder", Preferred: true)]);
+        store.Upsert(custom);
+        Assert(File.Exists(Path.Combine(dir, "qwen-local.json")), "engine-cfg: custom engine file written");
+        var reloaded = AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir);
+        Assert(reloaded.Get("qwen-local") is { Source: "custom" }, "engine-cfg: custom engine reloaded from disk");
+        Assert(reloaded.Get("qwen-local")!.PreferredModelIds().Contains("qwen2.5-coder"), "engine-cfg: preferred model persisted");
+
+        // 3) directly-edited built-in file is honored (path override + a preferred model added by hand)
+        File.WriteAllText(Path.Combine(dir, "gx.json"),
+            "{\"id\":\"gx\",\"name\":\"Codex\",\"source\":\"builtin\",\"adapterKind\":\"codex-json\",\"path\":\"C:/custom/codex.exe\"," +
+            "\"defaultEfforts\":[\"low\",\"high\"],\"models\":[{\"id\":\"gpt-5.6-luna\",\"efforts\":[\"low\",\"high\",\"max\"],\"preferred\":true}]}");
+        var edited = AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir);
+        Assert(edited.Get("gx")!.Path == "C:/custom/codex.exe", "engine-cfg: hand-edited path override honored");
+        Assert(edited.Get("gx")!.ModelIds().Contains("gpt-5.6-luna"), "engine-cfg: hand-added model appears");
+        Assert(edited.Get("gx")!.EffortsFor("gpt-5.6-luna").Contains("max"), "engine-cfg: hand-edited per-model efforts honored");
+        Assert(edited.Get("gx")!.PreferredModelIds().Contains("gpt-5.6-luna"), "engine-cfg: preferred flag from file");
+
+        // 4) Remove drops only custom engines
+        Assert(!edited.Remove("cc"), "engine-cfg: built-in is not removable");
+        Assert(edited.Remove("qwen-local"), "engine-cfg: custom engine removable");
+        Assert(!File.Exists(Path.Combine(dir, "qwen-local.json")), "engine-cfg: removed custom file deleted");
+
+        Console.WriteLine("engine config asserts OK");
+    }
+    finally { try { Directory.Delete(dir, recursive: true); } catch { } }
 }
 
 static async Task TestGitWorktreeAsync()
