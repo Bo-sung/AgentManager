@@ -89,6 +89,24 @@ public sealed class EngineConfigStore
         try { Save(cfg); } catch { /* best-effort */ }
     }
 
+    /// <summary>Replace an engine's model list from a live query (pi <c>--list-models</c> / agy <c>agy models</c>).
+    /// Existing per-model efforts/default/preferred are PRESERVED for surviving ids; new ids get defaults. Empty
+    /// query is a no-op (never wipes). Persists + returns true only when the id set actually changed.</summary>
+    public bool UpdateModelsFromQuery(string engineId, IReadOnlyList<string> queriedModelIds)
+    {
+        if (queriedModelIds.Count == 0) return false;
+        if (!_byId.TryGetValue(engineId, out var cfg)) return false;
+        var byId = cfg.ModelList.ToDictionary(m => m.Id, StringComparer.OrdinalIgnoreCase);
+        var oldIds = cfg.ModelList.Select(m => m.Id);
+        if (cfg.ModelList.Count == queriedModelIds.Count && oldIds.SequenceEqual(queriedModelIds, StringComparer.OrdinalIgnoreCase))
+            return false; // unchanged
+        var merged = queriedModelIds.Select(id => byId.TryGetValue(id, out var prev) ? prev : new EngineModelConfig(id)).ToArray();
+        var updated = cfg with { Models = merged };
+        _byId[engineId] = updated;
+        try { Save(updated); } catch { /* best-effort */ }
+        return true;
+    }
+
     /// <summary>Delete a custom engine (built-ins are not removed — they'd just re-seed). Removes the file.</summary>
     public bool Remove(string id)
     {

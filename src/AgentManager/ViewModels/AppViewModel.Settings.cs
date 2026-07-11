@@ -218,8 +218,8 @@ public sealed partial class AppViewModel
     public string[] GxModels => DropdownModelsFor("gx");
     public string[] AgyModels => DropdownModelsFor("agy");
     public string[] PiModels => DropdownModelsFor("pi");
-    // 엔진 모델 목록은 models.json 카탈로그에서(하드코딩 대체) — 사용자가 파일 편집으로 추가 가능.
-    private string[] EngineModels(string id) => [.. _modelCatalog.ModelsFor(id)];
+    // 엔진 모델 목록은 엔진별 config(engines/*.json)에서 — 사용자가 파일 편집으로 추가 가능. 미로드 시 카탈로그 폴백(P1c).
+    private string[] EngineModels(string id) => _engineConfig?.Get(id) is { } c ? [.. c.ModelIds()] : [.. _modelCatalog.ModelsFor(id)];
 
     // ----- "주로 쓰는 모델" — 엔진별 선호 집합(설정 영속) + 체크리스트(cc/gx/agy/pi 공통) -----
     private Dictionary<string, HashSet<string>> _preferred => _settings.Preferred;
@@ -301,7 +301,7 @@ public sealed partial class AppViewModel
             _piCatalog.Clear();
             _piCatalog.AddRange(cat.Models);
             _piProviders = cat.Providers;
-            _modelCatalog.UpdateFromQuery("pi", cat.Models); // 조회 결과가 다르면 models.json의 pi 항목 갱신(요구사항)
+            _engineConfig?.UpdateModelsFromQuery("pi", cat.Models); // 조회 결과가 다르면 engines/pi.json 모델 목록 갱신
             PiChecklist.SetModels(_piCatalog);
             PiModelsStatus = cat.Models.Count > 0 ? App.L("L.ModelsFound", cat.Models.Count) : App.L("L.NoModels");
         }
@@ -335,7 +335,7 @@ public sealed partial class AppViewModel
             var models = await EngineRegistry.QueryAgyModelsAsync(_agyPath);
             _agyCatalog.Clear();
             _agyCatalog.AddRange(models);
-            if (models.Count > 0) _modelCatalog.UpdateFromQuery("agy", ["default", .. models]); // models.json의 agy 항목 갱신
+            if (models.Count > 0) _engineConfig?.UpdateModelsFromQuery("agy", ["default", .. models]); // engines/agy.json 모델 목록 갱신
             AgyChecklist.SetModels(_agyCatalog.Count > 0 ? ["default", .. _agyCatalog] : EngineModels("agy"));
             AgyModelsStatus = models.Count > 0 ? App.L("L.ModelsFound", models.Count) : App.L("L.NoModels");
         }

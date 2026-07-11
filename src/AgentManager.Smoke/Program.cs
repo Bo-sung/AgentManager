@@ -1898,6 +1898,13 @@ static void AssertEngineConfig()
         Assert(edited.Get("gx")!.EffortsFor("gpt-5.6-luna").Contains("max"), "engine-cfg: hand-edited per-model efforts honored");
         Assert(edited.Get("gx")!.PreferredModelIds().Contains("gpt-5.6-luna"), "engine-cfg: preferred flag from file");
 
+        // 3.5) live query updates the model list (preserve survivors' efforts, add new, empty = no-op)
+        Assert(!edited.UpdateModelsFromQuery("pi", []), "engine-cfg: empty query is a no-op");
+        Assert(edited.UpdateModelsFromQuery("pi", ["default", "zai/glm-9.9"]), "engine-cfg: query updates the model list");
+        Assert(edited.Get("pi")!.ModelIds().Contains("zai/glm-9.9"), "engine-cfg: newly-queried model present");
+        Assert(edited.Get("pi")!.EffortsFor("default").Contains("off"), "engine-cfg: surviving model keeps its efforts after query");
+        Assert(AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir).Get("pi")!.ModelIds().Contains("zai/glm-9.9"), "engine-cfg: query update persisted");
+
         // 4) Remove drops only custom engines
         Assert(!edited.Remove("cc"), "engine-cfg: built-in is not removable");
         Assert(edited.Remove("qwen-local"), "engine-cfg: custom engine removable");
