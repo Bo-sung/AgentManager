@@ -70,15 +70,11 @@ public sealed partial class AppViewModel
         Theme.AccentPalette.Apply(_accent);
     }
 
-    /// <summary>현재 설정을 settings.json DTO로 직렬화.</summary>
+    /// <summary>현재 설정을 settings.json DTO로 직렬화 — <b>공통(전역) 설정만</b>. 엔진별 설정(경로/모델 기본·선호/
+    /// skillDir/인증/enabled)은 engines/*.json, 런타임 상태(Usage/차단시각/숨긴 세션)는 state.json에 각각 기록한다.</summary>
     private AppSettingsDto BuildSettingsDto() => new()
     {
-        ClaudePath = _claudePath,
-        CodexPath = _codexPath,
-        AgyPath = _agyPath,
-        PiPath = _piPath,
-        PiWorkerPath = _piWorkerPath,
-        PreferredModels = _preferred.Where(kv => kv.Value.Count > 0).ToDictionary(kv => kv.Key, kv => kv.Value.ToArray()),
+        PiWorkerPath = _piWorkerPath, // pi-worker는 아직 config 엔진 아님(P3) → 여기 유지
         OllamaEndpoint = _ollamaEndpoint,
         OllamaModel = _ollamaModel,
         OllamaTimeoutSeconds = _settings.OllamaTimeoutSeconds,
@@ -87,7 +83,6 @@ public sealed partial class AppViewModel
         MaxConcurrentWorkers = MaxConcurrentWorkers,
         WorkerBehaviorPreamble = WorkerBehaviorPreamble,
         SkillContent = _skillContent,
-        SkillDirs = new Dictionary<string, string>(_skillDirs),
         ReviewPaneOpen = IsReviewOpen,
         WarnNoWorktree = _warnNoWorktree,
         Theme = _theme,
@@ -98,16 +93,10 @@ public sealed partial class AppViewModel
         WorktreeBase = _worktreeBase,
         AutoStartLastSession = _autoStartLastSession,
         StreamLogs = _settings.StreamLogs,
-        DefaultModels = new Dictionary<string, string>(_defaultModels),
         Accent = _accent,
         BodyScale = _bodyScale,
         ModalScale = _modalScale,
         Telemetry = _telemetry,
-        DisabledEngines = _disabledEngines.ToList(),
-        EngineAuthMode = _engineAuth.SnapshotAuthMode(),
-        EngineApiKey = _engineAuth.SnapshotApiKey(),
-        EngineAutoApiOnLimit = _engineAuth.SnapshotAutoApi(),
-        // 런타임 상태(Usage / EngineLimitedUntil / DismissedCliSessions)는 이제 state.json에 기록 — 여기서 제외.
     };
 
     /// <summary>Load the per-engine config store, migrating legacy settings.json per-engine keys + models.json into
