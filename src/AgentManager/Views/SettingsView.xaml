@@ -340,7 +340,7 @@
                                                                     </Border>
                                                                     <StackPanel VerticalAlignment="Center">
                                                                         <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}"/>
-                                                                        <TextBlock FontSize="10" Foreground="{DynamicResource Txt2}"><Run Text="custom · "/><Run Text="{Binding AdapterKind}"/></TextBlock>
+                                                                        <TextBlock FontSize="10" Foreground="{DynamicResource Txt2}" Text="{Binding AdapterKind, Mode=OneWay, StringFormat='custom · {0}'}"/>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </DockPanel>
