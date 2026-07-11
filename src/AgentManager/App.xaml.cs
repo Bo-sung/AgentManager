@@ -47,11 +47,23 @@ public partial class App : Application
     private const uint SEM_FAILCRITICALERRORS = 0x0001;
     private const uint SEM_NOGPFAULTERRORBOX = 0x0002;
 
+    /// <summary>Pre-create the per-engine config folder (%LOCALAPPDATA%\AgentManager\engines) — from the Velopack
+    /// install/update hooks and every startup — so it always exists (its parents are created too). Best-effort.</summary>
+    private static void EnsureDataDirs()
+    {
+        try { System.IO.Directory.CreateDirectory(AgentManager.Core.Engines.EngineConfigStore.DefaultDir); } catch { }
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         // Velopack: handle install/update/uninstall hooks (the installer/updater relaunches us with special args).
         // MUST run before any real startup work; on a hook it does its job and exits, so normal launch continues below.
-        VelopackApp.Build().Run();
+        // Pre-create the data + engines/ folders at install AND update, so the per-engine config folder always
+        // exists (e.g. to drop in a custom-engine manifest before first launch).
+        VelopackApp.Build()
+            .OnAfterInstallFastCallback(_ => EnsureDataDirs())
+            .OnAfterUpdateFastCallback(_ => EnsureDataDirs())
+            .Run();
 
         // Velopack launches us with the working directory set to the install folder (…\current\). If we keep it,
         // the process — and any child spawned without an explicit WorkingDirectory (notably the long-running,
@@ -67,6 +79,8 @@ public partial class App : Application
             Environment.CurrentDirectory = dataDir;
         }
         catch { /* cwd move is best-effort */ }
+
+        EnsureDataDirs(); // also guarantee engines/ exists on every normal launch (belt for install/update hooks)
 
         SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
