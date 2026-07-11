@@ -29,9 +29,8 @@ public sealed partial class AppViewModel
     {
         ModelManagerEngines.Clear();
         if (_engineConfig is null) return;
-        foreach (var id in new[] { "cc", "gx", "agy", "pi" })
+        foreach (var c in _engineConfig.All) // built-in + custom
         {
-            if (_engineConfig.Get(id) is not { } c) continue;
             var section = new EngineModelsVm(c.Id, c.Name, c.HasEfforts, draft => AddManagedModels(c.Id, draft));
             foreach (var m in c.ModelList) section.Models.Add(BuildManagedRow(c, m));
             ModelManagerEngines.Add(section);

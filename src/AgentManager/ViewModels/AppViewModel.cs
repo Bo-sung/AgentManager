@@ -83,7 +83,14 @@ public sealed partial class AppViewModel : ObservableObject
     public ObservableCollection<ScheduledJobViewModel> ScheduledJobs { get; } = [];
     public ObservableCollection<HistoryRowViewModel> HistoryRows { get; } = [];
     /// <summary>레지스트리에서 활성화된 전체 엔진 (설정 카드·모델 조회용 — 사용자 비활성과 무관).</summary>
-    public EngineDef[] AllEngines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
+    private EngineDef[]? _allEnginesCache;
+    /// <summary>All engines — built-in + custom (engines/*.json) — for settings cards, model query, and the picker
+    /// source (independent of user-disable). Cached; <see cref="RefreshEngines"/> invalidates on engine-set change.</summary>
+    public EngineDef[] AllEngines => _allEnginesCache ??= BuildAllEngines();
+    private EngineDef[] BuildAllEngines() => _engineConfig?.All is { Count: > 0 } list
+        ? [.. list.Select(c => new EngineDef(c.Id, string.IsNullOrEmpty(c.Badge) ? c.Id.ToUpperInvariant() : c.Badge, c.Name, c.Cli, [.. c.ModelIds()], c.Desc, true, c.InstallUrl))]
+        : Array.FindAll(EngineRegistry.All, e => e.Enabled);
+    private void RefreshEngines() { _allEnginesCache = null; OnChanged(nameof(AllEngines)); OnChanged(nameof(Engines)); }
     private HashSet<string> _disabledEngines => _settings.DisabledEngines;
     /// <summary>New Agent 피커에 노출할 엔진 (사용자가 비활성한 것 제외).</summary>
     public IEnumerable<EngineDef> Engines => Array.FindAll(AllEngines, e => !_disabledEngines.Contains(e.Id));
@@ -112,8 +119,8 @@ public sealed partial class AppViewModel : ObservableObject
         SessionViewModel.EffortOptionsProvider = (eng, model) => _engineConfig?.Get(eng) is { } c ? [.. c.EffortsFor(model)] : [.. _modelCatalog.EffortsFor(eng, model)];
         SessionViewModel.HasEffortProvider = eng => _engineConfig?.Get(eng) is { } c ? c.HasEfforts : _modelCatalog.HasEfforts(eng);
         SessionViewModel.DefaultEffortProvider = (eng, model) => _engineConfig?.Get(eng) is { } c ? c.DefaultEffortFor(model) : _modelCatalog.DefaultEffortFor(eng, model);
-        NewAgentSelectedEngine = AllEngines[0];
         RestoreState();
+        NewAgentSelectedEngine = AllEngines[0]; // after RestoreState so the engine set (incl. custom) is loaded
         // 복원된 pi/agy 세션이 있으면 실제 카탈로그를 로드해 컴포저 목록을 채운다(설정을 열지 않아도).
         if (_allSessions.Any(s => s.AgentId == "pi")) _ = QueryPiModelsAsync();
         if (_allSessions.Any(s => s.AgentId == "agy")) _ = QueryAgyModelsAsync();

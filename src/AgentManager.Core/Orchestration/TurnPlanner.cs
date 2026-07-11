@@ -39,7 +39,12 @@ public sealed record EngineResolveRequest(
     // Worker-role pi resolves the pi-worker harness instead of official pi (same engine/adapter).
     // For any other engine/role these are ignored.
     bool Worker = false,
-    string? PiWorkerPath = null);
+    string? PiWorkerPath = null,
+    // Custom engine (source=custom in engines/<id>.json): its protocol + resolved exe + launch arg template.
+    // When CustomExe is set the built-in engine/exe resolution is bypassed. Built-in engines leave these null.
+    string? AdapterKind = null,
+    string? CustomExe = null,
+    IReadOnlyList<string>? CustomArgs = null);
 
 /// <summary>Inputs to assemble a turn's <see cref="SessionOptions"/>. Pure data — a CLI frontend would
 /// fill the same record. The spool dirs are created and pointed at via env; the native-hook command is
@@ -88,6 +93,15 @@ public static class TurnPlanner
             if (!File.Exists(AgySdkAdapter.BridgeScriptPath)) return EngineResolution.Fail(EngineSetupError.AgyBridgeMissing);
             if (!r.HasApiKey) return EngineResolution.Fail(EngineSetupError.AgyKeyMissing);
             return new EngineResolution(new AgySdkAdapter(), exe, EngineSetupError.None);
+        }
+
+        // Custom engine: create its adapter from the manifest's protocol + launch args; exe is the resolved path.
+        if (r.CustomExe is { Length: > 0 })
+        {
+            var customAdapter = AdapterFactory.CreateCustom(r.AgentId, r.AdapterKind, r.CustomArgs ?? [], r.RequireApproval);
+            return customAdapter is null
+                ? EngineResolution.Fail(EngineSetupError.EngineUnavailable)
+                : new EngineResolution(customAdapter, r.CustomExe, EngineSetupError.None);
         }
 
         var adapter = EngineRegistry.CreateAdapter(r.AgentId, r.RequireApproval);

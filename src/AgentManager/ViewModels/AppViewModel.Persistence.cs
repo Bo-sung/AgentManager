@@ -177,6 +177,7 @@ public sealed partial class AppViewModel
         SyncPreferredFromStore(); // engines/*.json is authoritative for the "preferred" checklist working set
         SyncAuthFromStore();      // and for per-engine auth (mode / api key / auto-api)
         SyncEngineFlagsFromStore(); // and for enabled + skill-dir
+        RefreshEngines(); // engine set now includes any custom engines from engines/*.json
         var state = AppStateStore.Load();
         ApplyRuntimeState(state); // Usage / rate-limit cooldowns / dismissed CLI sessions now live in state.json (migrated from settings)
         if (state is null || state.Projects.Count == 0)
