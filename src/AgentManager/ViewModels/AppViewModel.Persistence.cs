@@ -458,10 +458,10 @@ public sealed partial class AppViewModel
             return; // 우리가 쓴 내용과 동일 → 외부 변경 아님
         }
         ApplySettings(disk);
-        OnChanged(nameof(BodyScale));
-        OnChanged(nameof(ModalScale));
-        OnChanged(nameof(BodyScalePercent));
-        OnChanged(nameof(ModalScalePercent));
+        // 설정 화면을 열지 않은 상태에서도 파생 바인딩(엔진 목록·배율·정책 등)이 즉시 반영되도록 전체 리프레시.
+        // WPF에서 null/"" 프로퍼티명은 "모든 속성 변경"을 의미해 이 VM에 걸린 모든 바인딩을 재평가시킨다.
+        // (언어 전환만은 리소스 사전 교체가 필요해 재시작 시 반영 — 저장 경로와 동일한 정책.)
+        OnChanged(string.Empty);
         if (CurrentView == MainViewKind.Settings) PullSettingsToEditor();
         if (manual) SettingsStatus = AgentManager.App.L("L.SettingsReloaded");
     }
