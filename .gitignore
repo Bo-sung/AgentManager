@@ -498,3 +498,8 @@ package-lock.json
 docs/DESIGN_HANDOFF_*.md
 docs/*_PROMPT*.md
 docs/*_DESIGN_BRIEF.md
+
+# Vendored pi-worker runtime — MUST be tracked despite the global "dist/" ignore above.
+!engines/pi-worker/
+!engines/pi-worker/dist/
+!engines/pi-worker/dist/**

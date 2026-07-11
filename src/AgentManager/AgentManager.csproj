@@ -14,6 +14,12 @@
     <!-- Antigravity SDK bridge (agy API mode): plain Python helper shipped next to the app so the
          AgySdkAdapter can spawn it. AgySdkAdapter.BridgeScriptPath resolves this copy at runtime. -->
     <None Include="..\..\tools\am_agy_bridge.py" CopyToOutputDirectory="PreserveNewest" Link="am_agy_bridge.py" />
+    <!-- Bundled Pi Worker runtime (vendored @agentmanager/pi-worker-harness — see engines/pi-worker/NOTICE.md).
+         Copied to <output>/runtimes/pi-worker/ so the Pi Worker engine works with NO global npm install.
+         Runs on plain Node (harness has no runtime npm deps); resolved by EngineRegistry.BundledPiWorker(). -->
+    <None Include="..\..\engines\pi-worker\**\*"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="runtimes\pi-worker\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
