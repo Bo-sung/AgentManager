@@ -45,6 +45,8 @@ public sealed partial class AppViewModel
     public RelayCommand QueryOllamaModelsCommand { get; private set; } = null!;
     /// <summary>`pi --list-models`로 pi 모델/연동 provider 조회(강제 새로고침).</summary>
     public RelayCommand QueryPiModelsCommand { get; private set; } = null!;
+    /// <summary>`agy models`로 agy 모델 목록 조회(강제 새로고침).</summary>
+    public RelayCommand QueryAgyModelsCommand { get; private set; } = null!;
     /// <summary>엔진 CLI 경로 자동 탐지(파라미터 = cc|gx|agy|pi) → 경로 입력란 채우기.</summary>
     public RelayCommand DetectEnginePathCommand { get; private set; } = null!;
 
@@ -52,6 +54,7 @@ public sealed partial class AppViewModel
     {
         QueryOllamaModelsCommand = new RelayCommand(_ => _ = QueryOllamaModelsAsync());
         QueryPiModelsCommand = new RelayCommand(_ => _ = QueryPiModelsAsync(force: true));
+        QueryAgyModelsCommand = new RelayCommand(_ => _ = QueryAgyModelsAsync(force: true));
         DetectEnginePathCommand = new RelayCommand(p => { if (p is string id) DetectEnginePath(id); });
         ZoomInCommand = new RelayCommand(_ => ZoomBy(+1));
         ZoomOutCommand = new RelayCommand(_ => ZoomBy(-1));

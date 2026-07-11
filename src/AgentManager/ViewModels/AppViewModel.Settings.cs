@@ -244,7 +244,8 @@ public sealed partial class AppViewModel
             if (pref is { Count: > 0 }) return ["default", .. pref.OrderBy(m => m, StringComparer.OrdinalIgnoreCase)];
             return _piCatalog.Count > 0 ? [.. _piCatalog] : EngineModels("pi");
         }
-        var all = EngineModels(id);
+        // agy는 `agy models` 동적 카탈로그(로드됐으면)를 기반으로, 없으면 정적 목록. "default"(--model 생략)는 항상 앞에.
+        var all = id == "agy" && _agyCatalog.Count > 0 ? ["default", .. _agyCatalog] : EngineModels(id);
         if (pref is not { Count: > 0 }) return all;
         // custom = 사용자가 설정에서 추가한 세부 버전(정적 별칭 목록에 없는 것) → 항상 드롭다운에 더한다.
         var custom = pref.Where(m => !all.Contains(m)).OrderBy(m => m, StringComparer.OrdinalIgnoreCase).ToArray();
@@ -289,6 +290,32 @@ public sealed partial class AppViewModel
     private void NotifySessionModelsChanged(string engineId)
     {
         foreach (var s in _allSessions.Where(s => s.AgentId == engineId)) s.RaiseAvailableModelsChanged();
+    }
+
+    // agy: `agy models` 동적 카탈로그 — 하드코딩 대체(라벨 그대로 --model). pi 조회와 동일 패턴.
+    private readonly List<string> _agyCatalog = [];
+    private bool _agyCatalogLoaded;
+    private string _agyModelsStatus = "";
+    public string AgyModelsStatus { get => _agyModelsStatus; private set => Set(ref _agyModelsStatus, value); }
+
+    /// <summary>`agy models`로 모델 목록을 조회(첫 호출만; force로 강제 새로고침) — cc/gx는 CLI 목록 커맨드가 없어 조회 불가.</summary>
+    public async Task QueryAgyModelsAsync(bool force = false)
+    {
+        if (_agyCatalogLoaded && !force) return;
+        _agyCatalogLoaded = true;
+        AgyModelsStatus = App.L("L.Querying");
+        try
+        {
+            var models = await EngineRegistry.QueryAgyModelsAsync(_agyPath);
+            _agyCatalog.Clear();
+            _agyCatalog.AddRange(models);
+            AgyChecklist.SetModels(_agyCatalog.Count > 0 ? ["default", .. _agyCatalog] : EngineModels("agy"));
+            AgyModelsStatus = models.Count > 0 ? App.L("L.ModelsFound", models.Count) : App.L("L.NoModels");
+        }
+        catch { _agyCatalogLoaded = false; AgyModelsStatus = App.L("L.QueryFailed"); }
+        OnChanged(nameof(AgyModels));
+        OnChanged(nameof(NewAgentModels));
+        NotifySessionModelsChanged("agy");
     }
 
     /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
@@ -748,6 +775,7 @@ public sealed partial class AppViewModel
         SettingsStatus = "";
         _ = RefreshOllamaStatusAsync();   // 설정 열 때 Ollama 상태 최신화
         _ = QueryPiModelsAsync();         // pi 모델/연동 provider 조회(첫 호출만 캐시)
+        _ = QueryAgyModelsAsync();        // agy 모델 목록 조회(`agy models`, 첫 호출만 캐시)
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
         CurrentView = MainViewKind.Settings;
     }

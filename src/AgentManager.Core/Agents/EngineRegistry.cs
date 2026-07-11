@@ -20,7 +20,7 @@ public static class EngineRegistry
         // that family (verified — incl. a future Sonnet 5), so new models work with no code patch. Pinned
         // versions can still be typed (the model field is free-form). sonnet[1m] = 1M-context alias.
         new("cc", "CC", "Claude Code",     "claude",      ["sonnet", "opus", "opusplan", "haiku", "fable", "best", "sonnet[1m]", "opus[1m]"], "anthropic · cli", true, "https://docs.claude.com/en/docs/claude-code/overview"),
-        new("gx", "GX", "Codex",           "codex",       ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true, "https://github.com/openai/codex"),
+        new("gx", "GX", "Codex",           "codex",       ["gpt-5.6", "gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true, "https://github.com/openai/codex"),
         // Google 계열은 agy(Antigravity)로 일원화 — 구형 Gemini CLI는 제거됨.
         // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략.
         // 추론 강도가 모델 label에 내장 — `--model`은 `agy models`의 정확한 label만 인식한다(슬러그
@@ -186,6 +186,37 @@ public static class EngineRegistry
         }
         catch { /* 미설치/실패 → 빈 카탈로그 */ }
         return new PiCatalog(models, providers);
+    }
+
+    /// <summary>`agy models`로 사용 가능한 모델 라벨 목록을 조회(줄당 하나 — 그대로 --model에 사용). 실패 시 빈 목록.
+    /// agy는 네이티브 exe라 node 래핑 없이 직접 실행한다. 라벨 = "Gemini 3.5 Flash (High)" 같은 형태.</summary>
+    public static async Task<IReadOnlyList<string>> QueryAgyModelsAsync(string? agyPath = null)
+    {
+        var cli = ResolveOverride(agyPath) ?? ResolveAgy();
+        if (cli is null) return [];
+        var psi = new ProcessStartInfo
+        {
+            FileName = cli,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        psi.ArgumentList.Add("models");
+        var models = new List<string>();
+        try
+        {
+            using var p = Process.Start(psi)!;
+            var so = await p.StandardOutput.ReadToEndAsync();
+            await p.WaitForExitAsync();
+            foreach (var raw in (so ?? "").Split('\n'))
+            {
+                var line = raw.Trim();
+                if (line.Length > 0) models.Add(line);
+            }
+        }
+        catch { /* 미설치/실패 → 빈 목록 */ }
+        return models;
     }
 
     private static string? ResolveOverride(string? path)

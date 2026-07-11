@@ -285,6 +285,20 @@ public partial class SessionView : UserControl
         if (ModelMenuBtn is { } t) t.IsChecked = false; // close the popup (IsOpen is two-way bound)
     }
 
+    /// <summary>컴포저 모델 메뉴의 "직접 입력" — 목록에 없는 모델명(예: gpt-5.7)을 Enter로 적용. 엔진 모델 필드는
+    /// 자유 입력이라(정적 목록에 가두지 않음) 새 모델이 나와도 코드 수정 없이 바로 쓸 수 있게 한다.</summary>
+    private void CustomModel_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        if (sender is TextBox box && box.Text.Trim() is { Length: > 0 } model && Vm?.ActiveSession is { } s)
+        {
+            s.Model = model;
+            box.Text = "";
+        }
+        if (ModelMenuBtn is { } t) t.IsChecked = false;
+    }
+
     private void EffortOption_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is string effort && Vm?.ActiveSession is { } s)

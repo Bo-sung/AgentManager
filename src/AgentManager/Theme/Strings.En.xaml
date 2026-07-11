@@ -257,6 +257,7 @@
     <sys:String x:Key="L.RemoveProject">Remove project</sys:String>
     <sys:String x:Key="L.Rename">RENAME</sys:String>
     <sys:String x:Key="L.Apply">Apply</sys:String>
+    <sys:String x:Key="L.ModelCustom">Custom model (Enter to apply)</sys:String>
     <sys:String x:Key="L.NoSessionStart">No sessions · start with New Agent</sys:String>
     <sys:String x:Key="L.DiffReviewToggleTip">Open/close Diff review pane (Ctrl+R)</sys:String>
     <sys:String x:Key="L.OpenIde">Open IDE</sys:String>

@@ -82,8 +82,9 @@ public sealed partial class AppViewModel : ObservableObject
         SessionViewModel.ComposerModelsProvider = id => DropdownModelsFor(id);
         NewAgentSelectedEngine = AllEngines[0];
         RestoreState();
-        // 복원된 pi 세션이 있으면 실제 카탈로그를 로드해 컴포저 목록을 채운다(설정을 열지 않아도).
+        // 복원된 pi/agy 세션이 있으면 실제 카탈로그를 로드해 컴포저 목록을 채운다(설정을 열지 않아도).
         if (_allSessions.Any(s => s.AgentId == "pi")) _ = QueryPiModelsAsync();
+        if (_allSessions.Any(s => s.AgentId == "agy")) _ = QueryAgyModelsAsync();
         Theme.AccentPalette.Apply(_accent);
         LoadScheduledJobs();
         CurrentView = MainViewKind.Orchestrator;

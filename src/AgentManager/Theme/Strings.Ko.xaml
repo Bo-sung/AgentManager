@@ -257,6 +257,7 @@
     <sys:String x:Key="L.RemoveProject">프로젝트 제거</sys:String>
     <sys:String x:Key="L.Rename">RENAME</sys:String>
     <sys:String x:Key="L.Apply">적용</sys:String>
+    <sys:String x:Key="L.ModelCustom">직접 입력 (Enter로 적용)</sys:String>
     <sys:String x:Key="L.NoSessionStart">세션이 없습니다 · New Agent로 시작하세요</sys:String>
     <sys:String x:Key="L.DiffReviewToggleTip">Diff review 패널 열기/닫기 (Ctrl+R)</sys:String>
     <sys:String x:Key="L.OpenIde">Open IDE</sys:String>

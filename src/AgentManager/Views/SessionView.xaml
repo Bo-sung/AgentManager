@@ -572,6 +572,13 @@
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
                                                                 </ItemsControl>
+                                                                <!-- 직접 입력: 하드코딩/조회 목록에 없는 모델(예: gpt-5.7)도 코드 수정 없이 즉시 사용 -->
+                                                                <Border Height="1" Background="{DynamicResource LineSoft}" Margin="6,5,6,4"/>
+                                                                <TextBlock Text="{StaticResource L.ModelCustom}" Style="{StaticResource Lbl}" Margin="9,0,9,4"/>
+                                                                <TextBox x:Name="CustomModelBox" FontFamily="{StaticResource Mono}" FontSize="11" Margin="6,0,6,3"
+                                                                         Background="{DynamicResource Bg1}" Foreground="{DynamicResource Txt0}"
+                                                                         BorderBrush="{DynamicResource LineSoft}" BorderThickness="1" CaretBrush="{DynamicResource Txt0}"
+                                                                         VerticalContentAlignment="Center" Padding="6,4" KeyDown="CustomModel_KeyDown"/>
                                                             </StackPanel>
                                                         </Border>
                                                     </Popup>
