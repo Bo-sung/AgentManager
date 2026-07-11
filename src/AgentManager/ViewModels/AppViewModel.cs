@@ -44,11 +44,29 @@ public sealed partial class AppViewModel : ObservableObject
     // Seeded/migrated from settings.json + models.json on first run (RestoreState). Read-routing is being moved
     // over incrementally (P1c): efforts already source from here; models/path/auth follow. See docs/ENGINE_CONFIG_OVERHAUL_KO.md.
     private AgentManager.Core.Engines.EngineConfigStore? _engineConfig;
-    private string _claudePath { get => _settings.ClaudePath; set => _settings.ClaudePath = value; }
-    private string _codexPath { get => _settings.CodexPath; set => _settings.CodexPath = value; }
-    private string _agyPath { get => _settings.AgyPath; set => _settings.AgyPath = value; }
-    private string _piPath { get => _settings.PiPath; set => _settings.PiPath = value; }
+    // Per-engine CLI path override now lives in engines/<id>.json. Read from the store when loaded, else the legacy
+    // settings.json holder (used only during startup before the store loads + the one-time migration). Writes go
+    // to the store (SetEnginePath). pi-worker keeps its own settings path until it becomes a config engine (P3).
+    private string _claudePath { get => _engineConfig?.Get("cc")?.Path ?? _settings.ClaudePath; set => SetEnginePath("cc", value); }
+    private string _codexPath { get => _engineConfig?.Get("gx")?.Path ?? _settings.CodexPath; set => SetEnginePath("gx", value); }
+    private string _agyPath { get => _engineConfig?.Get("agy")?.Path ?? _settings.AgyPath; set => SetEnginePath("agy", value); }
+    private string _piPath { get => _engineConfig?.Get("pi")?.Path ?? _settings.PiPath; set => SetEnginePath("pi", value); }
     private string _piWorkerPath { get => _settings.PiWorkerPath; set => _settings.PiWorkerPath = value; }
+
+    /// <summary>Persist an engine's CLI path override to engines/&lt;id&gt;.json (or the legacy settings holder before
+    /// the store is loaded, e.g. during ApplySettings at startup — the migration then folds it into the store).</summary>
+    private void SetEnginePath(string id, string value)
+    {
+        var v = (value ?? "").Trim();
+        if (_engineConfig?.Get(id) is { } c) _engineConfig.Upsert(c with { Path = v });
+        else switch (id)
+        {
+            case "cc": _settings.ClaudePath = v; break;
+            case "gx": _settings.CodexPath = v; break;
+            case "agy": _settings.AgyPath = v; break;
+            case "pi": _settings.PiPath = v; break;
+        }
+    }
     private string _ollamaEndpoint { get => _settings.OllamaEndpoint; set => _settings.OllamaEndpoint = value; }
     private string _ollamaModel { get => _settings.OllamaModel; set => _settings.OllamaModel = value; }
 

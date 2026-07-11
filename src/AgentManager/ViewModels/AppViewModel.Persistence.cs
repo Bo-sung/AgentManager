@@ -157,12 +157,14 @@ public sealed partial class AppViewModel
         return d;
     }
 
+    // Legacy path source for the one-time migration — reads the settings.json holder directly (never the store,
+    // which is being built when this runs).
     private string PathForEngine(string id) => id switch
     {
-        "cc" => _claudePath,
-        "gx" => _codexPath,
-        "agy" => _agyPath,
-        "pi" => _piPath,
+        "cc" => _settings.ClaudePath,
+        "gx" => _settings.CodexPath,
+        "agy" => _settings.AgyPath,
+        "pi" => _settings.PiPath,
         _ => "",
     };
 
