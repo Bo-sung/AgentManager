@@ -2,6 +2,15 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.2
+엔진 설정 오버홀 — 설정 파일 3분할 + 모델 관리 + 커스텀 엔진. (기능)
+- **설정 파일 3분할**: 그동안 `settings.json`(엔진별 경로·`DefaultModels`·`PreferredModels`·`SkillDirs`·인증·비활성목록)과 `models.json`(카탈로그)에 흩어져 있던 값을 **엔진 1개 = 파일 1개**(`%LOCALAPPDATA%\AgentManager\engines\<id>.json`)로 모았다. 이제 3계층: **공통/전역 = `settings.json`**, **엔진별 = `engines\<id>.json`**(모델·추론 effort·경로·인증·활성·스킬 폴더), **런타임 = `state.json`**(사용량·한도 쿨다운·무시한 세션). 모두 손편집 + 라이브 리로드. 첫 실행 시 기존 `settings.json`+`models.json`에서 엔진별 파일로 **1회 자동 마이그레이션**(survivor의 effort/preferred 보존, 빈 결과는 덮어쓰지 않음).
+- **폴더 선생성**: `engines\` 폴더를 **설치·업데이트(Velopack 훅) + 매 시작 시** 미리 생성 → 첫 실행 전에도 커스텀 매니페스트를 넣어둘 수 있고, `엔진 설정 폴더 열기`가 lazy-create와 경합하지 않음. (설정 하단 `엔진 설정 폴더 열기` — 폴더는 ShellExecute 실패 회피 위해 explorer로 명시 오픈.)
+- **모델 관리 서브페이지**: 설정 → `모델 관리`에서 엔진별 모델을 **여러 개 한번에 추가**(줄바꿈/콤마/불릿 분리) · 삭제 · 기본 모델 지정. 모델 설정이 설정 뷰에서 차지하던 비중을 별도 페이지로 분리.
+- **커스텀 엔진**: `engines\<id>.json`의 `source:"custom"` + `adapterKind` + `launch`(exe/args 템플릿)로 **사용자 정의 엔진**을 추가하면 New Agent 피커·모델 관리에 노출·실행된다(그 파일이 곧 매니페스트). **`AdapterFactory`가 엔진 id가 아니라 `adapterKind`로 프로토콜을 분기**(빌트인 cc=`claude-stream-json`/gx=`codex-json`/agy=`agy-pty`/pi=`pi-rpc`와 동일 경로) → 프로토콜과 엔진 id 분리. 단발형 CLI용 **`one-shot-text` 어댑터** 추가(`{prompt}`/`{model}`/`{cwd}` 치환, stdout 텍스트를 어시스턴트 응답으로; 프로세스 종료 시 `TurnCompleted` 합성해 완료 판정). 커스텀 엔진은 `launch.Exe`가 있으면 "설치됨"으로 간주해 피커에서 선택 가능.
+- **파일 정리**: 계산 속성(`ModelList`/`AuthOrDefault`/`HasEfforts`)이 `engines\<id>.json`에 중복 직렬화되던 것 `[JsonIgnore]`로 제거(손편집 친화).
+- (검증) 빌드 green · 전체 스모크 green(신규 `engine config`/`engine config migration`/`one-shot adapter` assert 포함) · GUI E2E: 읽기·쓰기 마이그레이션, 모델 관리 대량 추가, 커스텀 엔진 피커 노출 및 실제 실행 확인. 문서: `docs/ENGINE_CONFIG_OVERHAUL_KO.md`.
+
 ## 1.21.1
 자기 업데이트가 스스로 막히던 버그 수정 — 설치 폴더(`current\`) 잠금. (버그 패치)
 - **버그**: Velopack은 앱을 **설치 폴더(`…\current\`)를 작업 디렉터리로** 실행한다. 그래서 앱, 그리고 그 cwd를 **상속한 자식**(특히 장수 서버 `ollama serve`)이 `current\`를 붙들면, 업데이트 때 Velopack이 그 폴더를 교체하지 못하고("파일 사용 중", code 32) **이전 버전으로 롤백**된다. 특히 설정의 **`실행(serve)` 버튼**으로 띄운 ollama가 앱 종료 후 **고아로 남아 폴더를 무기한 잠가** 모든 자기 업데이트가 실패했다(실측: 고아 `ollama.exe`의 cwd = `…\current\`).

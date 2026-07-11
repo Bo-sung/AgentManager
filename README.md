@@ -101,7 +101,9 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 - AgentManager 밖에서 돌린 `claude`/`codex` 세션 발견 → 가져오기·resume, 과거 트랜스크립트 복원(대형 기록 청크 비동기 + UI 가상화), 사이드바 재스캔
 
 ### 설정 (중앙 Settings 페인 · VS Code식 settings.json)
-- 설정은 별도 **`settings.json`** 으로 저장 — "Open settings.json"으로 손편집 + 외부 편집 **라이브 리로드**(앱 내 변경과 양방향 동기화). API key는 DPAPI 암호화로 보관(평문 금지)
+- **설정 파일 3분할** — 공통/전역값은 **`settings.json`**, 엔진별 값은 **`engines\<id>.json`**(엔진 1개=파일 1개), 런타임 상태(사용량·한도)는 `state.json`. 모두 손편집 + **라이브 리로드**(앱 내 변경과 양방향 동기화). 첫 실행 시 기존 `settings.json`+`models.json`에서 엔진별 파일로 **자동 마이그레이션**. API key는 DPAPI 암호화로 보관(평문 금지)
+- **모델 관리(서브페이지)** — 설정 → `모델 관리`에서 엔진별 모델을 **여러 개 한번에 추가**(불릿/줄바꿈/콤마) · 삭제 · 기본 모델 지정. `models.json` 단일 파일이 차지하던 자리를 엔진별 파일로 분리해 설정 뷰가 가벼워짐
+- **커스텀 엔진** — `engines\<id>.json`에 `adapterKind`(`one-shot-text` 등)+`launch`(exe/args 템플릿)를 적으면 New Agent 피커·모델 관리에 **커스텀 엔진**으로 노출·실행. 어댑터 팩토리가 엔진 id가 아니라 `adapterKind`로 프로토콜을 분기(빌트인 cc/gx/agy/pi와 동일 경로)
 - **Runtimes** — 엔진 4종 모두 **수동 CLI 경로 + 탐지(Detect) 버튼** · enable/disable · **인증(구독/API key)** · CLI Sign in. 탐지 우선순위는 **독립 설치 우선**(Claude `~/.local/bin`, Codex npm 전역) → 확장 번들 폴백. **미설치 엔진은 New Agent에서 회색+선택 불가**, **"가이드"**(설치·세팅 Markdown 모달), **한도 도달 시 API 자동전환**(opt-in) 토글
 - **번역 · 언어** — UI 언어 + **번역 전/후 언어**(11개 언어쌍) + Ollama. **번역 모델 드롭다운 + "설치 모델 조회"**. **Ollama 상태(실행/꺼짐/미설치) + [실행]**(`ollama serve`); 번역 ON은 Ollama 실행 시에만 적용, 꺼짐 시 토글 옆 ⚠ · 새 세션 번역 기본값
 - **Orchestration** — worktree base · auto-start · stream-logs · 동시 실행 cap
@@ -195,8 +197,9 @@ dotnet run --project src/AgentManager.Smoke
 
 ## 데이터 위치
 
-- 상태/세션/트랜스크립트: `%LocalAppData%\AgentManager\state.json`
-- 설정: `%LocalAppData%\AgentManager\settings.json` (VS Code식 손편집 + 라이브 리로드)
+- 공통 설정: `%LocalAppData%\AgentManager\settings.json` (VS Code식 손편집 + 라이브 리로드) — 전 엔진 공통/전역 값만
+- **엔진별 설정: `%LocalAppData%\AgentManager\engines\<id>.json`** — 엔진 1개 = 파일 1개. 모델·추론 effort·경로·인증·활성·스킬 폴더 등 그 엔진 전용값. **커스텀 엔진은 이 파일이 매니페스트 겸용**(`adapterKind`+`launch`). 설치/업데이트/시작 시 폴더 선생성, 설정에서 `엔진 설정 폴더 열기`
+- 런타임 상태(사용량·한도 쿨다운·무시한 세션): `%LocalAppData%\AgentManager\state.json`
 - 창 상태: `%LocalAppData%\AgentManager\window.json`
 - worktree: `%LocalAppData%\AgentManager\worktrees\...`
 - 첨부 이미지: `%LocalAppData%\AgentManager\attachments\`
@@ -228,6 +231,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.21.2** — **엔진 설정 오버홀**: 설정 파일을 3분할(공통=`settings.json` / 엔진별=`engines\<id>.json` / 런타임=`state.json`) — 엔진 1개=파일 1개, 첫 실행 시 기존 `settings.json`+`models.json`에서 자동 마이그레이션 · 설치/업데이트/시작 시 `engines\` 폴더 선생성 + `엔진 설정 폴더 열기` 버튼 · **모델 관리 서브페이지**(엔진별 모델 다중 추가/삭제/기본값 지정) · **커스텀 엔진**(`engines\<id>.json`이 `adapterKind`+`launch` 매니페스트 겸용 → 피커·매니저 노출·실행, 어댑터 팩토리가 `adapterKind`로 프로토콜 분기 · `one-shot-text` 어댑터로 단발 CLI 지원). 상세 [docs/ENGINE_CONFIG_OVERHAUL_KO.md](docs/ENGINE_CONFIG_OVERHAUL_KO.md)
 - **1.21.1** — 자기 업데이트가 스스로 막히던 버그 수정: 앱/`ollama serve` 자식이 설치 폴더(`current\`)를 cwd로 잡아 Velopack이 폴더를 교체 못 하던 문제(앱 cwd 이동 + 우리가 띄운 ollama만 정리, **외부 ollama 불가침**). ※ 이 버전부터 적용 — 기존에 막혔다면 재부팅 후 한 번만 업데이트
 - **1.21.0** — 모델 카탈로그 파일 **`models.json`**(엔진별 모델 목록 + 모델별 추론 effort/기본값 — 설정파일 직접 편집이 필터/피커에 반영, 하드코딩 목록 대체) · 설정에 `models.json 열기`·`설정 새로고침` 버튼 · **settings.json 라이브 리로드 견고화 + 유실 버그 수정**(파싱 실패 시 기본값 덮어쓰기 방지). 상세 [docs/MODEL_CATALOG_KO.md](docs/MODEL_CATALOG_KO.md)
 - **1.20.1** — Pi Worker 런타임을 설치본에 **번들**(글로벌 npm 설치 불필요) · Codex `gpt-5.6` 모델 · 컴포저 커스텀 모델 직접 입력 · agy 모델 조회
