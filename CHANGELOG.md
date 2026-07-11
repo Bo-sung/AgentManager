@@ -2,6 +2,13 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.20.1
+Pi Worker 런타임 번들 + 모델 목록/커스텀 모델 개선. (기능 패치)
+- **Pi Worker 런타임 번들**: `pi-worker` 하네스 런타임을 설치본에 포함(`engines/pi-worker/` vendor → publish 출력 `runtimes/pi-worker/`) → **글로벌 npm 설치나 별도 경로 지정 없이 Pi Worker 사용 가능**. 탐지 우선순위: 사용자 override → 번들 → 글로벌 npm(레거시). vendor 소스: `@agentmanager/pi-worker-harness` 0.1.0(MIT, upstream `6e49dbd`, 런타임 npm deps 0 — 순수 node 실행). framework-dependent single-file · self-contained(Velopack) 모두 번들 포함(실측). ADR: `docs/PI_WORKER_BUNDLING_KO.md`. (참고: Custom Engine 플랫폼의 Phase A — 나머지 B~H는 후속.)
+- **GPT-5.6 모델**: Codex(gx) 모델 목록에 `gpt-5.6` 추가(최신 우선).
+- **컴포저 커스텀 모델 입력**: 세션 컴포저에서 목록에 없는 모델 ID를 직접 입력해 사용할 수 있는 항목 추가(전 엔진 공통 흐름과 정합).
+- **agy 모델 조회**: Antigravity 모델 목록을 조회하는 경로 추가(설정/모델 선택 정합).
+
 ## 1.20.0
 Pi Worker — Pi 엔진의 Worker 역할을 격리 런처 `pi-worker`로 실행. (기능)
 - **역할별 실행 분리**: Pi 엔진 세션이 **Worker 역할**이면 공식 `pi` 대신 **`pi-worker`**(`@agentmanager/pi-worker-harness` 0.1.0, 공식 Pi `0.80.3` 래핑, 격리 config root `~/.pi-worker`, worker-guard 확장)로 실행한다. General/Main Pi는 그대로 공식 `pi`. **별도 엔진이 아니라** 같은 Pi 엔진/`PiAdapter` 하나를 공유하고 세션 Role로 실행 파일만 분기(`PiAdapter`가 exe `.js` 여부로 node/direct 구동).
