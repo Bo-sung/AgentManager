@@ -231,6 +231,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.21.3** — v1.21.2 커스텀 엔진 후속 수정: **`설정 새로고침`이 `engines\*.json`도 재스캔**(손으로 추가/편집한 커스텀 엔진이 재시작 없이 피커·모델 관리·설정에 반영 — 이전엔 settings.json만 재로드) · 설정 Runtimes에 **커스텀 엔진 카드**(adapterKind·실행 경로·활성·삭제·모델 관리 링크, 데이터 주도) · 빌트인 카드의 중복 "주로 쓰는 모델" 체크리스트 제거(모델 관리로 일원화) · 커스텀 카드 adapterKind 바인딩 크래시 수정
 - **1.21.2** — **엔진 설정 오버홀**: 설정 파일을 3분할(공통=`settings.json` / 엔진별=`engines\<id>.json` / 런타임=`state.json`) — 엔진 1개=파일 1개, 첫 실행 시 기존 `settings.json`+`models.json`에서 자동 마이그레이션 · 설치/업데이트/시작 시 `engines\` 폴더 선생성 + `엔진 설정 폴더 열기` 버튼 · **모델 관리 서브페이지**(엔진별 모델 다중 추가/삭제/기본값 지정) · **커스텀 엔진**(`engines\<id>.json`이 `adapterKind`+`launch` 매니페스트 겸용 → 피커·매니저 노출·실행, 어댑터 팩토리가 `adapterKind`로 프로토콜 분기 · `one-shot-text` 어댑터로 단발 CLI 지원). 상세 [docs/ENGINE_CONFIG_OVERHAUL_KO.md](docs/ENGINE_CONFIG_OVERHAUL_KO.md)
 - **1.21.1** — 자기 업데이트가 스스로 막히던 버그 수정: 앱/`ollama serve` 자식이 설치 폴더(`current\`)를 cwd로 잡아 Velopack이 폴더를 교체 못 하던 문제(앱 cwd 이동 + 우리가 띄운 ollama만 정리, **외부 ollama 불가침**). ※ 이 버전부터 적용 — 기존에 막혔다면 재부팅 후 한 번만 업데이트
 - **1.21.0** — 모델 카탈로그 파일 **`models.json`**(엔진별 모델 목록 + 모델별 추론 effort/기본값 — 설정파일 직접 편집이 필터/피커에 반영, 하드코딩 목록 대체) · 설정에 `models.json 열기`·`설정 새로고침` 버튼 · **settings.json 라이브 리로드 견고화 + 유실 버그 수정**(파싱 실패 시 기본값 덮어쓰기 방지). 상세 [docs/MODEL_CATALOG_KO.md](docs/MODEL_CATALOG_KO.md)
