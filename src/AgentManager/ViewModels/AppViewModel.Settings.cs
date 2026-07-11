@@ -429,6 +429,35 @@ public sealed partial class AppViewModel
         }
     }
 
+    /// <summary>Load per-engine enabled + skill-dir from engines/*.json into the runtime working copies
+    /// (_disabledEngines / _skillDirs) — engines/*.json is authoritative.</summary>
+    private void SyncEngineFlagsFromStore()
+    {
+        if (_engineConfig is null) return;
+        _disabledEngines.Clear();
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig.Get(id) is not { } c) continue;
+            if (!c.Enabled) _disabledEngines.Add(id);
+            if (!string.IsNullOrWhiteSpace(c.SkillDir)) _skillDirs[id] = c.SkillDir;
+        }
+    }
+
+    /// <summary>Persist per-engine enabled + skill-dir back to engines/&lt;id&gt;.json.</summary>
+    private void SyncEngineFlagsToStore()
+    {
+        if (_engineConfig is null) return;
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig.Get(id) is not { } c) continue;
+            _engineConfig.Upsert(c with
+            {
+                Enabled = !_disabledEngines.Contains(id),
+                SkillDir = _skillDirs.GetValueOrDefault(id, ""),
+            });
+        }
+    }
+
     public string SettingsModelCc { get => _settingsModelCc; set => Set(ref _settingsModelCc, value); }
     private string _settingsModelCc = "";
     public string SettingsModelGx { get => _settingsModelGx; set => Set(ref _settingsModelGx, value); }
@@ -962,6 +991,7 @@ public sealed partial class AppViewModel
         _settings.TranslationSelectedId = string.IsNullOrWhiteSpace(SettingsTranslationSelectedId) ? "ollama" : SettingsTranslationSelectedId;
         _translator = BuildTranslator(); // selected provider (ollama / agent / custom) via the factory
         ApplyAndInjectSkill(); // 각 엔진 스킬 폴더에 SKILL.md 기록
+        SyncEngineFlagsToStore(); // enabled + skill-dir를 engines/*.json에 반영
         SettingsStatus = languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
         SaveState();
     }
