@@ -49,7 +49,9 @@ public sealed record EngineConfig(
     IReadOnlyList<EngineModelConfig>? Models = null,
     IReadOnlyList<string>? AllowedRoles = null)      // Plain | Main | Worker
 {
+    [System.Text.Json.Serialization.JsonIgnore]
     public IReadOnlyList<EngineModelConfig> ModelList => Models ?? [];
+    [System.Text.Json.Serialization.JsonIgnore]
     public EngineAuthConfig AuthOrDefault => Auth ?? new EngineAuthConfig();
 
     /// <summary>Model ids only, in order.</summary>
@@ -69,6 +71,7 @@ public sealed record EngineConfig(
     public string? DefaultEffortFor(string? modelId) => Find(modelId)?.DefaultEffort;
 
     /// <summary>Whether the engine has any reasoning dimension at all (false ⇒ hide the effort picker).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public bool HasEfforts => (DefaultEfforts?.Count ?? 0) > 0;
 
     private EngineModelConfig? Find(string? modelId) =>
