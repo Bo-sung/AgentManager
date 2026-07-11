@@ -112,7 +112,14 @@ public sealed partial class AppViewModel
         if (exe is null) { OllamaState = "absent"; return; }
         try
         {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, "serve") { UseShellExecute = false, CreateNoWindow = true });
+            // Explicit WorkingDirectory (never inherit our cwd) — ollama serve is long-running and orphans when we
+            // close; if it inherited …\current\ it would hold the install folder open and block self-update.
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, "serve")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            });
         }
         catch { }
         _ = Task.Run(async () =>

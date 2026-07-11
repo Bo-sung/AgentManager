@@ -53,6 +53,21 @@ public partial class App : Application
         // MUST run before any real startup work; on a hook it does its job and exits, so normal launch continues below.
         VelopackApp.Build().Run();
 
+        // Velopack launches us with the working directory set to the install folder (…\current\). If we keep it,
+        // the process — and any child spawned without an explicit WorkingDirectory (notably the long-running,
+        // orphan-surviving `ollama serve`) — holds …\current\ open as its cwd, which blocks the updater from
+        // replacing that folder ("file in use") and makes self-update fail. Move to the stable data dir so neither
+        // this process nor an inheriting child ever locks the install folder. (Our own file access uses absolute
+        // paths / AppContext.BaseDirectory, so cwd is not otherwise relied upon.)
+        try
+        {
+            var dataDir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager");
+            System.IO.Directory.CreateDirectory(dataDir);
+            Environment.CurrentDirectory = dataDir;
+        }
+        catch { /* cwd move is best-effort */ }
+
         SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
         // 전역 예외 가드 — 처리되지 않은 UI/AppDomain 예외(=크래시)는 오류 로그 팝업을 띄우고 종료한다.
