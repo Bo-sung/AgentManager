@@ -118,9 +118,58 @@ public sealed partial class AppViewModel
         }),
     };
 
+    /// <summary>Load the per-engine config store, migrating legacy settings.json per-engine keys + models.json into
+    /// engines/*.json on first run (when the dir has no files). Idempotent: once files exist they are authoritative.</summary>
+    private AgentManager.Core.Engines.EngineConfigStore LoadEngineConfig()
+    {
+        var defaults = AgentManager.Core.Engines.DefaultEngineConfig.Build();
+        try
+        {
+            var dir = AgentManager.Core.Engines.EngineConfigStore.DefaultDir;
+            var firstRun = !Directory.Exists(dir) || !Directory.EnumerateFiles(dir, "*.json").Any();
+            if (firstRun)
+            {
+                var seed = AgentManager.Core.Engines.EngineConfigMigration.Apply(defaults, BuildLegacyEngineData(), _modelCatalog);
+                return AgentManager.Core.Engines.EngineConfigStore.Load(seed);
+            }
+        }
+        catch { /* fall through to plain defaults */ }
+        return AgentManager.Core.Engines.EngineConfigStore.Load(defaults);
+    }
+
+    /// <summary>Gather the legacy per-engine values (already applied to the VM) for the one-time migration.</summary>
+    private IReadOnlyDictionary<string, AgentManager.Core.Engines.LegacyEngineData> BuildLegacyEngineData()
+    {
+        var apiKeys = _engineAuth.SnapshotApiKey();
+        var d = new Dictionary<string, AgentManager.Core.Engines.LegacyEngineData>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in new[] { "cc", "gx", "agy", "pi" })
+        {
+            d[id] = new AgentManager.Core.Engines.LegacyEngineData(
+                Path: PathForEngine(id),
+                AuthMode: _engineAuth.GetAuthMode(id),
+                ApiKeyEnc: apiKeys.TryGetValue(id, out var k) ? k : null,
+                AutoApiOnLimit: _engineAuth.GetAutoApi(id),
+                DefaultModel: _defaultModels.TryGetValue(id, out var dm) ? dm : null,
+                PreferredModels: _preferred.TryGetValue(id, out var s) ? s.ToArray() : null,
+                SkillDir: _skillDirs.TryGetValue(id, out var sd) ? sd : null,
+                Disabled: _disabledEngines.Contains(id));
+        }
+        return d;
+    }
+
+    private string PathForEngine(string id) => id switch
+    {
+        "cc" => _claudePath,
+        "gx" => _codexPath,
+        "agy" => _agyPath,
+        "pi" => _piPath,
+        _ => "",
+    };
+
     private void RestoreState()
     {
         ApplySettings(SettingsStore.Load());
+        _engineConfig = LoadEngineConfig(); // seed/migrate engines/*.json from the just-applied legacy settings (first run only)
         var state = AppStateStore.Load();
         if (state is null || state.Projects.Count == 0)
         {

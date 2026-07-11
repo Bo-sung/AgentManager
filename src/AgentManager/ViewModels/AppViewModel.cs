@@ -40,6 +40,10 @@ public sealed partial class AppViewModel : ObservableObject
     // 하드코딩 대체(사용자가 파일 편집으로 모델/effort 추가·수정). 선택(preferred)은 settings.json 그대로.
     private readonly AgentManager.Core.Models.ModelCatalog _modelCatalog =
         AgentManager.Core.Models.ModelCatalog.Load(AgentManager.Core.Models.DefaultModelCatalog.Build());
+    // Per-engine config store (engines/*.json) — the new home for engine-specific settings + custom engines.
+    // Seeded/migrated from settings.json + models.json on first run (RestoreState). Read-routing is being moved
+    // over incrementally (P1c): efforts already source from here; models/path/auth follow. See docs/ENGINE_CONFIG_OVERHAUL_KO.md.
+    private AgentManager.Core.Engines.EngineConfigStore? _engineConfig;
     private string _claudePath { get => _settings.ClaudePath; set => _settings.ClaudePath = value; }
     private string _codexPath { get => _settings.CodexPath; set => _settings.CodexPath = value; }
     private string _agyPath { get => _settings.AgyPath; set => _settings.AgyPath = value; }
@@ -84,10 +88,11 @@ public sealed partial class AppViewModel : ObservableObject
         // 모든 엔진의 컴포저 모델 메뉴가 설정/New-Agent 피커와 동일한 목록(DropdownModelsFor: 동적 카탈로그 +
         // "주로 쓰는 모델" 체크 부분집합 + custom)을 쓰게 한다 — 정적 목록과의 불일치 제거.
         SessionViewModel.ComposerModelsProvider = id => DropdownModelsFor(id);
-        // 추론(effort) 옵션·기본값·유무를 models.json 카탈로그에서 가져온다(모델별 상이) — 하드코딩 대체.
-        SessionViewModel.EffortOptionsProvider = (eng, model) => _modelCatalog.EffortsFor(eng, model);
-        SessionViewModel.HasEffortProvider = eng => _modelCatalog.HasEfforts(eng);
-        SessionViewModel.DefaultEffortProvider = (eng, model) => _modelCatalog.DefaultEffortFor(eng, model);
+        // 추론(effort) 옵션·기본값·유무를 엔진별 config(engines/*.json)에서 가져온다(모델별 상이). 아직 로드 전
+        // (첫 조회는 RestoreState 이후)이거나 미정의 엔진이면 models.json 카탈로그로 폴백 — 점진 전환(P1c).
+        SessionViewModel.EffortOptionsProvider = (eng, model) => _engineConfig?.Get(eng) is { } c ? [.. c.EffortsFor(model)] : [.. _modelCatalog.EffortsFor(eng, model)];
+        SessionViewModel.HasEffortProvider = eng => _engineConfig?.Get(eng) is { } c ? c.HasEfforts : _modelCatalog.HasEfforts(eng);
+        SessionViewModel.DefaultEffortProvider = (eng, model) => _engineConfig?.Get(eng) is { } c ? c.DefaultEffortFor(model) : _modelCatalog.DefaultEffortFor(eng, model);
         NewAgentSelectedEngine = AllEngines[0];
         RestoreState();
         // 복원된 pi/agy 세션이 있으면 실제 카탈로그를 로드해 컴포저 목록을 채운다(설정을 열지 않아도).
@@ -770,9 +775,11 @@ public sealed partial class AppViewModel : ObservableObject
 
     /// <summary>추론 수준을 소비하는 엔진(cc: --effort, gx: model_reasoning_effort, pi: --thinking)만 노출.
     /// agy만 추론 플래그가 없음. SessionViewModel.HasEffort(= not agy)와 일치.</summary>
-    public bool NewAgentHasEffort => _newEngine is { } e && _modelCatalog.HasEfforts(e.Id);
-    /// <summary>New-Agent 추론 단계 — models.json 카탈로그의 모델별 effort(없으면 엔진 기본). 하드코딩 대체.</summary>
-    public string[] NewAgentEffortOptions => _newEngine is { } e ? [.. _modelCatalog.EffortsFor(e.Id, NewAgentModel)] : [];
+    public bool NewAgentHasEffort => _newEngine is { } e && (_engineConfig?.Get(e.Id) is { } c ? c.HasEfforts : _modelCatalog.HasEfforts(e.Id));
+    /// <summary>New-Agent 추론 단계 — 엔진별 config의 모델별 effort(없으면 엔진 기본; 미로드 시 카탈로그 폴백).</summary>
+    public string[] NewAgentEffortOptions => _newEngine is { } e
+        ? (_engineConfig?.Get(e.Id) is { } c ? [.. c.EffortsFor(NewAgentModel)] : [.. _modelCatalog.EffortsFor(e.Id, NewAgentModel)])
+        : [];
     private string _newAgentReasoning = "default";
     public string NewAgentReasoning { get => _newAgentReasoning; set => Set(ref _newAgentReasoning, value); }
 
