@@ -12,8 +12,8 @@
 - Evidence directory: `artifacts\test-evidence\pi-worker-gui-e2e\20260711-022239\` (gitignored)
 
 ## Summary
-- Total: 11 · Passed: 9 · Partial(Not-exercised): 1 (TC-07) · Failed: 0 · Blocked: 0 · Skipped(negative TC-N01): 1
-- **Final result: 핵심 Pi Worker 통합 GUI E2E PASS.** Worker-role Pi 세션이 실제로 `pi-worker`를 구동하고, RPC로 도구 실행 후 표준 보고서(+완료 마커)를 반환하며, `~/.pi-worker`에 격리되고, orphan 없이 정리됨을 Published GUI에서 육안 검증. TC-07(원본 Main으로의 report routing)만 직접-태스킹 방식이라 미실행.
+- Total: 11 · Passed: **11** · Failed: 0 · Blocked: 0 · Skipped(negative TC-N01): 1
+- **Final result: Pi Worker 통합 GUI E2E 전체 PASS(TC-07 포함).** Worker-role Pi 세션이 실제로 `pi-worker`를 구동하고, RPC로 도구 실행 후 표준 보고서(+완료 마커)를 반환하며, `~/.pi-worker`에 격리되고, orphan 없이 정리됨. **Main→Worker 위임(worker-prompt 스킬→백로그→할당→실행)과 워커 보고서의 원본 Main report inbox routing까지 Published GUI에서 육안 검증.**
 
 ## Test Cases
 ### TC-01 — Published GUI 시작 및 단일 인스턴스 — PASS
@@ -39,9 +39,12 @@
 - (2차 명시적 command-list 프롬프트) 완전한 표준 보고서 생성:
   결과(README.md 존재, 첫 제목 `# AgentManager`, 분기 `worker/e2e-piworker-2`, git clean) · 변경된 파일 없음 · 검증(exit code 0, 실제 출력 verbatim) · 편차/위험 없음 · **`PI_WORKER_GUI_E2E_PASS`** 마커 포함.
 - DIFF REVIEW "No changes in this worktree"(읽기 전용 준수).
-### TC-07 — Origin Main 세션 Report Routing — NOT EXERCISED (부분)
-- 본 검증은 Worker 세션에 **직접 태스킹**(Main→위임 UI를 통하지 않음)했으므로 원본 Main으로의 routing은 미실행. 워커 자신의 우측 "보고 수신함/Summary" 패널에는 보고서가 캡처됨.
-- Main→Worker 위임 UI 제스처는 이번 세션에서 특정하지 못함(`>액션`은 앱 명령(clear/review/settings/help)뿐). routing 메커니즘 자체(`DelegateAsync`가 워커 최종 텍스트→Main inbox)는 코드/스모크로 검증됨. → 완전 검증하려면 Main-위임 흐름 1회 필요(후속).
+### TC-07 — Origin Main 세션 Report Routing — PASS
+- **전체 위임 흐름을 GUI에서 검증**(TC07-report-routing-PASS.txt):
+  1. E2E-Main 모델을 `openai-codex/gpt-5.5`로 전환(사용자 승인; provider는 `~/.pi` 인증) → capable 모델이 **worker-prompt 스킬로 `AGENTMANAGER_TASK_SPOOL`에 태스크 파일 작성** → Orchestrator **워커 백로그**에 "README check"(OriginSessionId=E2E-Main) 유입.
+  2. 백로그 태스크를 **E2E-PiWorker에 할당(할당)** → **실행** → E2E-PiWorker가 **pi-worker로 실행**(dgx-spark). 실행 중 1 → 완료.
+  3. 워커 보고서가 **원본 Main(E2E-Main)의 "보고 수신함"(report inbox)으로 routing**: `[NEW] README check — ## Result: Complete / ## Summary(README 존재, '# AgentManager', worktree branch, git clean) / ## Files Changed: None`.
+- 참고: worker-prompt 스킬을 신뢰성 있게 쓰려면 capable Main 모델(gpt-5.5) 필요 — 소형 로컬 모델은 스킬 경로를 오사용(빈 등록/잘못된 경로). routing 메커니즘은 엔진 무관(backlog OriginSessionId).
 ### TC-08 — Worker 재위임 차단 — PASS
 - WORKERS 수 1 유지(하위 Worker 0). pi-worker 커맨드라인에 `AGENTMANAGER_TASK_SPOOL` 없음(worker-guard만 주입) → delegation depth 0 정책 실측 확인.
 ### TC-09 — 앱 정상 종료 + 프로세스 정리 — PASS
@@ -59,7 +62,7 @@
 - State transitions: 대기→실행 중→완료 · Completion marker: PI_WORKER_GUI_E2E_PASS(2차) · Elapsed: 수 초~수십 초/턴
 
 ## Report Routing
-- Worker report created: 예(2차) · WorkerTaskStore/inbox: 워커 우측 Summary 패널에 캡처 · Origin Main received: 미실행(직접 태스킹) · Duplicate: 없음
+- Worker report created: 예 · WorkerTaskStore/backlog: gpt-5.5 Main이 스킬로 등록→할당→실행 · **Origin Main received: 예(E2E-Main 보고 수신함에 [NEW] README check)** · Duplicate: 없음
 
 ## Isolation and Cleanup
 - Official Pi(auth/settings/models): 불변 · Worker session root: `~/.pi-worker` · Orphan: 0 · Repository: 무변경
@@ -75,6 +78,6 @@ dotnet run --project src/AgentManager.Smoke -c Release → exit 0 (14 assert gro
 - 없음(통합 결함). 관찰된 제약: (1) 소형 로컬 모델이 상세/모호 프롬프트에서 빈 bash 실행·보고서 미생성(모델 한계) — 명시적 프롬프트로 해소. (2) General Pi 세션이 프롬프트 없이 자동 실행되는 현상(모델/세션 시작 동작; 통합과 무관, 별도 관찰).
 
 ## Final Decision
-- GUI E2E: **PASS**(핵심 Pi Worker 통합). TC-07(Main-origin routing)만 미실행.
-- Merge readiness: 준비됨. 남은 필수: TC-07 Main-위임 routing 1회(선택), master 머지 직전 README 확인.
-- Recommended next action: 사용자 승인 시 `feature/pi-worker-integration` → `develop` 머지. 검증 세션(E2E-Main/E2E-PiWorker)·상태 복원은 사용자 승인 후(state.json 백업 존재).
+- GUI E2E: **전체 PASS**(TC-07 포함). Main→Worker 위임 + 워커 보고서 원본 Main routing까지 GUI 검증 완료.
+- Merge readiness: 준비됨. 사용자 지시로 검증 세션 삭제 후 `feature/pi-worker-integration` → `develop` 머지(push 안 함). master 머지 직전 README 확인은 후속.
+- 설정 유지(PiWorkerPath), 전체 상태 복원 안 함(사용자 지시). 검증 세션(E2E-Main/E2E-PiWorker)은 GUI에서 삭제.

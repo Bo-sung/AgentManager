@@ -212,7 +212,7 @@ Worker 세션 (cc · gx · agy · pi 무관)
 - 사용자 승인 하에 설치본을 사용자가 종료 → 검증 publish를 단일 인스턴스로 구동 → Published GUI에서 Pi Worker E2E 육안 검증.
 - **핵심 PASS**: New Agent→Pi+`워커로 생성`으로 Worker 세션 생성 시 **실제로 `pi-worker`(harness index.js)를 구동**(프로세스 트리 실측: AgentManager→node(pi-worker)→cmd→node(공식 pi); worker-guard 확장 주입). 상태 대기→실행중→완료(willRetry:false), 표준 보고서 + `PI_WORKER_GUI_E2E_PASS` 마커, DIFF "No changes"(읽기전용), 종료 후 orphan 0, Worker 세션은 `~/.pi-worker`에만 생성, 공식 `~/.pi` auth/settings/models 불변, 저장소 clean.
 - **모델 한계 관찰**(통합 결함 아님): 소형 로컬 qwen3-30b-a3b가 상세/모호 프롬프트에선 빈 bash만 실행 → 명시적 command-list 프롬프트로 정상 보고서 생성.
-- **미실행 1건**: TC-07 원본 Main으로의 report routing — 워커에 직접 태스킹해서 Main-위임 흐름 미사용(Main→위임 UI 제스처 미특정). routing 메커니즘 자체는 코드/스모크로 검증됨. (후속: Main-위임 1회.)
+- **TC-07(원본 Main report routing) PASS**: E2E-Main을 `openai-codex/gpt-5.5`로 전환 → worker-prompt 스킬로 백로그 태스크 등록 → Orchestrator에서 E2E-PiWorker에 할당→실행(pi-worker) → 워커 보고서가 **E2E-Main 보고 수신함으로 routing** 확인. (worker-prompt 스킬을 신뢰성 있게 쓰려면 capable Main 모델 필요; 소형 로컬 모델은 오사용.)
 - **비저장소 변경(사용자 승인, 백업 있음)**: `settings.json`에 PiWorkerPath 추가(백업 `.bak`), 검증용 세션 E2E-Main/E2E-PiWorker가 `state.json`에 잔존. state.json 백업 `state.json.pi-worker-gui-e2e.*.bak`. 복원은 사용자 승인 후.
 
 ## 공유 코드 동작 변경 (확정 — 위 "Worker Delegation Policy" 참조)
