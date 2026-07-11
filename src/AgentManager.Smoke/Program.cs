@@ -1258,6 +1258,7 @@ AssertPiExtensionUi();
 AssertModelCatalog();
 AssertEngineConfig();
 AssertEngineConfigMigration();
+AssertOneShotAdapter();
 
 static void AssertQuickReplyParser()
 {
@@ -1956,6 +1957,29 @@ static void AssertEngineConfigMigration()
         Console.WriteLine("engine config migration asserts OK");
     }
     finally { try { File.Delete(tmp); } catch { } }
+}
+
+static void AssertOneShotAdapter()
+{
+    var adapter = new AgentManager.Core.Agents.OneShotTextAdapter("myeng", ["run", "{prompt}", "--model", "{model}", "--cwd", "{cwd}"]);
+    Assert(adapter.Id == "myeng", "one-shot: engine id");
+    Assert(adapter.CloseStdinAfterStart, "one-shot: closes stdin (prompt is in args)");
+
+    var opts = new AgentManager.Core.Agents.SessionOptions { WorkingDirectory = "D:/work", Model = "qwen2.5-coder" };
+    var psi = adapter.BuildStartInfo("C:/tool.exe", opts, "hello world");
+    Assert(psi.FileName == "C:/tool.exe", "one-shot: exe = resolved path");
+    Assert(psi.ArgumentList.SequenceEqual(["run", "hello world", "--model", "qwen2.5-coder", "--cwd", "D:/work"]), "one-shot: {prompt}/{model}/{cwd} substituted into ArgumentList");
+    Assert(psi.RedirectStandardOutput && !psi.UseShellExecute, "one-shot: stdio redirected, no shell");
+
+    var evs1 = adapter.ParseLine("line one").ToList();
+    Assert(evs1.Count == 2 && evs1[0] is AgentManager.Core.Events.SessionStarted && evs1[1] is AgentManager.Core.Events.AssistantDelta { Delta: "line one\n" }, "one-shot: first line = SessionStarted + AssistantDelta");
+    var evs2 = adapter.ParseLine("line two").ToList();
+    Assert(evs2.Count == 1 && evs2[0] is AgentManager.Core.Events.AssistantDelta { Delta: "line two\n" }, "one-shot: later line = AssistantDelta only");
+
+    Assert(AgentManager.Core.Agents.AdapterFactory.CreateCustom("myeng", "one-shot-text", ["{prompt}"]) is AgentManager.Core.Agents.OneShotTextAdapter, "adapter-factory: custom one-shot-text");
+    Assert(AgentManager.Core.Agents.AdapterFactory.CreateCustom("myeng", "codex-json", []) is AgentManager.Core.Agents.CodexAdapter, "adapter-factory: custom reusing built-in kind");
+
+    Console.WriteLine("one-shot adapter asserts OK");
 }
 
 static async Task TestGitWorktreeAsync()

@@ -16,7 +16,16 @@ public static class AdapterFactory
         "codex-app-server" => new CodexAppServerAdapter(),
         "agy-pty" => new AgyAdapter(),
         "pi-rpc" => new PiAdapter(),
-        // Custom-engine adapter kinds (one-shot-text / agentmanager-bridge-jsonl) are added in P4.
+        // Custom-engine-only kinds need launch args → use CreateCustom.
         _ => null,
+    };
+
+    /// <summary>Create the adapter for a CUSTOM engine from its manifest. One-shot-text engines need the launch
+    /// argument template; a custom engine may also reuse a built-in protocol kind (then args are ignored).</summary>
+    public static IAgentAdapter? CreateCustom(string engineId, string? adapterKind, IReadOnlyList<string> argsTemplate, bool requireApproval = false) => adapterKind switch
+    {
+        "one-shot-text" => new OneShotTextAdapter(engineId, argsTemplate),
+        // "agentmanager-bridge-jsonl" => … (future)
+        _ => Create(adapterKind, requireApproval), // custom engine reusing a built-in protocol
     };
 }

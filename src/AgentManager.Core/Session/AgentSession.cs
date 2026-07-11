@@ -86,9 +86,11 @@ public sealed class AgentSession(
             proc.StandardInput.Close();
 
         string? outLine;
+        var sawCompleted = false;
         while ((outLine = await proc.StandardOutput.ReadLineAsync(ct)) is not null)
             foreach (var ev in adapter.ParseLine(outLine))
             {
+                if (ev is TurnCompleted) sawCompleted = true;
                 // Stateful handshake (codex app-server): the adapter asks us to send a line.
                 if (ev is EngineWriteback wb)
                 {
@@ -131,6 +133,14 @@ public sealed class AgentSession(
             }
 
         await proc.WaitForExitAsync(ct);
+        // One-shot engines (custom CLIs) print their answer and exit without a JSONL "turn_completed" line.
+        // If the adapter never signaled completion, synthesize it on process exit so the turn ends cleanly.
+        // Existing engines always emit TurnCompleted, so this never fires for them.
+        if (!sawCompleted && !ct.IsCancellationRequested)
+        {
+            var isError = proc.HasExited && proc.ExitCode != 0;
+            await EmitTranslatedAsync(new TurnCompleted(null, isError, null, null), ct);
+        }
         await stderrPump;
     }
 
