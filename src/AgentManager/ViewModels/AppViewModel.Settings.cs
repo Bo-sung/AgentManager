@@ -794,6 +794,20 @@ public sealed partial class AppViewModel
         }
         catch { }
     }
+
+    /// <summary>Open the model/effort catalog (models.json) in the default editor, seeding it first if absent.
+    /// Edits apply on next app start (the catalog is loaded once at startup).</summary>
+    private void OpenModelsFile()
+    {
+        try
+        {
+            var path = AgentManager.Core.Models.ModelCatalog.DefaultPath;
+            if (!System.IO.File.Exists(path))
+                _modelCatalog.Save();
+            Shell.Open(path);
+        }
+        catch { }
+    }
     private MainViewKind _viewBeforeSettings = MainViewKind.Orchestrator;
     private void CloseSettings()
     {
