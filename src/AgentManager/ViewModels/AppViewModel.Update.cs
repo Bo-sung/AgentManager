@@ -158,6 +158,7 @@ public sealed partial class AppViewModel
         try
         {
             await Vpk.DownloadUpdatesAsync(_vpkPending);
+            StopSpawnedOllama(); // our own ollama child must not hold …\current\ open while Velopack swaps it
             Vpk.ApplyUpdatesAndRestart(_vpkPending); // applies + restarts the app (does not return)
         }
         catch

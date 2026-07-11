@@ -202,6 +202,7 @@ public sealed partial class AppViewModel : ObservableObject
         // ct.Register(() => proc.Kill(entireProcessTree: true))가 걸려 있어 Cancel()이 프로세스 트리를 죽인다.
         // 비차단(non-blocking)으로 발사만 한다 — UI 스레드에서 절대 .Wait()/.Result로 막지 않는다.
         _runs.CancelAll();
+        StopSpawnedOllama(); // reap the ollama WE started (never an external one) so it can't orphan + lock …\current\
 
         _scheduler.JobDue -= Scheduler_JobDue;
         _scheduler.Dispose();

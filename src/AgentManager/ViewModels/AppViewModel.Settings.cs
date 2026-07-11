@@ -105,6 +105,11 @@ public sealed partial class AppViewModel
         OllamaState = up ? "running" : (EngineRegistry.OllamaExe() is not null ? "stopped" : "absent");
     }
 
+    // The ollama process WE started via the settings '실행' button (null = we never launched one). We only ever
+    // stop THIS reference — an ollama the user runs themselves (desktop app / service / terminal) is external and
+    // must never be touched. Used to reap our own child on exit/update so it can't orphan and lock the install dir.
+    private System.Diagnostics.Process? _ollamaProcess;
+
     /// <summary>설정의 '실행' 버튼 — 설치된 ollama를 'serve'로 백그라운드 기동 후 상태 재확인.</summary>
     public void StartOllama()
     {
@@ -114,7 +119,7 @@ public sealed partial class AppViewModel
         {
             // Explicit WorkingDirectory (never inherit our cwd) — ollama serve is long-running and orphans when we
             // close; if it inherited …\current\ it would hold the install folder open and block self-update.
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, "serve")
+            _ollamaProcess = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, "serve")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -127,6 +132,18 @@ public sealed partial class AppViewModel
             for (var i = 0; i < 6 && !await Core.Translation.OllamaTranslator.PingAsync(_ollamaEndpoint, 1500); i++) await Task.Delay(1000);
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await RefreshOllamaStatusAsync());
         });
+    }
+
+    /// <summary>Terminate ONLY the ollama process we started ourselves (the '실행' button), tree included. No-op
+    /// when we never launched one, or it already exited. An externally-run ollama is never referenced here, so it
+    /// is never affected. Called on app shutdown and before a self-update so our child can't orphan and hold the
+    /// install folder open.</summary>
+    internal void StopSpawnedOllama()
+    {
+        var p = _ollamaProcess;
+        _ollamaProcess = null;
+        try { if (p is { HasExited: false }) p.Kill(entireProcessTree: true); } catch { /* best-effort */ }
+        try { p?.Dispose(); } catch { }
     }
 
     private bool _settingsDefaultTranslationEnabled = true;
