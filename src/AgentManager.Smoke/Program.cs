@@ -1257,6 +1257,7 @@ AssertPiCompletionStateMachine();
 AssertPiExtensionUi();
 AssertModelCatalog();
 AssertEngineConfig();
+AssertEngineConfigMigration();
 
 static void AssertQuickReplyParser()
 {
@@ -1905,6 +1906,39 @@ static void AssertEngineConfig()
         Console.WriteLine("engine config asserts OK");
     }
     finally { try { Directory.Delete(dir, recursive: true); } catch { } }
+}
+
+static void AssertEngineConfigMigration()
+{
+    var tmp = Path.Combine(Path.GetTempPath(), "am_ecm_" + Guid.NewGuid().ToString("N")[..8] + ".json");
+    try
+    {
+        var defaults = AgentManager.Core.Engines.DefaultEngineConfig.Build();
+        var catalog = AgentManager.Core.Models.ModelCatalog.Load(AgentManager.Core.Models.DefaultModelCatalog.Build(), tmp);
+
+        var legacy = new Dictionary<string, AgentManager.Core.Engines.LegacyEngineData>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["cc"] = new(Path: "C:/cc.exe", AuthMode: "api", ApiKeyEnc: "ENC==", AutoApiOnLimit: true,
+                         DefaultModel: "opus", PreferredModels: ["opus", "sonnet"], SkillDir: "D:/skills/cc"),
+            ["agy"] = new(Disabled: true),
+        };
+
+        var migrated = AgentManager.Core.Engines.EngineConfigMigration.Apply(defaults, legacy, catalog)
+            .ToDictionary(e => e.Id, StringComparer.OrdinalIgnoreCase);
+
+        var cc = migrated["cc"];
+        Assert(cc.Path == "C:/cc.exe", "migrate: legacy path folded in");
+        Assert(cc.AuthOrDefault is { Mode: "api", ApiKeyEnc: "ENC==", AutoApiOnLimit: true }, "migrate: legacy auth folded in");
+        Assert(cc.DefaultModel == "opus", "migrate: legacy default model folded in");
+        Assert(cc.SkillDir == "D:/skills/cc", "migrate: legacy skillDir folded in");
+        Assert(cc.PreferredModelIds().OrderBy(x => x).SequenceEqual(["opus", "sonnet"]), "migrate: preferred flags applied");
+        Assert(cc.EffortsFor("opus").Contains("ultracode"), "migrate: per-model efforts come from the catalog");
+        Assert(migrated["agy"].Enabled == false, "migrate: legacy disabled → enabled=false");
+        Assert(migrated["gx"].Path == "" && migrated["gx"].AuthOrDefault.Mode == "subscription", "migrate: engine with no legacy keeps defaults");
+
+        Console.WriteLine("engine config migration asserts OK");
+    }
+    finally { try { File.Delete(tmp); } catch { } }
 }
 
 static async Task TestGitWorktreeAsync()
