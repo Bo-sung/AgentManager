@@ -2,6 +2,17 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.20.0
+Pi Worker — Pi 엔진의 Worker 역할을 격리 런처 `pi-worker`로 실행. (기능)
+- **역할별 실행 분리**: Pi 엔진 세션이 **Worker 역할**이면 공식 `pi` 대신 **`pi-worker`**(`@agentmanager/pi-worker-harness` 0.1.0, 공식 Pi `0.80.3` 래핑, 격리 config root `~/.pi-worker`, worker-guard 확장)로 실행한다. General/Main Pi는 그대로 공식 `pi`. **별도 엔진이 아니라** 같은 Pi 엔진/`PiAdapter` 하나를 공유하고 세션 Role로 실행 파일만 분기(`PiAdapter`가 exe `.js` 여부로 node/direct 구동).
+- **경로 설정/탐지**: `PiWorkerPath`(빈 값=npm-global 자동탐지, 또는 harness `dist/cli/index.js`/셸 shim 직접 지정). 미설치 시 typed 오류. 기존 설정과 backward compatible.
+- **역할별 세션 discovery**: Worker 세션 파일은 `~/.pi-worker/agent/sessions`, General은 `~/.pi/agent/sessions`(`CliSessionDiscovery.PiSessionsRoot(worker)` 단일화). transcript 재동기화도 역할별 루트 스캔.
+- **공통 Worker 정책 확정**: 모든 Worker 역할 세션(cc·gx·agy·pi)에 `AGENTMANAGER_ROLE/SESSION_ID/PROJECT_ID/DELEGATION_DEPTH=0` 주입, **task-spool 미제공**(무제한 재귀 위임 차단). Main/General만 task-spool 사용·워커 생성 가능.
+- **RPC 완료 판정 안정화**: pi 0.80.3의 `agent_end`는 시도마다 발생하며 `willRetry`를 동반 — **`willRetry==false`일 때만 턴 완료**로 처리(기존 첫 `agent_end` 즉시 종료가 auto-retry를 중간에 죽이던 문제 수정). 회복된 retry는 성공으로 보고.
+- **extension_ui_request 안전 처리**: headless Worker에서 blocking UI 요청(select/confirm/input/editor)은 즉시 cancel 응답으로 무기한 대기 차단, fire-and-forget은 무시.
+- **프로세스 정리**: 취소·완료 시 `entireProcessTree` kill이 pi-worker의 자식 공식 pi까지 도달(orphan 없음).
+- (검증) 전체 스모크 green(특성화 3종) · 헤드리스 라이브 E2E · Published GUI E2E 11개 TC 전부 PASS(Main→Worker 위임 + 워커 보고서 원본 Main routing 포함). 상세: `docs/PI_WORKER_INTEGRATION_KO.md`, `docs/PI_WORKER_GUI_E2E_TEST_REPORT_KO.md`.
+
 ## 1.19.5
 bash 블록이 비어 보이는 문제 해소 — 명령 표시 + 중단 tool 마감. (기능 패치)
 - **bash 명령 표시**: tool 블록 헤더에 실제 shell 명령(`CommandText`)을 서브라인으로 항상 표시(펼치지 않아도 보임). 기존엔 명령은 캡처만 하고 렌더하지 않아, 출력(Body)이 도착 전이거나 없으면 블록에 볼 게 없어 "빈 bash"로 보였다.

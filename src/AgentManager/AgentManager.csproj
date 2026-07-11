@@ -28,8 +28,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
-    <!-- 1.19.5: bash tool 블록에 명령 표시 + 결과 못 받은 tool "중단됨" 마감(빈 블록 방지). -->
-    <Version>1.19.5</Version>
+    <!-- 1.20.0: Pi Worker — Worker-role pi runs the pi-worker harness (isolated ~/.pi-worker); General/Main pi unchanged. -->
+    <Version>1.20.0</Version>
     <Product>AgentManager</Product>
   </PropertyGroup>
 
