@@ -21,6 +21,7 @@ public enum MainViewKind
     History,
     Scheduled,
     Settings,
+    ModelManager,
     Session,
 }
 
@@ -40,11 +41,33 @@ public sealed partial class AppViewModel : ObservableObject
     // 하드코딩 대체(사용자가 파일 편집으로 모델/effort 추가·수정). 선택(preferred)은 settings.json 그대로.
     private readonly AgentManager.Core.Models.ModelCatalog _modelCatalog =
         AgentManager.Core.Models.ModelCatalog.Load(AgentManager.Core.Models.DefaultModelCatalog.Build());
-    private string _claudePath { get => _settings.ClaudePath; set => _settings.ClaudePath = value; }
-    private string _codexPath { get => _settings.CodexPath; set => _settings.CodexPath = value; }
-    private string _agyPath { get => _settings.AgyPath; set => _settings.AgyPath = value; }
-    private string _piPath { get => _settings.PiPath; set => _settings.PiPath = value; }
+    // Per-engine config store (engines/*.json) — the new home for engine-specific settings + custom engines.
+    // Seeded/migrated from settings.json + models.json on first run (RestoreState). Read-routing is being moved
+    // over incrementally (P1c): efforts already source from here; models/path/auth follow. See docs/ENGINE_CONFIG_OVERHAUL_KO.md.
+    private AgentManager.Core.Engines.EngineConfigStore? _engineConfig;
+    // Per-engine CLI path override now lives in engines/<id>.json. Read from the store when loaded, else the legacy
+    // settings.json holder (used only during startup before the store loads + the one-time migration). Writes go
+    // to the store (SetEnginePath). pi-worker keeps its own settings path until it becomes a config engine (P3).
+    private string _claudePath { get => _engineConfig?.Get("cc")?.Path ?? _settings.ClaudePath; set => SetEnginePath("cc", value); }
+    private string _codexPath { get => _engineConfig?.Get("gx")?.Path ?? _settings.CodexPath; set => SetEnginePath("gx", value); }
+    private string _agyPath { get => _engineConfig?.Get("agy")?.Path ?? _settings.AgyPath; set => SetEnginePath("agy", value); }
+    private string _piPath { get => _engineConfig?.Get("pi")?.Path ?? _settings.PiPath; set => SetEnginePath("pi", value); }
     private string _piWorkerPath { get => _settings.PiWorkerPath; set => _settings.PiWorkerPath = value; }
+
+    /// <summary>Persist an engine's CLI path override to engines/&lt;id&gt;.json (or the legacy settings holder before
+    /// the store is loaded, e.g. during ApplySettings at startup — the migration then folds it into the store).</summary>
+    private void SetEnginePath(string id, string value)
+    {
+        var v = (value ?? "").Trim();
+        if (_engineConfig?.Get(id) is { } c) _engineConfig.Upsert(c with { Path = v });
+        else switch (id)
+        {
+            case "cc": _settings.ClaudePath = v; break;
+            case "gx": _settings.CodexPath = v; break;
+            case "agy": _settings.AgyPath = v; break;
+            case "pi": _settings.PiPath = v; break;
+        }
+    }
     private string _ollamaEndpoint { get => _settings.OllamaEndpoint; set => _settings.OllamaEndpoint = value; }
     private string _ollamaModel { get => _settings.OllamaModel; set => _settings.OllamaModel = value; }
 
@@ -60,7 +83,14 @@ public sealed partial class AppViewModel : ObservableObject
     public ObservableCollection<ScheduledJobViewModel> ScheduledJobs { get; } = [];
     public ObservableCollection<HistoryRowViewModel> HistoryRows { get; } = [];
     /// <summary>레지스트리에서 활성화된 전체 엔진 (설정 카드·모델 조회용 — 사용자 비활성과 무관).</summary>
-    public EngineDef[] AllEngines { get; } = Array.FindAll(EngineRegistry.All, e => e.Enabled);
+    private EngineDef[]? _allEnginesCache;
+    /// <summary>All engines — built-in + custom (engines/*.json) — for settings cards, model query, and the picker
+    /// source (independent of user-disable). Cached; <see cref="RefreshEngines"/> invalidates on engine-set change.</summary>
+    public EngineDef[] AllEngines => _allEnginesCache ??= BuildAllEngines();
+    private EngineDef[] BuildAllEngines() => _engineConfig?.All is { Count: > 0 } list
+        ? [.. list.Select(c => new EngineDef(c.Id, string.IsNullOrEmpty(c.Badge) ? c.Id.ToUpperInvariant() : c.Badge, c.Name, c.Cli, [.. c.ModelIds()], c.Desc, true, c.InstallUrl))]
+        : Array.FindAll(EngineRegistry.All, e => e.Enabled);
+    private void RefreshEngines() { _allEnginesCache = null; OnChanged(nameof(AllEngines)); OnChanged(nameof(Engines)); }
     private HashSet<string> _disabledEngines => _settings.DisabledEngines;
     /// <summary>New Agent 피커에 노출할 엔진 (사용자가 비활성한 것 제외).</summary>
     public IEnumerable<EngineDef> Engines => Array.FindAll(AllEngines, e => !_disabledEngines.Contains(e.Id));
@@ -84,12 +114,13 @@ public sealed partial class AppViewModel : ObservableObject
         // 모든 엔진의 컴포저 모델 메뉴가 설정/New-Agent 피커와 동일한 목록(DropdownModelsFor: 동적 카탈로그 +
         // "주로 쓰는 모델" 체크 부분집합 + custom)을 쓰게 한다 — 정적 목록과의 불일치 제거.
         SessionViewModel.ComposerModelsProvider = id => DropdownModelsFor(id);
-        // 추론(effort) 옵션·기본값·유무를 models.json 카탈로그에서 가져온다(모델별 상이) — 하드코딩 대체.
-        SessionViewModel.EffortOptionsProvider = (eng, model) => _modelCatalog.EffortsFor(eng, model);
-        SessionViewModel.HasEffortProvider = eng => _modelCatalog.HasEfforts(eng);
-        SessionViewModel.DefaultEffortProvider = (eng, model) => _modelCatalog.DefaultEffortFor(eng, model);
-        NewAgentSelectedEngine = AllEngines[0];
+        // 추론(effort) 옵션·기본값·유무를 엔진별 config(engines/*.json)에서 가져온다(모델별 상이). 아직 로드 전
+        // (첫 조회는 RestoreState 이후)이거나 미정의 엔진이면 models.json 카탈로그로 폴백 — 점진 전환(P1c).
+        SessionViewModel.EffortOptionsProvider = (eng, model) => _engineConfig?.Get(eng) is { } c ? [.. c.EffortsFor(model)] : [.. _modelCatalog.EffortsFor(eng, model)];
+        SessionViewModel.HasEffortProvider = eng => _engineConfig?.Get(eng) is { } c ? c.HasEfforts : _modelCatalog.HasEfforts(eng);
+        SessionViewModel.DefaultEffortProvider = (eng, model) => _engineConfig?.Get(eng) is { } c ? c.DefaultEffortFor(model) : _modelCatalog.DefaultEffortFor(eng, model);
         RestoreState();
+        NewAgentSelectedEngine = AllEngines[0]; // after RestoreState so the engine set (incl. custom) is loaded
         // 복원된 pi/agy 세션이 있으면 실제 카탈로그를 로드해 컴포저 목록을 채운다(설정을 열지 않아도).
         if (_allSessions.Any(s => s.AgentId == "pi")) _ = QueryPiModelsAsync();
         if (_allSessions.Any(s => s.AgentId == "agy")) _ = QueryAgyModelsAsync();
@@ -650,6 +681,7 @@ public sealed partial class AppViewModel : ObservableObject
             OnChanged(nameof(IsHistoryView));
             OnChanged(nameof(IsScheduledView));
             OnChanged(nameof(IsSettingsView));
+            OnChanged(nameof(IsModelManagerView));
             OnChanged(nameof(IsSessionView));
             OnChanged(nameof(ShowSessionPane));
             OnChanged(nameof(ShowSessionEmpty));
@@ -718,9 +750,16 @@ public sealed partial class AppViewModel : ObservableObject
     /// <summary>New Agent 엔진 피커용 — 각 엔진 + 설치 여부(수동 경로/PATH 반영). 폼 열 때 새로 계산.</summary>
     public IReadOnlyList<EngineOptionVm> NewAgentEngineOptions =>
         Engines.Select(d => new EngineOptionVm(d,
-            EngineRegistry.IsInstalled(d.Id, _claudePath, _codexPath, _agyPath, _piPath),
+            IsEngineInstalled(d.Id),
             IsEngineLimited(d.Id),
             WillUseApiOnLimit(d.Id))).ToList();
+
+    /// <summary>Whether an engine is runnable in the picker. Built-ins: the CLI auto-detects. Custom engines have
+    /// no CLI detection — they are "installed" when their manifest defines a launch exe (so the tile is selectable).</summary>
+    private bool IsEngineInstalled(string id) =>
+        _engineConfig?.Get(id) is { Source: "custom" } c
+            ? !string.IsNullOrWhiteSpace(c.Launch?.Exe)
+            : EngineRegistry.IsInstalled(id, _claudePath, _codexPath, _agyPath, _piPath);
 
     // ----- 설치 & 세팅 가이드 모달 (Resources/Guide.<lang>.md를 MarkdownViewer로 렌더) -----
     private bool _showInstallGuide;
@@ -770,9 +809,11 @@ public sealed partial class AppViewModel : ObservableObject
 
     /// <summary>추론 수준을 소비하는 엔진(cc: --effort, gx: model_reasoning_effort, pi: --thinking)만 노출.
     /// agy만 추론 플래그가 없음. SessionViewModel.HasEffort(= not agy)와 일치.</summary>
-    public bool NewAgentHasEffort => _newEngine is { } e && _modelCatalog.HasEfforts(e.Id);
-    /// <summary>New-Agent 추론 단계 — models.json 카탈로그의 모델별 effort(없으면 엔진 기본). 하드코딩 대체.</summary>
-    public string[] NewAgentEffortOptions => _newEngine is { } e ? [.. _modelCatalog.EffortsFor(e.Id, NewAgentModel)] : [];
+    public bool NewAgentHasEffort => _newEngine is { } e && (_engineConfig?.Get(e.Id) is { } c ? c.HasEfforts : _modelCatalog.HasEfforts(e.Id));
+    /// <summary>New-Agent 추론 단계 — 엔진별 config의 모델별 effort(없으면 엔진 기본; 미로드 시 카탈로그 폴백).</summary>
+    public string[] NewAgentEffortOptions => _newEngine is { } e
+        ? (_engineConfig?.Get(e.Id) is { } c ? [.. c.EffortsFor(NewAgentModel)] : [.. _modelCatalog.EffortsFor(e.Id, NewAgentModel)])
+        : [];
     private string _newAgentReasoning = "default";
     public string NewAgentReasoning { get => _newAgentReasoning; set => Set(ref _newAgentReasoning, value); }
 

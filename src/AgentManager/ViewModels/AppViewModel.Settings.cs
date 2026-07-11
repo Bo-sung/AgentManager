@@ -218,8 +218,8 @@ public sealed partial class AppViewModel
     public string[] GxModels => DropdownModelsFor("gx");
     public string[] AgyModels => DropdownModelsFor("agy");
     public string[] PiModels => DropdownModelsFor("pi");
-    // 엔진 모델 목록은 models.json 카탈로그에서(하드코딩 대체) — 사용자가 파일 편집으로 추가 가능.
-    private string[] EngineModels(string id) => [.. _modelCatalog.ModelsFor(id)];
+    // 엔진 모델 목록은 엔진별 config(engines/*.json)에서 — 사용자가 파일 편집으로 추가 가능. 미로드 시 카탈로그 폴백(P1c).
+    private string[] EngineModels(string id) => _engineConfig?.Get(id) is { } c ? [.. c.ModelIds()] : [.. _modelCatalog.ModelsFor(id)];
 
     // ----- "주로 쓰는 모델" — 엔진별 선호 집합(설정 영속) + 체크리스트(cc/gx/agy/pi 공통) -----
     private Dictionary<string, HashSet<string>> _preferred => _settings.Preferred;
@@ -301,7 +301,7 @@ public sealed partial class AppViewModel
             _piCatalog.Clear();
             _piCatalog.AddRange(cat.Models);
             _piProviders = cat.Providers;
-            _modelCatalog.UpdateFromQuery("pi", cat.Models); // 조회 결과가 다르면 models.json의 pi 항목 갱신(요구사항)
+            _engineConfig?.UpdateModelsFromQuery("pi", cat.Models); // 조회 결과가 다르면 engines/pi.json 모델 목록 갱신
             PiChecklist.SetModels(_piCatalog);
             PiModelsStatus = cat.Models.Count > 0 ? App.L("L.ModelsFound", cat.Models.Count) : App.L("L.NoModels");
         }
@@ -335,7 +335,7 @@ public sealed partial class AppViewModel
             var models = await EngineRegistry.QueryAgyModelsAsync(_agyPath);
             _agyCatalog.Clear();
             _agyCatalog.AddRange(models);
-            if (models.Count > 0) _modelCatalog.UpdateFromQuery("agy", ["default", .. models]); // models.json의 agy 항목 갱신
+            if (models.Count > 0) _engineConfig?.UpdateModelsFromQuery("agy", ["default", .. models]); // engines/agy.json 모델 목록 갱신
             AgyChecklist.SetModels(_agyCatalog.Count > 0 ? ["default", .. _agyCatalog] : EngineModels("agy"));
             AgyModelsStatus = models.Count > 0 ? App.L("L.ModelsFound", models.Count) : App.L("L.NoModels");
         }
@@ -345,24 +345,119 @@ public sealed partial class AppViewModel
         NotifySessionModelsChanged("agy");
     }
 
-    /// <summary>엔진의 기본 모델 (설정값 → 없으면 첫 모델).</summary>
-    private string DefaultModelFor(string id) =>
-        _defaultModels.TryGetValue(id, out var m) && !string.IsNullOrWhiteSpace(m) ? m : (EngineModels(id).FirstOrDefault() ?? "");
-    /// <summary>유효한 모델만 저장 (엔진 모델 목록에 있을 때).</summary>
+    /// <summary>엔진의 기본 모델 (engines/&lt;id&gt;.json → 없으면 첫 모델; 스토어 미로드 시 레거시 폴백).</summary>
+    private string DefaultModelFor(string id)
+    {
+        var m = _engineConfig?.Get(id) is { } c ? c.DefaultModel
+            : (_defaultModels.TryGetValue(id, out var lm) ? lm : null);
+        return !string.IsNullOrWhiteSpace(m) ? m! : (EngineModels(id).FirstOrDefault() ?? "");
+    }
+    /// <summary>기본 모델을 engines/&lt;id&gt;.json에 저장 (유효한 모델만; pi는 "provider/id" 자유형식).</summary>
     private void SetDefaultModel(string id, string model)
     {
-        // pi는 멀티 provider — "provider/id" 자유형식 허용("default"/빈값은 ~/.pi 기본값 사용).
-        if (id == "pi")
-        {
-            if (!string.IsNullOrWhiteSpace(model) && model != "default") _defaultModels[id] = model;
-            else _defaultModels.Remove(id);
-            return;
-        }
-        if (!string.IsNullOrWhiteSpace(model) && Array.IndexOf(EngineModels(id), model) >= 0)
-            _defaultModels[id] = model;
-        else
-            _defaultModels.Remove(id);
+        // pi는 멀티 provider — 자유형식 허용("default"/빈값은 ~/.pi 기본값 사용); 그 외는 목록에 있을 때만.
+        string? val = id == "pi"
+            ? (!string.IsNullOrWhiteSpace(model) && model != "default" ? model : null)
+            : (!string.IsNullOrWhiteSpace(model) && Array.IndexOf(EngineModels(id), model) >= 0 ? model : null);
+        if (_engineConfig?.Get(id) is { } c) _engineConfig.Upsert(c with { DefaultModel = val });
+        else if (val is null) _defaultModels.Remove(id);
+        else _defaultModels[id] = val;
     }
+    private static readonly string[] PreferredEngines = ["cc", "gx", "agy", "pi"];
+
+    /// <summary>Load the checklist working set (_preferred[id]) from the engine config's preferred flags — engines/*.json
+    /// is authoritative. Called once the store is loaded; the checklists bind to these same HashSets.</summary>
+    private void SyncPreferredFromStore()
+    {
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig?.Get(id) is not { } c || !_preferred.TryGetValue(id, out var set)) continue;
+            set.Clear();
+            foreach (var m in c.PreferredModelIds()) set.Add(m);
+        }
+    }
+
+    /// <summary>Persist the checklist working set (_preferred[id]) back to engines/&lt;id&gt;.json — flips each model's
+    /// preferred flag and adds any custom (checklist-typed) model not yet in the list.</summary>
+    private void SyncPreferredToStore()
+    {
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig?.Get(id) is not { } c) continue;
+            var pref = _preferred.GetValueOrDefault(id) ?? [];
+            var models = c.ModelList.Select(m => m with { Preferred = pref.Contains(m.Id) }).ToList();
+            var known = new HashSet<string>(models.Select(m => m.Id), StringComparer.OrdinalIgnoreCase);
+            foreach (var m in pref) if (!known.Contains(m)) models.Add(new AgentManager.Core.Engines.EngineModelConfig(m, Preferred: true));
+            _engineConfig.Upsert(c with { Models = models });
+        }
+    }
+
+    /// <summary>Load the auth service (mode / encrypted api key / auto-api) from engines/*.json — authoritative —
+    /// while preserving the runtime rate-limit cooldowns already in the service.</summary>
+    private void SyncAuthFromStore()
+    {
+        if (_engineConfig is null) return;
+        var mode = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var apiKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var autoApi = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig.Get(id) is not { } c) continue;
+            var a = c.AuthOrDefault;
+            mode[id] = a.Mode;
+            if (!string.IsNullOrEmpty(a.ApiKeyEnc)) apiKey[id] = a.ApiKeyEnc;
+            autoApi[id] = a.AutoApiOnLimit;
+        }
+        _engineAuth.Load(mode, apiKey, autoApi, _engineAuth.SnapshotLimitedUntil());
+    }
+
+    /// <summary>Persist the auth service state (mode / encrypted key / auto-api) back to engines/&lt;id&gt;.json.</summary>
+    private void SyncAuthToStore()
+    {
+        if (_engineConfig is null) return;
+        var keys = _engineAuth.SnapshotApiKey();
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig.Get(id) is not { } c) continue;
+            _engineConfig.Upsert(c with
+            {
+                Auth = new AgentManager.Core.Engines.EngineAuthConfig(
+                    _engineAuth.GetAuthMode(id),
+                    keys.TryGetValue(id, out var k) ? k : "",
+                    _engineAuth.GetAutoApi(id)),
+            });
+        }
+    }
+
+    /// <summary>Load per-engine enabled + skill-dir from engines/*.json into the runtime working copies
+    /// (_disabledEngines / _skillDirs) — engines/*.json is authoritative.</summary>
+    private void SyncEngineFlagsFromStore()
+    {
+        if (_engineConfig is null) return;
+        _disabledEngines.Clear();
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig.Get(id) is not { } c) continue;
+            if (!c.Enabled) _disabledEngines.Add(id);
+            if (!string.IsNullOrWhiteSpace(c.SkillDir)) _skillDirs[id] = c.SkillDir;
+        }
+    }
+
+    /// <summary>Persist per-engine enabled + skill-dir back to engines/&lt;id&gt;.json.</summary>
+    private void SyncEngineFlagsToStore()
+    {
+        if (_engineConfig is null) return;
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig.Get(id) is not { } c) continue;
+            _engineConfig.Upsert(c with
+            {
+                Enabled = !_disabledEngines.Contains(id),
+                SkillDir = _skillDirs.GetValueOrDefault(id, ""),
+            });
+        }
+    }
+
     public string SettingsModelCc { get => _settingsModelCc; set => Set(ref _settingsModelCc, value); }
     private string _settingsModelCc = "";
     public string SettingsModelGx { get => _settingsModelGx; set => Set(ref _settingsModelGx, value); }
@@ -819,16 +914,15 @@ public sealed partial class AppViewModel
         catch { }
     }
 
-    /// <summary>Open the model/effort catalog (models.json) in the default editor, seeding it first if absent.
-    /// Edits apply on next app start (the catalog is loaded once at startup).</summary>
+    /// <summary>Open the per-engine config folder (engines/*.json) in the file manager. This is the source for each
+    /// engine's models/efforts/path/auth (it replaced models.json). Edits apply on next app start.</summary>
     private void OpenModelsFile()
     {
         try
         {
-            var path = AgentManager.Core.Models.ModelCatalog.DefaultPath;
-            if (!System.IO.File.Exists(path))
-                _modelCatalog.Save();
-            Shell.Open(path);
+            var dir = AgentManager.Core.Engines.EngineConfigStore.DefaultDir;
+            System.IO.Directory.CreateDirectory(dir);
+            Shell.Open(dir);
         }
         catch { }
     }
@@ -863,6 +957,7 @@ public sealed partial class AppViewModel
         SetDefaultModel("gx", SettingsModelGx);
         SetDefaultModel("agy", SettingsModelAgy);
         SetDefaultModel("pi", SettingsModelPi);
+        SyncPreferredToStore(); // "주로 쓰는 모델" 체크 상태를 engines/*.json에 반영(+ 커스텀 모델 추가)
         _accent = Theme.AccentPalette.Normalize(SettingsAccent);
         _telemetry = SettingsTelemetry;
         // 엔진 비활성 집합 재구성 — 단, 최소 1개는 활성으로 유지
@@ -883,6 +978,7 @@ public sealed partial class AppViewModel
         _engineAuth.SetAutoApi("cc", SettingsAutoApiCc);
         _engineAuth.SetAutoApi("gx", SettingsAutoApiGx);
         _engineAuth.SetAutoApi("agy", SettingsAutoApiAgy);
+        SyncAuthToStore(); // 인증(모드/암호화 키/auto-api)을 engines/*.json에 반영
         _theme = Theme.ThemePalette.Normalize(SettingsTheme); // 테마는 이미 라이브 적용됨
         var newLanguage = SettingsLanguage == "en" ? "en" : "ko";
         var languageChanged = newLanguage != _language;
@@ -894,6 +990,7 @@ public sealed partial class AppViewModel
         _settings.TranslationSelectedId = string.IsNullOrWhiteSpace(SettingsTranslationSelectedId) ? "ollama" : SettingsTranslationSelectedId;
         _translator = BuildTranslator(); // selected provider (ollama / agent / custom) via the factory
         ApplyAndInjectSkill(); // 각 엔진 스킬 폴더에 SKILL.md 기록
+        SyncEngineFlagsToStore(); // enabled + skill-dir를 engines/*.json에 반영
         SettingsStatus = languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");
         SaveState();
     }

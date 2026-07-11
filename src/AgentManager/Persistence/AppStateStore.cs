@@ -15,6 +15,14 @@ public sealed record AppStateDto
     public List<SessionDto> Sessions { get; init; } = [];
     /// <summary>워커 작업 백로그/큐(프로젝트 단위). 스킬이 스풀로 등록 → 유저가 워커에 할당.</summary>
     public List<AgentManager.Core.Workers.WorkerTaskDto> WorkerTasks { get; init; } = [];
+
+    // ----- 런타임 상태 (설정이 아님 — settings.json에서 이관). 앱이 자동 기록 — 손편집 대상 아님. -----
+    /// <summary>엔진별 마지막 사용량(rate-limit) 스냅샷 — footer 복원용.</summary>
+    public Dictionary<string, UsageSnapshotDto> Usage { get; init; } = new();
+    /// <summary>엔진별 rate-limit 차단 해제 시각(unix) — 재시작 후에도 소진 상태 유지.</summary>
+    public Dictionary<string, long> EngineLimitedUntil { get; init; } = new();
+    /// <summary>사용자가 삭제한 CLI 세션 id — CLI History 재발견에서 영구 제외.</summary>
+    public List<string> DismissedCliSessions { get; init; } = [];
 }
 
 public sealed record AppSettingsDto

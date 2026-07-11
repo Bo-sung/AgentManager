@@ -70,15 +70,11 @@ public sealed partial class AppViewModel
         Theme.AccentPalette.Apply(_accent);
     }
 
-    /// <summary>현재 설정을 settings.json DTO로 직렬화.</summary>
+    /// <summary>현재 설정을 settings.json DTO로 직렬화 — <b>공통(전역) 설정만</b>. 엔진별 설정(경로/모델 기본·선호/
+    /// skillDir/인증/enabled)은 engines/*.json, 런타임 상태(Usage/차단시각/숨긴 세션)는 state.json에 각각 기록한다.</summary>
     private AppSettingsDto BuildSettingsDto() => new()
     {
-        ClaudePath = _claudePath,
-        CodexPath = _codexPath,
-        AgyPath = _agyPath,
-        PiPath = _piPath,
-        PiWorkerPath = _piWorkerPath,
-        PreferredModels = _preferred.Where(kv => kv.Value.Count > 0).ToDictionary(kv => kv.Key, kv => kv.Value.ToArray()),
+        PiWorkerPath = _piWorkerPath, // pi-worker는 아직 config 엔진 아님(P3) → 여기 유지
         OllamaEndpoint = _ollamaEndpoint,
         OllamaModel = _ollamaModel,
         OllamaTimeoutSeconds = _settings.OllamaTimeoutSeconds,
@@ -87,7 +83,6 @@ public sealed partial class AppViewModel
         MaxConcurrentWorkers = MaxConcurrentWorkers,
         WorkerBehaviorPreamble = WorkerBehaviorPreamble,
         SkillContent = _skillContent,
-        SkillDirs = new Dictionary<string, string>(_skillDirs),
         ReviewPaneOpen = IsReviewOpen,
         WarnNoWorktree = _warnNoWorktree,
         Theme = _theme,
@@ -98,30 +93,93 @@ public sealed partial class AppViewModel
         WorktreeBase = _worktreeBase,
         AutoStartLastSession = _autoStartLastSession,
         StreamLogs = _settings.StreamLogs,
-        DefaultModels = new Dictionary<string, string>(_defaultModels),
         Accent = _accent,
         BodyScale = _bodyScale,
         ModalScale = _modalScale,
         Telemetry = _telemetry,
-        DisabledEngines = _disabledEngines.ToList(),
-        DismissedCliSessions = _dismissedCliSessions.ToList(),
-        EngineAuthMode = _engineAuth.SnapshotAuthMode(),
-        EngineApiKey = _engineAuth.SnapshotApiKey(),
-        EngineAutoApiOnLimit = _engineAuth.SnapshotAutoApi(),
-        EngineLimitedUntil = _engineAuth.SnapshotLimitedUntil(),
-        Usage = _usageService.Snapshots.ToDictionary(k => k.Key, v => new UsageSnapshotDto
-        {
-            Utilization = v.Value.Utilization,
-            ResetsAtUnix = v.Value.ResetsAtUnix,
-            RateLimitType = v.Value.RateLimitType,
-            CapturedUtc = v.Value.CapturedUtc,
-        }),
     };
+
+    /// <summary>Load the per-engine config store, migrating legacy settings.json per-engine keys + models.json into
+    /// engines/*.json on first run (when the dir has no files). Idempotent: once files exist they are authoritative.</summary>
+    private AgentManager.Core.Engines.EngineConfigStore LoadEngineConfig()
+    {
+        var defaults = AgentManager.Core.Engines.DefaultEngineConfig.Build();
+        try
+        {
+            var dir = AgentManager.Core.Engines.EngineConfigStore.DefaultDir;
+            var firstRun = !Directory.Exists(dir) || !Directory.EnumerateFiles(dir, "*.json").Any();
+            if (firstRun)
+            {
+                var seed = AgentManager.Core.Engines.EngineConfigMigration.Apply(defaults, BuildLegacyEngineData(), _modelCatalog);
+                return AgentManager.Core.Engines.EngineConfigStore.Load(seed);
+            }
+        }
+        catch { /* fall through to plain defaults */ }
+        return AgentManager.Core.Engines.EngineConfigStore.Load(defaults);
+    }
+
+    /// <summary>Gather the legacy per-engine values (already applied to the VM) for the one-time migration.</summary>
+    private IReadOnlyDictionary<string, AgentManager.Core.Engines.LegacyEngineData> BuildLegacyEngineData()
+    {
+        var apiKeys = _engineAuth.SnapshotApiKey();
+        var d = new Dictionary<string, AgentManager.Core.Engines.LegacyEngineData>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in new[] { "cc", "gx", "agy", "pi" })
+        {
+            d[id] = new AgentManager.Core.Engines.LegacyEngineData(
+                Path: PathForEngine(id),
+                AuthMode: _engineAuth.GetAuthMode(id),
+                ApiKeyEnc: apiKeys.TryGetValue(id, out var k) ? k : null,
+                AutoApiOnLimit: _engineAuth.GetAutoApi(id),
+                DefaultModel: _defaultModels.TryGetValue(id, out var dm) ? dm : null,
+                PreferredModels: _preferred.TryGetValue(id, out var s) ? s.ToArray() : null,
+                SkillDir: _skillDirs.TryGetValue(id, out var sd) ? sd : null,
+                Disabled: _disabledEngines.Contains(id));
+        }
+        return d;
+    }
+
+    // Legacy path source for the one-time migration — reads the settings.json holder directly (never the store,
+    // which is being built when this runs).
+    private string PathForEngine(string id) => id switch
+    {
+        "cc" => _settings.ClaudePath,
+        "gx" => _settings.CodexPath,
+        "agy" => _settings.AgyPath,
+        "pi" => _settings.PiPath,
+        _ => "",
+    };
+
+    /// <summary>Apply runtime state (usage snapshots / rate-limit cooldowns / dismissed CLI sessions) from state.json.
+    /// These moved out of settings.json; ApplySettings still reads the legacy settings copy first (one-time
+    /// migration), and this overrides with state.json values once they exist there.</summary>
+    private void ApplyRuntimeState(AppStateDto? state)
+    {
+        if (state is null) return;
+        if (state.Usage is { Count: > 0 })
+        {
+            _usageService.Clear();
+            foreach (var kv in state.Usage)
+                _usageService.Set(kv.Key, new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc));
+        }
+        if (state.EngineLimitedUntil is { Count: > 0 })
+            _engineAuth.Load(_engineAuth.SnapshotAuthMode(), _engineAuth.SnapshotApiKey(), _engineAuth.SnapshotAutoApi(), state.EngineLimitedUntil);
+        if (state.DismissedCliSessions is { Count: > 0 })
+        {
+            _dismissedCliSessions.Clear();
+            foreach (var d in state.DismissedCliSessions) _dismissedCliSessions.Add(d);
+        }
+    }
 
     private void RestoreState()
     {
         ApplySettings(SettingsStore.Load());
+        _engineConfig = LoadEngineConfig(); // seed/migrate engines/*.json from the just-applied legacy settings (first run only)
+        SyncPreferredFromStore(); // engines/*.json is authoritative for the "preferred" checklist working set
+        SyncAuthFromStore();      // and for per-engine auth (mode / api key / auto-api)
+        SyncEngineFlagsFromStore(); // and for enabled + skill-dir
+        RefreshEngines(); // engine set now includes any custom engines from engines/*.json
         var state = AppStateStore.Load();
+        ApplyRuntimeState(state); // Usage / rate-limit cooldowns / dismissed CLI sessions now live in state.json (migrated from settings)
         if (state is null || state.Projects.Count == 0)
         {
             var repo = FindRepoRoot();
@@ -315,6 +373,16 @@ public sealed partial class AppViewModel
         Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
         WorkerTasks = [],
         Sessions = [],
+        // 런타임 상태(설정 아님) — state.json에 기록.
+        Usage = _usageService.Snapshots.ToDictionary(k => k.Key, v => new UsageSnapshotDto
+        {
+            Utilization = v.Value.Utilization,
+            ResetsAtUnix = v.Value.ResetsAtUnix,
+            RateLimitType = v.Value.RateLimitType,
+            CapturedUtc = v.Value.CapturedUtc,
+        }),
+        EngineLimitedUntil = _engineAuth.SnapshotLimitedUntil(),
+        DismissedCliSessions = _dismissedCliSessions.ToList(),
     };
 
     /// <summary>프로젝트 로컬 상태 스냅샷 — 각 프로젝트의 세션 + 워커 백로그/큐를 projectId로 그룹핑해

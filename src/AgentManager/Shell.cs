@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 
 namespace AgentManager;
 
@@ -11,7 +12,15 @@ internal static class Shell
     public static void Open(string? target)
     {
         if (string.IsNullOrWhiteSpace(target)) return;
-        try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); }
+        try
+        {
+            // A bare directory path via ShellExecute fails on some systems ("location not available"), so open
+            // folders in the file manager explicitly. Files/URLs use the OS default handler as before.
+            if (Directory.Exists(target))
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{target}\"") { UseShellExecute = true });
+            else
+                Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+        }
         catch { /* 링크/경로 열기 실패는 무시 */ }
     }
 }

@@ -1155,6 +1155,9 @@
                 <!-- ===================== Settings (full center pane) -> views/SettingsView ===================== -->
                 <views:SettingsView DataContext="{Binding DataContext, ElementName=Root}"
                                     Visibility="{Binding IsSettingsView, Converter={StaticResource BoolVis}}"/>
+                <!-- ===================== Model manager (settings sub-page) -> views/ModelManagerView ===================== -->
+                <views:ModelManagerView DataContext="{Binding DataContext, ElementName=Root}"
+                                        Visibility="{Binding IsModelManagerView, Converter={StaticResource BoolVis}}"/>
             </Grid>
 
             <!-- Review pane -->

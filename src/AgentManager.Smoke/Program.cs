@@ -1256,6 +1256,9 @@ AssertPiWorkerLaunch();
 AssertPiCompletionStateMachine();
 AssertPiExtensionUi();
 AssertModelCatalog();
+AssertEngineConfig();
+AssertEngineConfigMigration();
+AssertOneShotAdapter();
 
 static void AssertQuickReplyParser()
 {
@@ -1853,6 +1856,130 @@ static void AssertModelCatalog()
         Console.WriteLine("model catalog asserts OK");
     }
     finally { try { File.Delete(tmp); } catch { } }
+}
+
+static void AssertEngineConfig()
+{
+    var dir = Path.Combine(Path.GetTempPath(), "am_ec_" + Guid.NewGuid().ToString("N")[..8]);
+    try
+    {
+        var defaults = AgentManager.Core.Engines.DefaultEngineConfig.Build();
+
+        // 1) fresh dir -> seed one file per built-in engine
+        var store = AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir);
+        Assert(File.Exists(Path.Combine(dir, "cc.json")), "engine-cfg: seeds engines/cc.json when missing");
+        Assert(store.All.Count >= 4, "engine-cfg: built-ins seeded (cc/gx/agy/pi)");
+        Assert(store.All[0].Id == "cc", "engine-cfg: stable order, cc first");
+        var cc = store.Get("cc")!;
+        Assert(cc.Source == "builtin" && cc.AdapterKind == "claude-stream-json", "engine-cfg: cc identity/adapterKind seeded");
+        Assert(cc.ModelIds().Contains("opus"), "engine-cfg: cc models seeded");
+        Assert(cc.EffortsFor("opus").Contains("ultracode"), "engine-cfg: cc opus per-model efforts include ultracode");
+        Assert(cc.DefaultEffortFor("opus") == "medium", "engine-cfg: cc opus default effort");
+        Assert(!store.Get("agy")!.HasEfforts && cc.HasEfforts, "engine-cfg: HasEfforts agy=false, cc=true");
+
+        // 2) Upsert a CUSTOM engine -> saved + reload sees it
+        var custom = new AgentManager.Core.Engines.EngineConfig(
+            Id: "qwen-local", Name: "Qwen (local)", Source: "custom", AdapterKind: "one-shot-text",
+            Launch: new AgentManager.Core.Engines.EngineLaunchConfig("ollama", ["run", "qwen2.5-coder"]),
+            DefaultEfforts: [],
+            Models: [new AgentManager.Core.Engines.EngineModelConfig("qwen2.5-coder", Preferred: true)]);
+        store.Upsert(custom);
+        Assert(File.Exists(Path.Combine(dir, "qwen-local.json")), "engine-cfg: custom engine file written");
+        var reloaded = AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir);
+        Assert(reloaded.Get("qwen-local") is { Source: "custom" }, "engine-cfg: custom engine reloaded from disk");
+        Assert(reloaded.Get("qwen-local")!.PreferredModelIds().Contains("qwen2.5-coder"), "engine-cfg: preferred model persisted");
+
+        // 3) directly-edited built-in file is honored (path override + a preferred model added by hand)
+        File.WriteAllText(Path.Combine(dir, "gx.json"),
+            "{\"id\":\"gx\",\"name\":\"Codex\",\"source\":\"builtin\",\"adapterKind\":\"codex-json\",\"path\":\"C:/custom/codex.exe\"," +
+            "\"defaultEfforts\":[\"low\",\"high\"],\"models\":[{\"id\":\"gpt-5.6-luna\",\"efforts\":[\"low\",\"high\",\"max\"],\"preferred\":true}]}");
+        var edited = AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir);
+        Assert(edited.Get("gx")!.Path == "C:/custom/codex.exe", "engine-cfg: hand-edited path override honored");
+        Assert(edited.Get("gx")!.ModelIds().Contains("gpt-5.6-luna"), "engine-cfg: hand-added model appears");
+        Assert(edited.Get("gx")!.EffortsFor("gpt-5.6-luna").Contains("max"), "engine-cfg: hand-edited per-model efforts honored");
+        Assert(edited.Get("gx")!.PreferredModelIds().Contains("gpt-5.6-luna"), "engine-cfg: preferred flag from file");
+
+        // 3.5) live query updates the model list (preserve survivors' efforts, add new, empty = no-op)
+        Assert(!edited.UpdateModelsFromQuery("pi", []), "engine-cfg: empty query is a no-op");
+        Assert(edited.UpdateModelsFromQuery("pi", ["default", "zai/glm-9.9"]), "engine-cfg: query updates the model list");
+        Assert(edited.Get("pi")!.ModelIds().Contains("zai/glm-9.9"), "engine-cfg: newly-queried model present");
+        Assert(edited.Get("pi")!.EffortsFor("default").Contains("off"), "engine-cfg: surviving model keeps its efforts after query");
+        Assert(AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir).Get("pi")!.ModelIds().Contains("zai/glm-9.9"), "engine-cfg: query update persisted");
+
+        // 4) Remove drops only custom engines
+        Assert(!edited.Remove("cc"), "engine-cfg: built-in is not removable");
+        Assert(edited.Remove("qwen-local"), "engine-cfg: custom engine removable");
+        Assert(!File.Exists(Path.Combine(dir, "qwen-local.json")), "engine-cfg: removed custom file deleted");
+
+        // 5) AdapterFactory dispatches on adapterKind (P3); built-in id wrapper still resolves
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("claude-stream-json") is AgentManager.Core.Agents.ClaudeAdapter, "adapter-factory: claude-stream-json");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("codex-json", false) is AgentManager.Core.Agents.CodexAdapter, "adapter-factory: codex-json → exec");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("codex-json", true) is AgentManager.Core.Agents.CodexAppServerAdapter, "adapter-factory: codex-json+approval → app-server");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("agy-pty") is AgentManager.Core.Agents.AgyAdapter, "adapter-factory: agy-pty");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("pi-rpc") is AgentManager.Core.Agents.PiAdapter, "adapter-factory: pi-rpc");
+        Assert(AgentManager.Core.Agents.AdapterFactory.Create("nope") is null, "adapter-factory: unknown → null");
+        Assert(AgentManager.Core.Agents.EngineRegistry.CreateAdapter("gx", true) is AgentManager.Core.Agents.CodexAppServerAdapter, "engine-registry: gx id wrapper still works");
+        Assert(AgentManager.Core.Agents.EngineRegistry.BuiltinAdapterKind("cc") == "claude-stream-json", "engine-registry: builtin adapterKind map");
+
+        Console.WriteLine("engine config asserts OK");
+    }
+    finally { try { Directory.Delete(dir, recursive: true); } catch { } }
+}
+
+static void AssertEngineConfigMigration()
+{
+    var tmp = Path.Combine(Path.GetTempPath(), "am_ecm_" + Guid.NewGuid().ToString("N")[..8] + ".json");
+    try
+    {
+        var defaults = AgentManager.Core.Engines.DefaultEngineConfig.Build();
+        var catalog = AgentManager.Core.Models.ModelCatalog.Load(AgentManager.Core.Models.DefaultModelCatalog.Build(), tmp);
+
+        var legacy = new Dictionary<string, AgentManager.Core.Engines.LegacyEngineData>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["cc"] = new(Path: "C:/cc.exe", AuthMode: "api", ApiKeyEnc: "ENC==", AutoApiOnLimit: true,
+                         DefaultModel: "opus", PreferredModels: ["opus", "sonnet"], SkillDir: "D:/skills/cc"),
+            ["agy"] = new(Disabled: true),
+        };
+
+        var migrated = AgentManager.Core.Engines.EngineConfigMigration.Apply(defaults, legacy, catalog)
+            .ToDictionary(e => e.Id, StringComparer.OrdinalIgnoreCase);
+
+        var cc = migrated["cc"];
+        Assert(cc.Path == "C:/cc.exe", "migrate: legacy path folded in");
+        Assert(cc.AuthOrDefault is { Mode: "api", ApiKeyEnc: "ENC==", AutoApiOnLimit: true }, "migrate: legacy auth folded in");
+        Assert(cc.DefaultModel == "opus", "migrate: legacy default model folded in");
+        Assert(cc.SkillDir == "D:/skills/cc", "migrate: legacy skillDir folded in");
+        Assert(cc.PreferredModelIds().OrderBy(x => x).SequenceEqual(["opus", "sonnet"]), "migrate: preferred flags applied");
+        Assert(cc.EffortsFor("opus").Contains("ultracode"), "migrate: per-model efforts come from the catalog");
+        Assert(migrated["agy"].Enabled == false, "migrate: legacy disabled → enabled=false");
+        Assert(migrated["gx"].Path == "" && migrated["gx"].AuthOrDefault.Mode == "subscription", "migrate: engine with no legacy keeps defaults");
+
+        Console.WriteLine("engine config migration asserts OK");
+    }
+    finally { try { File.Delete(tmp); } catch { } }
+}
+
+static void AssertOneShotAdapter()
+{
+    var adapter = new AgentManager.Core.Agents.OneShotTextAdapter("myeng", ["run", "{prompt}", "--model", "{model}", "--cwd", "{cwd}"]);
+    Assert(adapter.Id == "myeng", "one-shot: engine id");
+    Assert(adapter.CloseStdinAfterStart, "one-shot: closes stdin (prompt is in args)");
+
+    var opts = new AgentManager.Core.Agents.SessionOptions { WorkingDirectory = "D:/work", Model = "qwen2.5-coder" };
+    var psi = adapter.BuildStartInfo("C:/tool.exe", opts, "hello world");
+    Assert(psi.FileName == "C:/tool.exe", "one-shot: exe = resolved path");
+    Assert(psi.ArgumentList.SequenceEqual(["run", "hello world", "--model", "qwen2.5-coder", "--cwd", "D:/work"]), "one-shot: {prompt}/{model}/{cwd} substituted into ArgumentList");
+    Assert(psi.RedirectStandardOutput && !psi.UseShellExecute, "one-shot: stdio redirected, no shell");
+
+    var evs1 = adapter.ParseLine("line one").ToList();
+    Assert(evs1.Count == 2 && evs1[0] is AgentManager.Core.Events.SessionStarted && evs1[1] is AgentManager.Core.Events.AssistantDelta { Delta: "line one\n" }, "one-shot: first line = SessionStarted + AssistantDelta");
+    var evs2 = adapter.ParseLine("line two").ToList();
+    Assert(evs2.Count == 1 && evs2[0] is AgentManager.Core.Events.AssistantDelta { Delta: "line two\n" }, "one-shot: later line = AssistantDelta only");
+
+    Assert(AgentManager.Core.Agents.AdapterFactory.CreateCustom("myeng", "one-shot-text", ["{prompt}"]) is AgentManager.Core.Agents.OneShotTextAdapter, "adapter-factory: custom one-shot-text");
+    Assert(AgentManager.Core.Agents.AdapterFactory.CreateCustom("myeng", "codex-json", []) is AgentManager.Core.Agents.CodexAdapter, "adapter-factory: custom reusing built-in kind");
+
+    Console.WriteLine("one-shot adapter asserts OK");
 }
 
 static async Task TestGitWorktreeAsync()
