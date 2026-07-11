@@ -173,6 +173,7 @@ public sealed partial class AppViewModel
         ApplySettings(SettingsStore.Load());
         _engineConfig = LoadEngineConfig(); // seed/migrate engines/*.json from the just-applied legacy settings (first run only)
         SyncPreferredFromStore(); // engines/*.json is authoritative for the "preferred" checklist working set
+        SyncAuthFromStore();      // and for per-engine auth (mode / api key / auto-api)
         var state = AppStateStore.Load();
         if (state is null || state.Projects.Count == 0)
         {

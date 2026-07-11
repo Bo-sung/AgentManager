@@ -392,6 +392,43 @@ public sealed partial class AppViewModel
         }
     }
 
+    /// <summary>Load the auth service (mode / encrypted api key / auto-api) from engines/*.json — authoritative —
+    /// while preserving the runtime rate-limit cooldowns already in the service.</summary>
+    private void SyncAuthFromStore()
+    {
+        if (_engineConfig is null) return;
+        var mode = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var apiKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var autoApi = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig.Get(id) is not { } c) continue;
+            var a = c.AuthOrDefault;
+            mode[id] = a.Mode;
+            if (!string.IsNullOrEmpty(a.ApiKeyEnc)) apiKey[id] = a.ApiKeyEnc;
+            autoApi[id] = a.AutoApiOnLimit;
+        }
+        _engineAuth.Load(mode, apiKey, autoApi, _engineAuth.SnapshotLimitedUntil());
+    }
+
+    /// <summary>Persist the auth service state (mode / encrypted key / auto-api) back to engines/&lt;id&gt;.json.</summary>
+    private void SyncAuthToStore()
+    {
+        if (_engineConfig is null) return;
+        var keys = _engineAuth.SnapshotApiKey();
+        foreach (var id in PreferredEngines)
+        {
+            if (_engineConfig.Get(id) is not { } c) continue;
+            _engineConfig.Upsert(c with
+            {
+                Auth = new AgentManager.Core.Engines.EngineAuthConfig(
+                    _engineAuth.GetAuthMode(id),
+                    keys.TryGetValue(id, out var k) ? k : "",
+                    _engineAuth.GetAutoApi(id)),
+            });
+        }
+    }
+
     public string SettingsModelCc { get => _settingsModelCc; set => Set(ref _settingsModelCc, value); }
     private string _settingsModelCc = "";
     public string SettingsModelGx { get => _settingsModelGx; set => Set(ref _settingsModelGx, value); }
@@ -913,6 +950,7 @@ public sealed partial class AppViewModel
         _engineAuth.SetAutoApi("cc", SettingsAutoApiCc);
         _engineAuth.SetAutoApi("gx", SettingsAutoApiGx);
         _engineAuth.SetAutoApi("agy", SettingsAutoApiAgy);
+        SyncAuthToStore(); // 인증(모드/암호화 키/auto-api)을 engines/*.json에 반영
         _theme = Theme.ThemePalette.Normalize(SettingsTheme); // 테마는 이미 라이브 적용됨
         var newLanguage = SettingsLanguage == "en" ? "en" : "ko";
         var languageChanged = newLanguage != _language;
