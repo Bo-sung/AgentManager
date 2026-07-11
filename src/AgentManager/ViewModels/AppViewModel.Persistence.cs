@@ -416,6 +416,12 @@ public sealed partial class AppViewModel
             _settingsWatcher.Changed += OnChange;
             _settingsWatcher.Created += OnChange;
             _settingsWatcher.Renamed += (_, _) => _ = DebouncedReloadAsync();
+            // 버퍼 오버플로 등으로 감시가 죽으면 조용히 멈춘다 → 재무장(수동 새로고침 버튼이 최종 안전장치).
+            _settingsWatcher.Error += (_, _) =>
+            {
+                try { if (_settingsWatcher is { } w) { w.EnableRaisingEvents = false; w.EnableRaisingEvents = true; } }
+                catch { }
+            };
         }
         catch { }
     }
@@ -427,23 +433,37 @@ public sealed partial class AppViewModel
         if (disp is not null) await disp.InvokeAsync(ReloadSettingsFromDisk);
     }
 
-    /// <summary>디스크의 settings.json을 읽어 VM에 적용. 자기-쓰기는 내용 비교로 무시(루프 방지).</summary>
-    private void ReloadSettingsFromDisk()
+    /// <summary>파일 감시(디바운스) 경로. 조용히 적용(변경 없음/자기-쓰기는 무시). 파싱 실패 시 상태만 표시.</summary>
+    private void ReloadSettingsFromDisk() => ApplyDiskSettings(manual: false);
+
+    /// <summary>수동 "설정 새로고침" 버튼 경로. 결과(적용/변경 없음/파싱 실패)를 상태 라벨로 보고.</summary>
+    private void ReloadSettingsFile() => ApplyDiskSettings(manual: true);
+
+    /// <summary>디스크의 settings.json을 읽어 VM에 적용. 자기-쓰기는 내용 비교로 무시(루프 방지).
+    /// <b>읽기/파싱 실패 시 적용하지 않는다</b> — 일시적 문법 오류·잠금을 기본값으로 오인해 덮어써 설정이
+    /// 통째로 날아가는 것을 막는다(<see cref="SettingsStore.TryLoad"/>가 실패를 null로 신호).</summary>
+    private void ApplyDiskSettings(bool manual)
     {
-        try
+        AppSettingsDto? disk;
+        try { disk = SettingsStore.TryLoad(); } catch { disk = null; }
+        if (disk is null)
         {
-            var disk = SettingsStore.Load();
-            var opts = new JsonSerializerOptions();
-            if (JsonSerializer.Serialize(disk, opts) == JsonSerializer.Serialize(BuildSettingsDto(), opts))
-                return; // 우리가 쓴 내용과 동일 → 외부 변경 아님
-            ApplySettings(disk);
-            OnChanged(nameof(BodyScale));
-            OnChanged(nameof(ModalScale));
-            OnChanged(nameof(BodyScalePercent));
-            OnChanged(nameof(ModalScalePercent));
-            if (CurrentView == MainViewKind.Settings) PullSettingsToEditor();
+            SettingsStatus = AgentManager.App.L("L.SettingsReloadFailed");
+            return; // 파싱/읽기 실패 → 절대 적용 안 함(설정 보존)
         }
-        catch { }
+        var opts = new JsonSerializerOptions();
+        if (JsonSerializer.Serialize(disk, opts) == JsonSerializer.Serialize(BuildSettingsDto(), opts))
+        {
+            if (manual) SettingsStatus = AgentManager.App.L("L.SettingsReloadNoChange");
+            return; // 우리가 쓴 내용과 동일 → 외부 변경 아님
+        }
+        ApplySettings(disk);
+        // 설정 화면을 열지 않은 상태에서도 파생 바인딩(엔진 목록·배율·정책 등)이 즉시 반영되도록 전체 리프레시.
+        // WPF에서 null/"" 프로퍼티명은 "모든 속성 변경"을 의미해 이 VM에 걸린 모든 바인딩을 재평가시킨다.
+        // (언어 전환만은 리소스 사전 교체가 필요해 재시작 시 반영 — 저장 경로와 동일한 정책.)
+        OnChanged(string.Empty);
+        if (CurrentView == MainViewKind.Settings) PullSettingsToEditor();
+        if (manual) SettingsStatus = AgentManager.App.L("L.SettingsReloaded");
     }
 
     private static readonly string DefaultWorktreesRoot =

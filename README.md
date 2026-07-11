@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.20.1
+`WPF · .NET 10 · Windows` · v1.21.0
 
 ---
 
@@ -228,6 +228,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.21.0** — 모델 카탈로그 파일 **`models.json`**(엔진별 모델 목록 + 모델별 추론 effort/기본값 — 설정파일 직접 편집이 필터/피커에 반영, 하드코딩 목록 대체) · 설정에 `models.json 열기`·`설정 새로고침` 버튼 · **settings.json 라이브 리로드 견고화 + 유실 버그 수정**(파싱 실패 시 기본값 덮어쓰기 방지). 상세 [docs/MODEL_CATALOG_KO.md](docs/MODEL_CATALOG_KO.md)
 - **1.20.1** — Pi Worker 런타임을 설치본에 **번들**(글로벌 npm 설치 불필요) · Codex `gpt-5.6` 모델 · 컴포저 커스텀 모델 직접 입력 · agy 모델 조회
 - **1.20.0** — Pi Worker: Pi 엔진의 **Worker 역할** 세션을 격리 런처 `pi-worker`(공식 Pi 0.80.3 래핑)로 실행(General/Main Pi는 그대로 공식 pi — 별도 엔진 아님, 실행 파일만 분기). 역할별 세션 discovery(`~/.pi-worker`) · Worker 공통 정책(delegation depth 0, task-spool 미제공) · `agent_end.willRetry==false` 완료 판정 · extension_ui_request 안전 취소 · 프로세스 트리 정리. `PiWorkerPath` 설정(빈 값=자동탐지). 상세 [docs/PI_WORKER_INTEGRATION_KO.md](docs/PI_WORKER_INTEGRATION_KO.md)
 - **1.14.1** — Claude Code 에이전트 런타임(`.claude/worktrees/` · `settings.local.json`) gitignore

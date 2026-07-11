@@ -135,6 +135,13 @@
     <sys:String x:Key="L.Privacy">개인정보</sys:String>
     <sys:String x:Key="L.OpenSettingsJson">settings.json 열기</sys:String>
     <sys:String x:Key="L.OpenSettingsJsonTip">설정을 JSON으로 편집 — 외부 변경은 즉시 반영됩니다.</sys:String>
+    <sys:String x:Key="L.OpenModelsJson">models.json 열기</sys:String>
+    <sys:String x:Key="L.OpenModelsJsonTip">엔진별 모델·추론(effort) 목록을 JSON으로 편집 — 앱 재시작 시 반영됩니다.</sys:String>
+    <sys:String x:Key="L.ReloadSettingsJson">설정 새로고침</sys:String>
+    <sys:String x:Key="L.ReloadSettingsJsonTip">디스크의 settings.json을 다시 읽어 반영 (파싱 실패 시 무시하고 기존 설정 유지).</sys:String>
+    <sys:String x:Key="L.SettingsReloaded">디스크에서 설정을 다시 읽었습니다.</sys:String>
+    <sys:String x:Key="L.SettingsReloadNoChange">변경 없음.</sys:String>
+    <sys:String x:Key="L.SettingsReloadFailed">settings.json 파싱 실패 — 반영하지 않음(기존 설정 유지).</sys:String>
     <sys:String x:Key="L.SecProject">프로젝트</sys:String>
     <sys:String x:Key="L.SecSkills">스킬</sys:String>
     <sys:String x:Key="L.SkillInjectDesc">공용 SKILL.md(Agent Skills 오픈 표준)를 각 엔진 스킬 폴더에 기록해 cc · gx · agy · pi가 같은 스킬을 인식하게 합니다. Save settings 시 주입됩니다.</sys:String>

@@ -117,12 +117,22 @@ public sealed class SessionViewModel : ObservableObject
     /// codex(model_reasoning_effort): none/minimal/low/medium/high/xhigh (codex API invalid_enum_value).
     /// pi(--thinking): off/minimal/low/medium/high/xhigh (pi --help · PHASE0_PI_RPC).
     /// "default"는 UI 센티넬(플래그 생략 → 엔진 기본 사용); 어댑터가 "default"·빈값이면 플래그 미전달.</summary>
-    public bool HasEffort => AgentId is not "agy";
-    public string[] EffortOptions => AgentId switch
+    // 추론(effort) 옵션·유무·기본값은 models.json 카탈로그에서 온다(모델별 상이) — AppViewModel이 주입.
+    // 미주입(단위 테스트 등)이거나 파일이 비면 아래 정적 기본으로 폴백.
+    public static Func<string, string?, IReadOnlyList<string>>? EffortOptionsProvider;
+    public static Func<string, bool>? HasEffortProvider;
+    public static Func<string, string?, string?>? DefaultEffortProvider;
+
+    public bool HasEffort => HasEffortProvider?.Invoke(AgentId) ?? (AgentId is not "agy");
+    public string[] EffortOptions =>
+        EffortOptionsProvider?.Invoke(AgentId, Model) is { Count: > 0 } p ? [.. p] : StaticEffortOptions(AgentId, Model);
+
+    /// <summary>정적 폴백 effort 목록(카탈로그 미주입/빈 파일 대비). 과거 하드코딩 동작.</summary>
+    private static string[] StaticEffortOptions(string engineId, string? model) => engineId switch
     {
         "gx" => ["none", "minimal", "low", "medium", "high", "xhigh"],
         "pi" => ["default", "off", "minimal", "low", "medium", "high", "xhigh"],
-        _    => CcEffortOptions(Model), // cc — model-aware (ultracode only on xhigh-capable models)
+        _    => CcEffortOptions(model), // cc — model-aware (ultracode only on xhigh-capable models)
     };
 
     /// <summary>cc effort options for <paramref name="model"/>. Effort availability is model-dependent
@@ -154,7 +164,12 @@ public sealed class SessionViewModel : ObservableObject
     /// <summary>Recommended DEFAULT reasoning effort for an engine+model — a smart default, NOT a gate
     /// (the user can still pick any level). cc recommends medium for Opus (per cc's own guidance: "We
     /// recommend medium effort for Opus"); other cc models use cc's default; gx defaults to medium.</summary>
-    public static string RecommendedEffort(string? engineId, string? model) => engineId switch
+    public static string RecommendedEffort(string? engineId, string? model) =>
+        engineId is not null && DefaultEffortProvider?.Invoke(engineId, model) is { Length: > 0 } d
+            ? d
+            : StaticRecommendedEffort(engineId, model);
+
+    private static string StaticRecommendedEffort(string? engineId, string? model) => engineId switch
     {
         "cc" when model is { } m && m.Contains("opus", StringComparison.OrdinalIgnoreCase) => "medium",
         "gx" => "medium",
