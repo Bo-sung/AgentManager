@@ -559,4 +559,15 @@
     <sys:String x:Key="L.AgentTranslationModel">Translation model (blank = engine default; a cheap/fast model is recommended)</sys:String>
     <sys:String x:Key="L.RemoteEndpointWarning">⚠ Remote endpoint — prompts and code leave this machine. Prefer HTTPS (plaintext HTTP is unencrypted).</sys:String>
     <sys:String x:Key="L.CustomProviderWarning">⚠ Using a non-local translator (custom endpoint) — your prompts and code are sent to it. Security implications may apply; use only endpoints you trust.</sys:String>
+
+    <!-- Resource monitor strip (titlebar upper-right): labels + tooltips. Neutral in KO/EN. -->
+    <sys:String x:Key="L.ResCpu">CPU</sys:String>
+    <sys:String x:Key="L.ResGpu">GPU</sys:String>
+    <sys:String x:Key="L.ResMem">RAM</sys:String>
+    <sys:String x:Key="L.ResVram">VRAM</sys:String>
+    <sys:String x:Key="L.ResCpuTip">Host CPU utilization</sys:String>
+    <sys:String x:Key="L.ResGpuTip">First physical GPU utilization (performance counter)</sys:String>
+    <sys:String x:Key="L.ResMemTip">Used / total physical memory</sys:String>
+    <sys:String x:Key="L.ResVramTip">Primary GPU dedicated video memory used / total (DXGI)</sys:String>
+    <sys:String x:Key="L.ResNetTip">Ethernet/Wi-Fi send &amp; receive rate (bytes per second)</sys:String>
 </ResourceDictionary>

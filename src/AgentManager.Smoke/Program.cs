@@ -35,6 +35,14 @@ if (args.Contains("--json-write-atomic-check"))
     return;
 }
 
+// Host resource monitor (CPU/GPU/RAM/Ethernet) — Windows-only, live. Verifies the counters open and the
+// snapshot is well-formed. dotnet run --project src/AgentManager.Smoke -- --resource-monitor-check
+if (args.Contains("--resource-monitor-check"))
+{
+    ResourceMonitorCheck();
+    return;
+}
+
 // Live headless E2E of the task queue (real engine, no GUI). Run in YOUR terminal — costs a few tokens:
 // dotnet run --project src/AgentManager.Smoke -- --worker-task-run
 if (args.Contains("--worker-task-run"))
@@ -2237,6 +2245,32 @@ static void ApprovalBrokerCheck()
     Assert(task2.Result is { Allow: false, Reason: "session ended" }, "broker: denial delivered");
 
     Console.WriteLine("ApprovalBroker asserts OK");
+}
+
+// Host resource monitor smoke: open the counters, seed, wait >1s for a real base, then assert the
+// snapshot shape. GPU/VRAM are optional (n/a on hosts with no GPU counter); CPU/MEM/NET are required.
+static void ResourceMonitorCheck()
+{
+    using var m = new AgentManager.Core.Monitoring.ResourceMonitor();
+    m.SampleOnce(); // seed (first NextValue returns ~0)
+    System.Threading.Thread.Sleep(1100);
+    var s = m.SampleOnce();
+
+    var memTotalOk = s.MemoryTotalBytes > 0;
+    var memPctOk = s.MemoryPercent >= 0 && s.MemoryPercent <= 100;
+    var cpuOk = s.CpuPercent == -1 || (s.CpuPercent >= 0 && s.CpuPercent <= 100);
+    var gpuOk = !s.GpuAvailable || (s.GpuPercent >= 0 && s.GpuPercent <= 100);
+    var netOk = s.NetRecvBytesPerSec >= 0 && s.NetSentBytesPerSec >= 0;
+    var vramOk = !s.VramAvailable || s.VramTotalBytes > 0;
+    var ok = memTotalOk && memPctOk && cpuOk && gpuOk && netOk;
+
+    var memGiB = s.MemoryTotalBytes / 1073741824.0;
+    var gpu = s.GpuAvailable ? s.GpuPercent.ToString("F0") + "%" : "n/a";
+    var vram = s.VramAvailable ? (s.VramUsedBytes / 1073741824.0).ToString("F1") + "/" + (s.VramTotalBytes / 1073741824.0).ToString("F1") + "G" : "n/a";
+    var verdict = ok ? "PASS" : "FAIL";
+    Console.WriteLine($"[resource-monitor] cpu={s.CpuPercent:F0}% gpu={gpu} vram={vram} ram={s.MemoryPercent:F0}% ({memGiB:F1}GiB total) net down={s.NetRecvBytesPerSec:F0} up={s.NetSentBytesPerSec:F0} B/s");
+    Console.WriteLine($"[resource-monitor] memTotal={memTotalOk} memPct={memPctOk} cpu={cpuOk} gpu={gpuOk} vram={vramOk} net={netOk} -> {verdict}");
+    Environment.Exit(ok ? 0 : 1);
 }
 
 static void Assert(bool condition, string message)

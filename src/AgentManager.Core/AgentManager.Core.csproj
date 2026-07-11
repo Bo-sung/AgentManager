@@ -6,4 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Resource monitor: GPU Engine / Processor / Network Interface performance counters (Windows-only).
+         Needed explicitly on plain net10.0 (these types are in-box only on the -windows TFM). -->
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.0" />
+    <!-- VRAM total is read from the registry via advapi32 P/Invoke (no extra NuGet dependency). -->
+  </ItemGroup>
+
 </Project>

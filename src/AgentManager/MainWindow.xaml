@@ -446,6 +446,22 @@
                     </Button>
                 </StackPanel>
 
+                <!-- Resource monitor strip (CPU / GPU / RAM / Ethernet) — right-aligned in the stretcher
+                     column so it sits just left of the Running/Waiting/Done + token/cost counters. -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,14,0"
+                            TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10">
+                    <TextBlock Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,4,0"
+                               ToolTip="{StaticResource L.ResCpuTip}"><Run Text="{StaticResource L.ResCpu}"/><Run Text=" " /><Run Text="{Binding CpuLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
+                    <TextBlock Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,4,0"
+                               ToolTip="{StaticResource L.ResGpuTip}"><Run Text="{StaticResource L.ResGpu}"/><Run Text=" " /><Run Text="{Binding GpuLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
+                    <TextBlock Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,4,0"
+                               ToolTip="{StaticResource L.ResVramTip}"><Run Text="{StaticResource L.ResVram}"/><Run Text=" " /><Run Text="{Binding VramLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
+                    <TextBlock Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" Margin="0,0,4,0"
+                               ToolTip="{StaticResource L.ResMemTip}"><Run Text="{StaticResource L.ResMem}"/><Run Text=" " /><Run Text="{Binding MemLabel, Mode=OneWay}" Foreground="{DynamicResource Txt0}"/></TextBlock>
+                    <TextBlock Foreground="{DynamicResource Accent}" VerticalAlignment="Center"
+                               ToolTip="{StaticResource L.ResNetTip}"><Run Text="{Binding NetLabel, Mode=OneWay}"/></TextBlock>
+                </StackPanel>
+
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0"
                             TextElement.FontFamily="{StaticResource Mono}" TextElement.FontSize="10">
                     <Ellipse Width="7" Height="7" Fill="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,5,0"/>
