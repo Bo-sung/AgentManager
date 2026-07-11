@@ -91,6 +91,12 @@ public sealed partial class AppViewModel : ObservableObject
         ? [.. list.Select(c => new EngineDef(c.Id, string.IsNullOrEmpty(c.Badge) ? c.Id.ToUpperInvariant() : c.Badge, c.Name, c.Cli, [.. c.ModelIds()], c.Desc, true, c.InstallUrl))]
         : Array.FindAll(EngineRegistry.All, e => e.Enabled);
     private void RefreshEngines() { _allEnginesCache = null; OnChanged(nameof(AllEngines)); OnChanged(nameof(Engines)); }
+    /// <summary>Resolve an engine id to its <see cref="EngineDef"/> from the FULL set (built-in + custom engines),
+    /// falling back to the built-in registry only for a genuinely unknown id. Anything that rebuilds a session from a
+    /// stored <c>AgentId</c> (restore, fork, CLI-history resume, scheduled run) MUST use this — plain
+    /// <see cref="EngineRegistry.Get"/> knows only cc/gx/agy/pi and silently returns cc for a custom id, so on restart
+    /// a custom-engine session would be permanently rewritten to cc (its model too).</summary>
+    private EngineDef EngineDefFor(string id) => Array.Find(AllEngines, e => e.Id == id) ?? EngineRegistry.Get(id);
     private HashSet<string> _disabledEngines => _settings.DisabledEngines;
     /// <summary>New Agent 피커에 노출할 엔진 (사용자가 비활성한 것 제외).</summary>
     public IEnumerable<EngineDef> Engines => Array.FindAll(AllEngines, e => !_disabledEngines.Contains(e.Id));
@@ -516,7 +522,7 @@ public sealed partial class AppViewModel : ObservableObject
     public void ForkSession(SessionViewModel? src)
     {
         if (src is null) return;
-        var engine = EngineRegistry.Get(src.AgentId);
+        var engine = EngineDefFor(src.AgentId); // custom-aware
         var title = src.Title + " (fork)";
         var id = NewSessionId("s");
         var s = new SessionViewModel(id, engine, title, UniqueBranch("agent/" + Slug(title), id),

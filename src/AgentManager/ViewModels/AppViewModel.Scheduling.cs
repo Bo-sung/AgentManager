@@ -116,7 +116,7 @@ public sealed partial class AppViewModel
         project ??= ActiveProject ?? Projects.FirstOrDefault();
         if (project is null) return;
 
-        var engine = EngineRegistry.Get(job.AgentId);
+        var engine = EngineDefFor(job.AgentId); // custom-aware
         var title = string.IsNullOrWhiteSpace(job.Title) ? L("L.ScheduledDefaultTitle") : job.Title.Trim();
         var prompt = string.IsNullOrWhiteSpace(job.Prompt) ? title : job.Prompt.Trim();
 
@@ -125,7 +125,7 @@ public sealed partial class AppViewModel
         var id = NewSessionId("s");
         var branch = UniqueBranch(string.IsNullOrWhiteSpace(job.TargetBranch) ? "agent/" + Slug(title) : job.TargetBranch.Trim(), id);
         var session = new SessionViewModel(id, engine, title, branch,
-            project.Id, project.Name, project.Path, engine.Models[0])
+            project.Id, project.Name, project.Path, engine.Models.Length > 0 ? engine.Models[0] : "")
         {
             TranslationEnabled = TranslationEnabled,
             Activity = L("L.ScheduledQueued"),

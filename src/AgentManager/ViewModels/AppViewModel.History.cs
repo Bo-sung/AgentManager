@@ -137,9 +137,9 @@ public sealed partial class AppViewModel
             return;
         }
 
-        var engine = EngineRegistry.Get(item.Entry.EngineId);
+        var engine = EngineDefFor(item.Entry.EngineId); // custom-aware
         var s = new SessionViewModel(NewSessionId("s"), engine, item.Title, "(project dir)",
-            project.Id, project.Name, project.Path, engine.Models[0])
+            project.Id, project.Name, project.Path, engine.Models.Length > 0 ? engine.Models[0] : "")
         {
             TranslationEnabled = TranslationEnabled,
             EngineSessionId = item.Entry.SessionId,

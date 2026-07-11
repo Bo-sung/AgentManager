@@ -232,9 +232,9 @@ public sealed partial class AppViewModel
             restoredTasks.AddRange(tasksForProject);
             foreach (var dto in sessionsForProject)
             {
-                var engine = EngineRegistry.Get(dto.AgentId);
+                var engine = EngineDefFor(dto.AgentId); // custom-aware — EngineRegistry.Get would rewrite a custom engine to cc
                 // 모델 카탈로그가 바뀌면(예: codex gpt-5.1 계열 폐기) 저장된 구 모델 id를 현행 기본값으로 정규화
-                var model = engine.Models.Contains(dto.Model) ? dto.Model : engine.Models[0];
+                var model = engine.Models.Contains(dto.Model) ? dto.Model : engine.Models.Length > 0 ? engine.Models[0] : dto.Model;
                 var s = new SessionViewModel(
                     dto.Id,
                     engine,
