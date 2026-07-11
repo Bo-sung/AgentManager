@@ -35,6 +35,10 @@ public sealed partial class AppViewModel
     public RelayCommand ThemeSelectCommand { get; private set; } = null!;
     /// <summary>settings.json을 기본 편집기로 열기.</summary>
     public RelayCommand OpenSettingsFileCommand { get; private set; } = null!;
+    /// <summary>models.json(엔진별 모델·추론 카탈로그)을 기본 편집기로 열기.</summary>
+    public RelayCommand OpenModelsFileCommand { get; private set; } = null!;
+    /// <summary>디스크의 settings.json을 수동으로 다시 읽어 반영(감시가 놓쳤거나 즉시 반영하고 싶을 때).</summary>
+    public RelayCommand ReloadSettingsFileCommand { get; private set; } = null!;
     /// <summary>UI 줌 인/아웃/리셋 (Ctrl++ / Ctrl+- / Ctrl+0).</summary>
     public RelayCommand ZoomInCommand { get; private set; } = null!;
     public RelayCommand ZoomOutCommand { get; private set; } = null!;
@@ -112,5 +116,7 @@ public sealed partial class AppViewModel
         SignInCommand = new RelayCommand(p => { if (p is string id) SignIn(id); });
         ThemeSelectCommand = new RelayCommand(p => { if (p is string id) SettingsTheme = id; });
         OpenSettingsFileCommand = new RelayCommand(_ => OpenSettingsFile());
+        OpenModelsFileCommand = new RelayCommand(_ => OpenModelsFile());
+        ReloadSettingsFileCommand = new RelayCommand(_ => ReloadSettingsFile());
     }
 }
