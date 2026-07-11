@@ -1,0 +1,24 @@
+{
+	"name": "@agentmanager/pi-worker-harness",
+	"version": "0.1.0",
+	"description": "Thin launcher that runs the official Pi coding agent (@earendil-works/pi-coding-agent) as an isolated Worker role for AgentManager. Does not fork or modify Pi's core.",
+	"private": true,
+	"type": "module",
+	"license": "MIT",
+	"bin": {
+		"pi-worker": "dist/cli/index.js"
+	},
+	"engines": {
+		"node": ">=22.19.0"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"test": "node --test tests/*.test.js",
+		"prepack": "npm run build"
+	},
+	"devDependencies": {
+		"typescript": "^5.6.0",
+		"@types/node": "^22.10.0"
+	},
+	"pinnedSupportedPiVersion": "0.80.3"
+}

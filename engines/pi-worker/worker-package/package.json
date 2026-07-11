@@ -1,0 +1,12 @@
+{
+	"name": "@agentmanager/pi-worker-package",
+	"version": "0.1.0",
+	"description": "Pi Package bundling the Worker-role extension, skill, and prompts injected by pi-worker.",
+	"private": true,
+	"keywords": ["pi-package"],
+	"pi": {
+		"extensions": ["./extensions"],
+		"skills": ["./skills"],
+		"prompts": ["./prompts"]
+	}
+}

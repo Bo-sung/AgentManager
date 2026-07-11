@@ -126,15 +126,24 @@ public static class EngineRegistry
         return File.Exists(p) ? p : null;
     }
 
-    /// <summary>pi-worker 런처(@agentmanager/pi-worker-harness) 자동 탐지 — npm 전역 설치/`npm link`가
-    /// 만드는 <c>dist/cli/index.js</c>(node로 구동). 미설치면 null → 사용자가 설정에서 경로 지정.
-    /// (harness는 private 패키지라 npm registry엔 없고, `npm i -g &lt;tarball&gt;`/`npm link`로만 깔린다.)</summary>
+    /// <summary>번들된 pi-worker 런타임 경로(설치본에 vendor된 harness). 앱 실행 파일 옆
+    /// <c>runtimes/pi-worker/dist/cli/index.js</c>. 존재하지 않으면(예: 소스 실행 중 미빌드) null.
+    /// 일반 사용자는 이게 있어 글로벌 설치 없이 Pi Worker를 바로 쓴다.</summary>
+    public static string? BundledPiWorker()
+    {
+        var p = Path.Combine(AppContext.BaseDirectory, "runtimes", "pi-worker", "dist", "cli", "index.js");
+        return File.Exists(p) ? p : null;
+    }
+
+    /// <summary>pi-worker 런처 자동 탐지. 우선순위: (1) 번들 런타임(설치본) → (2) npm 전역 설치(레거시).
+    /// 둘 다 없으면 null. (사용자 override는 <see cref="ResolveExe"/>에서 먼저 처리된다.)</summary>
     private static string? ResolvePiWorker()
     {
-        var p = Path.Combine(
+        if (BundledPiWorker() is { } bundled) return bundled;
+        var npmGlobal = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), // %APPDATA%
             "npm", "node_modules", "@agentmanager", "pi-worker-harness", "dist", "cli", "index.js");
-        return File.Exists(p) ? p : null;
+        return File.Exists(npmGlobal) ? npmGlobal : null;
     }
 
     /// <summary>pi-worker 오토 탐지만(수동 경로 무시) — 설정의 '탐지' 버튼용. 실제 존재하는 파일만 반환.</summary>
