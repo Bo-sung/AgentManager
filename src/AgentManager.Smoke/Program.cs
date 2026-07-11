@@ -20,10 +20,39 @@ if (args.Contains("--sched-check"))
 // Diagnostic: write + print the DEFAULT model catalog (models.json seed) so its format is inspectable.
 if (args.Contains("--dump-model-catalog"))
 {
-    var p = Path.Combine(Path.GetTempPath(), "am-models-default.json");
-    try { File.Delete(p); } catch { }
-    AgentManager.Core.Models.ModelCatalog.Load(AgentManager.Core.Models.DefaultModelCatalog.Build(), p);
-    Console.WriteLine(File.ReadAllText(p));
+    // Optional path arg: `--dump-model-catalog <file>` loads an EXISTING (e.g. hand-edited) catalog
+    // and renders exactly what the GUI picker/filter sees (ModelCatalog.ModelsFor/EffortsFor — the
+    // same calls EngineModels()/SessionViewModel.EffortOptions make). No arg → seed+dump the default.
+    var i = Array.IndexOf(args, "--dump-model-catalog");
+    var given = i + 1 < args.Length && !args[i + 1].StartsWith("--") ? args[i + 1] : null;
+    var defaults = AgentManager.Core.Models.DefaultModelCatalog.Build();
+    string path;
+    if (given is { Length: > 0 } && File.Exists(given))
+    {
+        path = given;
+        Console.WriteLine($"[dump] loading edited catalog: {path}\n");
+    }
+    else
+    {
+        path = Path.Combine(Path.GetTempPath(), "am-models-default.json");
+        try { File.Delete(path); } catch { }
+    }
+    var cat = AgentManager.Core.Models.ModelCatalog.Load(defaults, path);
+    // Render the "filter view" per engine — this is what the dropdowns list.
+    foreach (var eng in new[] { "cc", "gx", "pi", "agy" })
+    {
+        var models = cat.ModelsFor(eng);
+        Console.WriteLine($"[{eng}] {models.Count} models  (hasEfforts={cat.HasEfforts(eng)})");
+        foreach (var m in models)
+        {
+            var efforts = cat.EffortsFor(eng, m);
+            var def = cat.DefaultEffortFor(eng, m);
+            var effStr = efforts.Count == 0 ? "(no reasoning dim)" : string.Join("/", efforts);
+            Console.WriteLine($"    - {m,-28} efforts=[{effStr}]{(def is null ? "" : $" default={def}")}");
+        }
+    }
+    Console.WriteLine("\n--- raw file ---");
+    Console.WriteLine(File.ReadAllText(path));
     return;
 }
 
