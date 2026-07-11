@@ -137,6 +137,11 @@
     <sys:String x:Key="L.OpenSettingsJsonTip">Edit settings as JSON; external changes apply live.</sys:String>
     <sys:String x:Key="L.OpenModelsJson">Open models.json</sys:String>
     <sys:String x:Key="L.OpenModelsJsonTip">Edit the per-engine model &amp; reasoning (effort) list as JSON; applies on restart.</sys:String>
+    <sys:String x:Key="L.ReloadSettingsJson">Reload settings</sys:String>
+    <sys:String x:Key="L.ReloadSettingsJsonTip">Re-read settings.json from disk (ignored if it fails to parse; current settings kept).</sys:String>
+    <sys:String x:Key="L.SettingsReloaded">Settings reloaded from disk.</sys:String>
+    <sys:String x:Key="L.SettingsReloadNoChange">No changes.</sys:String>
+    <sys:String x:Key="L.SettingsReloadFailed">settings.json parse failed — not applied (current settings kept).</sys:String>
     <sys:String x:Key="L.SecProject">Project</sys:String>
     <sys:String x:Key="L.SecSkills">Skills</sys:String>
     <sys:String x:Key="L.SkillInjectDesc">A shared SKILL.md (Agent Skills open standard) written into each engine's skill folder, so cc · gx · agy · pi all pick up the same skill. Injected on Save settings.</sys:String>

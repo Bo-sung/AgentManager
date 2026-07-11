@@ -68,6 +68,7 @@
                                 </StackPanel>
                                 <Button DockPanel.Dock="Left" Style="{StaticResource ChipButton}" Margin="0,0,12,0" Command="{Binding OpenSettingsFileCommand}" Content="{StaticResource L.OpenSettingsJson}" ToolTip="{StaticResource L.OpenSettingsJsonTip}"/>
                                 <Button DockPanel.Dock="Left" Style="{StaticResource ChipButton}" Margin="0,0,12,0" Command="{Binding OpenModelsFileCommand}" Content="{StaticResource L.OpenModelsJson}" ToolTip="{StaticResource L.OpenModelsJsonTip}"/>
+                                <Button DockPanel.Dock="Left" Style="{StaticResource ChipButton}" Margin="0,0,12,0" Command="{Binding ReloadSettingsFileCommand}" Content="{StaticResource L.ReloadSettingsJson}" ToolTip="{StaticResource L.ReloadSettingsJsonTip}"/>
                                 <TextBlock Text="{Binding SettingsStatus}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{DynamicResource Ok}" VerticalAlignment="Center"/>
                             </DockPanel>
                         </Border>
