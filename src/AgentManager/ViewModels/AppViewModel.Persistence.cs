@@ -178,6 +178,7 @@ public sealed partial class AppViewModel
         SyncAuthFromStore();      // and for per-engine auth (mode / api key / auto-api)
         SyncEngineFlagsFromStore(); // and for enabled + skill-dir
         RefreshEngines(); // engine set now includes any custom engines from engines/*.json
+        RebuildCustomEngines(); // and their Settings → Runtimes cards
         var state = AppStateStore.Load();
         ApplyRuntimeState(state); // Usage / rate-limit cooldowns / dismissed CLI sessions now live in state.json (migrated from settings)
         if (state is null || state.Projects.Count == 0)
@@ -520,19 +521,51 @@ public sealed partial class AppViewModel
             return; // 파싱/읽기 실패 → 절대 적용 안 함(설정 보존)
         }
         var opts = new JsonSerializerOptions();
-        if (JsonSerializer.Serialize(disk, opts) == JsonSerializer.Serialize(BuildSettingsDto(), opts))
+        var settingsChanged = JsonSerializer.Serialize(disk, opts) != JsonSerializer.Serialize(BuildSettingsDto(), opts);
+        if (settingsChanged) ApplySettings(disk);
+
+        // 파일 감시는 settings.json만 본다. 엔진별 engines/*.json(특히 손으로 추가/편집한 커스텀 엔진 — 자기 파일만
+        // 바뀌고 settings.json은 그대로라 위 비교에서 "변경 없음")은 감시에 안 걸리므로, 수동 "설정 새로고침" 버튼이
+        // 이때 함께 폴더를 재스캔한다 → 재시작 없이 피커·모델 관리에 반영된다.
+        var enginesChanged = false;
+        if (manual)
         {
-            if (manual) SettingsStatus = AgentManager.App.L("L.SettingsReloadNoChange");
-            return; // 우리가 쓴 내용과 동일 → 외부 변경 아님
+            var before = EngineIdSignature();
+            ReloadEngineConfigFromDisk();
+            enginesChanged = before != EngineIdSignature();
         }
-        ApplySettings(disk);
-        // 설정 화면을 열지 않은 상태에서도 파생 바인딩(엔진 목록·배율·정책 등)이 즉시 반영되도록 전체 리프레시.
-        // WPF에서 null/"" 프로퍼티명은 "모든 속성 변경"을 의미해 이 VM에 걸린 모든 바인딩을 재평가시킨다.
-        // (언어 전환만은 리소스 사전 교체가 필요해 재시작 시 반영 — 저장 경로와 동일한 정책.)
-        OnChanged(string.Empty);
-        if (CurrentView == MainViewKind.Settings) PullSettingsToEditor();
-        if (manual) SettingsStatus = AgentManager.App.L("L.SettingsReloaded");
+
+        if (settingsChanged || enginesChanged)
+        {
+            // 설정 화면을 열지 않은 상태에서도 파생 바인딩(엔진 목록·배율·정책 등)이 즉시 반영되도록 전체 리프레시.
+            // WPF에서 null/"" 프로퍼티명은 "모든 속성 변경"을 의미해 이 VM에 걸린 모든 바인딩을 재평가시킨다.
+            // (언어 전환만은 리소스 사전 교체가 필요해 재시작 시 반영 — 저장 경로와 동일한 정책.)
+            OnChanged(string.Empty);
+            if (CurrentView == MainViewKind.Settings) PullSettingsToEditor();
+        }
+        if (manual)
+            SettingsStatus = AgentManager.App.L((settingsChanged || enginesChanged) ? "L.SettingsReloaded" : "L.SettingsReloadNoChange");
     }
+
+    /// <summary>Re-scan <c>engines/*.json</c> from disk and refresh everything derived from it (picker set, per-engine
+    /// model lists, preferred/auth/enabled working sets, model-manager sections). Used by the manual reload button
+    /// because the settings.json watcher does not cover these per-engine files — so a hand-added/edited custom engine
+    /// (its file never touches settings.json) would otherwise need an app restart to appear.</summary>
+    private void ReloadEngineConfigFromDisk()
+    {
+        _engineConfig = LoadEngineConfig(); // non-first-run ⇒ plain reload (no re-migration)
+        SyncPreferredFromStore();
+        SyncAuthFromStore();
+        SyncEngineFlagsFromStore();
+        RefreshEngines();
+        RebuildCustomEngines(); // Settings → Runtimes custom-engine cards
+        RebuildModelManager();
+    }
+
+    /// <summary>Cheap signature of the loaded engine set (ids + model counts + default model) to tell whether a
+    /// manual reload actually changed anything — only for the status label.</summary>
+    private string EngineIdSignature() =>
+        string.Join(";", (_engineConfig?.All ?? []).Select(e => e.Id + ":" + e.ModelList.Count + ":" + e.DefaultModel));
 
     private static readonly string DefaultWorktreesRoot =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "worktrees");

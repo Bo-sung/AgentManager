@@ -146,6 +146,8 @@
     <sys:String x:Key="L.MmOpenTip">Add/remove models, edit reasoning &amp; default/preferred per engine (saved to engines/*.json)</sys:String>
     <sys:String x:Key="L.MmTitle">Model manager</sys:String>
     <sys:String x:Key="L.MmSubtitle">Models · reasoning · default/preferred per engine</sys:String>
+    <sys:String x:Key="L.SecCustomEngines">Custom engines</sys:String>
+    <sys:String x:Key="L.CustomEngineExe">Launch path (entry point)</sys:String>
     <sys:String x:Key="L.MmBack">← Settings</sys:String>
     <sys:String x:Key="L.MmModel">Model</sys:String>
     <sys:String x:Key="L.MmPreferred">Preferred</sys:String>

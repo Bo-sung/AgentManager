@@ -146,6 +146,8 @@
     <sys:String x:Key="L.MmOpenTip">엔진별 모델 추가/삭제 · 추론 단계 · 기본/선호 편집 (engines/*.json에 저장)</sys:String>
     <sys:String x:Key="L.MmTitle">모델 관리</sys:String>
     <sys:String x:Key="L.MmSubtitle">엔진별 모델 · 추론 · 기본/선호</sys:String>
+    <sys:String x:Key="L.SecCustomEngines">커스텀 엔진</sys:String>
+    <sys:String x:Key="L.CustomEngineExe">실행 경로 (진입점)</sys:String>
     <sys:String x:Key="L.MmBack">← 설정</sys:String>
     <sys:String x:Key="L.MmModel">모델</sys:String>
     <sys:String x:Key="L.MmPreferred">선호</sys:String>
