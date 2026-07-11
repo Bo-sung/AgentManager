@@ -194,7 +194,8 @@ public sealed partial class AppViewModel
     public string[] GxModels => DropdownModelsFor("gx");
     public string[] AgyModels => DropdownModelsFor("agy");
     public string[] PiModels => DropdownModelsFor("pi");
-    private string[] EngineModels(string id) => Array.Find(AllEngines, e => e.Id == id)?.Models ?? [];
+    // 엔진 모델 목록은 models.json 카탈로그에서(하드코딩 대체) — 사용자가 파일 편집으로 추가 가능.
+    private string[] EngineModels(string id) => [.. _modelCatalog.ModelsFor(id)];
 
     // ----- "주로 쓰는 모델" — 엔진별 선호 집합(설정 영속) + 체크리스트(cc/gx/agy/pi 공통) -----
     private Dictionary<string, HashSet<string>> _preferred => _settings.Preferred;
@@ -276,6 +277,7 @@ public sealed partial class AppViewModel
             _piCatalog.Clear();
             _piCatalog.AddRange(cat.Models);
             _piProviders = cat.Providers;
+            _modelCatalog.UpdateFromQuery("pi", cat.Models); // 조회 결과가 다르면 models.json의 pi 항목 갱신(요구사항)
             PiChecklist.SetModels(_piCatalog);
             PiModelsStatus = cat.Models.Count > 0 ? App.L("L.ModelsFound", cat.Models.Count) : App.L("L.NoModels");
         }
@@ -309,6 +311,7 @@ public sealed partial class AppViewModel
             var models = await EngineRegistry.QueryAgyModelsAsync(_agyPath);
             _agyCatalog.Clear();
             _agyCatalog.AddRange(models);
+            if (models.Count > 0) _modelCatalog.UpdateFromQuery("agy", ["default", .. models]); // models.json의 agy 항목 갱신
             AgyChecklist.SetModels(_agyCatalog.Count > 0 ? ["default", .. _agyCatalog] : EngineModels("agy"));
             AgyModelsStatus = models.Count > 0 ? App.L("L.ModelsFound", models.Count) : App.L("L.NoModels");
         }

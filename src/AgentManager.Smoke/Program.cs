@@ -17,6 +17,16 @@ if (args.Contains("--sched-check"))
     return;
 }
 
+// Diagnostic: write + print the DEFAULT model catalog (models.json seed) so its format is inspectable.
+if (args.Contains("--dump-model-catalog"))
+{
+    var p = Path.Combine(Path.GetTempPath(), "am-models-default.json");
+    try { File.Delete(p); } catch { }
+    AgentManager.Core.Models.ModelCatalog.Load(AgentManager.Core.Models.DefaultModelCatalog.Build(), p);
+    Console.WriteLine(File.ReadAllText(p));
+    return;
+}
+
 if (args.Contains("--worker-prompt-check"))
 {
     WorkerPromptCheck();
@@ -1216,6 +1226,7 @@ AssertMarkdownFenceSplit();
 AssertPiWorkerLaunch();
 AssertPiCompletionStateMachine();
 AssertPiExtensionUi();
+AssertModelCatalog();
 
 static void AssertQuickReplyParser()
 {
@@ -1768,6 +1779,51 @@ static async Task PiWorkerLiveCheckAsync()
         Console.WriteLine("pi-worker LIVE E2E asserts OK");
     }
     finally { try { Directory.Delete(cwd, true); } catch { } }
+}
+
+// Model catalog (models.json): per-engine model lists + per-model reasoning(effort) options, user-editable,
+// query-updated. Verifies seed/roundtrip, per-model efforts (cc ultracode gate, agy none), UpdateFromQuery
+// (preserve+persist, empty=no-op), and that a directly-edited file is honored (the bug the user hit).
+static void AssertModelCatalog()
+{
+    var tmp = Path.Combine(Path.GetTempPath(), "am_mc_" + Guid.NewGuid().ToString("N")[..8] + ".json");
+    try
+    {
+        var defaults = AgentManager.Core.Models.DefaultModelCatalog.Build();
+        // 1) missing file -> seed from defaults + write
+        var cat = AgentManager.Core.Models.ModelCatalog.Load(defaults, tmp);
+        Assert(File.Exists(tmp), "catalog: seeds + writes models.json when missing");
+        Assert(cat.ModelsFor("gx").Contains("gpt-5.6"), "catalog: gx models seeded");
+        Assert(cat.ModelsFor("cc").Contains("opus"), "catalog: cc models seeded");
+
+        // 2) per-model efforts + engine capability + default
+        Assert(cat.EffortsFor("cc", "opus").Contains("ultracode"), "catalog: cc opus efforts include ultracode");
+        Assert(!cat.EffortsFor("cc", "haiku").Contains("ultracode"), "catalog: cc haiku efforts exclude ultracode");
+        Assert(cat.EffortsFor("gx", "gpt-5.5").Contains("xhigh"), "catalog: gx efforts present");
+        Assert(cat.EffortsFor("agy", "default").Count == 0, "catalog: agy has no reasoning dimension");
+        Assert(!cat.HasEfforts("agy") && cat.HasEfforts("cc"), "catalog: HasEfforts agy=false, cc=true");
+        Assert(cat.DefaultEffortFor("cc", "opus") == "medium", "catalog: cc opus default effort = medium");
+
+        // 3) UpdateFromQuery: empty = no-op; new set = change + preserve existing per-model data + persist
+        Assert(!cat.UpdateFromQuery("pi", []), "catalog: empty query is a no-op (never wipes)");
+        Assert(cat.UpdateFromQuery("pi", ["default", "zai/glm-4.7", "zai/glm-9.9"]), "catalog: query with new models updates");
+        Assert(cat.ModelsFor("pi").Contains("zai/glm-9.9"), "catalog: newly-queried model present");
+        Assert(cat.EffortsFor("pi", "zai/glm-4.7").Contains("off"), "catalog: surviving pi model keeps its efforts");
+        var reloaded = AgentManager.Core.Models.ModelCatalog.Load(defaults, tmp);
+        Assert(reloaded.ModelsFor("pi").Contains("zai/glm-9.9"), "catalog: query update persisted to file");
+
+        // 4) directly-edited file is honored (the reported bug): add a model + per-model efforts by hand
+        File.WriteAllText(tmp, "{\"schemaVersion\":1,\"engines\":{\"gx\":{\"defaultEfforts\":[\"low\",\"high\"]," +
+            "\"models\":[{\"id\":\"gpt-5.6-luna\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\"},\"my-custom-model\"]}}}");
+        var edited = AgentManager.Core.Models.ModelCatalog.Load(defaults, tmp);
+        Assert(edited.ModelsFor("gx").Contains("my-custom-model"), "catalog: directly-added model appears (fixes the reported bug)");
+        Assert(edited.EffortsFor("gx", "gpt-5.6-luna").Contains("max"), "catalog: per-model efforts from file (gx luna max)");
+        Assert(edited.EffortsFor("gx", "my-custom-model").SequenceEqual(["low", "high"]), "catalog: string model inherits engine defaultEfforts");
+        Assert(edited.DefaultEffortFor("gx", "gpt-5.6-luna") == "medium", "catalog: per-model defaultEffort from file");
+
+        Console.WriteLine("model catalog asserts OK");
+    }
+    finally { try { File.Delete(tmp); } catch { } }
 }
 
 static async Task TestGitWorktreeAsync()
