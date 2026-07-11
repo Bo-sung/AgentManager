@@ -104,18 +104,10 @@ public sealed partial class AppViewModel
         ModalScale = _modalScale,
         Telemetry = _telemetry,
         DisabledEngines = _disabledEngines.ToList(),
-        DismissedCliSessions = _dismissedCliSessions.ToList(),
         EngineAuthMode = _engineAuth.SnapshotAuthMode(),
         EngineApiKey = _engineAuth.SnapshotApiKey(),
         EngineAutoApiOnLimit = _engineAuth.SnapshotAutoApi(),
-        EngineLimitedUntil = _engineAuth.SnapshotLimitedUntil(),
-        Usage = _usageService.Snapshots.ToDictionary(k => k.Key, v => new UsageSnapshotDto
-        {
-            Utilization = v.Value.Utilization,
-            ResetsAtUnix = v.Value.ResetsAtUnix,
-            RateLimitType = v.Value.RateLimitType,
-            CapturedUtc = v.Value.CapturedUtc,
-        }),
+        // 런타임 상태(Usage / EngineLimitedUntil / DismissedCliSessions)는 이제 state.json에 기록 — 여기서 제외.
     };
 
     /// <summary>Load the per-engine config store, migrating legacy settings.json per-engine keys + models.json into
@@ -168,6 +160,27 @@ public sealed partial class AppViewModel
         _ => "",
     };
 
+    /// <summary>Apply runtime state (usage snapshots / rate-limit cooldowns / dismissed CLI sessions) from state.json.
+    /// These moved out of settings.json; ApplySettings still reads the legacy settings copy first (one-time
+    /// migration), and this overrides with state.json values once they exist there.</summary>
+    private void ApplyRuntimeState(AppStateDto? state)
+    {
+        if (state is null) return;
+        if (state.Usage is { Count: > 0 })
+        {
+            _usageService.Clear();
+            foreach (var kv in state.Usage)
+                _usageService.Set(kv.Key, new UsageSnapshot(kv.Value.Utilization, kv.Value.ResetsAtUnix, kv.Value.RateLimitType ?? "", kv.Value.CapturedUtc));
+        }
+        if (state.EngineLimitedUntil is { Count: > 0 })
+            _engineAuth.Load(_engineAuth.SnapshotAuthMode(), _engineAuth.SnapshotApiKey(), _engineAuth.SnapshotAutoApi(), state.EngineLimitedUntil);
+        if (state.DismissedCliSessions is { Count: > 0 })
+        {
+            _dismissedCliSessions.Clear();
+            foreach (var d in state.DismissedCliSessions) _dismissedCliSessions.Add(d);
+        }
+    }
+
     private void RestoreState()
     {
         ApplySettings(SettingsStore.Load());
@@ -176,6 +189,7 @@ public sealed partial class AppViewModel
         SyncAuthFromStore();      // and for per-engine auth (mode / api key / auto-api)
         SyncEngineFlagsFromStore(); // and for enabled + skill-dir
         var state = AppStateStore.Load();
+        ApplyRuntimeState(state); // Usage / rate-limit cooldowns / dismissed CLI sessions now live in state.json (migrated from settings)
         if (state is null || state.Projects.Count == 0)
         {
             var repo = FindRepoRoot();
@@ -369,6 +383,16 @@ public sealed partial class AppViewModel
         Projects = Projects.Select(p => new ProjectDto { Id = p.Id, Name = p.Name, Path = p.Path, McpConfigPath = p.McpConfigPath, ExtraPaths = p.ExtraPaths.ToList() }).ToList(),
         WorkerTasks = [],
         Sessions = [],
+        // 런타임 상태(설정 아님) — state.json에 기록.
+        Usage = _usageService.Snapshots.ToDictionary(k => k.Key, v => new UsageSnapshotDto
+        {
+            Utilization = v.Value.Utilization,
+            ResetsAtUnix = v.Value.ResetsAtUnix,
+            RateLimitType = v.Value.RateLimitType,
+            CapturedUtc = v.Value.CapturedUtc,
+        }),
+        EngineLimitedUntil = _engineAuth.SnapshotLimitedUntil(),
+        DismissedCliSessions = _dismissedCliSessions.ToList(),
     };
 
     /// <summary>프로젝트 로컬 상태 스냅샷 — 각 프로젝트의 세션 + 워커 백로그/큐를 projectId로 그룹핑해
