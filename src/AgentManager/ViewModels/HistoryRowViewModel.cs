@@ -22,6 +22,11 @@ public sealed class HistoryRowViewModel
     public required string BlocksText { get; init; }
     public bool IsArchived { get; init; }
 
+    /// <summary>Resolves an AgentId (incl. custom engines) to its <see cref="EngineDef"/>. Set once by
+    /// AppViewModel to its custom-aware resolver; falls back to <see cref="EngineRegistry.Get"/> (which returns
+    /// cc for an unknown/custom id) when unset — i.e. at design-time or in headless Smoke tests.</summary>
+    public static Func<string, EngineDef>? EngineResolver;
+
     public static HistoryRowViewModel FromSession(SessionViewModel session)
     {
         return new HistoryRowViewModel
@@ -46,7 +51,7 @@ public sealed class HistoryRowViewModel
 
     public static HistoryRowViewModel FromDto(SessionDto session)
     {
-        var engine = EngineRegistry.Get(session.AgentId);
+        var engine = EngineResolver?.Invoke(session.AgentId) ?? EngineRegistry.Get(session.AgentId);
         var status = (session.Status ?? "").Trim().ToLowerInvariant();
         return new HistoryRowViewModel
         {

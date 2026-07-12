@@ -14,9 +14,15 @@ public sealed class ScheduledJobViewModel(ScheduledJob job)
     public string CadenceText => Job.Trigger.CadenceText;
     public string TriggerKind => Job.Trigger.Kind;
     public bool Enabled => Job.Enabled;
-    public string EngineName => EngineRegistry.Get(Job.AgentId).Name;
-    public string EngineBadge => EngineRegistry.Get(Job.AgentId).Badge;
+    public string EngineName => Resolve().Name;
+    public string EngineBadge => Resolve().Badge;
     public string NextRunLabel => Job.NextRunUtc is { } next ? FormatNextRun(next) : "on trigger";
+
+    /// <summary>Resolves the job's AgentId (incl. custom engines) to its <see cref="EngineDef"/>. Set once by
+    /// AppViewModel to its custom-aware resolver; falls back to <see cref="EngineRegistry.Get"/> (cc for an
+    /// unknown/custom id) when unset — i.e. at design-time or in headless Smoke tests.</summary>
+    public static Func<string, EngineDef>? EngineResolver;
+    private EngineDef Resolve() => EngineResolver?.Invoke(Job.AgentId) ?? EngineRegistry.Get(Job.AgentId);
 
     private static string FormatNextRun(DateTime nextUtc)
     {
