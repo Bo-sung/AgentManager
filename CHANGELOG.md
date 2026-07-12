@@ -2,6 +2,12 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.4
+커스텀 엔진 세션 재시작 손상 수정 + PR #1(GPT-5.6 변형 · 고DPI 최대화). (버그+기능 패치)
+- **커스텀 엔진 세션이 재시작마다 cc로 리셋되던 버그**(데이터 손상): 세션/예약이 저장된 `AgentId`(예: `"piworker"`)로 재구성될 때 `EngineRegistry.Get(id)`를 썼는데, 이 함수는 **빌트인 4종(cc/gx/agy/pi)만** 알아 모르는 id면 `All[0]=cc`를 반환한다. 그래서 재시작마다 복원된 커스텀 엔진 세션이 **cc로 바뀌고**(모델도 cc 목록에 없어 sonnet 폴백), 다음 자동저장에서 그 잘못된 엔진이 **영구 기록**됐다. 커스텀 인지 `AppViewModel.EngineDefFor(id)`(AllEngines=빌트인+커스텀 먼저 조회) 추가 후 세션을 id로 재구성하는 4곳(복원/포크/CLI복원/예약실행)을 전부 교체 + `engine.Models[0]` 안전화. GUI E2E: 커스텀 Pi-Worker 세션 생성→턴 완료→종료·재시작 시 `AgentId`가 `piworker` 유지(예전엔 cc) 확인.
+- **[PR #1](https://github.com/Bo-sung/AgentManager/pull/1) (imda564)** — Codex 모델 목록에 **GPT-5.6 Sol/Terra/Luna** 변형 추가(기존 단일 `gpt-5.6` 대체; 신규 설치/카탈로그 시드에 반영). **고DPI 최대화 버그 수정**: 125%/150% 배율에서 최대화 창이 모니터 작업영역을 넘던 문제 — `WM_GETMINMAXINFO`를 `handled=true`로 처리해 WindowChrome이 물리픽셀 경계를 덮어쓰지 못하게 하고, 최대화 상태 복원을 hwnd 훅 설치 이후로 지연, `StateChanged`/`DpiChanged` 후 모니터 작업영역 경계를 `SetWindowPos`로 재적용(모니터 간 DPI 다른 이동 지원). 작성자 검증: FHD·QHD 150%에서 최대화/복원/저장상태.
+- (검증) 빌드·스모크 green(모델 카탈로그 `gpt-5.6-sol` 시드 포함) · 커스텀 엔진 재시작 유지 GUI E2E · 최대화/복원 사이클(100%) 무회귀.
+
 ## 1.21.3
 v1.21.2 커스텀 엔진 후속 수정 3건 — 실제 테스트에서 발견. (버그+기능 패치)
 - **`설정 새로고침`이 `engines\*.json`도 재스캔**(버그): 수동 새로고침이 `settings.json`만 다시 읽어, 손으로 추가/편집한 커스텀 엔진(자기 파일만 바뀌고 settings.json은 그대로 ⇒ "변경 없음"으로 조기 종료)이 **앱을 재시작해야만** 나타났다. 이제 새로고침이 엔진 폴더도 재스캔해 피커·모델 관리·설정에 즉시 반영한다.

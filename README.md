@@ -231,6 +231,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.21.4** — 커스텀 엔진 세션이 **재시작마다 cc로 리셋되던 버그 수정**(복원·포크·CLI복원·예약이 커스텀 엔진 id를 빌트인 전용 `EngineRegistry.Get`으로 되살려 cc+sonnet으로 폴백 → 다음 저장 때 손상; 커스텀 인지 `EngineDefFor`로 교체) · **[[PR #1](https://github.com/Bo-sung/AgentManager/pull/1)]** Codex 모델에 **GPT-5.6 Sol/Terra/Luna** 변형 추가 · **150% 배율에서 최대화 창이 작업영역을 넘던 고DPI 버그 수정**(`WM_GETMINMAXINFO`를 WindowChrome이 덮어쓰지 못하게 + 상태/DPI 전환 후 작업영역 재적용)
 - **1.21.3** — v1.21.2 커스텀 엔진 후속 수정: **`설정 새로고침`이 `engines\*.json`도 재스캔**(손으로 추가/편집한 커스텀 엔진이 재시작 없이 피커·모델 관리·설정에 반영 — 이전엔 settings.json만 재로드) · 설정 Runtimes에 **커스텀 엔진 카드**(adapterKind·실행 경로·활성·삭제·모델 관리 링크, 데이터 주도) · 빌트인 카드의 중복 "주로 쓰는 모델" 체크리스트 제거(모델 관리로 일원화) · 커스텀 카드 adapterKind 바인딩 크래시 수정
 - **1.21.2** — **엔진 설정 오버홀**: 설정 파일을 3분할(공통=`settings.json` / 엔진별=`engines\<id>.json` / 런타임=`state.json`) — 엔진 1개=파일 1개, 첫 실행 시 기존 `settings.json`+`models.json`에서 자동 마이그레이션 · 설치/업데이트/시작 시 `engines\` 폴더 선생성 + `엔진 설정 폴더 열기` 버튼 · **모델 관리 서브페이지**(엔진별 모델 다중 추가/삭제/기본값 지정) · **커스텀 엔진**(`engines\<id>.json`이 `adapterKind`+`launch` 매니페스트 겸용 → 피커·매니저 노출·실행, 어댑터 팩토리가 `adapterKind`로 프로토콜 분기 · `one-shot-text` 어댑터로 단발 CLI 지원). 상세 [docs/ENGINE_CONFIG_OVERHAUL_KO.md](docs/ENGINE_CONFIG_OVERHAUL_KO.md)
 - **1.21.1** — 자기 업데이트가 스스로 막히던 버그 수정: 앱/`ollama serve` 자식이 설치 폴더(`current\`)를 cwd로 잡아 Velopack이 폴더를 교체 못 하던 문제(앱 cwd 이동 + 우리가 띄운 ollama만 정리, **외부 ollama 불가침**). ※ 이 버전부터 적용 — 기존에 막혔다면 재부팅 후 한 번만 업데이트
