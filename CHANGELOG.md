@@ -2,6 +2,13 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.9
+사용량(rate-limit %) 체크 기능 제거. (정리)
+- **왜**: 엔진마다 사용량 확인 방식이 다르고 **헤드리스로 정확히 조회할 공식 경로가 없다**. 재점검 결과 cc `/usage`는 TUI 전용이라 `claude -p "/usage"`가 슬래시 명령이 아니라 **일반 프롬프트로 모델에 전달**돼 엉뚱한 응답 + **클릭당 실토큰 소모**(관측 $0.23)에 사용량 %는 못 얻었다(`claude usage` 서브커맨드도 없음). gx는 app-server usedPercent가 실측이나 매 체크가 실턴 소모, agy/ACP/커스텀은 사용량 API 자체가 없음.
+- **제거**: 푸터·설정의 **"지금 체크"** 버튼 + 엔진별 사용량 % 카드, 능동 조회(`CheckUsageAsync`/`ProbeUsageAsync`)와 `CheckUsageCommand` 배선. **코드는 보존**(XAML 주석 + C# `#if false`) — 향후 공식 사용량 API가 생기면 복원하기 쉽게.
+- **유지**: 실행 중 passive `rate_limit_event` 캡처 + `MarkRateLimited`(리셋시각 기반 **소진 감지 / auto-API-fallback**)는 표시 기능과 별개라 그대로 동작(무료·낭비 없음). **cost 표시**도 무관하게 유지 — AM은 cost를 계산하지 않고 각 엔진 자가보고값(cc `total_cost_usd` 등)을 그대로 표시할 뿐.
+- (검증) 빌드 green(경고 0 / 오류 0) · 스모크 전항목 OK.
+
 ## 1.21.8
 커스텀 엔진 모델 자동 조회. (기능)
 - **`modelsQuery`**: 커스텀 엔진 매니페스트(`engines/<id>.json`)에 모델 목록을 **한 줄에 하나씩 출력하는 명령의 args**를 넣을 수 있다(예: opencode `["models"]`). 설정 → Runtimes의 커스텀 엔진 카드에 **"설치 모델 조회"** 버튼이 생겨(modelsQuery 설정 시), `launch.exe + modelsQuery`를 실행하고 stdout을 파싱(`EngineRegistry.ParseModelLines`: 줄당 첫 토큰, trim·dedupe)해 기존 `UpdateModelsFromQuery`(survivor의 effort/preferred 보존)로 `engines/<id>.json`에 반영한다. 빌트인 pi/agy의 모델 조회와 동일 UX. **엔진 추가 폼**에도 "모델 조회 명령(args)" 입력이 생김.

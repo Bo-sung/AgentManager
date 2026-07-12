@@ -143,7 +143,7 @@ public sealed partial class AppViewModel : ObservableObject
             CurrentView = MainViewKind.Session;
         }
         NewProjectPath = WorkingDirectory;
-        _runtimeTimer.Tick += (_, _) => { RefreshRunningSessions(); RefreshQuotaText(); };
+        _runtimeTimer.Tick += (_, _) => { RefreshRunningSessions(); /* RefreshQuotaText(); — 사용량 표시 기능 제거(2026-07) */ };
         _runtimeTimer.Start();
         StartResourceMonitor(); // 1 Hz host CPU/GPU/RAM/Ethernet strip in the titlebar (background-sampled).
 
@@ -205,7 +205,8 @@ public sealed partial class AppViewModel : ObservableObject
         OpenInTerminalCommand = new RelayCommand(_ => OpenInTerminal(ActiveSession), _ => ActiveSession is not null);
         ResyncTranscriptCommand = new RelayCommand(_ => _ = ResyncTranscriptAsync(ActiveSession),
             _ => ActiveSession is { AgentId: "cc" or "gx" or "pi" } s && !string.IsNullOrEmpty(s.EngineSessionId));
-        CheckUsageCommand = new RelayCommand(_ => _ = CheckUsageAsync(), _ => !_checkingUsage);
+        // 사용량 체크 기능 제거(2026-07): 엔진별 공식 사용량 API 부재 + /usage 헤드리스 미지원(토큰만 소모).
+        // CheckUsageCommand = new RelayCommand(_ => _ = CheckUsageAsync(), _ => !_checkingUsage);
         RefreshScheduledJobsCommand = new RelayCommand(_ => LoadScheduledJobs());
         NewScheduleCommand = new RelayCommand(_ => OpenNewSchedule(), _ => ActiveProject is not null);
         CancelNewScheduleCommand = new RelayCommand(_ => ShowNewSchedule = false);
@@ -229,7 +230,8 @@ public sealed partial class AppViewModel : ObservableObject
     /// agy 세션에서만 활성화(CanExecute).</summary>
     public RelayCommand OpenInTerminalCommand { get; }
     public RelayCommand ResyncTranscriptCommand { get; }
-    public RelayCommand CheckUsageCommand { get; }
+    // 사용량 체크 기능 제거(2026-07) — 되살리려면 이 프로퍼티 + ctor 배선 + AppViewModel.Usage.cs 주석 해제.
+    // public RelayCommand CheckUsageCommand { get; }
     public RelayCommand RefreshScheduledJobsCommand { get; }
     public RelayCommand NewScheduleCommand { get; }
     public RelayCommand CancelNewScheduleCommand { get; }
@@ -724,7 +726,7 @@ public sealed partial class AppViewModel : ObservableObject
                 OnChanged(nameof(HasActive));
                 OnChanged(nameof(ShowSessionPane));
                 OnChanged(nameof(ShowSessionEmpty));
-                RefreshQuotaText(); // footer를 선택된 엔진의 잔여량으로 갱신
+                // RefreshQuotaText(); — 사용량 표시 기능 제거(2026-07)
                 RebuildTaskReports();  // "보고" 탭: 활성 세션의 워커 작업 보고 피드
                 if (value is not null)
                     CurrentView = MainViewKind.Session;

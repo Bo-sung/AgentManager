@@ -233,6 +233,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.21.9** — **사용량(rate-limit %) 체크 기능 제거** — 엔진별로 헤드리스에서 사용량을 정확히 조회할 공식 경로가 없음(cc `/usage`는 TUI 전용이라 `-p`에선 일반 프롬프트로 처리돼 토큰만 소모, gx/agy/ACP도 상시 조회 불가). 푸터·설정의 **"지금 체크"** 버튼 + 사용량 % 카드 + 능동 조회 제거. **코드는 보존**(XAML 주석 / C# `#if false`)해 향후 공식 API 등장 시 복원 용이. 실행 중 passive rate-limit 리셋 추적(소진 감지·auto-API-fallback)과 cost 표시(엔진 자가보고값 그대로 표시, 자체 계산 아님)는 그대로 유지.
 - **1.21.8** — **커스텀 엔진 모델 자동 조회** — 매니페스트에 `modelsQuery`(모델 목록을 한 줄에 하나씩 출력하는 명령의 args, 예: opencode `models`)를 넣으면 설정 커스텀 엔진 카드에 **"설치 모델 조회"** 버튼이 생겨 실행→파싱→`engines/<id>.json` 갱신(빌트인 pi/agy 조회와 동일 UX). 엔진 추가 폼에도 조회 명령 입력 추가. GUI 실측: opencode `models` → 1→117개 자동 반영.
 - **1.21.7** — **ACP(Agent Client Protocol) 어댑터** — Zed의 JSON-RPC/stdio 표준을 말하는 커스텀 엔진 종류(`adapterKind:"acp"`)로 **opencode·hermes 통합**(스트리밍 텍스트·thinking·도구/토큰 가시성, ANSI 없음). initialize→session/new→session/prompt 핸드셰이크 + session/update 매핑 + 권한 왕복. opencode `acp` end-to-end GUI 실측(핸드셰이크 연결→응답 스트림→완료). 상세 [docs/ACP_INTEGRATION_KO.md]. *(zcode는 자체 Electron/protocol이라 ACP stdio 모드 미발견 — 미통합.)*
 - **1.21.6** — 핫픽스: **모델 0개 커스텀 엔진을 New Agent에서 실행 시 크래시**(`IndexOutOfRange` — `engine.Models[0]` 무가드 접근) 수정. 0모델 엔진은 유효(컴포저 모델 자유 입력)하므로 안전 폴백(`DefaultModelFor`, 빈 모델=엔진 기본)으로 교체. GUI 실측: 0모델 엔진 Launch→세션 정상 생성 + trust 프롬프트 정상.
