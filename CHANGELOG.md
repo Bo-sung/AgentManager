@@ -2,6 +2,14 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.7
+ACP(Agent Client Protocol) 어댑터 — opencode/hermes 통합. (기능)
+- **`adapterKind:"acp"`**: Zed의 **Agent Client Protocol**(개행 구분 JSON-RPC 2.0 over stdio)을 말하는 커스텀 엔진 어댑터. ACP 서버를 노출하는 어떤 CLI든 하나의 어댑터로 붙는다 — 실측 통합: **opencode**(`opencode acp` v1.17.18)·**hermes**(`hermes-acp` v0.18.2, 둘 다 protocolVersion 1).
+- **동작**: `CodexAppServerAdapter`와 같은 stateful handshake를 `EngineWriteback`으로 진행 — initialize → session/new(→ sessionId) → session/prompt → `session/update` 스트림. 매핑: `agent_message_chunk`→어시스턴트 텍스트, `agent_thought_chunk`→thinking, `tool_call`/`tool_call_update`→도구 시작/결과, prompt 응답 `{stopReason,usage}`→턴 완료(토큰 usage). `session/request_permission`→권한 승인 UI(옵션 kind로 allow/reject optionId 선택). fs 능력은 false로 광고(에이전트 자체 도구 사용=tool_call 가시성), 미지원 에이전트 요청은 JSON-RPC 에러로 응답(무한 대기 방지). 첫 실행은 커스텀 엔진 trust 프롬프트 통과.
+- **추가 방법**: 설정 → Runtimes → ＋ 커스텀 엔진 추가에서 adapterKind `acp` + 실행 경로 + args(opencode=`acp`, hermes=비움). 매니페스트·상세: `docs/ACP_INTEGRATION_KO.md`.
+- **한계/후속**: v1은 에이전트 기본 모델 사용(모델 선택 후속) · fs=false(에이전트 자체 도구) · 텍스트 프롬프트만 · **zcode**는 Electron+자체 protocol이라 stdio ACP 모드 미발견 → 미통합.
+- (검증) 빌드·스모크 green(신규 `acp adapter asserts OK` — 실제 캡처한 opencode/hermes 트래픽으로 핸드셰이크·이벤트 매핑·권한 응답 검증) · **live GUI E2E**: `opencode acp`로 세션 생성→trust 승인→ACP 핸드셰이크 connected→thinking+어시스턴트 응답 스트림→완료(토큰 usage).
+
 ## 1.21.6
 핫픽스 — 모델 0개 커스텀 엔진 실행 크래시. (버그 패치)
 - **크래시(`IndexOutOfRangeException`)**: 모델이 하나도 없는(`models[]` 비어있는) 커스텀 엔진을 New Agent(또는 워커 피커)에서 선택해 **Launch하면 즉시 크래시**했다. `CreateSession`의 모델 폴백이 `engine.Models[0]`을(워커 setter는 `value.Models[0]`을) 무가드 접근한 탓. `DefaultModelFor`가 이미 `FirstOrDefault() ?? ""`로 안전하므로 두 경로 모두 그걸로 교체 — **0모델 엔진은 유효**(컴포저가 모델을 자유 입력하므로, 빈 모델이면 `--model` 없이 엔진 기본으로 실행). (v1.21.5의 커스텀 엔진 추가 폼이 모델 없이도 엔진을 만들 수 있게 되면서 드러난 잠복 버그.)
