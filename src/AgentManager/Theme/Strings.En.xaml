@@ -154,6 +154,10 @@
     <sys:String x:Key="L.CustomEngineIdHint">Unique, filename-safe (letters, digits, . _ -). Used for engines/&lt;id&gt;.json.</sys:String>
     <sys:String x:Key="L.CustomEngineName">Display name</sys:String>
     <sys:String x:Key="L.CustomEngineBadge">Badge</sys:String>
+    <sys:String x:Key="L.CustomEngineIcon">Icon</sys:String>
+    <sys:String x:Key="L.CustomEngineIconHint">A built-in glyph name (circle · square · hexagon · triangle · diamond · spark · bolt · bubble) or raw SVG path data (M…). Empty = default glyph.</sys:String>
+    <sys:String x:Key="L.CustomEngineColor">Color</sys:String>
+    <sys:String x:Key="L.CustomEngineColorHint">Brand color as HEX (e.g. #FF6B35). Empty = accent color.</sys:String>
     <sys:String x:Key="L.CustomEngineAdapter">Adapter kind</sys:String>
     <sys:String x:Key="L.CustomEngineAdapterHint">one-shot-text = generic (any CLI); other kinds need a matching CLI/protocol installed.</sys:String>
     <sys:String x:Key="L.CustomEngineArgs">Launch arguments</sys:String>

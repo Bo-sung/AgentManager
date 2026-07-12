@@ -2025,12 +2025,14 @@ static void AssertEngineConfig()
             Id: "qwen-local", Name: "Qwen (local)", Source: "custom", AdapterKind: "one-shot-text",
             Launch: new AgentManager.Core.Engines.EngineLaunchConfig("ollama", ["run", "qwen2.5-coder"]),
             DefaultEfforts: [],
-            Models: [new AgentManager.Core.Engines.EngineModelConfig("qwen2.5-coder", Preferred: true)]);
+            Models: [new AgentManager.Core.Engines.EngineModelConfig("qwen2.5-coder", Preferred: true)],
+            Icon: "hexagon", Color: "#FF6B35");
         store.Upsert(custom);
         Assert(File.Exists(Path.Combine(dir, "qwen-local.json")), "engine-cfg: custom engine file written");
         var reloaded = AgentManager.Core.Engines.EngineConfigStore.Load(defaults, dir);
         Assert(reloaded.Get("qwen-local") is { Source: "custom" }, "engine-cfg: custom engine reloaded from disk");
         Assert(reloaded.Get("qwen-local")!.PreferredModelIds().Contains("qwen2.5-coder"), "engine-cfg: preferred model persisted");
+        Assert(reloaded.Get("qwen-local") is { Icon: "hexagon", Color: "#FF6B35" }, "engine-cfg: custom icon/color persisted");
 
         // 2b) "Add custom engine" form contract (A2): launch args list roundtrips, Contains guards the id
         // against silent clobber (built-ins AND existing customs), and Upsert overwrites when the guard is bypassed.
