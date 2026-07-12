@@ -1825,7 +1825,7 @@ static void AssertModelCatalog()
         // 1) missing file -> seed from defaults + write
         var cat = AgentManager.Core.Models.ModelCatalog.Load(defaults, tmp);
         Assert(File.Exists(tmp), "catalog: seeds + writes models.json when missing");
-        Assert(cat.ModelsFor("gx").Contains("gpt-5.6"), "catalog: gx models seeded");
+        Assert(cat.ModelsFor("gx").Contains("gpt-5.6-sol"), "catalog: gx models seeded");
         Assert(cat.ModelsFor("cc").Contains("opus"), "catalog: cc models seeded");
 
         // 2) per-model efforts + engine capability + default

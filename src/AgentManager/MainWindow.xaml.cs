@@ -8,6 +8,7 @@ namespace AgentManager;
 public partial class MainWindow : Window
 {
     private readonly AppViewModel _vm = new();
+    private bool _restoreMaximized;
 
     public MainWindow()
     {
@@ -38,6 +39,8 @@ public partial class MainWindow : Window
         InputBindings.Add(new KeyBinding(_vm.ZoomOutCommand, Key.OemMinus, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(_vm.ZoomOutCommand, Key.Subtract, ModifierKeys.Control));
         PreviewMouseWheel += OnPreviewMouseWheelZoom;
+        StateChanged += (_, _) => QueueMaximizedBoundsCorrection();
+        DpiChanged += (_, _) => QueueMaximizedBoundsCorrection();
         RestoreWindowPlacement();
         Closing += (_, _) =>
         {
@@ -67,10 +70,18 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
         System.Windows.Interop.HwndSource.FromHwnd(handle)?.AddHook(WindowProc);
+
+        // Restoring WindowState in the constructor maximizes the native window while its HWND is
+        // being created, before this hook can receive WM_GETMINMAXINFO.  Defer it until the hook is
+        // installed so startup and button-triggered maximization use the same per-monitor bounds.
+        if (_restoreMaximized)
+            WindowState = WindowState.Maximized;
     }
 
     private const int WM_GETMINMAXINFO = 0x0024;
     private const uint MONITOR_DEFAULTTONEAREST = 0x2;
+    private const uint SWP_NOZORDER = 0x0004;
+    private const uint SWP_NOACTIVATE = 0x0010;
 
     private static IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
@@ -88,16 +99,62 @@ public partial class MainWindow : Window
                     mmi.ptMaxSize.X = info.rcWork.Right - info.rcWork.Left;
                     mmi.ptMaxSize.Y = info.rcWork.Bottom - info.rcWork.Top;
                     System.Runtime.InteropServices.Marshal.StructureToPtr(mmi, lParam, true);
+                    // WindowChrome also processes this message.  If it continues down the hook
+                    // chain it can replace these physical-pixel values, which is especially visible
+                    // on displays using 125% or 150% scaling.
+                    handled = true;
                 }
             }
         }
         return IntPtr.Zero;
     }
 
+    private bool _maximizedBoundsCorrectionQueued;
+
+    /// <summary>
+    /// WindowChrome can apply another frame placement after WM_GETMINMAXINFO.  On high-DPI
+    /// displays that may leave the final native window rectangle larger than the work area.
+    /// Re-apply the monitor's physical-pixel work rectangle after the state/DPI transition settles.
+    /// </summary>
+    private void QueueMaximizedBoundsCorrection()
+    {
+        if (WindowState != WindowState.Maximized || _maximizedBoundsCorrectionQueued)
+            return;
+
+        _maximizedBoundsCorrectionQueued = true;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            _maximizedBoundsCorrectionQueued = false;
+            if (WindowState != WindowState.Maximized)
+                return;
+
+            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            var monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            if (monitor == IntPtr.Zero)
+                return;
+
+            var info = new MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>() };
+            if (!GetMonitorInfo(monitor, ref info))
+                return;
+
+            SetWindowPos(
+                hwnd,
+                IntPtr.Zero,
+                info.rcWork.Left,
+                info.rcWork.Top,
+                info.rcWork.Right - info.rcWork.Left,
+                info.rcWork.Bottom - info.rcWork.Top,
+                SWP_NOZORDER | SWP_NOACTIVATE);
+        });
+    }
+
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO info);
+    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetWindowPos(
+        IntPtr hwnd, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
 
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
     private struct POINT { public int X; public int Y; }
@@ -260,7 +317,7 @@ public partial class MainWindow : Window
             {
                 // 저장된 건 항상 '복원(normal) 크기' — 최대화 상태에서도 RestoreBounds를 기록한다.
                 Left = l; Top = t; Width = w; Height = h;
-                if (parts.Length >= 5 && parts[4] == "max") WindowState = WindowState.Maximized;
+                _restoreMaximized = parts.Length >= 5 && parts[4] == "max";
             }
         }
         catch { }

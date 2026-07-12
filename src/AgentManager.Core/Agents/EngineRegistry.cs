@@ -20,7 +20,7 @@ public static class EngineRegistry
         // that family (verified — incl. a future Sonnet 5), so new models work with no code patch. Pinned
         // versions can still be typed (the model field is free-form). sonnet[1m] = 1M-context alias.
         new("cc", "CC", "Claude Code",     "claude",      ["sonnet", "opus", "opusplan", "haiku", "fable", "best", "sonnet[1m]", "opus[1m]"], "anthropic · cli", true, "https://docs.claude.com/en/docs/claude-code/overview"),
-        new("gx", "GX", "Codex",           "codex",       ["gpt-5.6", "gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true, "https://github.com/openai/codex"),
+        new("gx", "GX", "Codex",           "codex",       ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4", "gpt-5.4-mini"], "openai · cli", true, "https://github.com/openai/codex"),
         // Google 계열은 agy(Antigravity)로 일원화 — 구형 Gemini CLI는 제거됨.
         // agy: TTY 전용 → ConPTY 구동, 텍스트 전용 v1. default = --model 생략.
         // 추론 강도가 모델 label에 내장 — `--model`은 `agy models`의 정확한 label만 인식한다(슬러그
