@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace AgentManager.Core.Agents;
 
-public sealed record EngineDef(string Id, string Badge, string Name, string Cli, string[] Models, string Desc, bool Enabled, string InstallUrl = "");
+public sealed record EngineDef(string Id, string Badge, string Name, string Cli, string[] Models, string Desc, bool Enabled, string InstallUrl = "", string Icon = "", string Color = "");
 
 /// <summary>`pi --list-models` 결과 — provider/id 모델 목록 + 인증된(=모델이 보이는) provider 집합.</summary>
 public sealed record PiCatalog(IReadOnlyList<string> Models, IReadOnlyList<string> Providers);

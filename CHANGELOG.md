@@ -2,6 +2,13 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.10
+커스텀 엔진 아이콘/색상. (기능)
+- 커스텀 엔진 매니페스트(`engines/<id>.json`)에 **`icon`**(내장 글리프 이름 circle·square·hexagon·triangle·diamond·spark·bolt·bubble **또는** SVG path 데이터 `"M…"`) + **`color`**(hex `"#RRGGBB"`)를 넣으면 New Agent 피커·세션 탭·히스토리·오케스트레이터·설정 카드 등 **모든 표시 지점에 브랜드 아이콘/색**으로 렌더된다. 그전엔 커스텀 엔진이 아이콘 슬롯이 비어 badge 글자만 보였다.
+- **구현**: `EngineVisual` + `EngineGeometryConverter`가 `EngineIcon`/`EngineIconByDef` 스타일의 **기본 Setter**로 엔진 id→아이콘/색을 공급(표시 지점 무수정, 중앙 처리). 빌트인(cc/gx/agy/pi)은 기존 브랜드 DataTrigger가 그대로 우선하고, 커스텀만 매니페스트 값을 쓴다. 아이콘 미지정 커스텀·pi-worker도 기본 글리프(circle)라 빈칸이 없다. 색은 기존 `EngineBrushConverter`를 확장(뱃지·강조색도 매니페스트 `color` 반영). *(컨버터 인스턴스는 병합 딕셔너리 forward-reference 회피 위해 Icons.xaml 내부에 정의.)*
+- **입력**: 설정 → 엔진 추가 폼에 **"아이콘"·"색상"** 입력 추가 + 파일 직접 편집. 커스텀 엔진 설정 카드에도 아이콘 표시. `EngineConfig`/`EngineDef`에 `Icon`/`Color` 필드 추가.
+- (검증) 빌드 green(경고 0/오류 0) · 스모크 OK(신규 `engine-cfg: custom icon/color persisted`).
+
 ## 1.21.9
 사용량(rate-limit %) 체크 기능 제거. (정리)
 - **왜**: 엔진마다 사용량 확인 방식이 다르고 **헤드리스로 정확히 조회할 공식 경로가 없다**. 재점검 결과 cc `/usage`는 TUI 전용이라 `claude -p "/usage"`가 슬래시 명령이 아니라 **일반 프롬프트로 모델에 전달**돼 엉뚱한 응답 + **클릭당 실토큰 소모**(관측 $0.23)에 사용량 %는 못 얻었다(`claude usage` 서브커맨드도 없음). gx는 app-server usedPercent가 실측이나 매 체크가 실턴 소모, agy/ACP/커스텀은 사용량 API 자체가 없음.

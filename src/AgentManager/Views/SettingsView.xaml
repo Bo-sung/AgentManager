@@ -335,6 +335,7 @@
                                                                     <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Delete}" Command="{Binding RemoveCommand}" VerticalAlignment="Center"/>
                                                                 </StackPanel>
                                                                 <StackPanel Orientation="Horizontal">
+                                                                    <controls:IconView Style="{StaticResource EngineIconByDef}" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                                                     <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="6" Padding="7,3" VerticalAlignment="Center" Margin="0,0,9,0">
                                                                         <TextBlock Text="{Binding Badge}" FontFamily="{StaticResource Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Accent}"/>
                                                                     </Border>
@@ -376,6 +377,14 @@
 
                                                 <TextBlock Text="{StaticResource L.CustomEngineBadge}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineBadge, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineIcon}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineIcon, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="{StaticResource L.CustomEngineIconHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineColor}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineColor, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="{StaticResource L.CustomEngineColorHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
 
                                                 <TextBlock Text="{StaticResource L.CustomEngineAdapter}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                 <ComboBox ItemsSource="{Binding CustomAdapterKinds}" SelectedItem="{Binding NewEngineAdapterKind, Mode=TwoWay}" HorizontalAlignment="Stretch"/>

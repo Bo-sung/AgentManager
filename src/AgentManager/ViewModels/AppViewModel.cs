@@ -88,7 +88,7 @@ public sealed partial class AppViewModel : ObservableObject
     /// source (independent of user-disable). Cached; <see cref="RefreshEngines"/> invalidates on engine-set change.</summary>
     public EngineDef[] AllEngines => _allEnginesCache ??= BuildAllEngines();
     private EngineDef[] BuildAllEngines() => _engineConfig?.All is { Count: > 0 } list
-        ? [.. list.Select(c => new EngineDef(c.Id, string.IsNullOrEmpty(c.Badge) ? c.Id.ToUpperInvariant() : c.Badge, c.Name, c.Cli, [.. c.ModelIds()], c.Desc, true, c.InstallUrl))]
+        ? [.. list.Select(c => new EngineDef(c.Id, string.IsNullOrEmpty(c.Badge) ? c.Id.ToUpperInvariant() : c.Badge, c.Name, c.Cli, [.. c.ModelIds()], c.Desc, true, c.InstallUrl, c.Icon, c.Color))]
         : Array.FindAll(EngineRegistry.All, e => e.Enabled);
     private void RefreshEngines() { _allEnginesCache = null; OnChanged(nameof(AllEngines)); OnChanged(nameof(Engines)); }
     /// <summary>Resolve an engine id to its <see cref="EngineDef"/> from the FULL set (built-in + custom engines),
@@ -124,6 +124,7 @@ public sealed partial class AppViewModel : ObservableObject
         // 정적 provider 델리게이트(ComposerModelsProvider와 동일 패턴)로 custom-aware EngineDefFor를 주입한다.
         HistoryRowViewModel.EngineResolver = EngineDefFor;
         ScheduledJobViewModel.EngineResolver = EngineDefFor;
+        Controls.EngineVisual.DefOf = EngineDefFor;   // custom-engine icon/color 해석기(id→EngineDef)
         // 추론(effort) 옵션·기본값·유무를 엔진별 config(engines/*.json)에서 가져온다(모델별 상이). 아직 로드 전
         // (첫 조회는 RestoreState 이후)이거나 미정의 엔진이면 models.json 카탈로그로 폴백 — 점진 전환(P1c).
         SessionViewModel.EffortOptionsProvider = (eng, model) => _engineConfig?.Get(eng) is { } c ? [.. c.EffortsFor(model)] : [.. _modelCatalog.EffortsFor(eng, model)];

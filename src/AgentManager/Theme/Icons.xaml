@@ -2,6 +2,11 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:c="clr-namespace:AgentManager.Controls">
 
+    <!-- 커스텀 엔진 아이콘/색 해석기 — EngineIcon 스타일의 기본 Setter가 엔진 id로 매니페스트 icon/color를 렌더.
+         (여기 로컬로 정의 — 병합 딕셔너리에서 App.xaml 뒤쪽 리소스는 StaticResource forward-reference로 못 봄) -->
+    <c:EngineGeometryConverter x:Key="EngineGeomConv"/>
+    <c:EngineBrushConverter x:Key="EngineBrushConv"/>
+
     <!-- 엔진 브랜드 색(고정) — 강조색/테마 변경과 무관하게 모델 아이콘 색을 유지한다 -->
     <SolidColorBrush x:Key="CcBrand" Color="#FFFF5A2C"/>
     <SolidColorBrush x:Key="GxBrand" Color="#FF8B5CF6"/>
@@ -235,6 +240,9 @@
         <Setter Property="Width" Value="15"/>
         <Setter Property="Height" Value="15"/>
         <Setter Property="Filled" Value="True"/>
+        <!-- 기본값: 커스텀 엔진의 매니페스트 아이콘/색(빌트인은 아래 트리거가 덮어씀) -->
+        <Setter Property="Icon" Value="{Binding AgentId, Converter={StaticResource EngineGeomConv}}"/>
+        <Setter Property="Foreground" Value="{Binding AgentId, Converter={StaticResource EngineBrushConv}}"/>
         <Style.Triggers>
             <DataTrigger Binding="{Binding AgentId}" Value="cc">
                 <Setter Property="Icon" Value="{StaticResource IconEngineClaude}"/>
@@ -260,6 +268,9 @@
         <Setter Property="Width" Value="17"/>
         <Setter Property="Height" Value="17"/>
         <Setter Property="Filled" Value="True"/>
+        <!-- 기본값: 커스텀 엔진의 매니페스트 아이콘/색(빌트인은 아래 트리거가 덮어씀) -->
+        <Setter Property="Icon" Value="{Binding Id, Converter={StaticResource EngineGeomConv}}"/>
+        <Setter Property="Foreground" Value="{Binding Id, Converter={StaticResource EngineBrushConv}}"/>
         <Style.Triggers>
             <DataTrigger Binding="{Binding Id}" Value="cc">
                 <Setter Property="Icon" Value="{StaticResource IconEngineClaude}"/>

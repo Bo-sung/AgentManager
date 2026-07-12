@@ -23,6 +23,8 @@ public sealed class EngineBrushConverter : IValueConverter
             var key = part switch { "dim" => prefix + "BrandDim", "line" => prefix + "BrandLine", _ => prefix + "Brand" };
             if (Find(key) is Brush b) return b;
         }
+        // custom engine: use its manifest color (engines/<id>.json "color") for the main accent
+        else if (value is string cid && part == "main" && EngineVisual.ColorFor(cid) is Brush cb) return cb;
         // fallback when the engine/variant resource is absent
         return Find(part switch { "dim" => "Bg3", "line" => "Line", _ => "Accent" }) ?? Brushes.Gray;
     }

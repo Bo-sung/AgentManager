@@ -122,6 +122,13 @@ public sealed partial class AppViewModel
     /// <summary>Optional args (one per line) for a command that lists the engine's models, one id per line
     /// (e.g. opencode <c>models</c>) — enables the "모델 조회" button. Empty = no auto-query.</summary>
     public string NewEngineModelsQuery { get => _newEngineModelsQuery; set => Set(ref _newEngineModelsQuery, value); }
+    private string _newEngineIcon = "";
+    /// <summary>Optional brand icon: a built-in glyph name (circle|square|hexagon|triangle|diamond|spark|bolt|bubble)
+    /// or raw SVG path data ("M…"). Empty = default glyph.</summary>
+    public string NewEngineIcon { get => _newEngineIcon; set => Set(ref _newEngineIcon, value); }
+    private string _newEngineColor = "";
+    /// <summary>Optional brand color as hex ("#RRGGBB"). Empty = accent fallback.</summary>
+    public string NewEngineColor { get => _newEngineColor; set => Set(ref _newEngineColor, value); }
 
     private string _addEngineError = "";
     /// <summary>Inline validation message ("" = none).</summary>
@@ -133,6 +140,7 @@ public sealed partial class AppViewModel
     {
         NewEngineId = ""; NewEngineName = ""; NewEngineBadge = ""; NewEngineExe = "";
         NewEngineArgs = ""; NewEngineModels = ""; NewEngineAdapterKind = "one-shot-text"; NewEngineModelsQuery = "";
+        NewEngineIcon = ""; NewEngineColor = "";
         SetAddEngineError("");
         ShowAddEngineForm = true;
     });
@@ -207,7 +215,9 @@ public sealed partial class AppViewModel
             Launch: new EngineLaunchConfig(exe, args.Count > 0 ? args : null),
             Models: models.Count > 0 ? models : null,
             AllowedRoles: ["Plain", "Main", "Worker"],
-            ModelsQuery: modelsQuery.Count > 0 ? modelsQuery : null);
+            ModelsQuery: modelsQuery.Count > 0 ? modelsQuery : null,
+            Icon: (NewEngineIcon ?? "").Trim(),
+            Color: (NewEngineColor ?? "").Trim());
 
         _engineConfig!.Upsert(cfg);   // appends to display order + writes engines/<id>.json atomically
         _disabledEngines.Remove(id);  // ensure enabled
