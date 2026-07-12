@@ -45,7 +45,7 @@ public sealed partial class AppViewModel
     public EngineDef NewWorkerEngine
     {
         get => _newWorkerEngine;
-        set { if (Set(ref _newWorkerEngine, value)) { OnChanged(nameof(NewWorkerModels)); NewWorkerModel = DefaultModelFor(value.Id) is { Length: > 0 } dm ? dm : value.Models[0]; } }
+        set { if (Set(ref _newWorkerEngine, value)) { OnChanged(nameof(NewWorkerModels)); NewWorkerModel = DefaultModelFor(value.Id); } } // DefaultModelFor is 0-model safe (no Models[0] crash)
     }
     public string[] NewWorkerModels => _newWorkerEngine.Models;
     private string _newWorkerModel = EngineRegistry.All[0].Models[0];

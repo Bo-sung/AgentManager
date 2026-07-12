@@ -900,7 +900,7 @@ public sealed partial class AppViewModel : ObservableObject
         // 가두지 않는다(새 모델마다 패치 불필요). 잘못된 값이면 엔진이 런타임에 에러로 알려준다.
         var model = !string.IsNullOrWhiteSpace(NewAgentModel)
             ? NewAgentModel.Trim()
-            : (DefaultModelFor(engine.Id) is { Length: > 0 } dm ? dm : engine.Models[0]);
+            : DefaultModelFor(engine.Id); // safe for a 0-model custom engine (returns "" → no --model, engine default)
 
         // 워커로 생성: 작업 대기 풀에 추가만 하고 자동 실행하지 않음(작업 할당 시 구동).
         if (NewAgentAsWorker)
