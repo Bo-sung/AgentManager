@@ -2,6 +2,11 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.6
+핫픽스 — 모델 0개 커스텀 엔진 실행 크래시. (버그 패치)
+- **크래시(`IndexOutOfRangeException`)**: 모델이 하나도 없는(`models[]` 비어있는) 커스텀 엔진을 New Agent(또는 워커 피커)에서 선택해 **Launch하면 즉시 크래시**했다. `CreateSession`의 모델 폴백이 `engine.Models[0]`을(워커 setter는 `value.Models[0]`을) 무가드 접근한 탓. `DefaultModelFor`가 이미 `FirstOrDefault() ?? ""`로 안전하므로 두 경로 모두 그걸로 교체 — **0모델 엔진은 유효**(컴포저가 모델을 자유 입력하므로, 빈 모델이면 `--model` 없이 엔진 기본으로 실행). (v1.21.5의 커스텀 엔진 추가 폼이 모델 없이도 엔진을 만들 수 있게 되면서 드러난 잠복 버그.)
+- (검증) 빌드·스모크 green · 잔여 무가드 `Models[0]` 없음 · **GUI 실측**: 0모델 one-shot 커스텀 엔진 생성 → New Agent → Launch → 세션 정상 생성(크래시 없음), 이어서 A3 trust 프롬프트 렌더 + 거부 시 프로세스 미생성·idle 복귀까지 확인.
+
 ## 1.21.5
 커스텀 엔진 마감 + 보안 하드닝 (병렬 설계→구현 워크플로). (기능+보안 패치)
 - **커스텀 엔진 추가 폼**(A2): 설정 → Runtimes에 인라인 "＋ 커스텀 엔진 추가" 폼 — id(유일·파일명안전 검증)/이름/배지/adapterKind(드롭다운: one-shot-text·agentmanager-bridge-jsonl·재사용 빌트인)/실행 exe/args(줄당 1개)/초기 모델 입력 → `EngineConfigStore.Upsert`로 `engines/<id>.json` 생성. JSON 손편집 불필요.
