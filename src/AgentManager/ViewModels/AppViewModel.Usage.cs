@@ -98,8 +98,10 @@ public sealed partial class AppViewModel
     /// 리셋 시각만 갱신하고 기존 %·캡처시각은 유지한다.</summary>
     private void RecordUsage(string engineId, QuotaUpdate q)
     {
+        // 사용량 표시 기능은 제거됐지만, passive 스냅샷은 유지한다 — MarkRateLimited(리셋시각 기반
+        // 소진 감지 / auto-API-fallback)가 _usageService의 리셋시각을 읽기 때문. 표시 갱신만 뺀다.
         _usageService.Record(engineId, q);
-        RefreshQuotaText();
+        // RefreshQuotaText(); — 사용량 표시 기능 제거(2026-07)
     }
 
     /// <summary>footer 표시 갱신: 활성 세션 엔진 우선, 없으면 가장 최근 갱신된 엔진의 잔여량.</summary>
@@ -156,6 +158,8 @@ public sealed partial class AppViewModel
         return until.TotalHours >= 1 ? $"{(int)until.TotalHours}h {until.Minutes}m" : $"{until.Minutes}m";
     }
 
+#if false // 사용량 체크 능동 조회 제거(2026-07): 엔진별 공식 사용량 API 부재 + cc /usage는 헤드리스 미지원(토큰만 소모).
+          // 되살리려면 이 블록을 #if true 로 + XAML 버튼/카드 + AppViewModel.cs의 CheckUsageCommand 배선을 함께 복원.
     /// <summary>'지금 체크': cc/gx에 최소 요청을 보내 최신 잔여량을 받아온다(소량 토큰 소모).</summary>
     private async Task CheckUsageAsync()
     {
@@ -224,6 +228,7 @@ public sealed partial class AppViewModel
 
     /// <summary>/usage 응답 텍스트에서 세션·주간 사용 비율(0~1)을 추출. 못 찾으면 -1.</summary>
     private static (double session, double week) ParseUsageText(string text) => CoreHelpers.ParseUsageText(text);
+#endif // 사용량 체크 능동 조회 제거
 
 }
 

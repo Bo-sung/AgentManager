@@ -280,7 +280,7 @@ public sealed partial class AppViewModel
         LoadWorkerTasks(restoredTasks);
         ActiveProject = Projects.FirstOrDefault(p => p.Id == state.ActiveProjectId) ?? Projects[0];
         RefreshProjectSessions();
-        RefreshQuotaText(); // 복원된 사용량 스냅샷을 footer에 즉시 표시(신선도 라벨 포함)
+        // RefreshQuotaText(); — 사용량 표시 기능 제거(2026-07); 스냅샷은 rate-limit 리셋 추적용으로만 복원됨
         // 1회 마이그레이션: 레거시 전역 데이터를 프로젝트 로컬로 옮기고 전역 중복을 제거한다.
         // SaveState는 디바운스되므로 생성자 중에 호출해도 안전(수백 ms 후 한 번 기록).
         if (migrationPending) SaveState();
