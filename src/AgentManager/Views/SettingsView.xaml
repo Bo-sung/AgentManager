@@ -355,6 +355,51 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                        <!-- 커스텀 엔진 추가 폼 (A2): engines/<id>.json 을 직접 편집하지 않고 GUI로 생성 -->
+                                        <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.AddCustomEngine}"
+                                                Command="{Binding ShowAddEngineFormCommand}" HorizontalAlignment="Left" Margin="0,0,0,10"
+                                                Visibility="{Binding ShowAddEngineButton, Converter={StaticResource BoolVis}}"/>
+                                        <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10"
+                                                Visibility="{Binding ShowAddEngineForm, Converter={StaticResource BoolVis}}">
+                                            <StackPanel>
+                                                <TextBlock Text="{StaticResource L.AddCustomEngine}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Txt0}" Margin="0,0,0,10"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineId}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineId, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="{StaticResource L.CustomEngineIdHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineName}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineName, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineBadge}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineBadge, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineAdapter}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <ComboBox ItemsSource="{Binding CustomAdapterKinds}" SelectedItem="{Binding NewEngineAdapterKind, Mode=TwoWay}" HorizontalAlignment="Stretch"/>
+                                                <TextBlock Text="{StaticResource L.CustomEngineAdapterHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineExe}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineExe, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineArgs}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineArgs, UpdateSourceTrigger=PropertyChanged}"
+                                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="52" VerticalScrollBarVisibility="Auto"/>
+                                                <TextBlock Text="{StaticResource L.CustomEngineArgsHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineModels}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineModels, UpdateSourceTrigger=PropertyChanged}"
+                                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40" VerticalScrollBarVisibility="Auto"/>
+                                                <TextBlock Text="{StaticResource L.CustomEngineModelsHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
+
+                                                <TextBlock Text="{Binding AddEngineError}" Foreground="{DynamicResource Err}" FontSize="10.5" Margin="0,10,0,0" TextWrapping="Wrap"
+                                                           Visibility="{Binding HasAddEngineError, Converter={StaticResource BoolVis}}"/>
+
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                                    <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.Cancel}" Command="{Binding CancelAddEngineFormCommand}" Margin="0,0,8,0"/>
+                                                    <Button Style="{StaticResource AccentButton}" Content="{StaticResource L.CreateEngine}" Command="{Binding AddEngineCommand}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
                                         <!-- Usage check -->
                                         <Border Background="{DynamicResource Bg2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                                             <DockPanel>

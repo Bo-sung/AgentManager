@@ -148,6 +148,24 @@
     <sys:String x:Key="L.MmSubtitle">Models · reasoning · default/preferred per engine</sys:String>
     <sys:String x:Key="L.SecCustomEngines">Custom engines</sys:String>
     <sys:String x:Key="L.CustomEngineExe">Launch path (entry point)</sys:String>
+    <!-- Add custom engine form (Settings → Runtimes) -->
+    <sys:String x:Key="L.AddCustomEngine">＋ Add custom engine</sys:String>
+    <sys:String x:Key="L.CustomEngineId">Engine ID</sys:String>
+    <sys:String x:Key="L.CustomEngineIdHint">Unique, filename-safe (letters, digits, . _ -). Used for engines/&lt;id&gt;.json.</sys:String>
+    <sys:String x:Key="L.CustomEngineName">Display name</sys:String>
+    <sys:String x:Key="L.CustomEngineBadge">Badge</sys:String>
+    <sys:String x:Key="L.CustomEngineAdapter">Adapter kind</sys:String>
+    <sys:String x:Key="L.CustomEngineAdapterHint">one-shot-text = generic (any CLI); other kinds need a matching CLI/protocol installed.</sys:String>
+    <sys:String x:Key="L.CustomEngineArgs">Launch arguments</sys:String>
+    <sys:String x:Key="L.CustomEngineArgsHint">One argument per line. Use {prompt} where the user message should be inserted.</sys:String>
+    <sys:String x:Key="L.CustomEngineModels">Initial models (optional)</sys:String>
+    <sys:String x:Key="L.CustomEngineModelsHint">Model IDs separated by newlines or commas.</sys:String>
+    <sys:String x:Key="L.CreateEngine">Create engine</sys:String>
+    <sys:String x:Key="L.AddEngineErrIdEmpty">Engine ID is required.</sys:String>
+    <sys:String x:Key="L.AddEngineErrId">Invalid ID — use only letters, digits, dot, underscore or hyphen (not starting/ending with a dot).</sys:String>
+    <sys:String x:Key="L.AddEngineErrDup">That ID already exists — choose a different one.</sys:String>
+    <sys:String x:Key="L.AddEngineErrAdapter">Choose a valid adapter kind.</sys:String>
+    <sys:String x:Key="L.AddEngineErrExe">Launch path (entry point) is required.</sys:String>
     <sys:String x:Key="L.MmBack">← Settings</sys:String>
     <sys:String x:Key="L.MmModel">Model</sys:String>
     <sys:String x:Key="L.MmPreferred">Preferred</sys:String>

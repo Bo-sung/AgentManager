@@ -1947,6 +1947,14 @@ static void AssertEngineConfig()
         Assert(reloaded.Get("qwen-local") is { Source: "custom" }, "engine-cfg: custom engine reloaded from disk");
         Assert(reloaded.Get("qwen-local")!.PreferredModelIds().Contains("qwen2.5-coder"), "engine-cfg: preferred model persisted");
 
+        // 2b) "Add custom engine" form contract (A2): launch args list roundtrips, Contains guards the id
+        // against silent clobber (built-ins AND existing customs), and Upsert overwrites when the guard is bypassed.
+        Assert(reloaded.Get("qwen-local")!.Launch!.Args!.SequenceEqual(new[] { "run", "qwen2.5-coder" }), "engine-cfg: custom launch args list roundtrips");
+        Assert(store.Contains("cc") && store.Contains("qwen-local"), "engine-cfg: Contains true for built-in + existing custom (form dup guard)");
+        Assert(!store.Contains("brand-new-id"), "engine-cfg: Contains false for a novel id");
+        store.Upsert(custom with { Name = "Qwen (clobbered)" });
+        Assert(store.Get("qwen-local")!.Name == "Qwen (clobbered)", "engine-cfg: Upsert overwrites an existing id (why the form's Contains pre-check is load-bearing)");
+
         // 3) directly-edited built-in file is honored (path override + a preferred model added by hand)
         File.WriteAllText(Path.Combine(dir, "gx.json"),
             "{\"id\":\"gx\",\"name\":\"Codex\",\"source\":\"builtin\",\"adapterKind\":\"codex-json\",\"path\":\"C:/custom/codex.exe\"," +

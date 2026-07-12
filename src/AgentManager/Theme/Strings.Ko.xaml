@@ -148,6 +148,24 @@
     <sys:String x:Key="L.MmSubtitle">엔진별 모델 · 추론 · 기본/선호</sys:String>
     <sys:String x:Key="L.SecCustomEngines">커스텀 엔진</sys:String>
     <sys:String x:Key="L.CustomEngineExe">실행 경로 (진입점)</sys:String>
+    <!-- 커스텀 엔진 추가 폼 (설정 → 런타임) -->
+    <sys:String x:Key="L.AddCustomEngine">＋ 커스텀 엔진 추가</sys:String>
+    <sys:String x:Key="L.CustomEngineId">엔진 ID</sys:String>
+    <sys:String x:Key="L.CustomEngineIdHint">고유하고 파일명에 안전하게 (영문·숫자·. _ -). engines/&lt;id&gt;.json 에 사용됩니다.</sys:String>
+    <sys:String x:Key="L.CustomEngineName">표시 이름</sys:String>
+    <sys:String x:Key="L.CustomEngineBadge">배지</sys:String>
+    <sys:String x:Key="L.CustomEngineAdapter">어댑터 종류</sys:String>
+    <sys:String x:Key="L.CustomEngineAdapterHint">one-shot-text = 범용 (아무 CLI); 다른 종류는 해당 CLI/프로토콜이 설치되어 있어야 합니다.</sys:String>
+    <sys:String x:Key="L.CustomEngineArgs">실행 인자</sys:String>
+    <sys:String x:Key="L.CustomEngineArgsHint">한 줄에 인자 하나. 사용자 메시지가 들어갈 위치에 {prompt} 를 넣으세요.</sys:String>
+    <sys:String x:Key="L.CustomEngineModels">초기 모델 (선택)</sys:String>
+    <sys:String x:Key="L.CustomEngineModelsHint">모델 ID를 줄바꿈 또는 쉼표로 구분.</sys:String>
+    <sys:String x:Key="L.CreateEngine">엔진 생성</sys:String>
+    <sys:String x:Key="L.AddEngineErrIdEmpty">엔진 ID를 입력하세요.</sys:String>
+    <sys:String x:Key="L.AddEngineErrId">잘못된 ID — 영문·숫자·점·밑줄·하이픈만 사용하세요 (점으로 시작/끝 불가).</sys:String>
+    <sys:String x:Key="L.AddEngineErrDup">이미 존재하는 ID입니다 — 다른 ID를 사용하세요.</sys:String>
+    <sys:String x:Key="L.AddEngineErrAdapter">유효한 어댑터 종류를 선택하세요.</sys:String>
+    <sys:String x:Key="L.AddEngineErrExe">실행 경로 (진입점)를 입력하세요.</sys:String>
     <sys:String x:Key="L.MmBack">← 설정</sys:String>
     <sys:String x:Key="L.MmModel">모델</sys:String>
     <sys:String x:Key="L.MmPreferred">선호</sys:String>

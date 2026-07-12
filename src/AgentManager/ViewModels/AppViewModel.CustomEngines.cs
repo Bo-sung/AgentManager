@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.RegularExpressions;
 using AgentManager.Core.Engines;
 
 namespace AgentManager.ViewModels;
@@ -75,5 +77,133 @@ public sealed partial class AppViewModel
         _trustStore.Revoke(vm.Id); // forget any run approval (a re-added engine re-prompts anyway)
         RefreshEngines();
         RebuildCustomEngines(); // command context ⇒ safe to rebuild the collection
+    }
+
+    // ── "Add custom engine" inline form (Settings → Runtimes) ─────────────────────────────
+    // Creates a fresh engines/<id>.json (Source="custom") from GUI fields — no hand-editing JSON.
+    // The new engine appears as a card + in the New-Agent picker immediately; its first run passes
+    // through the same trust gate as any other custom engine (nothing is auto-approved here).
+
+    /// <summary>Adapter-kind choices for the dropdown. Mirrors <c>AdapterFactory.CreateCustom</c>/<c>Create</c>:
+    /// the first two are custom-only kinds (need the launch args template); the rest reuse a built-in protocol
+    /// (only actually run if the matching CLI/protocol is installed). <c>one-shot-text</c> is the safe generic default.</summary>
+    public IReadOnlyList<string> CustomAdapterKinds { get; } =
+        ["one-shot-text", "agentmanager-bridge-jsonl", "claude-stream-json", "codex-json", "codex-app-server", "agy-pty", "pi-rpc"];
+
+    private bool _showAddEngineForm;
+    /// <summary>Whether the collapsible add-engine form is expanded.</summary>
+    public bool ShowAddEngineForm
+    {
+        get => _showAddEngineForm;
+        set { if (Set(ref _showAddEngineForm, value)) OnChanged(nameof(ShowAddEngineButton)); }
+    }
+    /// <summary>Inverse of <see cref="ShowAddEngineForm"/> — the "＋ Add custom engine" launcher button shows only while the form is collapsed.</summary>
+    public bool ShowAddEngineButton => !_showAddEngineForm;
+
+    private string _newEngineId = "";
+    public string NewEngineId { get => _newEngineId; set => Set(ref _newEngineId, value); }
+    private string _newEngineName = "";
+    public string NewEngineName { get => _newEngineName; set => Set(ref _newEngineName, value); }
+    private string _newEngineBadge = "";
+    public string NewEngineBadge { get => _newEngineBadge; set => Set(ref _newEngineBadge, value); }
+    private string _newEngineExe = "";
+    public string NewEngineExe { get => _newEngineExe; set => Set(ref _newEngineExe, value); }
+    private string _newEngineArgs = "";
+    /// <summary>One launch argument per line (spaces inside a line are preserved as part of that single arg).</summary>
+    public string NewEngineArgs { get => _newEngineArgs; set => Set(ref _newEngineArgs, value); }
+    private string _newEngineModels = "";
+    /// <summary>Optional initial model ids, newline/comma separated.</summary>
+    public string NewEngineModels { get => _newEngineModels; set => Set(ref _newEngineModels, value); }
+    private string _newEngineAdapterKind = "one-shot-text";
+    public string NewEngineAdapterKind { get => _newEngineAdapterKind; set => Set(ref _newEngineAdapterKind, value); }
+
+    private string _addEngineError = "";
+    /// <summary>Inline validation message ("" = none).</summary>
+    public string AddEngineError { get => _addEngineError; set => Set(ref _addEngineError, value); }
+    public bool HasAddEngineError => !string.IsNullOrEmpty(_addEngineError);
+
+    private RelayCommand? _showAddEngineFormCommand;
+    public RelayCommand ShowAddEngineFormCommand => _showAddEngineFormCommand ??= new RelayCommand(_ =>
+    {
+        NewEngineId = ""; NewEngineName = ""; NewEngineBadge = ""; NewEngineExe = "";
+        NewEngineArgs = ""; NewEngineModels = ""; NewEngineAdapterKind = "one-shot-text";
+        SetAddEngineError("");
+        ShowAddEngineForm = true;
+    });
+
+    private RelayCommand? _cancelAddEngineFormCommand;
+    public RelayCommand CancelAddEngineFormCommand => _cancelAddEngineFormCommand ??= new RelayCommand(_ =>
+    {
+        ShowAddEngineForm = false;
+        SetAddEngineError("");
+    });
+
+    private RelayCommand? _addEngineCommand;
+    public RelayCommand AddEngineCommand => _addEngineCommand ??= new RelayCommand(_ => AddCustomEngine());
+
+    private void SetAddEngineError(string msg)
+    {
+        AddEngineError = msg;
+        OnChanged(nameof(HasAddEngineError));
+    }
+
+    /// <summary>Validate the draft fields. On failure sets <see cref="AddEngineError"/> and returns false.</summary>
+    private bool TryValidateNewEngine(out string id, out string name, out string badge, out string exe, out string kind)
+    {
+        id = (NewEngineId ?? "").Trim();
+        name = (NewEngineName ?? "").Trim();
+        badge = (NewEngineBadge ?? "").Trim();
+        exe = (NewEngineExe ?? "").Trim();
+        kind = (NewEngineAdapterKind ?? "").Trim();
+
+        if (id.Length == 0) { SetAddEngineError(AgentManager.App.L("L.AddEngineErrIdEmpty")); return false; }
+        // Strict charset so SafeFileName never remaps two distinct ids onto the same file (e.g. "a/b" vs "a_b").
+        if (!Regex.IsMatch(id, "^[A-Za-z0-9._-]+$") || id.StartsWith('.') || id.EndsWith('.'))
+        { SetAddEngineError(AgentManager.App.L("L.AddEngineErrId")); return false; }
+        // Uniqueness — covers built-ins (cc/gx/agy/pi/pi-worker are seeded) AND existing customs. Upsert overwrites
+        // silently, so this guard is load-bearing (prevents clobbering an existing engine's file).
+        if (_engineConfig is null || _engineConfig.Contains(id)) { SetAddEngineError(AgentManager.App.L("L.AddEngineErrDup")); return false; }
+        if (!CustomAdapterKinds.Contains(kind)) { SetAddEngineError(AgentManager.App.L("L.AddEngineErrAdapter")); return false; }
+        if (exe.Length == 0) { SetAddEngineError(AgentManager.App.L("L.AddEngineErrExe")); return false; }
+
+        if (name.Length == 0) name = id;
+        if (badge.Length == 0) badge = id.ToUpperInvariant();
+        return true;
+    }
+
+    /// <summary>Validate → build an EngineConfig → persist via Upsert → refresh picker + cards. On success collapses the form.</summary>
+    private void AddCustomEngine()
+    {
+        if (!TryValidateNewEngine(out var id, out var name, out var badge, out var exe, out var kind)) return;
+
+        // One arg per line — preserves spaces inside a single argument (e.g. a path). Args is a real list, not a shell string.
+        var args = (NewEngineArgs ?? "")
+            .Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        // Same split as ModelManager.AddManagedModels: newline/comma separated, de-duplicated.
+        var modelIds = (NewEngineModels ?? "").Split(['\n', '\r', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var models = new List<EngineModelConfig>();
+        foreach (var mid in modelIds) if (seen.Add(mid)) models.Add(new EngineModelConfig(mid));
+
+        var cfg = new EngineConfig(
+            Id: id,
+            Name: name,
+            Badge: badge,
+            Source: "custom",
+            AdapterKind: kind,
+            Enabled: true,
+            Launch: new EngineLaunchConfig(exe, args.Count > 0 ? args : null),
+            Models: models.Count > 0 ? models : null,
+            AllowedRoles: ["Plain", "Main", "Worker"]);
+
+        _engineConfig!.Upsert(cfg);   // appends to display order + writes engines/<id>.json atomically
+        _disabledEngines.Remove(id);  // ensure enabled
+        RefreshEngines();             // invalidate AllEngines cache + New-Agent picker
+        RebuildCustomEngines();       // command context ⇒ safe to rebuild the card collection
+
+        SetAddEngineError("");
+        ShowAddEngineForm = false;
     }
 }
