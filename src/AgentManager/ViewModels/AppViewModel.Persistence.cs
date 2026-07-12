@@ -66,6 +66,7 @@ public sealed partial class AppViewModel
         _translateSource = NormalizeTranslationLang(s.TranslateSourceLanguage, "Korean");
         _translateTarget = NormalizeTranslationLang(s.TranslateTargetLanguage, "English");
         _translator = BuildTranslator();
+        _ = RefreshTranslationStatusAsync(); // 선택된 provider 기준으로 번역 게이트 초기화(Ollama 상태에 하드코딩 X)
         Theme.ThemePalette.Apply(_theme);
         Theme.AccentPalette.Apply(_accent);
     }

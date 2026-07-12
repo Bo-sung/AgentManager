@@ -84,16 +84,38 @@ public sealed partial class AppViewModel
         {
             if (!Set(ref _ollamaState, value)) return;
             OnChanged(nameof(OllamaRunning)); OnChanged(nameof(OllamaStopped)); OnChanged(nameof(OllamaAbsent));
-            OnChanged(nameof(OllamaStatusText)); OnChanged(nameof(CanTranslate)); OnChanged(nameof(OllamaDown));
+            OnChanged(nameof(OllamaStatusText)); OnChanged(nameof(OllamaDown));
         }
     }
     public bool OllamaRunning => _ollamaState == "running";
     public bool OllamaStopped => _ollamaState == "stopped";   // 설치됐지만 꺼짐
     public bool OllamaAbsent => _ollamaState == "absent";     // 미설치
-    /// <summary>번역 레이어 사용 가능 여부 = Ollama 실행 중.</summary>
-    public bool CanTranslate => OllamaRunning;
-    /// <summary>Ollama가 확실히 불가(꺼짐/미설치) — 번역 토글 옆 경고 아이콘 표시용. checking/unknown은 제외.</summary>
+    /// <summary>Ollama가 확실히 불가(꺼짐/미설치) — Ollama 설정 패널 상태 표시용. checking/unknown은 제외.</summary>
     public bool OllamaDown => _ollamaState is "stopped" or "absent";
+
+    // ----- 번역 provider 준비 상태 (provider-agnostic: ollama / agent:<id> / custom endpoint) -----
+    // 번역 ON 게이팅은 선택된 provider의 가용성에 따른다(과거엔 Ollama 프로세스 상태에 하드코딩되어, agent/custom
+    // provider를 골라도 Ollama가 켜져 있어야만 번역을 켤 수 있었음). IsTranslatorReadyAsync는 저장된 _settings의
+    // 선택 provider를 검사하므로, 여기 캐시된 신호는 메인 창의 토글/경고 아이콘 어포던스에 그대로 쓰인다.
+    private bool _translationReady;
+    private bool _translationChecked;
+    /// <summary>선택된 번역 provider가 준비됨(도달 가능/설치됨) — 번역 토글 활성 판단.</summary>
+    public bool TranslationReady
+    {
+        get => _translationReady;
+        private set { if (Set(ref _translationReady, value)) { OnChanged(nameof(CanTranslate)); OnChanged(nameof(TranslationProviderDown)); } }
+    }
+    /// <summary>번역 레이어 사용 가능 여부 = 선택된 provider 준비됨.</summary>
+    public bool CanTranslate => TranslationReady;
+    /// <summary>선택된 provider가 확실히 불가 — 번역 토글 옆 경고 아이콘 표시용. 미검사(unknown)는 제외.</summary>
+    public bool TranslationProviderDown => _translationChecked && !_translationReady;
+    /// <summary>선택된 번역 provider의 준비 상태를 재확인(provider-agnostic). 저장된 설정 기준.</summary>
+    public async Task RefreshTranslationStatusAsync()
+    {
+        var ready = await IsTranslatorReadyAsync();
+        _translationChecked = true;
+        TranslationReady = ready;
+    }
     public string OllamaStatusText => _ollamaState switch
     {
         "running" => App.L("L.OllamaRunning"),
@@ -903,7 +925,8 @@ public sealed partial class AppViewModel
     {
         PullSettingsToEditor();
         SettingsStatus = "";
-        _ = RefreshOllamaStatusAsync();   // 설정 열 때 Ollama 상태 최신화
+        _ = RefreshOllamaStatusAsync();   // 설정 열 때 Ollama 상태 최신화(Ollama 설정 패널 pill)
+        _ = RefreshTranslationStatusAsync(); // 선택된 번역 provider 준비 상태 최신화(토글/경고 어포던스)
         _ = QueryPiModelsAsync();         // pi 모델/연동 provider 조회(첫 호출만 캐시)
         _ = QueryAgyModelsAsync();        // agy 모델 목록 조회(`agy models`, 첫 호출만 캐시)
         if (CurrentView != MainViewKind.Settings) _viewBeforeSettings = CurrentView;
@@ -998,6 +1021,7 @@ public sealed partial class AppViewModel
         _settings.TranslationAgentModel = (SettingsTranslationAgentModel ?? "").Trim();
         _settings.TranslationSelectedId = string.IsNullOrWhiteSpace(SettingsTranslationSelectedId) ? "ollama" : SettingsTranslationSelectedId;
         _translator = BuildTranslator(); // selected provider (ollama / agent / custom) via the factory
+        _ = RefreshTranslationStatusAsync(); // provider가 바뀌었을 수 있으니 준비 상태 재평가(토글/경고 게이트)
         ApplyAndInjectSkill(); // 각 엔진 스킬 폴더에 SKILL.md 기록
         SyncEngineFlagsToStore(); // enabled + skill-dir를 engines/*.json에 반영
         SettingsStatus = languageChanged ? L("L.SettingsSavedRestart") : L("L.SettingsSaved");

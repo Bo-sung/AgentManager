@@ -344,7 +344,8 @@
     <sys:String x:Key="L.Original">원문</sys:String>
     <sys:String x:Key="L.OriginalResponseTip">원본 응답 보기</sys:String>
     <sys:String x:Key="L.Retranslate">이 메시지 재번역</sys:String>
-    <sys:String x:Key="L.TranslateProviderDown">번역 provider가 준비되지 않았습니다 — Ollama 실행 여부/설정을 확인하세요.</sys:String>
+    <sys:String x:Key="L.TranslateProviderDown">번역 provider가 준비되지 않았습니다 — 선택한 provider 실행 여부/설정을 확인하세요.</sys:String>
+    <sys:String x:Key="L.TranslateProviderOffWarn">선택한 번역 provider를 사용할 수 없어 번역이 적용되지 않습니다 — 설정 → 번역·언어에서 확인하세요.</sys:String>
     <sys:String x:Key="L.TranslateFailed">번역 실패 — 타임아웃이거나 모델이 응답하지 않았습니다. 더 빠른 모델을 쓰거나 타임아웃을 올리세요.</sys:String>
     <sys:String x:Key="L.TranslateFailedCount">{0}개 메시지 번역 실패 (타임아웃/모델). 더 빠른 모델을 쓰거나 타임아웃을 올리세요.</sys:String>
     <sys:String x:Key="L.OriginalOutputTip">원본 출력 보기</sys:String>

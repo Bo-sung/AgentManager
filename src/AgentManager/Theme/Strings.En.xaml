@@ -344,7 +344,8 @@
     <sys:String x:Key="L.Original">ORIGINAL</sys:String>
     <sys:String x:Key="L.OriginalResponseTip">Show original response</sys:String>
     <sys:String x:Key="L.Retranslate">Re-translate this message</sys:String>
-    <sys:String x:Key="L.TranslateProviderDown">Translation provider not ready — check that Ollama is running / your settings.</sys:String>
+    <sys:String x:Key="L.TranslateProviderDown">Translation provider not ready — check the selected provider is running / your settings.</sys:String>
+    <sys:String x:Key="L.TranslateProviderOffWarn">The selected translation provider is unavailable, so translation won't apply — check it in Settings → Translation · Language.</sys:String>
     <sys:String x:Key="L.TranslateFailed">Translation failed — timeout or the model didn't respond. Try a faster model or raise the timeout.</sys:String>
     <sys:String x:Key="L.TranslateFailedCount">{0} message(s) failed to translate (timeout/model). Try a faster model or raise the timeout.</sys:String>
     <sys:String x:Key="L.OriginalOutputTip">Show original output</sys:String>

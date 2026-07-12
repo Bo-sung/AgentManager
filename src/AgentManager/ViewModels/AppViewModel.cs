@@ -756,7 +756,17 @@ public sealed partial class AppViewModel : ObservableObject
 
     // ----- new-agent overlay state -----
     private bool _showNew;
-    public bool ShowNewAgent { get => _showNew; set { if (Set(ref _showNew, value) && value) { OnChanged(nameof(NewAgentEngineOptions)); NewAgentTranslation = TranslationEnabled; NewAgentIsolate = true; NewAgentAsWorker = false; } } }
+    public bool ShowNewAgent { get => _showNew; set { if (Set(ref _showNew, value) && value) { OnChanged(nameof(NewAgentEngineOptions)); NewAgentTranslation = TranslationEnabled; NewAgentIsolate = true; NewAgentAsWorker = false; RefreshNewAgentTranslationReadiness(); } } }
+    // 폼 열 때 선택된 provider 준비 상태를 재확인하고, 완료되면 원하는 번역 기본값을 다시 반영한다(setter가
+    // 미준비 시 OFF로 강등하므로, 최초 캐시가 stale이어도 준비되면 켜지도록 재적용). per-turn 재검사가 실제 가드.
+    private void RefreshNewAgentTranslationReadiness()
+    {
+        var want = TranslationEnabled;
+        _ = RefreshTranslationStatusAsync().ContinueWith(_ =>
+        {
+            if (_showNew) NewAgentTranslation = want;
+        }, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
+    }
 
     /// <summary>New Agent 엔진 피커용 — 각 엔진 + 설치 여부(수동 경로/PATH 반영). 폼 열 때 새로 계산.</summary>
     public IReadOnlyList<EngineOptionVm> NewAgentEngineOptions =>
@@ -851,7 +861,7 @@ public sealed partial class AppViewModel : ObservableObject
         get => _newAgentTranslation;
         set
         {
-            if (value && !OllamaRunning) value = false; // Ollama 꺼짐이면 켤 수 없음 — OFF 유지(⚠ 안내)
+            if (value && !TranslationReady) value = false; // 선택된 provider 미준비면 켤 수 없음 — OFF 유지(⚠ 안내)
             if (Set(ref _newAgentTranslation, value)) OnChanged(nameof(NewAgentTranslationLabel));
         }
     }
@@ -1010,8 +1020,8 @@ public sealed partial class AppViewModel : ObservableObject
         {
             if (sender is SessionViewModel ses)
             {
-                // Ollama 꺼짐이면 번역을 켤 수 없음 — 다시 OFF로 되돌린다(⚠ 아이콘이 사유 안내).
-                if (ses.TranslationEnabled && !OllamaRunning) { ses.TranslationEnabled = false; return; }
+                // 선택된 provider 미준비면 번역을 켤 수 없음 — 다시 OFF로 되돌린다(⚠ 아이콘이 사유 안내).
+                if (ses.TranslationEnabled && !TranslationReady) { ses.TranslationEnabled = false; return; }
                 // 토글을 켜면 아직 원문(영어)인 기존 블록도 번역한다(재동기화·임포트·번역 OFF로 받은 과거 turn 포함).
                 if (ses.TranslationEnabled) _ = TranslatePendingBlocksAsync(ses);
             }

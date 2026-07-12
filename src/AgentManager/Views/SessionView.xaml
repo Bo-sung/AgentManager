@@ -746,11 +746,11 @@
                                                 <ToggleButton DockPanel.Dock="Left" Style="{StaticResource TogglePillButton}" Height="30" Padding="12,0" Margin="0,0,8,0"
                                                               IsChecked="{Binding TranslationEnabled, Mode=TwoWay}"
                                                               Content="{Binding TranslationLabel}" ToolTip="{StaticResource L.TranslationToggleTip}"/>
-                                                <!-- Ollama 꺼짐 경고(번역 미적용) — 클릭 시 설정으로 -->
+                                                <!-- 번역 provider 미준비 경고(번역 미적용) — 클릭 시 설정으로 -->
                                                 <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconWarn}" Width="15" Height="15" Margin="0,0,8,0"
                                                                    VerticalAlignment="Center" Foreground="{DynamicResource Warn}" Cursor="Hand"
-                                                                   ToolTip="{StaticResource L.OllamaOffWarn}"
-                                                                   Visibility="{Binding DataContext.OllamaDown, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}"
+                                                                   ToolTip="{StaticResource L.TranslateProviderOffWarn}"
+                                                                   Visibility="{Binding DataContext.TranslationProviderDown, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}"
                                                                    controls:MouseClick.Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                                 <Button DockPanel.Dock="Right" Width="32" Height="32" Cursor="Hand" Foreground="White"
                                                         Margin="6,0,0,0" ToolTip="{StaticResource L.StopTip}"
