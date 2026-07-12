@@ -1259,6 +1259,7 @@ AssertModelCatalog();
 AssertEngineConfig();
 AssertEngineConfigMigration();
 AssertOneShotAdapter();
+AssertBridgeAdapter();
 
 static void AssertQuickReplyParser()
 {
@@ -1980,6 +1981,82 @@ static void AssertOneShotAdapter()
     Assert(AgentManager.Core.Agents.AdapterFactory.CreateCustom("myeng", "codex-json", []) is AgentManager.Core.Agents.CodexAdapter, "adapter-factory: custom reusing built-in kind");
 
     Console.WriteLine("one-shot adapter asserts OK");
+}
+
+static void AssertBridgeAdapter()
+{
+    // ---- ARGS mode: args carry {prompt} → prompt on argv, stdin closed ----
+    var a = new AgentManager.Core.Agents.BridgeJsonlAdapter("brg", ["chat", "{prompt}", "--model", "{model}", "--cwd", "{cwd}", "--session", "{sessionId}"]);
+    Assert(a.Id == "brg", "bridge: engine id");
+    Assert(a.CloseStdinAfterStart, "bridge: args mode closes stdin");
+    Assert(!a.KillAfterTurnCompleted, "bridge: args mode does not kill after turn");
+    Assert(a.Capabilities is { Thinking: true, Sessions: true, TokenUsage: true, Permissions: false, Images: false }, "bridge: capabilities");
+
+    var opts = new AgentManager.Core.Agents.SessionOptions { WorkingDirectory = "D:/work", Model = "gpt-x", ResumeSessionId = "sess-7" };
+    var psi = a.BuildStartInfo("C:/bridge.exe", opts, "hello world");
+    Assert(psi.FileName == "C:/bridge.exe", "bridge: exe = resolved path");
+    Assert(psi.ArgumentList.SequenceEqual(["chat", "hello world", "--model", "gpt-x", "--cwd", "D:/work", "--session", "sess-7"]), "bridge: {prompt}/{model}/{cwd}/{sessionId} substituted");
+    Assert(psi.RedirectStandardOutput && !psi.UseShellExecute, "bridge: stdio redirected, no shell");
+    Assert(a.InitialStdinLines("hello world", opts).Count == 0, "bridge: args mode writes no stdin start line");
+
+    // ---- ParseRoot mapping ----
+    var ss = a.ParseLine("{\"type\":\"session_started\",\"sessionId\":\"abc\",\"model\":\"gpt-x\",\"cwd\":\"D:/work\",\"toolCount\":9}").ToList();
+    Assert(ss.Count == 1 && ss[0] is AgentManager.Core.Events.SessionStarted { SessionId: "abc", Model: "gpt-x", ToolCount: 9, Cwd: "D:/work" }, "bridge: session_started");
+
+    var ad = a.ParseLine("{\"type\":\"assistant_delta\",\"text\":\"hi \"}").ToList();
+    Assert(ad.Count == 1 && ad[0] is AgentManager.Core.Events.AssistantDelta { Delta: "hi " }, "bridge: assistant_delta (already started, no synth)");
+
+    var at = a.ParseLine("{\"type\":\"assistant_text\",\"text\":\"  final answer  \"}").ToList();
+    Assert(at.Count == 1 && at[0] is AgentManager.Core.Events.AssistantText { Text: "final answer" }, "bridge: assistant_text trimmed");
+
+    var th = a.ParseLine("{\"type\":\"thinking\",\"text\":\" pondering \"}").ToList();
+    Assert(th.Count == 1 && th[0] is AgentManager.Core.Events.Thinking { Text: "pondering" }, "bridge: thinking trimmed");
+
+    var ts = a.ParseLine("{\"type\":\"tool_started\",\"id\":\"t1\",\"name\":\"shell\",\"input\":{\"cmd\":\"ls\"}}").ToList();
+    Assert(ts.Count == 1 && ts[0] is AgentManager.Core.Events.ToolUseStarted { ToolUseId: "t1", Name: "shell", InputJson: "{\"cmd\":\"ls\"}" }, "bridge: tool_started object input");
+    var tsStr = a.ParseLine("{\"type\":\"tool_started\",\"id\":\"t2\",\"name\":\"note\",\"input\":\"raw text\"}").ToList();
+    Assert(tsStr.Count == 1 && tsStr[0] is AgentManager.Core.Events.ToolUseStarted { ToolUseId: "t2", InputJson: "{\"text\":\"raw text\"}" }, "bridge: tool_started string input wrapped");
+
+    var tr = a.ParseLine("{\"type\":\"tool_result\",\"id\":\"t1\",\"content\":[{\"type\":\"text\",\"text\":\"file.txt\"}],\"isError\":false}").ToList();
+    Assert(tr.Count == 1 && tr[0] is AgentManager.Core.Events.ToolResult { ToolUseId: "t1", Content: "file.txt", IsError: false }, "bridge: tool_result content array flattened");
+    var trStr = a.ParseLine("{\"type\":\"tool_result\",\"id\":\"t2\",\"content\":\"done\",\"isError\":true}").ToList();
+    Assert(trStr.Count == 1 && trStr[0] is AgentManager.Core.Events.ToolResult { Content: "done", IsError: true }, "bridge: tool_result string content + isError");
+
+    var tu = a.ParseLine("{\"type\":\"token_usage\",\"input\":10,\"output\":20,\"cacheRead\":3,\"reasoning\":5}").ToList();
+    Assert(tu.Count == 1 && tu[0] is AgentManager.Core.Events.TokenUsage { InputTokens: 10, OutputTokens: 20, CacheReadTokens: 3, ReasoningTokens: 5 }, "bridge: token_usage");
+
+    var er = a.ParseLine("{\"type\":\"error\",\"message\":\"boom\"}").ToList();
+    Assert(er.Count == 1 && er[0] is AgentManager.Core.Events.EngineError { Message: "boom" }, "bridge: error");
+
+    var un = a.ParseLine("{\"type\":\"weird_new_event\",\"x\":1}").ToList();
+    Assert(un.Count == 1 && un[0] is AgentManager.Core.Events.RawUnknown { Type: "weird_new_event" }, "bridge: unknown → RawUnknown");
+
+    var done = a.ParseLine("{\"type\":\"turn_completed\",\"text\":\"final\",\"isError\":false,\"costUsd\":0.02,\"numTurns\":3,\"usage\":{\"input\":100,\"output\":200}}").ToList();
+    Assert(done.Count == 1 && done[0] is AgentManager.Core.Events.TurnCompleted { FinalText: "final", IsError: false, CostUsd: 0.02, NumTurns: 3, Usage: { InputTokens: 100, OutputTokens: 200 } }, "bridge: turn_completed + usage");
+    // duplicate terminal line is suppressed
+    Assert(a.ParseLine("{\"type\":\"turn_completed\",\"text\":\"again\"}").ToList().Count == 0, "bridge: duplicate turn_completed suppressed");
+
+    // ---- SessionStarted synth when a CLI streams before session_started ----
+    var b = new AgentManager.Core.Agents.BridgeJsonlAdapter("brg2", ["{prompt}"]);
+    var synth = b.ParseLine("{\"type\":\"assistant_delta\",\"text\":\"early\"}").ToList();
+    Assert(synth.Count == 2 && synth[0] is AgentManager.Core.Events.SessionStarted { SessionId: "brg2" } && synth[1] is AgentManager.Core.Events.AssistantDelta { Delta: "early" }, "bridge: synth SessionStarted before first delta");
+
+    // ---- STDIN mode: no {prompt} in args → stdin open, start line, kill after turn ----
+    var s = new AgentManager.Core.Agents.BridgeJsonlAdapter("srv", ["serve", "--mode", "rpc"]);
+    Assert(!s.CloseStdinAfterStart, "bridge: stdin mode keeps stdin open");
+    Assert(s.KillAfterTurnCompleted, "bridge: stdin mode kills after turn");
+    var stdinLines = s.InitialStdinLines("do it", new AgentManager.Core.Agents.SessionOptions { WorkingDirectory = "D:/w", Model = "m1", ResumeSessionId = "s9" });
+    Assert(stdinLines.Count == 1, "bridge: stdin mode writes one start line");
+    var start = System.Text.Json.JsonDocument.Parse(stdinLines[0]).RootElement;
+    Assert(start.GetProperty("type").GetString() == "start" && start.GetProperty("prompt").GetString() == "do it"
+        && start.GetProperty("model").GetString() == "m1" && start.GetProperty("cwd").GetString() == "D:/w"
+        && start.GetProperty("sessionId").GetString() == "s9", "bridge: start line fields");
+
+    // ---- AdapterFactory dispatch (both spellings) ----
+    Assert(AgentManager.Core.Agents.AdapterFactory.CreateCustom("brg", "agentmanager-bridge-jsonl", ["{prompt}"]) is AgentManager.Core.Agents.BridgeJsonlAdapter, "adapter-factory: agentmanager-bridge-jsonl");
+    Assert(AgentManager.Core.Agents.AdapterFactory.CreateCustom("brg", "bridge-jsonl", ["{prompt}"]) is AgentManager.Core.Agents.BridgeJsonlAdapter, "adapter-factory: bridge-jsonl alias");
+
+    Console.WriteLine("bridge adapter asserts OK");
 }
 
 static async Task TestGitWorktreeAsync()
