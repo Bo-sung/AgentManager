@@ -2,6 +2,11 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.8
+커스텀 엔진 모델 자동 조회. (기능)
+- **`modelsQuery`**: 커스텀 엔진 매니페스트(`engines/<id>.json`)에 모델 목록을 **한 줄에 하나씩 출력하는 명령의 args**를 넣을 수 있다(예: opencode `["models"]`). 설정 → Runtimes의 커스텀 엔진 카드에 **"설치 모델 조회"** 버튼이 생겨(modelsQuery 설정 시), `launch.exe + modelsQuery`를 실행하고 stdout을 파싱(`EngineRegistry.ParseModelLines`: 줄당 첫 토큰, trim·dedupe)해 기존 `UpdateModelsFromQuery`(survivor의 effort/preferred 보존)로 `engines/<id>.json`에 반영한다. 빌트인 pi/agy의 모델 조회와 동일 UX. **엔진 추가 폼**에도 "모델 조회 명령(args)" 입력이 생김.
+- (검증) 빌드·스모크 green(`model-query parse asserts OK`) · **GUI 실측**: opencode 엔진 `modelsQuery:["models"]` → "설치 모델 조회" 클릭 → 1개 → **117개 모델 자동 populate** + "117개 조회됨".
+
 ## 1.21.7
 ACP(Agent Client Protocol) 어댑터 — opencode/hermes 통합. (기능)
 - **`adapterKind:"acp"`**: Zed의 **Agent Client Protocol**(개행 구분 JSON-RPC 2.0 over stdio)을 말하는 커스텀 엔진 어댑터. ACP 서버를 노출하는 어떤 CLI든 하나의 어댑터로 붙는다 — 실측 통합: **opencode**(`opencode acp` v1.17.18)·**hermes**(`hermes-acp` v0.18.2, 둘 다 protocolVersion 1).
