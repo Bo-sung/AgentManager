@@ -88,7 +88,7 @@ public sealed partial class AppViewModel
     /// the first two are custom-only kinds (need the launch args template); the rest reuse a built-in protocol
     /// (only actually run if the matching CLI/protocol is installed). <c>one-shot-text</c> is the safe generic default.</summary>
     public IReadOnlyList<string> CustomAdapterKinds { get; } =
-        ["one-shot-text", "agentmanager-bridge-jsonl", "claude-stream-json", "codex-json", "codex-app-server", "agy-pty", "pi-rpc"];
+        ["one-shot-text", "agentmanager-bridge-jsonl", "acp", "claude-stream-json", "codex-json", "codex-app-server", "agy-pty", "pi-rpc"];
 
     private bool _showAddEngineForm;
     /// <summary>Whether the collapsible add-engine form is expanded.</summary>

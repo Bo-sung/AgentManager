@@ -28,6 +28,9 @@ public static class AdapterFactory
         // Richer JSONL protocol (tool-calls/thinking/usage). Accept both spellings — the canonical
         // manifest value is "agentmanager-bridge-jsonl"; "bridge-jsonl" is the shorthand alias.
         "agentmanager-bridge-jsonl" or "bridge-jsonl" => new BridgeJsonlAdapter(engineId, argsTemplate),
+        // Agent Client Protocol (Zed's JSON-RPC/stdio) — opencode `acp`, hermes `hermes-acp`, etc. The launch
+        // subcommand comes from launch.args (e.g. ["acp"]); the prompt is delivered via session/prompt, not args.
+        "acp" => new AcpAdapter(engineId, argsTemplate),
         _ => Create(adapterKind, requireApproval), // custom engine reusing a built-in protocol
     };
 }

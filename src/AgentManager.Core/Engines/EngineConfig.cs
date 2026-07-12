@@ -35,7 +35,7 @@ public sealed record EngineConfig(
     string Name,
     string Badge = "",
     string Source = "builtin",       // builtin | custom
-    string AdapterKind = "",         // claude-stream-json | codex-json | codex-app-server | agy-pty | pi-rpc | one-shot-text | agentmanager-bridge-jsonl (alias: bridge-jsonl)
+    string AdapterKind = "",         // claude-stream-json | codex-json | codex-app-server | agy-pty | pi-rpc | one-shot-text | agentmanager-bridge-jsonl (alias: bridge-jsonl) | acp
     string Cli = "",
     string Desc = "",
     string InstallUrl = "",

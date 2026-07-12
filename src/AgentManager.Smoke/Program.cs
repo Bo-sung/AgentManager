@@ -1317,6 +1317,7 @@ AssertEngineConfig();
 AssertEngineConfigMigration();
 AssertOneShotAdapter();
 AssertBridgeAdapter();
+AssertAcpAdapter();
 
 static void AssertQuickReplyParser()
 {
@@ -2704,6 +2705,61 @@ static void ResourceMonitorCheck()
     Console.WriteLine($"[resource-monitor] cpu={s.CpuPercent:F0}% gpu={gpu} vram={vram} ram={s.MemoryPercent:F0}% ({memGiB:F1}GiB total) net down={s.NetRecvBytesPerSec:F0} up={s.NetSentBytesPerSec:F0} B/s");
     Console.WriteLine($"[resource-monitor] memTotal={memTotalOk} memPct={memPctOk} cpu={cpuOk} gpu={gpuOk} vram={vramOk} net={netOk} -> {verdict}");
     Environment.Exit(ok ? 0 : 1);
+}
+
+static void AssertAcpAdapter()
+{
+    // Drives the ACP (Agent Client Protocol) handshake with the REAL on-the-wire shapes captured from
+    // `opencode acp` (v1.17.18) / hermes-acp (v0.18.2): initialize → session/new → session/prompt → updates.
+    var a = new AgentManager.Core.Agents.AcpAdapter("oc", ["acp"]);
+    Assert(a.Id == "oc", "acp: engine id");
+    Assert(!a.CloseStdinAfterStart, "acp: keeps stdin open for handshake");
+    Assert(a.KillAfterTurnCompleted, "acp: kills the ACP server after the turn");
+    Assert(a.Capabilities is { Permissions: true, Thinking: true, Sessions: true, TokenUsage: true }, "acp: capabilities");
+
+    var opts = new AgentManager.Core.Agents.SessionOptions { WorkingDirectory = "J:/work", Model = "m" };
+    var psi = a.BuildStartInfo("C:/opencode.exe", opts, "hello");
+    Assert(psi.FileName == "C:/opencode.exe" && psi.ArgumentList.SequenceEqual(["acp"]), "acp: exe + launch subcommand from args");
+    var init = a.InitialStdinLines("hello", opts);
+    Assert(init.Count == 1 && init[0].Contains("\"method\":\"initialize\"") && init[0].Contains("\"protocolVersion\":1") && init[0].Contains("\"readTextFile\":false"), "acp: initialize sent, fs advertised false");
+
+    // initialize response → adapter writes session/new
+    var afterInit = a.ParseLine("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"protocolVersion\":1,\"agentCapabilities\":{},\"agentInfo\":{\"name\":\"OpenCode\"}}}").ToList();
+    Assert(afterInit.Count == 1 && afterInit[0] is AgentManager.Core.Events.EngineWriteback wb1 && wb1.Line.Contains("\"method\":\"session/new\"") && wb1.Line.Contains("\"id\":2"), "acp: initialize response → session/new writeback");
+
+    // session/new response (sessionId) → SessionStarted + session/prompt writeback
+    var afterNew = a.ParseLine("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"sessionId\":\"ses_abc\",\"configOptions\":[]}}").ToList();
+    Assert(afterNew.Count == 2 && afterNew[0] is AgentManager.Core.Events.SessionStarted { SessionId: "ses_abc" }, "acp: session/new → SessionStarted");
+    Assert(afterNew[1] is AgentManager.Core.Events.EngineWriteback wb2 && wb2.Line.Contains("\"method\":\"session/prompt\"") && wb2.Line.Contains("\"sessionId\":\"ses_abc\"") && wb2.Line.Contains("hello"), "acp: session/new → session/prompt writeback with prompt");
+
+    // session/update streaming
+    var msg = a.ParseLine("{\"jsonrpc\":\"2.0\",\"method\":\"session/update\",\"params\":{\"sessionId\":\"ses_abc\",\"update\":{\"sessionUpdate\":\"agent_message_chunk\",\"content\":{\"type\":\"text\",\"text\":\"ACP-OK\"}}}}").ToList();
+    Assert(msg.Count == 1 && msg[0] is AgentManager.Core.Events.AssistantDelta { Delta: "ACP-OK" }, "acp: agent_message_chunk → AssistantDelta");
+    var thought = a.ParseLine("{\"jsonrpc\":\"2.0\",\"method\":\"session/update\",\"params\":{\"sessionId\":\"ses_abc\",\"update\":{\"sessionUpdate\":\"agent_thought_chunk\",\"content\":{\"type\":\"text\",\"text\":\"hmm\"}}}}").ToList();
+    Assert(thought.Count == 1 && thought[0] is AgentManager.Core.Events.Thinking { Text: "hmm" }, "acp: agent_thought_chunk → Thinking");
+    var tool = a.ParseLine("{\"jsonrpc\":\"2.0\",\"method\":\"session/update\",\"params\":{\"sessionId\":\"ses_abc\",\"update\":{\"sessionUpdate\":\"tool_call\",\"toolCallId\":\"t1\",\"title\":\"Read\",\"kind\":\"read\",\"rawInput\":{\"path\":\"x\"}}}}").ToList();
+    Assert(tool.Count == 1 && tool[0] is AgentManager.Core.Events.ToolUseStarted { ToolUseId: "t1", Name: "Read" }, "acp: tool_call → ToolUseStarted");
+    var toolDone = a.ParseLine("{\"jsonrpc\":\"2.0\",\"method\":\"session/update\",\"params\":{\"sessionId\":\"ses_abc\",\"update\":{\"sessionUpdate\":\"tool_call_update\",\"toolCallId\":\"t1\",\"status\":\"completed\",\"content\":[{\"type\":\"content\",\"content\":{\"type\":\"text\",\"text\":\"file body\"}}]}}}").ToList();
+    Assert(toolDone.Count == 1 && toolDone[0] is AgentManager.Core.Events.ToolResult { ToolUseId: "t1", Content: "file body", IsError: false }, "acp: tool_call_update completed → ToolResult");
+    Assert(a.ParseLine("{\"jsonrpc\":\"2.0\",\"method\":\"session/update\",\"params\":{\"update\":{\"sessionUpdate\":\"usage_update\",\"used\":11,\"size\":200}}}").ToList().Count == 0, "acp: usage_update ignored (token usage comes from prompt result)");
+
+    // session/prompt result → TurnCompleted with usage
+    var done = a.ParseLine("{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":{\"stopReason\":\"end_turn\",\"usage\":{\"inputTokens\":100,\"outputTokens\":5,\"totalTokens\":105,\"cachedReadTokens\":3}}}").ToList();
+    Assert(done.Count == 1 && done[0] is AgentManager.Core.Events.TurnCompleted { IsError: false, Usage: { InputTokens: 100, OutputTokens: 5, CacheReadTokens: 3 } }, "acp: session/prompt result → TurnCompleted + usage");
+
+    // permission round-trip: request → PermissionRequest; BuildPermissionResponse(allow) selects the allow_once option
+    var perm = a.ParseLine("{\"jsonrpc\":\"2.0\",\"id\":42,\"method\":\"session/request_permission\",\"params\":{\"sessionId\":\"ses_abc\",\"toolCall\":{\"toolCallId\":\"t9\",\"title\":\"Run shell\"},\"options\":[{\"optionId\":\"allow-once\",\"name\":\"Allow\",\"kind\":\"allow_once\"},{\"optionId\":\"reject-once\",\"name\":\"Reject\",\"kind\":\"reject_once\"}]}}").ToList();
+    Assert(perm.Count == 1 && perm[0] is AgentManager.Core.Events.PermissionRequest { RequestId: "42", ToolName: "Run shell", ToolUseId: "t9" }, "acp: session/request_permission → PermissionRequest");
+    var allow = a.BuildPermissionResponse((AgentManager.Core.Events.PermissionRequest)perm[0], new AgentManager.Core.Agents.PermissionDecision(true));
+    Assert(allow is not null && allow.Contains("\"outcome\":\"selected\"") && allow.Contains("\"optionId\":\"allow-once\"") && allow.Contains("\"id\":42"), "acp: allow → selects allow_once optionId");
+    var deny = a.BuildPermissionResponse((AgentManager.Core.Events.PermissionRequest)perm[0], new AgentManager.Core.Agents.PermissionDecision(false));
+    Assert(deny is not null && deny.Contains("\"outcome\":\"cancelled\""), "acp: deny → cancelled");
+
+    // unknown agent request is answered with a JSON-RPC error (never hangs)
+    var unknownReq = a.ParseLine("{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"terminal/create\",\"params\":{}}").ToList();
+    Assert(unknownReq.Count == 1 && unknownReq[0] is AgentManager.Core.Events.EngineWriteback wb3 && wb3.Line.Contains("-32601") && wb3.Line.Contains("\"id\":7"), "acp: unsupported agent request → JSON-RPC error writeback");
+
+    Console.WriteLine("acp adapter asserts OK");
 }
 
 static void Assert(bool condition, string message)
