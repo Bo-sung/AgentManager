@@ -72,6 +72,7 @@ public sealed partial class AppViewModel
         if (_engineConfig is null || !_engineConfig.Remove(vm.Id)) return; // Remove is a no-op for built-ins
         _disabledEngines.Remove(vm.Id);
         _skillDirs.Remove(vm.Id);
+        _trustStore.Revoke(vm.Id); // forget any run approval (a re-added engine re-prompts anyway)
         RefreshEngines();
         RebuildCustomEngines(); // command context ⇒ safe to rebuild the collection
     }

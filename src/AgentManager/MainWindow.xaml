@@ -1799,6 +1799,70 @@
             </Border>
         </Grid>
 
+        <!-- ===================== Custom-engine trust overlay (first-run approval) ===================== -->
+        <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowTrustPrompt, Converter={StaticResource BoolVis}}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowTrustPrompt}" Value="True">
+                            <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayFadeIn}"/></DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Border Width="560" MaxHeight="640" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource Bg2}"
+                    BorderBrush="{DynamicResource LineBright}" BorderThickness="1" CornerRadius="10" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><TranslateTransform Y="0"/></Border.RenderTransform>
+                <Border.LayoutTransform><ScaleTransform ScaleX="{Binding ModalScale}" ScaleY="{Binding ModalScale}"/></Border.LayoutTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowTrustPrompt}" Value="True">
+                                <DataTrigger.EnterActions><BeginStoryboard Storyboard="{StaticResource OverlayRiseIn}"/></DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Padding="18,15">
+                        <DockPanel>
+                            <controls:IconView DockPanel.Dock="Left" Icon="{StaticResource IconWarn}" Width="15" Height="15" Foreground="{DynamicResource Warn}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{StaticResource L.CustomEngineTrustTitle}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Txt0}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,1,0,0" Background="{DynamicResource Bg1}" Padding="18,14">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource ChipButton}" Content="{StaticResource L.CustomEngineTrustDeny}" Margin="0,0,9,0" Command="{Binding TrustDenyCommand}"/>
+                            <Button Style="{StaticResource AccentButton}" Command="{Binding TrustApproveCommand}">
+                                <TextBlock Text="{StaticResource L.CustomEngineTrustApprove}" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="18,14">
+                            <TextBlock Text="{Binding TrustEngineName, Mode=OneWay, StringFormat={}{0}}" FontWeight="SemiBold" FontSize="12.5" Foreground="{DynamicResource Txt0}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{StaticResource L.CustomEngineTrustBody}" TextWrapping="Wrap" FontSize="11.5" Foreground="{DynamicResource Txt1}" Margin="0,0,0,14"/>
+                            <TextBlock Text="{StaticResource L.CustomEngineTrustExeLabel}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
+                            <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,14">
+                                <TextBlock Text="{Binding TrustExe, Mode=OneWay}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Txt0}" TextWrapping="Wrap"/>
+                            </Border>
+                            <TextBlock Text="{StaticResource L.CustomEngineTrustArgsLabel}" Style="{StaticResource Lbl}" Margin="0,0,0,6"
+                                       Visibility="{Binding TrustHasArgs, Converter={StaticResource BoolVis}}"/>
+                            <ItemsControl ItemsSource="{Binding TrustArgs}" Visibility="{Binding TrustHasArgs, Converter={StaticResource BoolVis}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,5">
+                                            <TextBlock Text="{Binding Mode=OneWay}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource Txt1}" TextWrapping="Wrap"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+
         <!-- ===================== New-agent overlay ===================== -->
         <Grid Grid.RowSpan="2" Background="#9E05080B" Visibility="{Binding ShowNewAgent, Converter={StaticResource BoolVis}}">
             <Grid.Style>

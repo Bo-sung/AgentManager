@@ -448,6 +448,14 @@
     <sys:String x:Key="L.ApprovalExpired">expired</sys:String>
     <sys:String x:Key="L.PermissionDenied">User denied permission</sys:String>
     <sys:String x:Key="L.SessionEnded">Session ended</sys:String>
+    <sys:String x:Key="L.CustomEngineTrustTitle">Approve custom engine launch</sys:String>
+    <sys:String x:Key="L.CustomEngineTrustBody">This custom engine is about to run for the first time. It will start a local process using the executable and arguments below. Approve only if you recognize and trust this command. If the executable or arguments change, you will be asked to approve again.</sys:String>
+    <sys:String x:Key="L.CustomEngineTrustExeLabel">Executable</sys:String>
+    <sys:String x:Key="L.CustomEngineTrustArgsLabel">Arguments</sys:String>
+    <sys:String x:Key="L.CustomEngineTrustApprove">Approve &amp; run</sys:String>
+    <sys:String x:Key="L.CustomEngineTrustDeny">Deny</sys:String>
+    <sys:String x:Key="L.CustomEngineTrustDenied">⚠ Run denied — the custom engine was not trusted, so no process was started.</sys:String>
+    <sys:String x:Key="L.CustomEngineTrustDeniedActivity">Run denied</sys:String>
     <sys:String x:Key="L.ApprovalGrantedContinue">{0} approved - continuing</sys:String>
     <sys:String x:Key="L.ApprovalRejected">{0} rejected</sys:String>
     <sys:String x:Key="L.NonGitWorktreeNotice">⚠ not a git repository; running without isolation(worktree)</sys:String>

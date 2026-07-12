@@ -216,6 +216,7 @@ public sealed partial class AppViewModel : ObservableObject
         _scheduler.JobDue += Scheduler_JobDue;
         _scheduler.Start();
         InitNavCommands();
+        InitTrustCommands();
         InitDelegationCommands();
         InitWorkerTaskCommands();
         StartSettingsWatcher();

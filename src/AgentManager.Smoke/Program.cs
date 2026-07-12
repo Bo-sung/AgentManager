@@ -68,6 +68,12 @@ if (args.Contains("--worker-task-store-check"))
     return;
 }
 
+if (args.Contains("--engine-trust-check"))
+{
+    EngineTrustCheck();
+    return;
+}
+
 if (args.Contains("--json-write-atomic-check"))
 {
     JsonWriteAtomicCheck();
@@ -408,6 +414,57 @@ static void WorkerTaskStoreCheck()
         File.WriteAllText(path, json);
         return path;
     }
+}
+
+// Pre-run trust store for custom engines (A3): fingerprint determinism + list non-collision + Trust/IsTrusted +
+// changed-args re-prompt + load round-trip. dotnet run --project src/AgentManager.Smoke -- --engine-trust-check
+static void EngineTrustCheck()
+{
+    var tmp = Directory.CreateTempSubdirectory("am_trust_").FullName;
+    var file = Path.Combine(tmp, "trusted-engines.json");
+
+    // fingerprint is deterministic and order-sensitive
+    var fpA = AgentManager.Core.Engines.EngineTrustStore.Fingerprint("node", ["a", "b"]);
+    var okDeterministic = fpA == AgentManager.Core.Engines.EngineTrustStore.Fingerprint("node", ["a", "b"]);
+
+    // distinct argument LISTS must never collide: ["a","b"] vs ["a b"] vs ["ab"]
+    var fpAB = AgentManager.Core.Engines.EngineTrustStore.Fingerprint("node", ["a b"]);
+    var fpABjoined = AgentManager.Core.Engines.EngineTrustStore.Fingerprint("node", ["ab"]);
+    var okNoCollision = fpA != fpAB && fpA != fpABjoined && fpAB != fpABjoined;
+
+    // exe participates in the fingerprint
+    var okExeMatters = fpA != AgentManager.Core.Engines.EngineTrustStore.Fingerprint("python", ["a", "b"]);
+
+    var store = AgentManager.Core.Engines.EngineTrustStore.Load(file);
+    var okPreTrust = !store.IsTrusted("eng1", fpA);          // nothing trusted yet
+    store.Trust("eng1", fpA);
+    var okPostTrust = store.IsTrusted("eng1", fpA);          // exact fp trusted
+    var okChangedArgs = !store.IsTrusted("eng1", fpAB);      // a different fp (edited args) re-prompts
+    var okOtherEngine = !store.IsTrusted("eng2", fpA);       // trust is per-engine-id
+
+    // persisted + round-trips from disk (survives app restart)
+    var okSaved = File.Exists(file);
+    var reloaded = AgentManager.Core.Engines.EngineTrustStore.Load(file);
+    var okRoundTrip = reloaded.IsTrusted("eng1", fpA) && !reloaded.IsTrusted("eng1", fpAB);
+
+    // revoke forgets it (and re-persists)
+    reloaded.Revoke("eng1");
+    var okRevoke = !reloaded.IsTrusted("eng1", fpA)
+        && !AgentManager.Core.Engines.EngineTrustStore.Load(file).IsTrusted("eng1", fpA);
+
+    // a missing/corrupt file loads empty, never throws
+    File.WriteAllText(file, "{ not json");
+    var okBadFile = !AgentManager.Core.Engines.EngineTrustStore.Load(file).IsTrusted("eng1", fpA);
+    var okMissing = !AgentManager.Core.Engines.EngineTrustStore.Load(Path.Combine(tmp, "nope.json")).IsTrusted("x", fpA);
+
+    var ok = okDeterministic && okNoCollision && okExeMatters && okPreTrust && okPostTrust
+        && okChangedArgs && okOtherEngine && okSaved && okRoundTrip && okRevoke && okBadFile && okMissing;
+    Console.WriteLine($"[engine-trust] deterministic={okDeterministic} noCollision={okNoCollision} exeMatters={okExeMatters} "
+        + $"preTrust={okPreTrust} postTrust={okPostTrust} changedArgs={okChangedArgs} otherEngine={okOtherEngine} "
+        + $"saved={okSaved} roundTrip={okRoundTrip} revoke={okRevoke} badFile={okBadFile} missing={okMissing}");
+    Console.WriteLine($"[engine-trust] {(ok ? "PASS" : "FAIL")}");
+    try { Directory.Delete(tmp, true); } catch { }
+    Environment.Exit(ok ? 0 : 1);
 }
 
 // Live end-to-end of the task queue without the GUI: spool file → store ingest → assign →

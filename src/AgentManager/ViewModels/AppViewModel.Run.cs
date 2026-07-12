@@ -263,6 +263,28 @@ public sealed partial class AppViewModel
             return;
         }
 
+        // Custom engine (engines/<id>.json, source=custom): forward its protocol + launch exe/args so the planner
+        // builds the manifest adapter instead of the built-in resolution. Built-in engines leave these null. Computed
+        // here (BEFORE any transcript/status mutation) so the pre-run trust gate can fail fast without consuming a run.
+        var cfg = _engineConfig?.Get(s.AgentId);
+        var isCustom = cfg is { Source: "custom" };
+        var customExe = isCustom && cfg!.Launch is { } lc && !string.IsNullOrWhiteSpace(lc.Exe) ? lc.Exe.Trim() : null;
+
+        // Pre-run TRUST gate: the FIRST run of a custom engine (arbitrary exe+args) requires explicit approval,
+        // remembered per engine id by a fingerprint of exe+args (a later edit re-prompts). Denial aborts the turn
+        // before a UserBlock is added or a run slot is consumed — no process is spawned.
+        if (isCustom && customExe is not null)
+        {
+            var argsList = cfg!.Launch?.Args ?? [];
+            if (!await EnsureCustomEngineTrustedAsync(s, customExe, argsList))
+            {
+                s.Transcript.Add(new WorkingBlock(L("L.CustomEngineTrustDenied")));
+                s.Status = "idle";
+                s.MarkRunEnded(L("L.CustomEngineTrustDeniedActivity"));
+                return;
+            }
+        }
+
         var dispatcher = Application.Current.Dispatcher;
         s.ActiveChoice = null; // a new turn supersedes any pending choice
         var attachmentPaths = (images ?? []).Concat(docs ?? []).ToArray();
@@ -274,11 +296,7 @@ public sealed partial class AppViewModel
         // subscription이면 기존 AgyAdapter(CLI/ConPTY)를 바이트 단위로 유지. cc/gx는 어댑터 내
         // 크리덴셜만 바꾸지만 agy는 어댑터 클래스 자체가 바뀌므로 분기를 호출점에 둔다.
         // 결정 로직은 Core TurnPlanner로 추출(헤드리스); 여기선 타입 실패를 지역화된 에러 블록으로 렌더한다.
-        // Custom engine (engines/<id>.json, source=custom): forward its protocol + launch exe/args so the planner
-        // builds the manifest adapter instead of the built-in resolution. Built-in engines leave these null.
-        var cfg = _engineConfig?.Get(s.AgentId);
-        var isCustom = cfg is { Source: "custom" };
-        var customExe = isCustom && cfg!.Launch is { } lc && !string.IsNullOrWhiteSpace(lc.Exe) ? lc.Exe.Trim() : null;
+        // cfg/isCustom/customExe were computed above (before the trust gate) and are reused here.
         var resolution = TurnPlanner.ResolveEngine(new EngineResolveRequest(
             AgentId: s.AgentId,
             RequireApproval: s.RequireApproval,
