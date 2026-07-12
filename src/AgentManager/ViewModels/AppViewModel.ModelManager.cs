@@ -102,7 +102,16 @@ public sealed partial class AppViewModel
     private void AfterModelManagerChange(string engineId)
     {
         SyncPreferredFromStore();
-        NotifySessionModelsChanged(engineId);
-        OnChanged(nameof(NewAgentModels));
+        // 빌트인은 RefreshEngineModels로 위임 — 설정의 엔진별 모델 드롭다운(CcModels/GxModels/AgyModels/PiModels)
+        // OnChanged + 선택 보정(Coerce) + NewAgentModels + 세션 컴포저 갱신을 전부 수행한다. 이걸 빼먹어서
+        // "모델 관리에서 추가해도 설정 드롭다운이 갱신 안 됨" 버그가 났다(체크리스트 경로는 이미 이걸 했음).
+        if (engineId is "cc" or "gx" or "agy" or "pi")
+            RefreshEngineModels(engineId);
+        else
+        {
+            // 커스텀 엔진은 전용 설정 드롭다운이 없으므로 피커/컴포저만 갱신.
+            NotifySessionModelsChanged(engineId);
+            OnChanged(nameof(NewAgentModels));
+        }
     }
 }

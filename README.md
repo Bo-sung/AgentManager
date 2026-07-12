@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.21.10
+`WPF · .NET 10 · Windows` · v1.21.11
 
 ---
 
@@ -233,6 +233,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.21.11** — 버그 수정: **모델 관리에서 추가한 모델이 설정 "기본 모델" 드롭다운에 즉시 안 뜨던 문제**. 갱신 경로가 둘로 갈려 모델 관리 경로(`AfterModelManagerChange`)가 설정 엔진 드롭다운 갱신을 빼먹은 탓 — 특히 CLI 목록 조회가 없어 모델을 모델 관리로만 넣는 **cc·gx(codex)**에서 두드러짐. 빌트인은 `RefreshEngineModels`에 위임하도록 통합해 추가/삭제/기본지정이 드롭다운·New Agent·컴포저에 즉시 반영.
 - **1.21.10** — **커스텀 엔진 아이콘/색상** — 매니페스트에 `icon`(내장 글리프 circle·square·hexagon·triangle·diamond·spark·bolt·bubble 또는 SVG path 데이터) + `color`(hex)를 넣으면 New Agent 피커·세션 탭·히스토리·오케스트레이터·설정 카드 등 **모든 표시 지점에 브랜드 아이콘/색**으로 렌더(그전엔 빈 슬롯+badge 글자만). `EngineVisual` 컨버터가 EngineIcon 스타일 기본 Setter로 공급해 표시 지점 무수정 · 빌트인(cc/gx/agy/pi)은 기존 브랜드 유지 · 미지정 커스텀도 기본 글리프라 빈칸 없음. 엔진 추가 폼에 아이콘/색상 입력 추가.
 - **1.21.9** — **사용량(rate-limit %) 체크 기능 제거** — 엔진별로 헤드리스에서 사용량을 정확히 조회할 공식 경로가 없음(cc `/usage`는 TUI 전용이라 `-p`에선 일반 프롬프트로 처리돼 토큰만 소모, gx/agy/ACP도 상시 조회 불가). 푸터·설정의 **"지금 체크"** 버튼 + 사용량 % 카드 + 능동 조회 제거. **코드는 보존**(XAML 주석 / C# `#if false`)해 향후 공식 API 등장 시 복원 용이. 실행 중 passive rate-limit 리셋 추적(소진 감지·auto-API-fallback)과 cost 표시(엔진 자가보고값 그대로 표시, 자체 계산 아님)는 그대로 유지.
 - **1.21.8** — **커스텀 엔진 모델 자동 조회** — 매니페스트에 `modelsQuery`(모델 목록을 한 줄에 하나씩 출력하는 명령의 args, 예: opencode `models`)를 넣으면 설정 커스텀 엔진 카드에 **"설치 모델 조회"** 버튼이 생겨 실행→파싱→`engines/<id>.json` 갱신(빌트인 pi/agy 조회와 동일 UX). 엔진 추가 폼에도 조회 명령 입력 추가. GUI 실측: opencode `models` → 1→117개 자동 반영.

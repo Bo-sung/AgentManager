@@ -2,6 +2,13 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.11
+버그 수정 — 모델 관리에서 추가한 모델이 설정 "기본 모델" 드롭다운에 즉시 안 뜨던 문제. (버그 패치)
+- **증상**: 모델 관리(설정 서브페이지)에서 엔진 모델을 추가/삭제해도 설정 카드의 **"기본 모델" 드롭다운**(및 선택 보정)이 갱신되지 않았다. 특히 **cc·gx(codex)**는 `agy models`/`pi --list-models` 같은 CLI 목록 조회가 없어 모델을 오직 모델 관리로만 넣기 때문에 가장 두드러졌다.
+- **원인**: 모델 목록 갱신 경로가 둘로 갈렸는데, 체크리스트/조회 경로(`RefreshEngineModels`)는 `OnChanged(CcModels/GxModels/AgyModels/PiModels)` + 선택 보정 + New Agent + 세션 컴포저를 전부 갱신한 반면, **모델 관리 경로(`AfterModelManagerChange`)는 `NewAgentModels`만** 알리고 설정 엔진 드롭다운은 빼먹었다.
+- **수정**: `AfterModelManagerChange`가 빌트인(cc/gx/agy/pi)은 `RefreshEngineModels`에 위임하도록 통합 → 추가/삭제/기본지정이 **설정 드롭다운·New Agent·컴포저에 즉시 반영**. 커스텀 엔진은 전용 설정 드롭다운이 없어 기존대로 피커/컴포저만 갱신.
+- (검증) 빌드 green(경고 0/오류 0) · 스모크 OK.
+
 ## 1.21.10
 커스텀 엔진 아이콘/색상. (기능)
 - 커스텀 엔진 매니페스트(`engines/<id>.json`)에 **`icon`**(내장 글리프 이름 circle·square·hexagon·triangle·diamond·spark·bolt·bubble **또는** SVG path 데이터 `"M…"`) + **`color`**(hex `"#RRGGBB"`)를 넣으면 New Agent 피커·세션 탭·히스토리·오케스트레이터·설정 카드 등 **모든 표시 지점에 브랜드 아이콘/색**으로 렌더된다. 그전엔 커스텀 엔진이 아이콘 슬롯이 비어 badge 글자만 보였다.
