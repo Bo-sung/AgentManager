@@ -2,7 +2,7 @@
 
 **여러 코딩 에이전트(Claude Code · Codex · Antigravity · Pi)를 한 곳에서 구동·격리·승인·리뷰하고, 로컬 LLM 번역으로 토큰을 아끼는 Windows 데스크톱 관제 플랫폼**
 
-`WPF · .NET 10 · Windows` · v1.21.1
+`WPF · .NET 10 · Windows` · v1.21.10
 
 ---
 
@@ -82,7 +82,7 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 ### 관측 & 대시보드
 - **Orchestrator 대시보드** — KPI(Active/Awaiting/Completed/Failed/Fleet) + Live/Recent 카드, spark 이퀄라이저, diff 바
 - **Native worker 관측** — Claude 서브에이전트를 hook으로 실시간 표시(Running→Completed/Failed), `claude agents --json` 백그라운드 세션 폴러, 실패/rate-limit subagent transcript 추론
-- **사용량(Usage)** — Settings의 *사용량 체크* 카드에서 on-demand 확인. **엔진별 퍼센트 막대**(Claude 세션+주간 / Codex 사용% · 색=Ok/Warn/Err) · 리셋까지 시간 · 신선도 라벨. Antigravity는 무료 프리뷰(N/A). *공식 수치가 아닌 대략치* 안내 포함
+- **한도(rate-limit) 인지** — 실행 중 감지한 rate-limit 리셋 시각을 저장해 **소진 엔진 표시 + 한도 도달 시 API 자동전환**(opt-in)에 사용. *(온디맨드 사용량 % 조회 카드는 v1.21.9에서 제거 — 엔진별 공식 헤드리스 사용량 API가 없어 정확치 못하고 조회 때마다 토큰만 소모)*
 - **Activity History** — 저장된 app state를 직접 읽는 세션 횡단 이력(타임라인·일별 그룹·검색·필터, 토큰/비용/블록 수)
 - **데스크톱 알림** — 비활성 창 작업표시줄 깜빡임 + 승인 요청 사운드
 
@@ -103,7 +103,7 @@ AgentManager는 IDE가 아니라 **에이전트 전용 관제 평면(control pla
 ### 설정 (중앙 Settings 페인 · VS Code식 settings.json)
 - **설정 파일 3분할** — 공통/전역값은 **`settings.json`**, 엔진별 값은 **`engines\<id>.json`**(엔진 1개=파일 1개), 런타임 상태(사용량·한도)는 `state.json`. 모두 손편집 + **라이브 리로드**(앱 내 변경과 양방향 동기화). 첫 실행 시 기존 `settings.json`+`models.json`에서 엔진별 파일로 **자동 마이그레이션**. API key는 DPAPI 암호화로 보관(평문 금지)
 - **모델 관리(서브페이지)** — 설정 → `모델 관리`에서 엔진별 모델을 **여러 개 한번에 추가**(불릿/줄바꿈/콤마) · 삭제 · 기본 모델 지정. `models.json` 단일 파일이 차지하던 자리를 엔진별 파일로 분리해 설정 뷰가 가벼워짐
-- **커스텀 엔진** — `engines\<id>.json`에 `adapterKind`(`one-shot-text` 등)+`launch`(exe/args 템플릿)를 적으면 New Agent 피커·모델 관리에 **커스텀 엔진**으로 노출·실행. 어댑터 팩토리가 엔진 id가 아니라 `adapterKind`로 프로토콜을 분기(빌트인 cc/gx/agy/pi와 동일 경로)
+- **커스텀 엔진** — `engines\<id>.json`에 `adapterKind`+`launch`(exe/args 템플릿)를 적으면 New Agent 피커·모델 관리에 **커스텀 엔진**으로 노출·실행. 어댑터 팩토리가 엔진 id가 아니라 `adapterKind`로 프로토콜을 분기(빌트인 cc/gx/agy/pi와 동일 경로). 지원 종류: **`acp`**(Zed Agent Client Protocol — **opencode·hermes** 통합, [docs/ACP_INTEGRATION_KO.md](docs/ACP_INTEGRATION_KO.md)) · **`agentmanager-bridge-jsonl`**(풍부한 JSONL 프로토콜) · **`one-shot-text`**(단발 CLI). **`modelsQuery`**로 설치 모델 자동 조회, **`icon`**(내장 글리프 또는 SVG path)+**`color`**(hex)로 브랜드 아이콘/색 지정 — 설정 → 엔진 추가 폼에서 코드 없이 생성. 첫 실행 시 exe+args **trust 프롬프트**
 - **Runtimes** — 엔진 4종 모두 **수동 CLI 경로 + 탐지(Detect) 버튼** · enable/disable · **인증(구독/API key)** · CLI Sign in. 탐지 우선순위는 **독립 설치 우선**(Claude `~/.local/bin`, Codex npm 전역) → 확장 번들 폴백. **미설치 엔진은 New Agent에서 회색+선택 불가**, **"가이드"**(설치·세팅 Markdown 모달), **한도 도달 시 API 자동전환**(opt-in) 토글
 - **번역 · 언어** — UI 언어 + **번역 전/후 언어**(11개 언어쌍) + Ollama. **번역 모델 드롭다운 + "설치 모델 조회"**. **Ollama 상태(실행/꺼짐/미설치) + [실행]**(`ollama serve`); 번역 ON은 Ollama 실행 시에만 적용, 꺼짐 시 토글 옆 ⚠ · 새 세션 번역 기본값
 - **Orchestration** — worktree base · auto-start · stream-logs · 동시 실행 cap
@@ -233,6 +233,7 @@ dotnet run --project src/AgentManager.Smoke
 
 최근 버전 요약 — 전체는 [CHANGELOG.md](CHANGELOG.md) 참고 (`vX.Y.Z` 태그와 1:1).
 
+- **1.21.10** — **커스텀 엔진 아이콘/색상** — 매니페스트에 `icon`(내장 글리프 circle·square·hexagon·triangle·diamond·spark·bolt·bubble 또는 SVG path 데이터) + `color`(hex)를 넣으면 New Agent 피커·세션 탭·히스토리·오케스트레이터·설정 카드 등 **모든 표시 지점에 브랜드 아이콘/색**으로 렌더(그전엔 빈 슬롯+badge 글자만). `EngineVisual` 컨버터가 EngineIcon 스타일 기본 Setter로 공급해 표시 지점 무수정 · 빌트인(cc/gx/agy/pi)은 기존 브랜드 유지 · 미지정 커스텀도 기본 글리프라 빈칸 없음. 엔진 추가 폼에 아이콘/색상 입력 추가.
 - **1.21.9** — **사용량(rate-limit %) 체크 기능 제거** — 엔진별로 헤드리스에서 사용량을 정확히 조회할 공식 경로가 없음(cc `/usage`는 TUI 전용이라 `-p`에선 일반 프롬프트로 처리돼 토큰만 소모, gx/agy/ACP도 상시 조회 불가). 푸터·설정의 **"지금 체크"** 버튼 + 사용량 % 카드 + 능동 조회 제거. **코드는 보존**(XAML 주석 / C# `#if false`)해 향후 공식 API 등장 시 복원 용이. 실행 중 passive rate-limit 리셋 추적(소진 감지·auto-API-fallback)과 cost 표시(엔진 자가보고값 그대로 표시, 자체 계산 아님)는 그대로 유지.
 - **1.21.8** — **커스텀 엔진 모델 자동 조회** — 매니페스트에 `modelsQuery`(모델 목록을 한 줄에 하나씩 출력하는 명령의 args, 예: opencode `models`)를 넣으면 설정 커스텀 엔진 카드에 **"설치 모델 조회"** 버튼이 생겨 실행→파싱→`engines/<id>.json` 갱신(빌트인 pi/agy 조회와 동일 UX). 엔진 추가 폼에도 조회 명령 입력 추가. GUI 실측: opencode `models` → 1→117개 자동 반영.
 - **1.21.7** — **ACP(Agent Client Protocol) 어댑터** — Zed의 JSON-RPC/stdio 표준을 말하는 커스텀 엔진 종류(`adapterKind:"acp"`)로 **opencode·hermes 통합**(스트리밍 텍스트·thinking·도구/토큰 가시성, ANSI 없음). initialize→session/new→session/prompt 핸드셰이크 + session/update 매핑 + 권한 왕복. opencode `acp` end-to-end GUI 실측(핸드셰이크 연결→응답 스트림→완료). 상세 [docs/ACP_INTEGRATION_KO.md]. *(zcode는 자체 Electron/protocol이라 ACP stdio 모드 미발견 — 미통합.)*
