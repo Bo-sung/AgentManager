@@ -30,10 +30,12 @@ public sealed partial class AppViewModel
                     c.Launch?.Exe ?? "",
                     !_disabledEngines.Contains(c.Id),
                     ModelSummaryFor(c),
+                    (c.ModelsQuery?.Count ?? 0) > 0,
                     onEnabledChanged: SetCustomEngineEnabled,
                     onExeChanged: SetCustomEngineExe,
                     onRemove: RemoveCustomEngine,
-                    onManageModels: _ => OpenModelManager()));
+                    onManageModels: _ => OpenModelManager(),
+                    onQueryModels: vm => _ = QueryCustomEngineModelsAsync(vm)));
         OnChanged(nameof(CustomEngines));
         OnChanged(nameof(HasCustomEngines));
     }
@@ -116,6 +118,10 @@ public sealed partial class AppViewModel
     public string NewEngineModels { get => _newEngineModels; set => Set(ref _newEngineModels, value); }
     private string _newEngineAdapterKind = "one-shot-text";
     public string NewEngineAdapterKind { get => _newEngineAdapterKind; set => Set(ref _newEngineAdapterKind, value); }
+    private string _newEngineModelsQuery = "";
+    /// <summary>Optional args (one per line) for a command that lists the engine's models, one id per line
+    /// (e.g. opencode <c>models</c>) — enables the "모델 조회" button. Empty = no auto-query.</summary>
+    public string NewEngineModelsQuery { get => _newEngineModelsQuery; set => Set(ref _newEngineModelsQuery, value); }
 
     private string _addEngineError = "";
     /// <summary>Inline validation message ("" = none).</summary>
@@ -126,7 +132,7 @@ public sealed partial class AppViewModel
     public RelayCommand ShowAddEngineFormCommand => _showAddEngineFormCommand ??= new RelayCommand(_ =>
     {
         NewEngineId = ""; NewEngineName = ""; NewEngineBadge = ""; NewEngineExe = "";
-        NewEngineArgs = ""; NewEngineModels = ""; NewEngineAdapterKind = "one-shot-text";
+        NewEngineArgs = ""; NewEngineModels = ""; NewEngineAdapterKind = "one-shot-text"; NewEngineModelsQuery = "";
         SetAddEngineError("");
         ShowAddEngineForm = true;
     });
@@ -187,6 +193,10 @@ public sealed partial class AppViewModel
         var models = new List<EngineModelConfig>();
         foreach (var mid in modelIds) if (seen.Add(mid)) models.Add(new EngineModelConfig(mid));
 
+        var modelsQuery = (NewEngineModelsQuery ?? "")
+            .Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
         var cfg = new EngineConfig(
             Id: id,
             Name: name,
@@ -196,7 +206,8 @@ public sealed partial class AppViewModel
             Enabled: true,
             Launch: new EngineLaunchConfig(exe, args.Count > 0 ? args : null),
             Models: models.Count > 0 ? models : null,
-            AllowedRoles: ["Plain", "Main", "Worker"]);
+            AllowedRoles: ["Plain", "Main", "Worker"],
+            ModelsQuery: modelsQuery.Count > 0 ? modelsQuery : null);
 
         _engineConfig!.Upsert(cfg);   // appends to display order + writes engines/<id>.json atomically
         _disabledEngines.Remove(id);  // ensure enabled
@@ -205,5 +216,29 @@ public sealed partial class AppViewModel
 
         SetAddEngineError("");
         ShowAddEngineForm = false;
+    }
+
+    /// <summary>Run the engine's configured <c>modelsQuery</c> command (launch.exe + query args → one model id per line),
+    /// fold the result into engines/&lt;id&gt;.json (UpdateModelsFromQuery preserves surviving efforts/preferred), and
+    /// refresh the picker/model-manager. Feedback via the card's ModelsStatus; the card's model summary updates in place.</summary>
+    private async System.Threading.Tasks.Task QueryCustomEngineModelsAsync(CustomEngineVm vm)
+    {
+        if (_engineConfig?.Get(vm.Id) is not { } c || (c.ModelsQuery?.Count ?? 0) == 0
+            || c.Launch?.Exe is not { Length: > 0 } exe)
+        { vm.ModelsStatus = AgentManager.App.L("L.NoModels"); return; }
+
+        vm.ModelsStatus = AgentManager.App.L("L.Querying");
+        IReadOnlyList<string> ids;
+        try { ids = await AgentManager.Core.Agents.EngineRegistry.QueryModelsByCommandAsync(exe, c.ModelsQuery!); }
+        catch { ids = []; }
+
+        if (ids.Count == 0) { vm.ModelsStatus = AgentManager.App.L("L.QueryFailed"); return; }
+
+        _engineConfig.UpdateModelsFromQuery(vm.Id, ids);
+        RefreshEngines();          // picker + AllEngines
+        RebuildModelManager();     // model-manager page rows
+        NotifySessionModelsChanged(vm.Id);
+        if (_engineConfig.Get(vm.Id) is { } updated) vm.ModelSummary = ModelSummaryFor(updated); // update card in place (no rebuild ⇒ status persists)
+        vm.ModelsStatus = AgentManager.App.L("L.ModelsFound", ids.Count);
     }
 }

@@ -160,6 +160,8 @@
     <sys:String x:Key="L.CustomEngineArgsHint">One argument per line. Use {prompt} where the user message should be inserted.</sys:String>
     <sys:String x:Key="L.CustomEngineModels">Initial models (optional)</sys:String>
     <sys:String x:Key="L.CustomEngineModelsHint">Model IDs separated by newlines or commas.</sys:String>
+    <sys:String x:Key="L.CustomEngineModelsQuery">Model-query command (optional, args)</sys:String>
+    <sys:String x:Key="L.CustomEngineModelsQueryHint">Args of a command that prints the model list, one id per line (one arg per line). E.g. opencode = models. When set, the card shows a "Query installed" button.</sys:String>
     <sys:String x:Key="L.CreateEngine">Create engine</sys:String>
     <sys:String x:Key="L.AddEngineErrIdEmpty">Engine ID is required.</sys:String>
     <sys:String x:Key="L.AddEngineErrId">Invalid ID — use only letters, digits, dot, underscore or hyphen (not starting/ending with a dot).</sys:String>

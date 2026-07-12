@@ -47,7 +47,8 @@ public sealed record EngineConfig(
     string? DefaultModel = null,
     IReadOnlyList<string>? DefaultEfforts = null,   // engine-level fallback effort list (models omitting their own)
     IReadOnlyList<EngineModelConfig>? Models = null,
-    IReadOnlyList<string>? AllowedRoles = null)      // Plain | Main | Worker
+    IReadOnlyList<string>? AllowedRoles = null,       // Plain | Main | Worker
+    IReadOnlyList<string>? ModelsQuery = null)        // custom engines: args that print the model list, one id per line (e.g. opencode ["models"]) — powers the "모델 조회" button
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public IReadOnlyList<EngineModelConfig> ModelList => Models ?? [];

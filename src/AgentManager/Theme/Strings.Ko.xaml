@@ -160,6 +160,8 @@
     <sys:String x:Key="L.CustomEngineArgsHint">한 줄에 인자 하나. 사용자 메시지가 들어갈 위치에 {prompt} 를 넣으세요.</sys:String>
     <sys:String x:Key="L.CustomEngineModels">초기 모델 (선택)</sys:String>
     <sys:String x:Key="L.CustomEngineModelsHint">모델 ID를 줄바꿈 또는 쉼표로 구분.</sys:String>
+    <sys:String x:Key="L.CustomEngineModelsQuery">모델 조회 명령 (선택, args)</sys:String>
+    <sys:String x:Key="L.CustomEngineModelsQueryHint">모델 목록을 한 줄에 하나씩 출력하는 명령의 인자(줄당 1개). 예: opencode = models. 채우면 카드에 "설치 모델 조회" 버튼이 생김.</sys:String>
     <sys:String x:Key="L.CreateEngine">엔진 생성</sys:String>
     <sys:String x:Key="L.AddEngineErrIdEmpty">엔진 ID를 입력하세요.</sys:String>
     <sys:String x:Key="L.AddEngineErrId">잘못된 ID — 영문·숫자·점·밑줄·하이픈만 사용하세요 (점으로 시작/끝 불가).</sys:String>

@@ -347,9 +347,12 @@
                                                             <TextBlock Text="{StaticResource L.CustomEngineExe}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
                                                             <TextBox Style="{StaticResource SettingsInput}" Text="{Binding LaunchExe}"/>
                                                             <DockPanel Margin="0,10,0,0">
-                                                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.MmTitle}" Command="{Binding ManageModelsCommand}" VerticalAlignment="Center"/>
+                                                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.MmTitle}" Command="{Binding ManageModelsCommand}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                                                <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.QueryModels}" Command="{Binding QueryModelsCommand}" VerticalAlignment="Center"
+                                                                        Visibility="{Binding HasModelsQuery, Converter={StaticResource BoolVis}}"/>
                                                                 <TextBlock Text="{Binding ModelSummary}" FontSize="10.5" Foreground="{DynamicResource Txt2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                                             </DockPanel>
+                                                            <TextBlock Text="{Binding ModelsStatus}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0"/>
                                                         </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
@@ -390,6 +393,11 @@
                                                 <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineModels, UpdateSourceTrigger=PropertyChanged}"
                                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40" VerticalScrollBarVisibility="Auto"/>
                                                 <TextBlock Text="{StaticResource L.CustomEngineModelsHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
+
+                                                <TextBlock Text="{StaticResource L.CustomEngineModelsQuery}" Style="{StaticResource Lbl}" Margin="0,10,0,6"/>
+                                                <TextBox Style="{StaticResource SettingsInput}" Text="{Binding NewEngineModelsQuery, UpdateSourceTrigger=PropertyChanged}"
+                                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40" VerticalScrollBarVisibility="Auto"/>
+                                                <TextBlock Text="{StaticResource L.CustomEngineModelsQueryHint}" FontSize="9.5" Foreground="{DynamicResource Txt3}" Margin="2,4,0,0" TextWrapping="Wrap"/>
 
                                                 <TextBlock Text="{Binding AddEngineError}" Foreground="{DynamicResource Err}" FontSize="10.5" Margin="0,10,0,0" TextWrapping="Wrap"
                                                            Visibility="{Binding HasAddEngineError, Converter={StaticResource BoolVis}}"/>

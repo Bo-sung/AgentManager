@@ -1318,6 +1318,11 @@ AssertEngineConfigMigration();
 AssertOneShotAdapter();
 AssertBridgeAdapter();
 AssertAcpAdapter();
+// Custom-engine model-query parsing (EngineRegistry.ParseModelLines): first token per line, trim, dedupe, drop blanks/noise.
+Assert(AgentManager.Core.Agents.EngineRegistry.ParseModelLines("opencode/big-pickle\r\ngithub/foo\n\nopencode/big-pickle\n").SequenceEqual(["opencode/big-pickle", "github/foo"]), "parseModelLines: trims/dedupes/drops blanks");
+Assert(AgentManager.Core.Agents.EngineRegistry.ParseModelLines("id-1  a description").SequenceEqual(["id-1"]), "parseModelLines: first whitespace token only");
+Assert(AgentManager.Core.Agents.EngineRegistry.ParseModelLines(null).Count == 0 && AgentManager.Core.Agents.EngineRegistry.ParseModelLines("").Count == 0, "parseModelLines: null/empty → empty");
+Console.WriteLine("model-query parse asserts OK");
 
 static void AssertQuickReplyParser()
 {

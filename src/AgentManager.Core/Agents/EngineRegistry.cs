@@ -234,6 +234,48 @@ public static class EngineRegistry
         return models;
     }
 
+    /// <summary>Run a CUSTOM engine's model-list command (<c>exe args…</c>) and return the model ids it prints —
+    /// one per line on stdout (first whitespace-token of each line; blanks/dupes dropped). Empty on failure/timeout.
+    /// Powers the custom-engine "모델 조회" button (e.g. opencode's <c>models</c>).</summary>
+    public static async Task<IReadOnlyList<string>> QueryModelsByCommandAsync(string exe, IReadOnlyList<string> args)
+    {
+        if (string.IsNullOrWhiteSpace(exe)) return [];
+        var psi = new ProcessStartInfo
+        {
+            FileName = exe,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        foreach (var a in args ?? []) psi.ArgumentList.Add(a);
+        try
+        {
+            using var p = Process.Start(psi)!;
+            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var so = await p.StandardOutput.ReadToEndAsync(cts.Token);
+            try { await p.WaitForExitAsync(cts.Token); } catch { try { if (!p.HasExited) p.Kill(entireProcessTree: true); } catch { } }
+            return ParseModelLines(so);
+        }
+        catch { return []; }
+    }
+
+    /// <summary>Parse a model-list command's stdout: the first whitespace-delimited token of each non-blank line,
+    /// de-duplicated, skipping obvious noise (empty / very long lines). Testable without spawning a process.</summary>
+    public static IReadOnlyList<string> ParseModelLines(string? stdout)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var models = new List<string>();
+        foreach (var raw in (stdout ?? "").Split('\n'))
+        {
+            var line = raw.Trim();
+            if (line.Length is 0 or > 200) continue;
+            var id = line.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries) is [{ } first, ..] ? first : line;
+            if (id.Length > 0 && seen.Add(id)) models.Add(id);
+        }
+        return models;
+    }
+
     private static string? ResolveOverride(string? path)
     {
         if (string.IsNullOrWhiteSpace(path)) return null;
