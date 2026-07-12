@@ -179,6 +179,8 @@ dotnet run --project src/AgentManager.Smoke
 
 > 런타임 설치 없이 단독 실행 배포가 필요하면 self-contained 발행으로 전환할 수 있습니다(산출물 ~150MB).
 
+> **코드 서명(Authenticode)**: `scripts/release.ps1`은 환경 변수(`AM_SIGN_THUMBPRINT` 또는 `AM_SIGN_PFX`+`AM_SIGN_PFX_PASSWORD`)로 서명 정보를 받아 설치본(`Setup.exe`/`Update.exe`)에 서명합니다. 인증서·비밀번호는 커밋하지 않습니다(`*.pfx` gitignore). 발급·설치·서명 실행 방법은 [docs/RELEASE_SIGNING_KO.md](docs/RELEASE_SIGNING_KO.md) 참고. 환경 변수를 지정하지 않으면 기존처럼 서명 없이 패키징됩니다.
+
 ---
 
 ## 빠른 사용법
