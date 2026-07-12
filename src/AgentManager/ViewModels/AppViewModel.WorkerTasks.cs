@@ -197,6 +197,9 @@ public sealed partial class AppViewModel
     private void InitWorkerTaskCommands()
     {
         _taskStore.Changed += OnTaskStoreChanged;
+        // SEC (spool DoS guard): the store rejects tasks past its cap — surface the drop so it's never silent.
+        _taskStore.TasksDropped += n =>
+            Application.Current?.Dispatcher.BeginInvoke(() => FlashTranslateToast(L("L.WorkerTasksDropped", n)));
         _taskStore.ReconcileInterrupted(); // crashed-mid-run tasks (running) → re-queue as assigned
 
         // 할당 버튼 → 워커 선택 팝업 열기 (테마된 워커 목록).
@@ -460,8 +463,10 @@ public sealed partial class AppViewModel
         {
             if (!File.Exists(path)) return;
             var added = projectId is null ? _taskStore.IngestFile(path) : _taskStore.IngestFile(path, projectId, originSessionId);
-            if (added.Count > 0) { try { File.Delete(path); } catch { } } // raises Changed → rebuild + save
-            // 0 added = empty/partial write — leave the file; a later event retries
+            // Delete on ANY accept OR cap-drop: a fully cap-rejected file (added==0, dropped>0) must still be
+            // removed or the watcher/rescan would re-fire it forever (a drop-toast loop). 0/0 = empty/partial
+            // write — leave the file so a later event retries.
+            if (added.Count > 0 || _taskStore.LastIngestDropped > 0) { try { File.Delete(path); } catch { } } // raises Changed → rebuild + save
         }
         catch { }
     }

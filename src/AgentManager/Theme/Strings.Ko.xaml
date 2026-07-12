@@ -411,6 +411,9 @@
     <sys:String x:Key="L.OllamaChecking">Ollama 확인 중…</sys:String>
     <sys:String x:Key="L.OllamaStart">실행</sys:String>
     <sys:String x:Key="L.OllamaOffWarn">Ollama가 꺼져 있어 번역이 적용되지 않습니다 — 설정 → 번역·언어에서 실행하세요.</sys:String>
+    <sys:String x:Key="L.OllamaRemoteWarning">이 Ollama 엔드포인트는 로컬(loopback)이 아닙니다. 번역은 입력한 원문을 그대로 전송하므로, 원격 호스트로 지정하면 해당 컴퓨터로 텍스트가 유출됩니다. 기본적으로 차단되며, 신뢰하는 LAN 내 Ollama 서버에만 허용하세요.</sys:String>
+    <sys:String x:Key="L.OllamaAllowRemote">원격 Ollama 엔드포인트 허용</sys:String>
+    <sys:String x:Key="L.WorkerTasksDropped">작업 {0}건이 삭제됨 — 작업 스풀이 가득 참</sys:String>
     <sys:String x:Key="L.Detect">탐지</sys:String>
     <sys:String x:Key="L.DetectFound">탐지됨 — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">자동 탐지 실패 — 경로를 직접 입력하세요</sys:String>

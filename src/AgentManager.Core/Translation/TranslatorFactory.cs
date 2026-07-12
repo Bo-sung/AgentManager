@@ -55,6 +55,12 @@ public static class TranslatorFactory
         var id = string.IsNullOrWhiteSpace(providerId) ? s.TranslationSelectedId : providerId!;
 
         if (string.IsNullOrWhiteSpace(id) || id == "ollama")
+        {
+            // SEC (egress guard): never send the user's raw prompt text to a non-loopback Ollama host unless
+            // the user has explicitly opted in. Returning null makes the caller skip translation (text passes
+            // through unchanged) rather than egressing to an external machine.
+            if (!OllamaTranslator.IsLoopbackEndpoint(s.OllamaEndpoint) && !s.AllowRemoteOllamaEndpoint)
+                return null;
             return new OllamaTranslator(new OllamaOptions
             {
                 Endpoint = s.OllamaEndpoint,
@@ -63,6 +69,7 @@ public static class TranslatorFactory
                 SourceLanguage = src,
                 TargetLanguage = tgt,
             });
+        }
 
         if (id.StartsWith("agent:", StringComparison.Ordinal))
         {
@@ -94,7 +101,13 @@ public static class TranslatorFactory
     {
         var id = string.IsNullOrWhiteSpace(s.TranslationSelectedId) ? "ollama" : s.TranslationSelectedId;
         if (id == "ollama")
+        {
+            // SEC (egress guard): a blocked non-loopback endpoint is "not available" so the per-turn ping
+            // doesn't reach out to it and translation passes text through unchanged.
+            if (!OllamaTranslator.IsLoopbackEndpoint(s.OllamaEndpoint) && !s.AllowRemoteOllamaEndpoint)
+                return false;
             return await OllamaTranslator.PingAsync(s.OllamaEndpoint, 1500, ct);
+        }
         if (id.StartsWith("agent:", StringComparison.Ordinal))
             return !string.IsNullOrWhiteSpace(resolveExe(id["agent:".Length..]));
         var cp = s.TranslationCustomProviders.FirstOrDefault(c => c.Id == id);

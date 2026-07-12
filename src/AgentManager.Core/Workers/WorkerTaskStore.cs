@@ -16,8 +16,23 @@ public sealed class WorkerTaskStore
 {
     private readonly List<WorkerTaskDto> _tasks = [];
 
+    /// <summary>SEC (spool DoS guard): max tasks held in the store TOTAL (backlog + all worker queues +
+    /// finished history, across every project). Ingest past this is rejected — reject-newest, never evict a
+    /// live/assigned task — so a flood of spool files can't grow in-memory + persisted (project.json) state
+    /// without bound.</summary>
+    public const int MaxTasks = 2000;
+
     /// <summary>Raised after any mutation (load, ingest, assign, status change, reorder, delete).</summary>
     public event Action? Changed;
+
+    /// <summary>Raised (once per ingest, after the tasks are added) with the number of tasks DROPPED by the
+    /// per-file or store cap, so the host can surface it (never a silent loss). Value is always &gt; 0.</summary>
+    public event Action<int>? TasksDropped;
+
+    /// <summary>How many tasks the most recent <see cref="IngestFile(string,string,string)"/> call dropped
+    /// (per-file + store cap). Lets the caller delete a cap-rejected spool file instead of leaving it to
+    /// re-fire the watcher forever.</summary>
+    public int LastIngestDropped { get; private set; }
 
     public IReadOnlyList<WorkerTaskDto> All => _tasks;
 
@@ -60,12 +75,26 @@ public sealed class WorkerTaskStore
     /// isn't a project id. <paramref name="originSessionId"/> = the session that wrote it (report target).</summary>
     public IReadOnlyList<WorkerTaskDto> IngestFile(string path, string projectId, string originSessionId = "")
     {
-        var added = TaskSpool.ReadFile(path, projectId);
-        if (added.Count == 0) return added;
+        var result = TaskSpool.ReadFile(path, projectId);
+        var parsed = result.Tasks;
+        var dropped = result.Dropped; // per-file cap overflow
         if (!string.IsNullOrEmpty(originSessionId))
-            added = added.Select(t => t with { OriginSessionId = originSessionId }).ToList();
-        _tasks.AddRange(added);
-        Changed?.Invoke();
+            parsed = parsed.Select(t => t with { OriginSessionId = originSessionId }).ToList();
+
+        // Store-level cap: reject-newest (drop the incoming surplus). Never evict existing tasks — the
+        // oldest may be assigned/running and evicting them would corrupt live worker queues.
+        var remaining = Math.Max(0, MaxTasks - _tasks.Count);
+        IReadOnlyList<WorkerTaskDto> added;
+        if (parsed.Count > remaining)
+        {
+            added = parsed.Take(remaining).ToList();
+            dropped += parsed.Count - remaining;
+        }
+        else added = parsed;
+
+        LastIngestDropped = dropped;
+        if (added.Count > 0) { _tasks.AddRange(added); Changed?.Invoke(); }
+        if (dropped > 0) TasksDropped?.Invoke(dropped);
         return added;
     }
 

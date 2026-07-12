@@ -539,6 +539,19 @@
                                                     </StackPanel.Style>
                                                 <TextBlock Text="{StaticResource L.Endpoint}" Style="{StaticResource Lbl}" Margin="0,0,0,6"/>
                                                 <TextBox Style="{StaticResource SettingsInput}" Text="{Binding SettingsOllamaEndpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <!-- SEC egress guard: warn + explicit opt-in when the endpoint is a NON-loopback host (translation sends raw user text). -->
+                                                <StackPanel>
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding OllamaEndpointRemote}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </StackPanel.Style>
+                                                    <TextBlock Text="{StaticResource L.OllamaRemoteWarning}" FontSize="9.5" Foreground="{DynamicResource Warn}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                                    <ToggleButton Style="{StaticResource TogglePillButton}" Margin="0,8,0,0" HorizontalAlignment="Left" IsChecked="{Binding SettingsAllowRemoteOllama, Mode=TwoWay}" Content="{StaticResource L.OllamaAllowRemote}"/>
+                                                </StackPanel>
                                                 <!-- Ollama 서비스 상태 + 제어 -->
                                                 <DockPanel Margin="0,8,0,0">
                                                     <Button DockPanel.Dock="Right" Style="{StaticResource ChipButton}" Content="{StaticResource L.Refresh}" Command="{Binding RefreshOllamaStatusCommand}" VerticalAlignment="Center" Margin="6,0,0,0"/>

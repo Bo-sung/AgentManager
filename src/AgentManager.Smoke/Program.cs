@@ -1507,7 +1507,86 @@ ProjectStoreCheck();
 TranscriptProjectorCheck();
 RunRegistryCheck();
 ApprovalBrokerCheck();
+SpoolCapCheck();
+OllamaEgressGuardCheck();
 Console.WriteLine("smoke OK");
+
+// B2 Design 1 — spool size-cap: per-file cap, store-level cap (reject-newest), never-silent drop reporting.
+static void SpoolCapCheck()
+{
+    var tmp = Directory.CreateTempSubdirectory("am_spoolcap_").FullName;
+    const string proj = "capProj";
+    var dir = Path.Combine(tmp, proj);
+    Directory.CreateDirectory(dir);
+
+    static string WriteArray(string dir, string name, int count)
+    {
+        var items = Enumerable.Range(0, count).Select(i => new { prompt = $"task {i}" });
+        var path = Path.Combine(dir, name);
+        File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(items));
+        return path;
+    }
+
+    // Per-file cap: a 1000-task file is capped at MaxTasksPerFile, and the surplus is REPORTED (not silent).
+    var store = new WorkerTaskStore();
+    var droppedEvents = 0; var droppedTotal = 0;
+    store.TasksDropped += n => { droppedEvents++; droppedTotal += n; };
+    var f1 = WriteArray(dir, "big.json", 1000);
+    var added1 = store.IngestFile(f1, proj);
+    Assert(added1.Count == TaskSpool.MaxTasksPerFile, "spool: per-file cap accepts MaxTasksPerFile");
+    Assert(store.LastIngestDropped == 1000 - TaskSpool.MaxTasksPerFile, "spool: per-file surplus reported");
+    Assert(droppedEvents == 1 && droppedTotal == 1000 - TaskSpool.MaxTasksPerFile, "spool: TasksDropped fired once with surplus");
+
+    // Store-level cap: keep ingesting 200-task files until full; total never exceeds MaxTasks, overflow dropped.
+    for (var i = 0; i < 20; i++) store.IngestFile(WriteArray(dir, $"f{i}.json", 200), proj);
+    Assert(store.All.Count == WorkerTaskStore.MaxTasks, "spool: store cap holds total at MaxTasks");
+
+    // At capacity a further ingest adds 0 but STILL reports a drop (so the host deletes the file, no retry loop).
+    var atCap = store.IngestFile(WriteArray(dir, "over.json", 50), proj);
+    Assert(atCap.Count == 0 && store.LastIngestDropped == 50, "spool: at-capacity ingest rejects + reports drop");
+    Assert(store.All.Count == WorkerTaskStore.MaxTasks, "spool: cap never exceeded");
+
+    // A clean, in-cap file after ClearFinished-style room still ingests normally (no false rejection).
+    var store2 = new WorkerTaskStore();
+    var normal = store2.IngestFile(WriteArray(dir, "small.json", 5), proj);
+    Assert(normal.Count == 5 && store2.LastIngestDropped == 0, "spool: normal small ingest unaffected");
+
+    Console.WriteLine("[spool-cap] PASS");
+    try { Directory.Delete(tmp, true); } catch { }
+}
+
+// B2 Design 2 — Ollama egress guard: loopback classifier + TranslatorFactory gating (default block, opt-in allow).
+static void OllamaEgressGuardCheck()
+{
+    // Loopback classifier
+    Assert(OllamaTranslator.IsLoopbackEndpoint("http://localhost:11434"), "egress: localhost is loopback");
+    Assert(OllamaTranslator.IsLoopbackEndpoint("http://127.0.0.1:11434"), "egress: 127.0.0.1 is loopback");
+    Assert(OllamaTranslator.IsLoopbackEndpoint("http://[::1]:11434"), "egress: [::1] is loopback");
+    Assert(OllamaTranslator.IsLoopbackEndpoint(""), "egress: empty ⇒ loopback default");
+    Assert(!OllamaTranslator.IsLoopbackEndpoint("http://192.168.1.5:11434"), "egress: LAN IP is NOT loopback");
+    Assert(!OllamaTranslator.IsLoopbackEndpoint("http://ollama.example.com:11434"), "egress: remote host is NOT loopback");
+    Assert(!OllamaTranslator.IsLoopbackEndpoint("not a url"), "egress: garbage ⇒ NOT loopback (fail closed)");
+
+    static string? Resolve(string _) => null;
+    static string? Decrypt(string _) => null;
+
+    // Loopback endpoint: always builds regardless of the opt-in.
+    var loopback = new AgentManager.Core.Settings.SettingsService { TranslationSelectedId = "ollama", OllamaEndpoint = "http://localhost:11434" };
+    Assert(TranslatorFactory.Create(loopback, Resolve, Decrypt) is OllamaTranslator, "egress: loopback builds translator");
+
+    // Remote endpoint, default (AllowRemoteOllamaEndpoint=false) ⇒ BLOCKED (null) so raw text can't egress.
+    var remoteBlocked = new AgentManager.Core.Settings.SettingsService { TranslationSelectedId = "ollama", OllamaEndpoint = "http://192.168.1.5:11434" };
+    Assert(TranslatorFactory.Create(remoteBlocked, Resolve, Decrypt) is null, "egress: remote blocked by default");
+
+    // Remote endpoint, explicit opt-in ⇒ builds.
+    var remoteAllowed = new AgentManager.Core.Settings.SettingsService { TranslationSelectedId = "ollama", OllamaEndpoint = "http://192.168.1.5:11434", AllowRemoteOllamaEndpoint = true };
+    Assert(TranslatorFactory.Create(remoteAllowed, Resolve, Decrypt) is OllamaTranslator, "egress: remote builds when opted in");
+
+    // IsAvailableAsync mirrors the gate: a blocked remote endpoint is "not available" (no ping egress).
+    Assert(TranslatorFactory.IsAvailableAsync(remoteBlocked, Resolve, Decrypt).GetAwaiter().GetResult() == false, "egress: blocked remote not available");
+
+    Console.WriteLine("[ollama-egress] PASS");
+}
 
 static void AssertPermissionResponse()
 {

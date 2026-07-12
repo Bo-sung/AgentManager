@@ -35,7 +35,14 @@ public sealed partial class AppViewModel
     /// <summary>pi-worker 런처 경로(편집기 값). 빈 값 = 자동 탐지. Worker 역할 pi 세션에만 적용.</summary>
     public string SettingsPiWorkerPath { get => _settingsPiWorkerPath; set => Set(ref _settingsPiWorkerPath, value); }
     private string _settingsOllamaEndpoint = "";
-    public string SettingsOllamaEndpoint { get => _settingsOllamaEndpoint; set => Set(ref _settingsOllamaEndpoint, value); }
+    public string SettingsOllamaEndpoint { get => _settingsOllamaEndpoint; set { if (Set(ref _settingsOllamaEndpoint, value)) OnChanged(nameof(OllamaEndpointRemote)); } }
+    private bool _settingsAllowRemoteOllama;
+    /// <summary>SEC (egress guard): opt-in to let the built-in Ollama translator target a non-loopback host.
+    /// Persisted to <see cref="Core.Settings.SettingsService.AllowRemoteOllamaEndpoint"/>.</summary>
+    public bool SettingsAllowRemoteOllama { get => _settingsAllowRemoteOllama; set => Set(ref _settingsAllowRemoteOllama, value); }
+    /// <summary>True when the edited Ollama endpoint is NOT a loopback host — drives the egress warning banner
+    /// + opt-in checkbox in Settings. Computed (get-only ⇒ bind OneWay).</summary>
+    public bool OllamaEndpointRemote => !Core.Translation.OllamaTranslator.IsLoopbackEndpoint(SettingsOllamaEndpoint);
     private string _settingsOllamaModel = "";
     public string SettingsOllamaModel { get => _settingsOllamaModel; set => Set(ref _settingsOllamaModel, value); }
     private int _settingsOllamaTimeoutSeconds = 60;
@@ -846,6 +853,7 @@ public sealed partial class AppViewModel
         SettingsPiPath = _piPath;
         SettingsPiWorkerPath = _piWorkerPath;
         SettingsOllamaEndpoint = _ollamaEndpoint;
+        SettingsAllowRemoteOllama = _settings.AllowRemoteOllamaEndpoint;
         SettingsOllamaModel = _ollamaModel;
         SettingsOllamaTimeoutSeconds = _settings.OllamaTimeoutSeconds;
         LoadCustomProvidersEditor();
@@ -945,6 +953,7 @@ public sealed partial class AppViewModel
         _piWorkerPath = Clean(SettingsPiWorkerPath);
         RefreshDetectLabels();
         _ollamaEndpoint = string.IsNullOrWhiteSpace(SettingsOllamaEndpoint) ? "http://localhost:11434" : SettingsOllamaEndpoint.Trim();
+        _settings.AllowRemoteOllamaEndpoint = SettingsAllowRemoteOllama;
         _ollamaModel = string.IsNullOrWhiteSpace(SettingsOllamaModel) ? "exaone3.5:7.8b" : SettingsOllamaModel.Trim();
         _settings.OllamaTimeoutSeconds = Math.Clamp(SettingsOllamaTimeoutSeconds, 10, 600);
         TranslationEnabled = SettingsDefaultTranslationEnabled;

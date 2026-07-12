@@ -34,6 +34,16 @@ public sealed class OllamaTranslator(OllamaOptions options, HttpClient? http = n
         return ep.Replace("localhost", "127.0.0.1", StringComparison.OrdinalIgnoreCase).TrimEnd('/');
     }
 
+    /// <summary>SEC (egress guard): is the endpoint a loopback host (localhost / 127.0.0.1 / [::1])? The
+    /// built-in Ollama translator sends the user's RAW prompt text, so this gates it against silently
+    /// egressing that text to an arbitrary external host. Empty/whitespace ⇒ true (the effective default is
+    /// the loopback http://localhost:11434). A non-empty but unparseable value ⇒ false (fail closed).</summary>
+    public static bool IsLoopbackEndpoint(string? endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint)) return true; // falls back to the loopback default
+        return Uri.TryCreate(endpoint.Trim(), UriKind.Absolute, out var u) && u.IsLoopback;
+    }
+
     /// <summary>Ollama 서버가 응답하는지 빠른 핑(/api/tags). 번역 게이팅/상태표시용 — 짧은 타임아웃.</summary>
     public static async Task<bool> PingAsync(string endpoint, int timeoutMs = 1500, CancellationToken ct = default)
     {

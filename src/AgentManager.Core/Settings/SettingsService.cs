@@ -34,6 +34,12 @@ public sealed class SettingsService
     public string OllamaEndpoint { get; set; } = "http://localhost:11434";
     public string OllamaModel { get; set; } = "exaone3.5:7.8b";
 
+    /// <summary>SEC (egress guard): allow the built-in Ollama translator to target a NON-loopback endpoint.
+    /// Default false = restrict to loopback so the user's raw prompt text can't silently egress to an
+    /// arbitrary external host (a corrupted/hand-edited settings.json can't bypass it). Opt in only for a
+    /// trusted Ollama server on your LAN. See <see cref="OllamaTranslator.IsLoopbackEndpoint"/>.</summary>
+    public bool AllowRemoteOllamaEndpoint { get; set; } = false;
+
     /// <summary>Ollama 번역 요청 타임아웃(초). 큰 모델(예: 12B)은 콜드로드/긴 응답에서 기본 60초를 넘겨
     /// <see cref="OllamaTranslator"/>가 null을 반환 → 번역이 조용히 원문으로 폴백되므로 설정에서 선택 가능하게 노출.
     /// 첫 시도 후 재시도는 이 값의 2배까지 늘린다. 유효 범위 10~600초.</summary>

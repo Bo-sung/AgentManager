@@ -411,6 +411,9 @@
     <sys:String x:Key="L.OllamaChecking">Checking Ollama…</sys:String>
     <sys:String x:Key="L.OllamaStart">Start</sys:String>
     <sys:String x:Key="L.OllamaOffWarn">Ollama is off, so translation won't apply — start it in Settings → Translation · Language.</sys:String>
+    <sys:String x:Key="L.OllamaRemoteWarning">This Ollama endpoint is not local (loopback). Translation sends your raw prompt text — pointing it at a remote host lets that text egress to another machine. Blocked by default; only allow it for an Ollama server you trust on your LAN.</sys:String>
+    <sys:String x:Key="L.OllamaAllowRemote">Allow remote Ollama endpoint</sys:String>
+    <sys:String x:Key="L.WorkerTasksDropped">{0} task(s) dropped — task spool is full</sys:String>
     <sys:String x:Key="L.Detect">Detect</sys:String>
     <sys:String x:Key="L.DetectFound">Detected — {0}</sys:String>
     <sys:String x:Key="L.DetectFailed">Auto-detect failed — enter the path manually</sys:String>

@@ -56,6 +56,11 @@ file sealed record SpoolTask
     public string? engine { get; init; }
 }
 
+/// <summary>Result of reading one spool file: the accepted tasks plus how many valid tasks were
+/// DROPPED by the per-file cap (<see cref="TaskSpool.MaxTasksPerFile"/>) so the caller can surface the
+/// drop instead of silently losing work.</summary>
+public sealed record SpoolReadResult(IReadOnlyList<WorkerTaskDto> Tasks, int Dropped);
+
 /// <summary>
 /// Project task spool: a per-project directory the agent (via the worker-prompt skill) drops
 /// task JSON files into. One watcher on the root ingests them into the backlog and deletes them.
@@ -63,6 +68,11 @@ file sealed record SpoolTask
 /// </summary>
 public static class TaskSpool
 {
+    /// <summary>SEC (spool DoS guard): max tasks accepted from a SINGLE spool file. A giant JSON array
+    /// (one file can hold hundreds of thousands of minimal objects within the byte cap) is rejected past
+    /// this count — reject-newest, never evict — and the overflow is reported as dropped, never silently.</summary>
+    public const int MaxTasksPerFile = 200;
+
     /// <summary>Spool root under app data. Per-project subdir = the agent's AGENTMANAGER_TASK_SPOOL.</summary>
     public static string Root =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgentManager", "task-spool");
@@ -70,20 +80,23 @@ public static class TaskSpool
     public static string DirFor(string projectId) => Path.Combine(Root, Sanitize(projectId));
 
     /// <summary>Read one spool file into backlog WorkerTaskDtos. The file may hold a single task
-    /// object or a JSON array of tasks; returns all valid tasks (empty if unreadable/partial).</summary>
-    public static IReadOnlyList<WorkerTaskDto> ReadFile(string path, string projectId)
+    /// object or a JSON array of tasks; returns all valid tasks (empty if unreadable/partial), capped at
+    /// <see cref="MaxTasksPerFile"/> with the surplus counted in <see cref="SpoolReadResult.Dropped"/>.</summary>
+    public static SpoolReadResult ReadFile(string path, string projectId)
     {
         try
         {
             var json = (JsonFile.ReadCapped(path) ?? "").Trim(); // size-capped read (SEC: spool DoS guard)
-            if (json.Length == 0) return [];
+            if (json.Length == 0) return new SpoolReadResult([], 0);
             var raw = json[0] == '['
                 ? JsonSerializer.Deserialize<List<SpoolTask>>(json) ?? []
                 : [JsonSerializer.Deserialize<SpoolTask>(json)!];
             var tasks = new List<WorkerTaskDto>();
+            var dropped = 0;
             foreach (var st in raw)
             {
                 if (st is null || string.IsNullOrWhiteSpace(st.prompt)) continue;
+                if (tasks.Count >= MaxTasksPerFile) { dropped++; continue; } // per-file cap: reject the surplus
                 tasks.Add(new WorkerTaskDto
                 {
                     Id = "t" + Guid.NewGuid().ToString("N")[..12],
@@ -94,9 +107,9 @@ public static class TaskSpool
                     Status = WorkerTaskStatus.Backlog,
                 });
             }
-            return tasks;
+            return new SpoolReadResult(tasks, dropped);
         }
-        catch { return []; }
+        catch { return new SpoolReadResult([], 0); }
     }
 
     static string FirstLine(string s)
