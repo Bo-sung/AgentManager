@@ -120,6 +120,10 @@ public sealed partial class AppViewModel : ObservableObject
         // 모든 엔진의 컴포저 모델 메뉴가 설정/New-Agent 피커와 동일한 목록(DropdownModelsFor: 동적 카탈로그 +
         // "주로 쓰는 모델" 체크 부분집합 + custom)을 쓰게 한다 — 정적 목록과의 불일치 제거.
         SessionViewModel.ComposerModelsProvider = id => DropdownModelsFor(id);
+        // 히스토리 행/스케줄 잡은 AppViewModel 참조가 없는 독립 VM이라 custom 엔진 id를 못 푼다(EngineRegistry.Get→cc).
+        // 정적 provider 델리게이트(ComposerModelsProvider와 동일 패턴)로 custom-aware EngineDefFor를 주입한다.
+        HistoryRowViewModel.EngineResolver = EngineDefFor;
+        ScheduledJobViewModel.EngineResolver = EngineDefFor;
         // 추론(effort) 옵션·기본값·유무를 엔진별 config(engines/*.json)에서 가져온다(모델별 상이). 아직 로드 전
         // (첫 조회는 RestoreState 이후)이거나 미정의 엔진이면 models.json 카탈로그로 폴백 — 점진 전환(P1c).
         SessionViewModel.EffortOptionsProvider = (eng, model) => _engineConfig?.Get(eng) is { } c ? [.. c.EffortsFor(model)] : [.. _modelCatalog.EffortsFor(eng, model)];

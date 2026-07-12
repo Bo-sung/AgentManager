@@ -19,7 +19,7 @@
 - **A. Bundle Pi Worker + built-in engine** — 진행 예정 먼저.
 - B. EngineDefinition/AdapterKind/RuntimeDefinition refactor + AdapterFactory.
 - C. Custom engine manifest loader + OneShotTextAdapter.
-- D. AgentManager bridge JSONL adapter.
+- D. AgentManager bridge JSONL adapter. ✅ (adapter+spec+smoke 완료 — 라이브 E2E는 실제 CLI 대기)
 - E. Custom Engine settings GUI + trust/security.
 - F. Hermes preset (E2E blocked — 미설치). G. ZCode probe doc (미설치).
 - H. Migration/regression tests + docs + publish verify.
@@ -34,7 +34,7 @@
 ## Remaining — 설계 노트 (다음 에이전트/세션용)
 - **Phase B (engine model refactor)**: `EngineDef` → `EngineDefinition`(identity) + `AdapterKind`(protocol) + `EngineRuntimeDefinition` + `Capabilities` + `AllowedRoles` + `Source`. `AdapterFactory.Create(adapterKind, engine)`로 id-switch 축소. 내장 adapterKind: claude-stream-json/codex-json/codex-app-server/agy-pty/pi-rpc. **주의**: `AgentId`(engine id)가 UI·persistence·worker 생성 전반에 박혀 있어 광범위·회귀 위험. 점진적으로.
 - **Phase C (custom manifest + one-shot adapter)**: `%LOCALAPPDATA%/AgentManager/engines/*.json`(schemaVersion 1, §5.1). `OneShotTextAdapter`는 stdout **전체**를 최종 AssistantText로, **process-exit**로 완료 — **현 `AgentSession`은 라인별 JSONL 파서라 EOF/exit 완료 훅이 없음**. `IAgentAdapter`에 stream-end/exit 훅 추가 or one-shot 전용 실행 경로 필요(공유 세션 루프 변경 = 회귀 주의). model source: static/free-form/command(단순 1줄=1모델 or JSON array만).
-- **Phase D (bridge JSONL)**: out-of-process bridge(별도 exe), 버전드 protocol(start/cancel ↔ session_started/assistant_delta/assistant_text/tool_started/tool_result/engine_error/turn_completed). malformed/unknown/crash/dup-completion 안전 처리. `agentmanager-bridge-jsonl` adapterKind — 기존 `StdioJsonAdapter` 재사용 가능.
+- **Phase D (bridge JSONL)** ✅ 완료: `BridgeJsonlAdapter : StdioJsonAdapter` + `AdapterFactory.CreateCustom`(`agentmanager-bridge-jsonl`, 별칭 `bridge-jsonl`) + `AssertBridgeAdapter` 스모크 + 규격 문서 `docs/BRIDGE_JSONL_PROTOCOL_KO.md`. 버전드 protocol(protocolVersion 1): ARGS 모드({prompt} argv, stdin close) / STDIN 모드(start 줄, KillAfterTurnCompleted). 이벤트 session_started/assistant_delta/assistant_text/thinking/tool_started/tool_result/token_usage/error/turn_completed → NormalizedEvent, malformed/unknown(RawUnknown)/crash(AgentSession exit 합성)/dup-completion 가드. 라이브 E2E는 실제 브리지 CLI 대기(미설치). v1 미지원: Permissions/Images.
 - **Phase E (GUI + trust)**: Settings Engines 관리 화면. **XAML 회귀 주의**(중복 x:Key = 시작 크래시, 로컬라이즈 문자열). trust: 첫 실행 전 exe+args 표시·승인, ArgumentList only, shell string 금지, secret 마스킹, manifest 변경 시 trust 무효화.
 - **Phase F/G (Hermes/ZCode)**: **CLI 미설치 → 라이브 E2E/probe 불가**. Hermes preset 매니페스트(`hermes -z {prompt}`, capabilities는 one-shot 정직하게) + `HERMES_ENGINE_INTEGRATION_KO`/`ZCODE_CAPABILITY_PROBE_KO`에 blocker + 설치 시 검증 절차 기록. ACP는 후속(공식 계약 확인 후).
 - **Phase H**: 마이그레이션(legacy PiWorkerPath → engine override, 최소 1릴리즈 읽기 호환) · 회귀(cc/gx/agy/pi/pi-worker + 14 smoke) · 8개 문서 · publish 검증 · v1.21.0 후보(push/release 사용자 승인 후).

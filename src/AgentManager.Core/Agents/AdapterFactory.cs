@@ -25,7 +25,9 @@ public static class AdapterFactory
     public static IAgentAdapter? CreateCustom(string engineId, string? adapterKind, IReadOnlyList<string> argsTemplate, bool requireApproval = false) => adapterKind switch
     {
         "one-shot-text" => new OneShotTextAdapter(engineId, argsTemplate),
-        // "agentmanager-bridge-jsonl" => … (future)
+        // Richer JSONL protocol (tool-calls/thinking/usage). Accept both spellings — the canonical
+        // manifest value is "agentmanager-bridge-jsonl"; "bridge-jsonl" is the shorthand alias.
+        "agentmanager-bridge-jsonl" or "bridge-jsonl" => new BridgeJsonlAdapter(engineId, argsTemplate),
         _ => Create(adapterKind, requireApproval), // custom engine reusing a built-in protocol
     };
 }

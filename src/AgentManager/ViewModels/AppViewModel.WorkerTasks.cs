@@ -221,7 +221,7 @@ public sealed partial class AppViewModel
         {
             if (p is string engineId && PendingAssign is { } t && ActiveProject is { } proj)
             {
-                var eng = EngineRegistry.Get(engineId);
+                var eng = EngineDefFor(engineId);
                 var model = DefaultModelFor(eng.Id) is { Length: > 0 } dm ? dm : (eng.Models.Length > 0 ? eng.Models[0] : "");
                 var w = CreateWorkerSession(eng, model, proj, $"{eng.Name} worker",
                     translationEnabled: false, "Korean", "English", WorkerBehaviorPreamble);

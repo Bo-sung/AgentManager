@@ -50,7 +50,7 @@ public sealed partial class AppViewModel
             foreach (var id in new[] { "cc", "gx", "agy" })
             {
                 if (_disabledEngines.Contains(id)) continue;
-                var name = EngineRegistry.Get(id).Name;
+                var name = EngineDefFor(id).Name;
                 if (_usageService.TryGet(id, out var snap) && snap.Utilization >= 0)
                 {
                     var stale = snap.ResetsAtUnix > 0 && snap.ResetsAtUnix <= DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -108,7 +108,7 @@ public sealed partial class AppViewModel
         if (_checkingUsage) return; // 확인 중에는 "확인 중…" 텍스트 유지
         // footer: 단일(활성/최근) 엔진만 컴팩트하게. 카드(UsageStatusText)는 엔진별 멀티라인.
         var (displayEngineId, snap) = _usageService.PickDisplay(ActiveSession?.AgentId);
-        QuotaText = snap is null ? "" : FormatUsageLine(displayEngineId!, EngineRegistry.Get(displayEngineId!).Name, snap);
+        QuotaText = snap is null ? "" : FormatUsageLine(displayEngineId!, EngineDefFor(displayEngineId!).Name, snap);
         RebuildUsageRows();
     }
 
