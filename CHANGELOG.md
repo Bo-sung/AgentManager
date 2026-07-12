@@ -2,6 +2,19 @@
 
 AgentManager 버전별 변경 사항. (최신순) · 버전은 `vX.Y.Z` 태그와 1:1 대응.
 
+## 1.21.5
+커스텀 엔진 마감 + 보안 하드닝 (병렬 설계→구현 워크플로). (기능+보안 패치)
+- **커스텀 엔진 추가 폼**(A2): 설정 → Runtimes에 인라인 "＋ 커스텀 엔진 추가" 폼 — id(유일·파일명안전 검증)/이름/배지/adapterKind(드롭다운: one-shot-text·agentmanager-bridge-jsonl·재사용 빌트인)/실행 exe/args(줄당 1개)/초기 모델 입력 → `EngineConfigStore.Upsert`로 `engines/<id>.json` 생성. JSON 손편집 불필요.
+- **실행 전 trust 프롬프트**(A3, 보안): 커스텀 엔진(임의 exe+args)의 **첫 실행 전** exe+인자 목록을 모달로 보여주고 승인 요구. 승인 지문(SHA-256 over exe+args)을 `trusted-engines.json`에 저장 — 재시작 후에도 유지, exe/args가 바뀌면 **재승인**. 거부 시 프로세스·런슬롯·트랜스크립트 모두 무소비. args는 끝까지 인자 리스트 유지.
+- **`agentmanager-bridge-jsonl` 어댑터**(A4): one-shot-text보다 풍부한 라인구분 JSON 프로토콜 — session_started/assistant_delta/thinking/tool_started/tool_result/token_usage/turn_completed를 정규화 이벤트로 매핑(ARGS 모드 `{prompt}` 치환 + STDIN 모드). 제3자 CLI가 도구/사고/토큰 가시성을 갖고 통합 가능. 스펙: `docs/BRIDGE_JSONL_PROTOCOL_KO.md`.
+- **커스텀 엔진 표시명 버그 수정**(A1): 히스토리 행·예약 작업이 저장된 커스텀 `AgentId`를 빌트인 전용 `EngineRegistry.Get`으로 풀어 **cc 배지/이름으로 표기**되던 것 — 정적 provider 델리게이트(`EngineResolver`→`EngineDefFor`)로 교체.
+- **Ollama egress 가드**(B2, 보안): 번역 Ollama 엔드포인트가 **loopback이 아니면**(외부 호스트) 사용자 텍스트가 무단 유출되지 않도록 경고 배너 + 옵트인 토글(`AllowRemoteOllamaEndpoint`, 기본 off) 전까지 번역기 생성 차단(fail-closed).
+- **워커 스풀 크기 상한**(B2): 워커-태스크 스풀 무한 증가 방지 — 전체 2000 / 파일당 200, 초과 시 **reject-newest**(유입 거부 + 드롭 로깅, 무음 삭제 없음).
+- **번역 활성화 게이팅 수정**(C2): 번역 enable이 Ollama 프로세스 상태에 하드코딩돼 agent/커스텀 provider를 못 켜던 것 — provider 무관 준비상태 신호(`TranslationReady`/`RefreshTranslationStatusAsync`)로 교체(TP4 나머지 config/UI는 이미 출시됨을 확인).
+- **릴리스 코드서명 배선**(B1): `scripts/release.ps1`에 인증서 소스(cert-store thumbprint / .pfx, 시크릿 비커밋) + RFC-3161 타임스탬프 배선 + `docs/RELEASE_SIGNING_KO.md`. 미서명 경로 무결. **실제 서명 릴리스는 Authenticode 인증서 확보 후.**
+- **연기**: models.json 완전 제거(A5) — v1.21.0/1.21.1에서 건너뛰어 업그레이드하는 사용자의 손편집 모델/effort 유실 위험(마이그레이션 감지용 schema-version 부재). 2~3릴리스 후 재검토.
+- (검증) 빌드 0오류 · 스모크 전체 green(신규 engine-trust/bridge/one-shot assert 포함) · 양 Strings 중복 x:Key 없음 · 시작 크래시 없음 · 새 XAML 바인딩 정적 감사(모든 경로 VM 해석 + TwoWay 입력은 setter 보유) 통과. ※ computer-use 미가용으로 폼/모달 **인터랙티브 흐름 검증은 사용자 설치 후 권장**(각 기능 GUI 체크 단계 제공).
+
 ## 1.21.4
 커스텀 엔진 세션 재시작 손상 수정 + PR #1(GPT-5.6 변형 · 고DPI 최대화). (버그+기능 패치)
 - **커스텀 엔진 세션이 재시작마다 cc로 리셋되던 버그**(데이터 손상): 세션/예약이 저장된 `AgentId`(예: `"piworker"`)로 재구성될 때 `EngineRegistry.Get(id)`를 썼는데, 이 함수는 **빌트인 4종(cc/gx/agy/pi)만** 알아 모르는 id면 `All[0]=cc`를 반환한다. 그래서 재시작마다 복원된 커스텀 엔진 세션이 **cc로 바뀌고**(모델도 cc 목록에 없어 sonnet 폴백), 다음 자동저장에서 그 잘못된 엔진이 **영구 기록**됐다. 커스텀 인지 `AppViewModel.EngineDefFor(id)`(AllEngines=빌트인+커스텀 먼저 조회) 추가 후 세션을 id로 재구성하는 4곳(복원/포크/CLI복원/예약실행)을 전부 교체 + `engine.Models[0]` 안전화. GUI E2E: 커스텀 Pi-Worker 세션 생성→턴 완료→종료·재시작 시 `AgentId`가 `piworker` 유지(예전엔 cc) 확인.
