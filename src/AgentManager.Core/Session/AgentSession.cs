@@ -85,6 +85,9 @@ public sealed class AgentSession(
         if (adapter.CloseStdinAfterStart)
             proc.StandardInput.Close();
 
+        // Safety net for a child that won't exit after the turn completes (e.g. resumed from PC sleep on a
+        // dead connection): the grace timer force-kills it so the read loop below can't block forever.
+        using var graceCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         string? outLine;
         var sawCompleted = false;
         while ((outLine = await proc.StandardOutput.ReadLineAsync(ct)) is not null)
@@ -118,20 +121,32 @@ public sealed class AgentSession(
                     }
                 }
 
-                // A keep-open engine (Claude) waits for more stdin after the turn; close
-                // stdin on completion so it exits and the read loop ends.
-                if (ev is TurnCompleted && stdinOpen)
+                if (ev is TurnCompleted)
                 {
-                    proc.StandardInput.Close();
-                    stdinOpen = false;
+                    // A keep-open engine (Claude) waits for more stdin after the turn; close
+                    // stdin on completion so it exits and the read loop ends.
+                    if (stdinOpen)
+                    {
+                        proc.StandardInput.Close();
+                        stdinOpen = false;
+                    }
                     // Server-style engines (codex app-server) keep running after stdin EOF.
                     if (adapter.KillAfterTurnCompleted)
                     {
                         try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
                     }
+                    else
+                    {
+                        // The turn is logically complete. If the child fails to exit promptly (e.g. resumed
+                        // from PC sleep with a dead connection), the ReadLineAsync loop would block forever and
+                        // the turn would stay "running" until manually stopped — force-kill after a grace period
+                        // so the loop ends and the turn finalizes cleanly (its report is already captured).
+                        _ = ForceKillAfterGraceAsync(proc, graceCts.Token);
+                    }
                 }
             }
 
+        graceCts.Cancel(); // the read loop ended (child exited on its own) → cancel any pending grace-kill
         await proc.WaitForExitAsync(ct);
         // One-shot engines (custom CLIs) print their answer and exit without a JSONL "turn_completed" line.
         // If the adapter never signaled completion, synthesize it on process exit so the turn ends cleanly.
@@ -142,6 +157,19 @@ public sealed class AgentSession(
             await EmitTranslatedAsync(new TurnCompleted(null, isError, null, null), ct);
         }
         await stderrPump;
+    }
+
+    /// <summary>Grace-period force-kill for a keep-open child that didn't exit after its turn completed
+    /// (e.g. resumed from PC sleep on a dead connection). Cancelled via <paramref name="graceToken"/> when the
+    /// child exits on its own first, so a healthy turn is never killed.</summary>
+    private static async Task ForceKillAfterGraceAsync(Process proc, CancellationToken graceToken)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30), graceToken);
+            if (!proc.HasExited) proc.Kill(entireProcessTree: true);
+        }
+        catch { /* cancelled (child already exited / user stop) or the process is already gone */ }
     }
 
     private async Task EmitTranslatedAsync(NormalizedEvent ev, CancellationToken ct)
