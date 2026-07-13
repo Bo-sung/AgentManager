@@ -375,7 +375,8 @@ public sealed partial class AppViewModel
             NativeHookSpoolDirectory: NativeHookSpoolDirectoryFor(s),
             Worker: s.IsWorker,
             SessionId: s.Id,
-            ProjectId: s.ProjectId));
+            ProjectId: s.ProjectId,
+            TurnInactivityTimeout: TimeSpan.FromMinutes(_settings.TurnTimeoutMinutes))); // 0 min ⇒ Zero ⇒ watchdog off
 
         // gx/agy는 프롬프트를 명령행 인자로 받아 ~32K 한도를 넘기면 실행 자체가 실패한다 → 큰 프롬프트는
         // 파일로 빼고 짧은 참조만 전달. cc/pi는 stdin이라 인라인 유지(대형도 빠름 — init-ack 이후 전송).

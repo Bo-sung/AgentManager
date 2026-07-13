@@ -38,6 +38,8 @@ public sealed record AppSettingsDto
     public string OllamaModel { get; init; } = "exaone3.5:7.8b";
     /// <summary>Ollama 번역 타임아웃(초). 큰 모델은 기본 60초를 넘겨 번역이 조용히 원문으로 폴백되므로 설정에서 선택. 재시도는 2배.</summary>
     public int OllamaTimeoutSeconds { get; init; } = 60;
+    /// <summary>턴 무응답(무활동) 타임아웃(분). 이 시간 동안 엔진이 아무 출력도 없으면 stall로 보고 강제 종료. 0 = 무제한.</summary>
+    public int TurnTimeoutMinutes { get; init; } = 10;
     public bool TranslationEnabled { get; init; } = true;
     public int MaxConcurrentSessions { get; init; } = 3;
     /// <summary>워커 전용 동시 실행 cap(메인 cap과 분리). 워커 위임 병렬성.</summary>

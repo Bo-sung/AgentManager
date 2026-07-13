@@ -120,6 +120,8 @@
     <sys:String x:Key="L.WorkersGroup">WORKERS</sys:String>
     <sys:String x:Key="L.MaxWorkers">Max concurrent workers</sys:String>
     <sys:String x:Key="L.MaxWorkersDesc">Parallel limit for worker delegations (separate from the main session limit).</sys:String>
+    <sys:String x:Key="L.TurnTimeout">Turn inactivity timeout (min)</sys:String>
+    <sys:String x:Key="L.TurnTimeoutHint">If the engine emits no output for this long, the turn is treated as stalled and finalized automatically (progress captured as the report). Long tool calls reset it on every line, so they aren't cut off. 0 = unlimited.</sys:String>
     <sys:String x:Key="L.SecWorkers">Workers</sys:String>
     <sys:String x:Key="L.WorkerPreamble">Worker behavior preamble (default template)</sys:String>
     <sys:String x:Key="L.WorkerPreambleDesc">Default behavior rules for new workers, auto-prepended to delegation prompts.</sys:String>

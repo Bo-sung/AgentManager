@@ -49,6 +49,9 @@ public sealed record SessionOptions
     public string? NativeHookSpoolDirectory { get; init; }
     public string? NativeHookCommand { get; init; }
     public bool BypassHookTrust { get; init; }
+    /// <summary>Inactivity watchdog: kill a turn that emits no output for this long (the timer resets on every
+    /// line). <c>null</c> = use the engine default; <c>TimeSpan.Zero</c> or negative = disabled (no cap).</summary>
+    public TimeSpan? TurnInactivityTimeout { get; init; }
 }
 
 /// <summary>

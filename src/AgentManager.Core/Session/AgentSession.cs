@@ -92,8 +92,9 @@ public sealed class AgentSession(
         // child hung WITHOUT ever emitting a completion event, so the grace-kill above never gets scheduled) and
         // finalize it instead of blocking forever. The timer resets on every line, so a legitimately long-but-quiet
         // tool call (a slow build/test) is not cut off.
+        var idleTimeout = options.TurnInactivityTimeout ?? DefaultTurnInactivityTimeout; // Settings-driven; Zero = disabled
         using var idleCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        idleCts.CancelAfter(TurnInactivityTimeout);
+        if (idleTimeout > TimeSpan.Zero) idleCts.CancelAfter(idleTimeout);
         string? outLine;
         var sawCompleted = false;
         var stalled = false;
@@ -109,7 +110,7 @@ public sealed class AgentSession(
                 break;
             }
             if (outLine is null) break;
-            idleCts.CancelAfter(TurnInactivityTimeout); // activity → reset the stall timer
+            if (idleTimeout > TimeSpan.Zero) idleCts.CancelAfter(idleTimeout); // activity → reset the stall timer
             foreach (var ev in adapter.ParseLine(outLine))
             {
                 if (ev is TurnCompleted) sawCompleted = true;
@@ -179,10 +180,11 @@ public sealed class AgentSession(
         await stderrPump;
     }
 
-    /// <summary>No output for this long ⇒ the turn is stalled (the child hung, possibly without ever emitting a
-    /// completion event). Generous so a legitimately long, quiet tool call (a slow build/test) is never cut off;
-    /// the read loop resets it on every line. Bounds any hang instead of waiting forever for a manual stop.</summary>
-    private static readonly TimeSpan TurnInactivityTimeout = TimeSpan.FromMinutes(10);
+    /// <summary>Default inactivity watchdog window when the caller doesn't set <see cref="SessionOptions.TurnInactivityTimeout"/>
+    /// (e.g. the CLI / usage probe). No output for this long ⇒ the turn is stalled (the child hung, possibly without ever
+    /// emitting a completion event); the read loop resets it on every line so a long, quiet tool call is never cut off.
+    /// Users override it in Settings; <c>TimeSpan.Zero</c> disables the watchdog.</summary>
+    private static readonly TimeSpan DefaultTurnInactivityTimeout = TimeSpan.FromMinutes(10);
 
     /// <summary>Grace-period force-kill for a keep-open child that didn't exit after its turn completed
     /// (e.g. resumed from PC sleep on a dead connection). Cancelled via <paramref name="graceToken"/> when the

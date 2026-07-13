@@ -45,6 +45,10 @@ public sealed class SettingsService
     /// 첫 시도 후 재시도는 이 값의 2배까지 늘린다. 유효 범위 10~600초.</summary>
     public int OllamaTimeoutSeconds { get; set; } = 60;
 
+    /// <summary>Inactivity watchdog window (minutes): a turn that emits no output for this long is killed and
+    /// finalized (the timer resets on every line). 0 = disabled (no cap). Default 10; valid 0~120.</summary>
+    public int TurnTimeoutMinutes { get; set; } = 10;
+
     /// <summary>Model the agent provider uses for translation (blank = engine default). Applies to the selected
     /// <c>agent:&lt;id&gt;</c> — e.g. a cheap/fast model like cc's haiku so translation doesn't burn the default.</summary>
     public string TranslationAgentModel { get; set; } = "";
