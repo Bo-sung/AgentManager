@@ -88,9 +88,28 @@ public sealed class AgentSession(
         // Safety net for a child that won't exit after the turn completes (e.g. resumed from PC sleep on a
         // dead connection): the grace timer force-kills it so the read loop below can't block forever.
         using var graceCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        // Inactivity watchdog: if the engine emits NO output for this long, treat the turn as stalled (e.g. the
+        // child hung WITHOUT ever emitting a completion event, so the grace-kill above never gets scheduled) and
+        // finalize it instead of blocking forever. The timer resets on every line, so a legitimately long-but-quiet
+        // tool call (a slow build/test) is not cut off.
+        using var idleCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        idleCts.CancelAfter(TurnInactivityTimeout);
         string? outLine;
         var sawCompleted = false;
-        while ((outLine = await proc.StandardOutput.ReadLineAsync(ct)) is not null)
+        var stalled = false;
+        while (true)
+        {
+            try { outLine = await proc.StandardOutput.ReadLineAsync(idleCts.Token); }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                // watchdog fired (not a user stop) → the turn stalled; kill it and let the code below synthesize a
+                // completion so the turn finalizes and any output already produced is captured as the report.
+                stalled = true;
+                try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+                break;
+            }
+            if (outLine is null) break;
+            idleCts.CancelAfter(TurnInactivityTimeout); // activity → reset the stall timer
             foreach (var ev in adapter.ParseLine(outLine))
             {
                 if (ev is TurnCompleted) sawCompleted = true;
@@ -145,6 +164,7 @@ public sealed class AgentSession(
                     }
                 }
             }
+        }
 
         graceCts.Cancel(); // the read loop ended (child exited on its own) → cancel any pending grace-kill
         await proc.WaitForExitAsync(ct);
@@ -153,11 +173,16 @@ public sealed class AgentSession(
         // Existing engines always emit TurnCompleted, so this never fires for them.
         if (!sawCompleted && !ct.IsCancellationRequested)
         {
-            var isError = proc.HasExited && proc.ExitCode != 0;
+            var isError = stalled || (proc.HasExited && proc.ExitCode != 0);
             await EmitTranslatedAsync(new TurnCompleted(null, isError, null, null), ct);
         }
         await stderrPump;
     }
+
+    /// <summary>No output for this long ⇒ the turn is stalled (the child hung, possibly without ever emitting a
+    /// completion event). Generous so a legitimately long, quiet tool call (a slow build/test) is never cut off;
+    /// the read loop resets it on every line. Bounds any hang instead of waiting forever for a manual stop.</summary>
+    private static readonly TimeSpan TurnInactivityTimeout = TimeSpan.FromMinutes(10);
 
     /// <summary>Grace-period force-kill for a keep-open child that didn't exit after its turn completed
     /// (e.g. resumed from PC sleep on a dead connection). Cancelled via <paramref name="graceToken"/> when the
@@ -166,7 +191,11 @@ public sealed class AgentSession(
     {
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(30), graceToken);
+            // A healthy keep-open child exits ~1-2s after stdin EOF (grace then cancels, so normal sessions are
+            // untouched). Some configs (e.g. Claude Code as a worker) consistently fail to exit on the post-turn
+            // stdin close — for them this grace IS the finalize latency, so keep it short. Verified: cc exits well
+            // under this window when it exits at all.
+            await Task.Delay(TimeSpan.FromSeconds(6), graceToken);
             if (!proc.HasExited) proc.Kill(entireProcessTree: true);
         }
         catch { /* cancelled (child already exited / user stop) or the process is already gone */ }
