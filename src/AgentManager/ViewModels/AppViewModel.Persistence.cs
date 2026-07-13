@@ -32,6 +32,7 @@ public sealed partial class AppViewModel
         _ollamaEndpoint = string.IsNullOrWhiteSpace(s.OllamaEndpoint) ? _ollamaEndpoint : s.OllamaEndpoint;
         _ollamaModel = string.IsNullOrWhiteSpace(s.OllamaModel) ? _ollamaModel : s.OllamaModel;
         _settings.OllamaTimeoutSeconds = s.OllamaTimeoutSeconds is >= 10 and <= 600 ? s.OllamaTimeoutSeconds : 60;
+        _settings.TurnTimeoutMinutes = s.TurnTimeoutMinutes is >= 0 and <= 120 ? s.TurnTimeoutMinutes : 10;
         TranslationEnabled = s.TranslationEnabled;
         MaxConcurrentSessions = s.MaxConcurrentSessions;
         MaxConcurrentWorkers = s.MaxConcurrentWorkers < 1 ? AgentManager.Core.Workers.WorkerDefaults.DefaultMaxConcurrentWorkers : s.MaxConcurrentWorkers;
@@ -79,6 +80,7 @@ public sealed partial class AppViewModel
         OllamaEndpoint = _ollamaEndpoint,
         OllamaModel = _ollamaModel,
         OllamaTimeoutSeconds = _settings.OllamaTimeoutSeconds,
+        TurnTimeoutMinutes = _settings.TurnTimeoutMinutes,
         TranslationEnabled = TranslationEnabled,
         MaxConcurrentSessions = MaxConcurrentSessions,
         MaxConcurrentWorkers = MaxConcurrentWorkers,

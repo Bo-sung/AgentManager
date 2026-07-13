@@ -71,7 +71,8 @@ public sealed record TurnOptionsRequest(
     string SessionId = "",
     string ProjectId = "",
     string? TaskId = null,
-    string? PiWorkerHome = null);
+    string? PiWorkerHome = null,
+    TimeSpan? TurnInactivityTimeout = null);
 
 /// <summary>Headless turn-setup: the engine-resolution decision tree and the <see cref="SessionOptions"/>
 /// assembly lifted out of the WPF run loop (<c>AppViewModel.Run.cs:RunTurnAsync</c>). No UI types, no
@@ -155,6 +156,7 @@ public static class TurnPlanner
             AdditionalDirectories = r.AdditionalDirectories,
             ReasoningEffort = string.IsNullOrWhiteSpace(r.ReasoningEffort) ? null : r.ReasoningEffort,
             ExtraEnvironment = env,
+            TurnInactivityTimeout = r.TurnInactivityTimeout,
             NativeHookSpoolDirectory = r.NativeHookSpoolDirectory,
             NativeHookCommand = r.AgentId is "gx" or "cc" && r.NativeHookSpoolDirectory is not null
                 ? NativeHookCommandFactory.WindowsPowerShellSpoolScript(r.NativeHookSpoolDirectory)

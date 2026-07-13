@@ -120,6 +120,8 @@
     <sys:String x:Key="L.WorkersGroup">WORKERS</sys:String>
     <sys:String x:Key="L.MaxWorkers">워커 동시 실행 수</sys:String>
     <sys:String x:Key="L.MaxWorkersDesc">워커 위임의 병렬 실행 한도 (메인 세션 한도와 분리).</sys:String>
+    <sys:String x:Key="L.TurnTimeout">턴 무응답 타임아웃(분)</sys:String>
+    <sys:String x:Key="L.TurnTimeoutHint">엔진이 이 시간 동안 아무 출력도 없으면 멈춘 것으로 보고 자동 종료(진행분은 보고로 캡처). 긴 도구 호출은 출력마다 리셋되어 안 끊김. 0 = 무제한.</sys:String>
     <sys:String x:Key="L.SecWorkers">워커</sys:String>
     <sys:String x:Key="L.WorkerPreamble">워커 행동 규칙 (기본 템플릿)</sys:String>
     <sys:String x:Key="L.WorkerPreambleDesc">새 워커 생성 시 기본으로 채워지는 행동 규칙. 위임 프롬프트 앞에 자동 부착됩니다.</sys:String>
