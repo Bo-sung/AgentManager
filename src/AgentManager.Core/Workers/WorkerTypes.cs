@@ -53,7 +53,10 @@ public static class WorkerDefaults
     public const string BehaviorPreamble =
         "You are a worker agent. Do exactly the delegated task, concisely. " +
         "If anything is unclear, make a reasonable assumption and proceed — do not ask back. " +
-        "End your response with a \"## Report\" section: 3-6 lines summarizing what you did and the result/artifacts.";
+        "When you have finished the task, write your final report (3-6 lines: what you did + the result/artifacts) " +
+        "to a file named report.md inside the directory given by the AGENTMANAGER_REPORT_SPOOL environment variable — " +
+        "that is how your report reaches the control tower's report inbox, so send it as soon as the work is done. " +
+        "Also end your chat response with the same \"## Report\" section (a fallback if the variable is unset).";
 
     /// <summary>워커 전용 동시 실행 기본 cap(메인 cap과 분리).</summary>
     public const int DefaultMaxConcurrentWorkers = 2;

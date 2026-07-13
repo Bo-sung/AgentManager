@@ -331,6 +331,7 @@ public sealed partial class AppViewModel
         var cwd = s.WorktreePath ?? s.ProjectPath;
         if (!s.IsWorker) WatchSessionTaskSpool(cwd, s.ProjectId, s.Id); // Main-only skill fallback (.am/worker-tasks/) → backlog; workers don't delegate (depth 0)
         WatchSessionAskSpool(cwd, s.Id);               // ask-user skill (.am/ask/) → structured choice panel
+        if (s.IsWorker) WatchSessionReportSpool(cwd, s.Id); // worker report skill (.am/report/) → origin's report inbox (decoupled from turn completion)
 
         // Attachment docs: text/code are inlined verbatim; binary office/PDF docs go by PATH
         // PASS-THROUGH (copied under cwd/.am/attachments, gitignored, and referenced in the prompt
@@ -376,7 +377,8 @@ public sealed partial class AppViewModel
             Worker: s.IsWorker,
             SessionId: s.Id,
             ProjectId: s.ProjectId,
-            TurnInactivityTimeout: TimeSpan.FromMinutes(_settings.TurnTimeoutMinutes))); // 0 min ⇒ Zero ⇒ watchdog off
+            TurnInactivityTimeout: TimeSpan.FromMinutes(_settings.TurnTimeoutMinutes), // 0 min ⇒ Zero ⇒ watchdog off
+            ReportSpoolDir: s.IsWorker ? Path.Combine(cwd, ".am", "report", s.Id) : ""));
 
         // gx/agy는 프롬프트를 명령행 인자로 받아 ~32K 한도를 넘기면 실행 자체가 실패한다 → 큰 프롬프트는
         // 파일로 빼고 짧은 참조만 전달. cc/pi는 stdin이라 인라인 유지(대형도 빠름 — init-ack 이후 전송).

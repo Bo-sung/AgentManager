@@ -1784,7 +1784,8 @@ static void AssertPiWorkerLaunch()
         ResumeSessionId: null, Model: null, McpConfigPath: null, Images: [], AttachedDocsText: "",
         AdditionalDirectories: [], ReasoningEffort: null, ApiEnv: new Dictionary<string, string>(),
         TaskSpoolDir: Path.Combine(tmp, "ts"), AskSpoolDir: Path.Combine(tmp, "ask"), NativeHookSpoolDirectory: null,
-        Worker: worker, SessionId: worker ? "w1" : "", ProjectId: worker ? "proj1" : "");
+        Worker: worker, SessionId: worker ? "w1" : "", ProjectId: worker ? "proj1" : "",
+        ReportSpoolDir: worker ? Path.Combine(tmp, "report") : "");
     try
     {
         var mainOpts = TurnPlanner.BuildOptions(Req(false));
@@ -1798,6 +1799,8 @@ static void AssertPiWorkerLaunch()
         Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_PROJECT_ID"] == "proj1", "worker: PROJECT_ID");
         Assert(workerOpts.ExtraEnvironment["AGENTMANAGER_DELEGATION_DEPTH"] == "0", "worker: DELEGATION_DEPTH=0");
         Assert(workerOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_ASK_SPOOL"), "worker: ASK_SPOOL present");
+        Assert(workerOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_REPORT_SPOOL"), "worker: REPORT_SPOOL present (report skill)");
+        Assert(!mainOpts.ExtraEnvironment.ContainsKey("AGENTMANAGER_REPORT_SPOOL"), "main: no REPORT_SPOOL (workers only)");
     }
     finally { try { Directory.Delete(tmp, true); } catch { } }
 

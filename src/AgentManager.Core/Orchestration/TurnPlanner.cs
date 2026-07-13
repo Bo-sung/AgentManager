@@ -72,7 +72,8 @@ public sealed record TurnOptionsRequest(
     string ProjectId = "",
     string? TaskId = null,
     string? PiWorkerHome = null,
-    TimeSpan? TurnInactivityTimeout = null);
+    TimeSpan? TurnInactivityTimeout = null,
+    string ReportSpoolDir = "");
 
 /// <summary>Headless turn-setup: the engine-resolution decision tree and the <see cref="SessionOptions"/>
 /// assembly lifted out of the WPF run loop (<c>AppViewModel.Run.cs:RunTurnAsync</c>). No UI types, no
@@ -141,6 +142,13 @@ public static class TurnPlanner
             env["AGENTMANAGER_DELEGATION_DEPTH"] = "0";
             if (!string.IsNullOrWhiteSpace(r.TaskId)) env["AGENTMANAGER_TASK_ID"] = r.TaskId!;
             if (!string.IsNullOrWhiteSpace(r.PiWorkerHome)) env["PIWORKER_HOME"] = r.PiWorkerHome!;
+            // Report spool: the worker writes its final report here (report skill) → AgentManager files it into the
+            // origin's report inbox immediately, decoupled from turn-completion detection.
+            if (!string.IsNullOrWhiteSpace(r.ReportSpoolDir))
+            {
+                try { Directory.CreateDirectory(r.ReportSpoolDir); } catch { }
+                env["AGENTMANAGER_REPORT_SPOOL"] = r.ReportSpoolDir;
+            }
         }
 
         return new SessionOptions
