@@ -334,14 +334,19 @@ public sealed partial class AppViewModel
                             _taskStore.SetStatus(next.Id, WorkerTaskStatus.Assigned);
                             stop = true;
                         }
-                        else if (worker.Status == "done" && produced)
+                        else if (produced)
                         {
-                            // capture the worker's final reply as this task's report (back to the origin session)
+                            // The worker produced a final reply → capture it as this task's report and route it
+                            // to the origin session's inbox, EVEN IF the turn ended stopped ("idle") or errored
+                            // ("error") rather than "done". A completed "## Report" must never be silently
+                            // discarded — a non-"done" terminal status only downgrades Done→Failed classification
+                            // (both are IsFinished, so the report still surfaces in the origin's report inbox).
                             var last = fresh[^1];
                             _taskStore.SetReport(next.Id, last.OriginalText ?? last.Text ?? "");
-                            _taskStore.SetStatus(next.Id, WorkerTaskStatus.Done);
+                            _taskStore.SetStatus(next.Id, worker.Status == "done" ? WorkerTaskStatus.Done : WorkerTaskStatus.Failed);
                         }
                         else
+                            // no output produced and the status changed (e.g. immediate error) → genuine failure.
                             _taskStore.SetStatus(next.Id, WorkerTaskStatus.Failed);
                     }
                 }
